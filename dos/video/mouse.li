@@ -1,0 +1,58 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                                Hyper Tree                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+section HEADER
+
+  - name    := MOUSE;
+  
+  - category:=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Mouse for DOS.";
+  
+  - external := `union REGS __in_mouse;`;
+  
+section INHERIT
+
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+
+  - x:INTEGER;
+  
+  - y:INTEGER;
+  
+  - b:INTEGER;
+  
+  - create x_max,y_max:INTEGER <- `__in_mouse.w.ax=0x00; int386(0x33,&__in_mouse,&__in_mouse)`;
+
+  - display_on <- `__in_mouse.w.ax=0x01; int386(0x33,&__in_mouse,&__in_mouse)`;
+
+  - display_off <- `__in_mouse.w.ax=0x02; int386(0x33,&__in_mouse,&__in_mouse)`;
+  
+  - is_event:BOOLEAN <- TRUE;
+
+  - get_event:MOUSE_EVENT <- MOUSE_EVENT;
+  
+  // JBJB A VOIR POUR QUE CA MARCHE AVEC INTERFACE
+  
+  - refresh <-
+  (
+    `__in_mouse.w.ax=0x03; int386(0x33,&__in_mouse,&__in_mouse)`;
+    b:=`__in_mouse.w.bx`:INTEGER;
+    x:=`__in_mouse.w.cx`:INTEGER;
+    y:=`__in_mouse.w.dx`:INTEGER;
+  );
+
+  - set_position new_x,new_y:INTEGER <-
+  (
+    x:=new_x;
+    y:=new_y;
+    `__in_mouse.w.ax=0x04; __in_mouse.w.cx=@new_x; __in_mouse.w.dx=@new_y;`;
+    `int386(0x33,&__in_mouse,&__in_mouse)`;
+  );

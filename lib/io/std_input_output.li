@@ -67,7 +67,3 @@ section PUBLIC
     std_input.read_line_in str;
   );
 
-  - flush <-
-  (
-    std_output.flush;
-  );

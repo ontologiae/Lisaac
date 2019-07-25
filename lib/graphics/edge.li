@@ -1,0 +1,224 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := EDGE;
+  
+  - comment     := "Sub prototype for BITMAP.polygone";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;  
+  
+section PUBLIC
+  
+  // Make.
+  
+  + y:INTEGER;
+  + x:INTEGER;   
+  
+  + width:INTEGER;
+  + dx:INTEGER;  // REAL_24_8
+  
+  + is_down:BOOLEAN;
+  + is_point:BOOLEAN;
+  
+  - x0:INTEGER <- x;
+  - y0:INTEGER <- y;
+  - x1:INTEGER <- dx;
+  - y1:INTEGER <- width;
+  
+  + next_y:EDGE;
+    
+  + prev_x:EDGE;  // doubly linked list
+  + next_x:EDGE;
+  
+  //
+  // Function.
+  // 
+  
+  - make x0,y0:INTEGER add inc:INTEGER <-
+  // Flat.
+  (    
+    next_y   := NULL;
+    is_point := TRUE;
+    dx       := inc;    
+    width    := 0;
+    x := x0;
+    y := y0;
+  );
+  
+  - make x0,y0:INTEGER to x1,y1:INTEGER <-
+  // Line.
+  ( 
+    next_y   := NULL;
+    is_point := FALSE;
+    (is_down := y0 < y1).if {
+      // Down.
+      y  := y0;
+      x  := x0;            
+      dx := x1;
+      width := y1;
+    } else {
+      // up.
+      y  := y1;
+      x  := x1;            
+      dx := x0;
+      width := y0;
+    };
+  );
+      
+  - set_next_x new:EDGE <-
+  (
+    next_x:=new;
+  );
+
+  - set_prev_x new:EDGE <-
+  (
+    prev_x:=new;
+  );
+  
+  - set_next_y new:EDGE <-
+  (
+    next_y := new;
+  );
+  
+  - add old_root:EDGE :EDGE <-
+  // Double link and sort with X.
+  ( + pos,prv:EDGE;
+    + new_root:EDGE;    
+    
+    to_run;
+    pos:=old_root;
+    {(pos!=NULL) && {(pos.x<x) || {(pos.x=x) && {pos.dx<dx}} } }.while_do {
+      prv := pos;
+      pos := pos.next_x;
+    };
+    next_x := pos;
+    prev_x := prv;
+    (next_x != NULL).if {
+      next_x.set_prev_x self;
+    };
+    (prev_x!=NULL).if {
+      prev_x.set_next_x self;
+      new_root:=old_root;
+    } else {
+      new_root:=self;
+    };
+    
+    new_root
+  );
+    
+  - next_line old_root:EDGE :EDGE <-
+  // Remove double link.
+  ( + new_root:EDGE;
+    
+    (next_y = NULL).if {
+      // Remove
+      (next_x!=NULL).if {
+	next_x.set_prev_x prev_x;
+      };
+      (prev_x!=NULL).if {
+	prev_x.set_next_x next_x;
+	new_root:=old_root;
+      } else {
+	new_root:=next_x;
+      };
+    } else {
+      // Replace next_y
+      next_y.to_run;
+      next_y.set_next_x next_x;
+      next_y.set_prev_x prev_x;
+      (next_x!=NULL).if {
+	next_x.set_prev_x next_y;
+      };
+      (prev_x!=NULL).if {
+	prev_x.set_next_x next_y;
+	new_root:=old_root;
+      } else {
+	new_root:=next_y;
+      };
+    };
+    new_root
+  );
+  
+  - new_step <-
+  (
+    width:=width-1;
+    x:=x+dx;
+  );
+  
+section PRIVATE  
+  
+  - to_run <-
+  ( + dy:INTEGER; 
+    
+    (is_point).if {
+      // Point (Flat)
+      x := x0 << 8;
+    } else {
+      // Line
+      dy := y1 - y0;
+      dx := ((x1 - x0)<<8) / dy;
+      x  := x0 << 8; 
+        
+      (next_y = NULL).if {
+	width := dy;
+      } else {
+	width := dy - 1;
+      };      
+    };
+  );
+  
+  - display <-
+  (
+    '{'.print;
+    x0.print;
+    ','.print;
+    y0.print;
+    '-'.print;
+    x1.print;
+    ','.print;
+    y1.print;    
+    '}'.print;
+  );
+
+  - display_2 <-
+  (
+    '{'.print;      
+    (x>>8).print;
+    ','.print;
+    y.print;
+    'W'.print;
+    width.print;
+    'D'.print;
+    dx.print;    
+    'N'.print;
+    (next_y=NULL).if {
+      "null".print;
+    } else {
+      "=>".print;
+    };
+    '@'.print;
+    INTEGER.force_conversion self .print;
+    '}'.print;
+  );
+
+
+
+
+
+

@@ -47,7 +47,7 @@ section PUBLIC
     result
   );
   
-  - create_from_string str:ABSTRACT_STRING :STRING <-
+  - create_from_string str:ABSTRACT_STRING :SELF <-
   ( + result:STRING;
     result := create (str.count);
     result.copy str;
@@ -77,16 +77,24 @@ section PUBLIC
     make 0;
   );  
   
+  
+  - create_filled c:CHARACTER,n:INTEGER :SELF <-
+  ( + result:STRING;
+    result := STRING.clone;
+    result.make_filled c,n;
+    result
+  );
+  
   - make_filled c:CHARACTER,n:INTEGER <-
   // Initialize string with `n` copies of `c`
   ( ? {n >= 0};
     
     make n;
-    count := nr_blanks;
+    count := n;
     fill_with c;
     
     ? {count == n};
-    ? {nb_occurrences c == count};
+    ? {occurrences c == count};
   );
   
   - twin:STRING <-
@@ -150,7 +158,7 @@ section PUBLIC
   (
     storage.set_all_with c until (count - 1);
     
-    ? {nb_occurrences c = count};
+    ? {occurrences c = count};
   );
   
   - replace_all old_char:CHARACTER with new_char:CHARACTER <-
@@ -639,7 +647,6 @@ section PUBLIC
   // part of the Eiffel STRING.
   ( + old_count:INTEGER;
     + result:NATIVE_ARRAY[CHARACTER];
-    
     old_count:=count;
     (capacity > count).if {
       count := count + 1;
@@ -648,7 +655,7 @@ section PUBLIC
       };
     } else {
       add_last '\0';
-    };
+    }; 
     count := count - 1;
     result:= storage;
     
@@ -701,14 +708,13 @@ section PUBLIC
   
   - add_last_buffer buf:FIXED_ARRAY[USMALLINT] from beg:NUMERIC to end:NUMERIC <-
   (
-    beg.to end do { j:INTEGER;
+    beg.to end do { j:NUMERIC;
       add_last (buf.item j.to_character);
     };
   );
     
   - item_byte idx:NUMERIC offset ofs:NUMERIC :USMALLINT <-
-  ( + pos:INTEGER; 
-    + tab:NATIVE_ARRAY[USMALLINT];
+  ( 
     ? {ofs = 0};
     ? {idx <= upper};
     item idx.to_usmallint

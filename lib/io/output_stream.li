@@ -15,7 +15,6 @@ section HEADER
   - bibliography:="http://IsaacOS.com";
   - author      :="Sonntag Benoit (bsonntag@loria.fr)";
   - comment     :="Standard Output Stream.";
-  - external    :=`#include <stdio.h>`;
   
 section INHERIT
   
@@ -127,21 +126,10 @@ section PUBLIC
   
 section PRIVATE
   
-  - basic_io_putc byte:CHARACTER, stream:POINTER <-
-  (
-    `putc((@byte),((FILE*)(@stream)))`;
-  );
-
-  - basic_io_fwrite buf:NATIVE_ARRAY[CHARACTER],size:INTEGER,stream:POINTER <-
-  (
-    `fwrite((void *)(@buf),(size_t)(1), (size_t)(@size),(FILE*)(@stream))`;
-  );
-
-  - basic_io_flush stream_pointer:POINTER <-
-  (
-    `fflush((FILE*)(@stream_pointer))`;
-  );
-
+  - basic_io_putc c:CHARACTER <- SYSTEM_IO.print_char c;
+  
+  - basic_error_putc c:CHARACTER <- SYSTEM_IO.print_error_char c;
+  
   - tmp_file_read:TEXT_FILE_READ := TEXT_FILE_READ.create;
   
   - tmp_string:STRING := STRING.create 512;

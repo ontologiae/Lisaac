@@ -1,0 +1,88 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        := HANOI;
+  
+  - category    := MACRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "The classic Tower of Hanoi game.";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+
+section PRIVATE
+
+  + nb:INTEGER;
+
+  + tower1:TOWER;
+  + tower2:TOWER;
+  + tower3:TOWER;
+
+section PUBLIC
+
+  - make <-
+  (
+    (COMMAND_LINE.upper = 0).if {
+      "Number of discus: ".print;
+      IO.read_integer;
+      nb := IO.last_integer;
+    }.elseif {COMMAND_LINE.upper != 1} then {
+      "Usage: hanoi <NumberOfDiscus>\n".print;
+      die_with_code exit_failure_code;
+    }.elseif {COMMAND_LINE.item 1.is_integer} then {
+      nb := COMMAND_LINE.item 1.to_integer.max 1;
+    } else {
+      "hanoi: bad argument (not an integer)\n".print;
+      die_with_code exit_failure_code;
+    };
+    tower1 := TOWER.full nb;
+    tower2 := TOWER.empty nb;
+    tower3 := TOWER.empty nb;
+    "Situation at the beginning:\n".print;
+    move nb,tower1,tower2,tower3;
+    "Situation at the end:\n".print;
+    print;
+  );
+  
+section PRIVATE
+  
+  - move how_many:INTEGER, source, intermediate, destination:TOWER <-
+  ( + discus:INTEGER;
+
+    (how_many > 0).if {
+      move (how_many-1),source,destination,intermediate;
+      print;
+      discus := source.remove_discus;
+      destination.add_discus discus;
+      move (how_many-1),intermediate,source,destination;
+    };
+  );
+  
+  - print <-
+  (
+    '\n'.print;
+    nb.downto 1 do { i:INTEGER;
+      ' '.print;
+      tower1.show_a_discus i;
+      ' '.print;
+      tower2.show_a_discus i;
+      ' '.print;
+      tower3.show_a_discus i;
+      '\n'.print;
+    };
+    ((((2 * (nb + 1)) + 1) * 3) - 2).downto 1 do { i:INTEGER;
+      '-'.print;
+    };
+    '\n'.print;
+  );
+  

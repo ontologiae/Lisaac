@@ -1,0 +1,298 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        := MASTER; // MASTER can to be clonable.
+  
+  - category    := MACRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Example with -/+/* slot declaration.";
+  
+section INHERIT  
+  
+  //
+  // Parents.
+  //
+
+  - parent_minus:PARENT_MINUS := PARENT_MINUS;
+
+  + parent_plus :PARENT_PLUS := PARENT_PLUS;
+    
+  * parent_star :PARENT_STAR;
+
+section PRIVATE  
+  
+  //
+  // Globals.
+  //
+  
+  - global_minus:OBJ;
+  
+  + global_plus :OBJ;
+    
+  * global_star :OBJ;
+  
+  //
+  // Methods.
+  //
+  
+  - method_minus x,y:INTEGER :INTEGER <- (x + y);
+  
+  + method_plus x,y:INTEGER :INTEGER <- (x + y);
+  
+  //  * method_star x,y:INTEGER :INTEGER <- (x + y); // Not yet implemented.
+
+  //
+  // Locals.
+  //
+    
+  - local_minus:INTEGER <-
+  ( - local:OBJ;
+    
+    (local = NULL).if {
+      local := OBJ.clone;
+      local.set_value 100;
+    } else {
+      local.set_value (local.value + 1);
+    };
+    
+    local.value
+  );
+
+  - local_plus:INTEGER <-
+  ( + local:OBJ;
+    
+    (local = NULL).if {
+      local := OBJ.clone;
+      local.set_value 100;
+    } else {
+      local.set_value (local.value + 1);
+    };
+    
+    local.value
+  );
+
+  - local_star:INTEGER <-
+  ( * local:OBJ;
+    
+    (local = NULL).if {
+      local := OBJ.clone;
+      local.set_value 100;
+    } else {
+      local.set_value (local.value + 1);
+    };
+    
+    local.value
+  );
+  
+  //
+  // Display.
+  //
+  
+  - display <-  
+  (
+    "+========+======+======+======+\n\
+    \|  ".print;
+    name.print;
+    "  |  -   |  +   |  *   |\n\
+    \+========+======+======+======+\n".print;
+
+    // Parent.
+    "| parent | ".print;
+    parent_value_minus.to_string_format 4.print;
+    " | ".print;
+    parent_value_plus.to_string_format 4.print;
+    " | ".print;
+    parent_value_star.to_string_format 4.print;
+    " |\n\  
+    \+--------+------+------+------+\n".print;
+
+    // Global.
+    "| global | ".print;
+    (global_minus = NULL).if { "NULL".print; } else { global_minus.value.to_string_format 4.print; };
+    " | ".print;
+    (global_plus  = NULL).if { "NULL".print; } else { global_plus .value.to_string_format 4.print; };
+    " | ".print;
+    (global_star  = NULL).if { "NULL".print; } else { global_star .value.to_string_format 4.print; };
+    " |\n\
+    \+--------+------+------+------+\n".print;
+    
+    // Method.
+    "| method | ".print;
+    method_minus 2, 3.to_string_format 4.print;
+    " | ".print;
+    method_plus  2, 3.to_string_format 4.print;
+    " | ".print;
+    "NAN.".print;
+    " |\n\  
+    \+--------+------+------+------+\n".print;
+
+    // Local.
+    "| local  | ".print;
+    local_minus.to_string_format 4.print;
+    " | ".print;
+    local_plus.to_string_format 4.print;
+    " | ".print;
+    local_star.to_string_format 4.print;
+    " |\n".print;
+    "+========+======+======+======+\n\n".print;
+  );  
+  
+  //
+  // Service.
+  //
+  
+  + name:STRING_CONSTANT;
+  
+  - set_name new:STRING_CONSTANT <-
+  ( 
+    name := new;
+  );
+  
+  - press_key <-
+  (
+    "Press enter ...\n".print;
+    IO.read_character;
+  );
+  
+section PUBLIC  
+  
+  - make <-
+  ( + copy:SELF;
+    
+    "Example with -/+/* slot declaration:\n\
+    \====================================\n\n".print;
+    
+    "Source declaration:\n\
+    \-------------------\n".print;
+    
+    "Parent slot declaration:\n".print;
+    "  X parent:PARENT\n".print;
+    "Global data slot declaration:\n".print;
+    "  X global:OBJ\n".print;
+    "Method slot declaration (call `method 2 and 3'):\n".print;
+    "  X method x,y:INTEGER :INTEGER <- (x + y);\n".print;
+    "Local slot declaration:\n".print;
+    "  ( X local:OBJ;           \n\
+    \                           \n\
+    \    (local = NULL).if {    \n\
+    \      local := OBJ.clone;  \n\
+    \      local.set_value 100; \n\
+    \    } else {               \n\
+    \      local.set_value (local.value + 1); \n\
+    \    };                     \n\
+    \                           \n\
+    \    local.value            \n\
+    \  )                        \n".print;
+    
+    press_key;
+    
+    name := "SELF";
+    copy := clone;
+    copy.set_name "COPY";
+    
+    "Default value for two objects (SELF and COPY):\n\
+    \----------------------------------------------\n".print;    
+    self.display;    
+    copy.display;
+    "Rmq.: The `*' declaration slots are never with `NULL' value.\n".print;     
+    press_key;
+    
+    //
+    // LOCAL.
+    //
+    
+    "LOCAL SLOTS:\n\
+    \------------\n".print;    
+ 
+    "Display SELF object:\n".print;
+    self.display;
+    "Rmq.: The `-' local slot have a persistant value.\n".print;    
+    press_key;
+    
+    "Display COPY object:\n".print;
+    copy.display;
+    "Rmq.: The `-' local slot is shared with SELF object.\n".print;
+    press_key;
+    
+    //
+    // PARENT.
+    //
+    
+    "PARENT SLOTS:\n\
+    \-------------\n".print;    
+        
+    "`SELF.parent.value := 1' :\n".print;
+    parent_value_minus := 1;
+    parent_value_plus  := 1;
+    parent_value_star  := 1;
+    self.display;
+    copy.display;
+    "Rmq.: The `-' or '+' parent object is shared with COPY object.\n".print;
+    press_key;
+
+    "`SELF.parent := PARENT.clone' and `SELF.parent.value := 2' :\n".print;
+    parent_minus := PARENT_MINUS.clone;
+    parent_plus  := PARENT_PLUS.clone;
+    parent_value_minus := 2;
+    parent_value_plus  := 2;    
+    parent_value_star  := 2;
+    self.display;
+    copy.display;
+    "Rmq.: The `-' parent slot is always shared with COPY object.\n".print;
+    press_key;
+    
+    //
+    // GLOBAL.
+    //
+    
+    "GLOBAL SLOTS:\n\
+    \-------------\n".print;    
+        
+    "`SELF.global := OBJ.clone':\n".print;
+    global_minus := OBJ.clone;
+    global_plus  := OBJ.clone;
+    self.display;
+    copy.display;
+    "Rmq.: The `-' global data slot is shared with COPY object.\n".print;
+    press_key;
+
+    //
+    // GLOBAL.
+    //
+    
+    "METHOD SLOTS:\n\
+    \-------------\n".print;    
+        
+    "`SELF.method <- ( x,y:INTEGER; x * y)':\n".print;
+    method_minus <- ( x,y:INTEGER; x * y);
+    method_plus  <- ( x,y:INTEGER; x * y);
+    self.display;
+    copy.display;
+    "Rmq.: The `-' method slot is shared with COPY object.\n".print;
+    press_key;
+    
+  );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -135,17 +135,17 @@ section PUBLIC
     basic_seek cursor;
     cursor := cursor + size_byte;
     size_block := 512;
-    array_intern.make_with_map_object tmp_buffer;
+    
+    array_intern2.make_with_map_object tmp_buffer;
     {size_byte > 0}.while_do {
       (size_byte < 512).if {
 	size_block := size_byte;
       };
       result := result + basic_read tmp_buffer size size_block;
-      array_intern.set_upper ((size_block - 1).to_integer);
-      // BSBS: Ca doit pas marcher si la taille des objets n'est pas multiple de 512
-      dest.add_last_buffer array_intern from 0 to (size_block - 1);
+      array_intern2.set_upper ((size_block - 1).to_integer);
+      dest.add_last_buffer array_intern2 from 0 to (size_block - 1);
       size_byte := size_byte - size_block;
-      array_intern.clear;
+      array_intern2.clear;
     };
     result    
   );
@@ -197,6 +197,8 @@ section PUBLIC
 section PRIVATE
   
   + array_intern:FIXED_ARRAY[USMALLINT] := FIXED_ARRAY[USMALLINT].clone;
+  
+  + array_intern2:FIXED_ARRAY[USMALLINT] := FIXED_ARRAY[USMALLINT].clone;
   
   + stream:POINTER;
 

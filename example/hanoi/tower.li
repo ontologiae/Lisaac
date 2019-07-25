@@ -1,0 +1,114 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        := TOWER;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "The classic Tower of Hanoi game.";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+
+section PRIVATE
+
+  + t:ARRAY[INTEGER];
+
+  + top:INTEGER;
+
+section PUBLIC
+  
+  - full n:INTEGER :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.full_make n;
+    result
+  );
+  
+  - full_make n:INTEGER <-
+  ( ? {n >= 1};
+    
+    t := ARRAY[INTEGER].create 1 to n;
+    n.downto 1 do { i:INTEGER;
+      t.put (n-i+1) to i;
+    };
+    top := n;
+    
+    ? {nb = n};
+    ? {top = nb};
+    ? {t.item top = 1};
+  );
+  
+  - empty n:INTEGER :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.empty_make n;
+    result    
+  );
+  
+  - empty_make n:INTEGER <-
+  ( ? {n >= 1};
+    t := ARRAY[INTEGER].create 1 to n;
+    top := 1;
+    ? {nb = n};
+    ? {top = 1};
+  );
+
+section HANOI
+
+  - nb:INTEGER <- t.upper;
+
+  - show_a_discus d:INTEGER <-
+  ( + nb_of_free_slots, nb_of_used_slots:INTEGER;
+    ? {d.in_range d to nb};
+    nb_of_used_slots := t.item d;
+    nb_of_free_slots := nb - nb_of_used_slots;
+    nb_of_free_slots.downto 1 do { i:INTEGER;
+      ' '.print;
+    };
+    nb_of_used_slots.downto 1 do { i:INTEGER;
+      '='.print;
+    };
+    '|'.print;
+    nb_of_used_slots.downto 1 do { i:INTEGER;
+      '='.print;
+    };
+    nb_of_free_slots.downto 1 do { i:INTEGER;
+      ' '.print;
+    };
+  );
+
+  - remove_discus:INTEGER <-
+  ( + result:INTEGER;
+    result := t.item top;
+    t.put 0 to top;
+    (top > 1).if {
+      top := top - 1;
+    };
+    ? { top >= 1};
+    result
+  );
+
+  - add_discus d:INTEGER <-
+  (
+    (t.item top > d).if {
+      top := top + 1;
+      t.put d to top;
+    };
+    (t.item top = 0).if {
+      t.put d to top;
+    };
+    ? { top <= nb };
+  );
+  
+

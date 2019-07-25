@@ -1,0 +1,101 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := PIXEL_15;
+  
+  - comment     := "";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_pixel:PIXEL := PIXEL;
+  
+section MAPPING
+  
+  + real_color:USHORTINT;
+  
+section PRIVATE  
+  
+  - convert_5_to_8:FIXED_ARRAY[USMALLINT] :=
+  ( + result:FIXED_ARRAY[USMALLINT];
+    + step,value:UREAL_26_6;
+    
+    result:=FIXED_ARRAY[USMALLINT].create 32;
+    step := 255;
+    step := step /# 31;
+    0.to 31 do { j:INTEGER;
+      result.put (value.to_usmallint) to j;
+      value := value + step;
+    };
+    result
+  );
+        
+section PUBLIC
+  
+  - red:USMALLINT <- 
+  (
+    convert_5_to_8.item (real_color >> 10)
+  );
+  
+  - green:USMALLINT <- 
+  (
+    convert_5_to_8.item ((real_color >> 5) & 01Fh)
+  );
+
+  - blue:USMALLINT <- 
+  (
+    convert_5_to_8.item (real_color & 01Fh)
+  );
+  
+  - color col:UINTEGER <-
+  (
+    real_color := (((col >> 16)        .to_ushortint << 7) & 07C00h) |
+                  (((col & 00FF00h)>>8).to_ushortint << 3) & 003E0h) |
+                   ((col & 0000FFh)    >>3);
+  );
+  
+  - color_rgb r,g,b:USMALLINT <-
+  (
+    real_color := ((r.to_ushortint << 7) & 07C00h) |
+                  ((g.to_ushortint << 3) & 003E0h) |
+                  (b >> 3);
+  );
+  
+  - is_transparent:BOOLEAN <- 
+  (
+    (real_color & 08000h) != 0
+  );  
+  
+  - size:USMALLINT       := 16; 
+  - red_size:USMALLINT   := 5;
+  - red_pos:USMALLINT    := 10;
+  - green_size:USMALLINT := 5;
+  - green_pos:USMALLINT  := 5;
+  - blue_size:USMALLINT  := 5;
+  - blue_pos:USMALLINT   := 0;
+  - reserved_size:USMALLINT := 1;
+  - reserved_pos:USMALLINT  :=15;
+  
+  - copy other:SELF <-  
+  (
+    real_color := other.real_color;
+  );
+  
+  - to_pixel_15:PIXEL_15 <- self;
+  
+
+  
+

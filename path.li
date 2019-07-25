@@ -31,6 +31,8 @@ section COMMON
   // Always valid path.
 
   + lib   := lisaac + "lib/";
+  + unix  := lisaac + "unix/";
+  + dos   := lisaac + "dos/";
   
   // Standard library:
   - lib + "time/";
@@ -39,21 +41,23 @@ section COMMON
   - lib + "iterator/";
   - lib + "collection/";
   - lib + "base/";
+  - lib + "memory/";
+  - lib + "io/";  
+  - lib + "graphics/";
   
-  // Memory manager: (Libc)
-  - lib   + "system/";
-
-  // File manager: (Libc)
-  - lib   + "file_system/";
-  
-  // Input-Output: (Libc)
-  - lib + "io/";
-
 section UNIX
   
+  - unix   + "system/";
+  - unix   + "file_system/";
+  - unix   + "video/";
+
   * "gcc -O3 " + input_file + " -o " + output_file;
   
 section DOS, WINDOWS
+
+  - unix   + "system/";
+  - unix   + "file_system/";
+  - dos    + "video/";
   
   * "gcc -O3 " + input_file + " -o " + output_file + ".exe";
   

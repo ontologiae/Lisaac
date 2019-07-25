@@ -1,0 +1,130 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  - name        := VIDEO;
+  
+  - comment     := "Driver video - For DOS -";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+  - external := 
+  `
+#include <stdio.h> 
+#include <dos.h>
+#include <dpmi.h>
+#include <pc.h>
+#include <go32.h>
+#include <conio.h>
+unsigned short __desc_video;
+void __init_video_320x200()
+{ union REGS in;
+  
+  __desc_video=__dpmi_allocate_ldt_descriptors(1);
+  __djgpp_map_physical_memory((void *)0xA0000, 64000,0xA0000);
+  __dpmi_set_segment_base_address(__desc_video,0xA0000);
+  __dpmi_set_segment_limit(__desc_video,63999);
+  __dpmi_set_descriptor_access_rights(__desc_video,0x40F3);
+  in.w.ax=0x13;
+  int86(0x10,&in,&in);
+};
+void __init_video_text()
+{ union REGS in;
+  
+  in.w.ax=0x03;
+  int86(0x10,&in,&in);
+};
+`;
+  
+  
+section INHERIT
+  
+  * parent_bitmap:BITMAP_8;
+  
+section PUBLIC
+
+  - is_active:BOOLEAN;
+
+  - create <-
+  (     
+    //
+    // Init mode 320x200.
+    //
+ 
+    `__init_video_320x200()`;
+    make 320,200;
+    
+    //
+    // Init palette.
+    //
+    SYSTEM.putb 0 to 3C8h;
+    0.to 255 do { j:INTEGER;
+      + r,g,b,c:USMALLINT;
+      
+      c:=j.to_usmallint;
+      r:=(c&11000000b)>>2;
+      g:=(c&00111000b);
+      b:=(c&00000111b)<<3;
+      SYSTEM.putb r to 3C9h;
+      SYSTEM.putb g to 3C9h;
+      SYSTEM.putb b to 3C9h;
+    };
+    is_active := TRUE;
+  );
+
+  - pixel_hard x,y:INTEGER color col:UINTEGER <-
+  ( + col:USMALLINT;
+    + ofs:INTEGER;
+    col := (((col >> 16).to_usmallint) &11000000b) | ((((col & 00FF00h) >> 10).to_usmallint)&00111000b) | (((col & 0000FFh).to_usmallint) >>5);
+    ofs:=(y<<8)+(y<<6)+x;
+    `_farpokeb(__desc_video,@ofs,@col)`;
+    parent_bitmap.pixel_hard x,y color col;    
+  );
+  
+  - line_h_hard x,y:INTEGER until x1:INTEGER color col:UINTEGER <-
+  ( + col:USMALLINT;
+    + ofs:INTEGER;
+    col := (((col >> 16).to_usmallint) &11000000b) | ((((col & 00FF00h) >> 10).to_usmallint)&00111000b) | (((col & 0000FFh).to_usmallint) >>5);
+    ofs:=(y<<8)+(y<<6)+x;
+    ofs.to (ofs+x1-x) do { j:INTEGER;
+      `_farpokeb(__desc_video,@j,@col)`;
+    };
+    parent_bitmap.line_h_hard x,y until x1 color col;
+  );
+
+  - line_h_hard x,y:INTEGER until x1:INTEGER image line:BMP_LINE offset ofs_img:INTEGER <-
+  ( + ofs,ofs_img2:INTEGER;
+    + col:USMALLINT;
+    + pix:PIXEL_8;    
+    ofs:=(y<<8)+(y<<6)+x;
+    ofs_img2:=ofs_img;
+    ofs.to (ofs+x1-x) do { j:INTEGER;
+      pix := line.item_8 ofs_img2;
+      col:=pix.real_color;
+      `_farpokeb(__desc_video,@j,@col)`;
+      ofs_img2:=ofs_img2+1;
+    };  
+    parent_bitmap.line_h_hard x,y until x1 image line offset ofs_img;
+  );
+
+  - close <-
+  (
+    ? {is_active};
+    `__init_video_text()`;
+    is_active := FALSE;
+    ? {! is_active};
+  );
+
+
+
+
+

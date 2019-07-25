@@ -6,41 +6,50 @@
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
 *                          http://www.IsaacOS.com                          *
 ****************************************************************************/
+
 section HEADER
   
-  - name        := MEMORY;
+  - name        := VIDEO;
   
-  - comment     := "Memory manager, generic (with C glue)";
+  - comment     := "Generic Driver video - Text mode -";
   
   - category    := MICRO;
   
   - bibliography:= "http://IsaacOS.com";
-  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
   
-section PRIVATE
+section INHERIT
   
-  - create beg:UINTEGER <-
-  (
-    // Nothing to do in generic case
+  * parent_bitmap:BITMAP_ASCII;
+  
+section PUBLIC
+  
+  - is_active:BOOLEAN;
+  
+  - create <-
+  ( 
+    make 190,80;
+    is_active := TRUE;
   );
   
-  - allocation nb:NUMERIC :POINTER <-
+  - display_screen <-
   (
-    `malloc(@nb)`:POINTER
+    0.to (height-1) do { y:INTEGER;
+      '|'.print;
+      0.to (width-1) do { x:INTEGER;
+	image.item y.item x.print;
+      };
+      '|'.print;
+      '\n'.print;
+    };
   );
   
-  - free p:POINTER size n:NUMERIC <-
+  - close <-
   (
-    // In this case the size doesn't matter
-    `free((void*)@p)`;
+    ? {is_active};
+    is_active := FALSE;
+    ? {! is_active};
   );
-  - copy dest:POINTER from source:POINTER size n:NUMERIC :POINTER <-
-  (
-    `memcpy((void*)@dest,(void*)@source,@n)`:(POINTER)
-  );
-
-
-
 
 
 

@@ -1,0 +1,74 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := PIXEL_32;
+  
+  - comment     := "";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_pixel:PIXEL := PIXEL;
+  
+section MAPPING
+  
+
+  + blue:USMALLINT;
+
+  + green:USMALLINT;
+
+  + red:USMALLINT;
+    
+  + transparent:USMALLINT;
+  
+section PUBLIC
+  
+  - color col:UINTEGER <-
+  (
+    red   :=  (col >> 16).to_usmallint;
+    green := ((col & 00FF00h) >> 8).to_usmallint;
+    blue  :=  (col & 0000FFh).to_usmallint;
+  );
+  
+  - color_rgb r,g,b:USMALLINT <-
+  (
+    red := r;
+    green := g;
+    blue := b;
+  );
+  
+  - is_transparent:BOOLEAN <- 
+  (
+    transparent>0
+  );
+  
+  - size:USMALLINT       := 32; 
+  - red_size:USMALLINT   := 8;
+  - red_pos:USMALLINT    := 16;
+  - green_size:USMALLINT := 8;
+  - green_pos:USMALLINT  := 8;
+  - blue_size:USMALLINT  := 8;
+  - blue_pos:USMALLINT   := 0;
+  - reserved_size:USMALLINT :=8;
+  - reserved_pos:USMALLINT  :=24;
+
+  
+
+
+
+
+
+

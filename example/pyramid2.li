@@ -1,0 +1,142 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        := PYRAMID2;
+  
+  - category    := MACRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Run faster than pyramid.e";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+
+section PRIVATE
+  
+  + pyramid:ARRAY2[INTEGER];
+
+  + used:ARRAY[BOOLEAN]; // Already used numbers in `pyramid'.
+
+  - fill size:INTEGER <-
+  // Fill in a `pyramid' of `size' elements.
+  (
+    ? {size > 1};
+    used := ARRAY[BOOLEAN].create 1 to ((size+1) * size / 2);
+    pyramid := ARRAY2[INTEGER].create 1,1 to size,size;
+    (solution 1).if {
+      print;
+    } else {
+      "Sorry I can't find a solution.\n".print;
+    };
+  );
+
+  - put value:INTEGER to line,column:INTEGER <-
+  // Updtate `pyramid' and `used'.
+  (
+    used.put TRUE to value;
+    pyramid.put value to line,column;
+  );
+
+  - remove line,column:INTEGER <-
+  // Updtate `pyramid' and `used'.
+  (
+    (pyramid.item line,column != 0).if {
+      used.put FALSE to (pyramid.item line,column);
+      pyramid.put 0 to line,column;
+    };
+  );
+
+  - solution column:INTEGER :BOOLEAN <-
+  // Search a solution using a back-tracking algorithm.
+  ( + nb,i:INTEGER;
+    + result:BOOLEAN;
+    (column > pyramid.upper1).if {
+      result := TRUE;
+    } else {
+      nb := used.upper;
+      { result | (nb = 0)}.until_do {
+	(! used.item nb).if {
+	  result := fill_column column with nb;
+	};
+	(! result).if {
+	  i := pyramid.lower1;
+	  {(pyramid.item i,column = 0) || { i > pyramid.upper1 }}.until_do {
+	    remove i,column;
+	    i := i + 1;
+	  };
+	};
+	nb := nb - 1;
+      };
+    };
+    result
+  );
+
+  - fill_column col:INTEGER with val:INTEGER :BOOLEAN <-
+  ( + v,i:INTEGER;
+    + result:BOOLEAN;
+    i := 2;
+    put val  to 1,col;
+    {(i > col) | result}.until_do {
+      v := (pyramid.item (i-1),(col-1) - pyramid.item (i-1),col).abs;
+      (used.item v).if {
+	result := TRUE;
+      } else {
+	put v to i,col;
+	i := i + 1;
+      };
+    };
+    result.if {
+      {i < used.lower}.until_do {
+	remove i,col;
+	i := i-1;
+      };
+      result := FALSE;
+    } else {
+      result := solution (col+1);
+    };
+    result
+  );  
+
+  - print <-
+  // Display the pyramid to the standart output.
+  ( + blanks:STRING;
+    "\nSolution found : \n".print;
+    blanks := STRING.create 10;
+    pyramid.lower1.to (pyramid.upper1) do { line:INTEGER;
+      blanks.print;
+      pyramid.lower2.to (pyramid.upper2) do { column:INTEGER;
+	(pyramid.item line,column != 0).if {
+	  pyramid.item line,column.print;
+	  ' '.print;
+	};
+      };
+      '\n'.print;
+      blanks.add_last ' ';
+    };
+  );
+       
+section PUBLIC
+  
+  - make <-
+  ( + size: INTEGER;
+    // Read argument.
+    (COMMAND_LINE.upper = 0).if {
+      "Size of the pyramid (a small number greater than 1) : ".print;
+      IO.read_integer;
+      size := IO.last_integer;
+    } else {
+      size := COMMAND_LINE.item 1.to_integer;
+    };
+    "I am working...\n".print;
+    fill size;
+  );
+  

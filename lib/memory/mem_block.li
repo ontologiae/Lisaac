@@ -45,6 +45,85 @@ section PRIVATE
 section PUBLIC
   
   //
+  // Check Runtime Memory Block System.
+  //
+  
+  - is_cyclic_list:BOOLEAN <-
+  ( + cur:MEM_BLOCK;
+    cur := next_same;
+    {(cur != NULL) && {cur != self}}.while_do {
+      cur := cur.next_same;
+    };
+    cur = self
+  );
+  
+  - check_block <-
+  ( + is_small:BOOLEAN;
+    + ptr:UINTEGER;
+    + cur:MEM_BLOCK;
+    is_small := is_cyclic_list;
+    
+    //
+    // General test.
+    //
+    
+    // Test adress block.
+    ? {get_adress.in_range (MEMORY.begin_memory) to (MEMORY.end_memory)}; // Bound test.
+    ? {(get_adress & 0Fh) = 0};                                           // Alignment test.
+    // Size Test.
+    ? {(size & 0Fh) = 0};       // Alignment test.
+    ? {size > 128};             // Minimum size.
+    ? {size < MEMORY.capacity}; // Maximum size.
+    
+    (! is_small).if {
+      //
+      // Big Block.
+      //
+      
+      // Check linked list same.
+      cur := next_same;
+      {cur != NULL}.while_do {
+	? {cur.prev_same.next_same = cur};
+	? {cur.is_free = is_free};
+	cur := cur.next_same;
+      };
+      cur := prev_same;
+      {cur != NULL}.while_do {
+	? {cur.next_same.prev_same = cur};
+	? {cur.is_free = is_free};
+	cur := cur.prev_same;
+      };
+    } else {
+      //
+      // Small Block.
+      //
+      ? {! is_free};                                // Not free.
+      ? {size >= 4096};                             // Size Small Block.
+      ? {size <= (4096+128)};
+      ? {small_size >= 4};                          // small_size minimum.
+      ? {small_size <= (4096+128)};                       // small_size maximum.
+      ? {small_size.is_even};                       // small_size is even.
+      ? {(small_size = 4)  ->> {first_free = 0}};   // Small Block free implies first_free = 0.
+      // Check linked list first free.
+      ptr := first_free;    
+      {ptr != 0}.while_do {
+	? {ptr > 1};
+	? {ptr < (2048+64)};
+	ptr := memory.item ptr;
+      };
+      // Check cyclic linked list. 
+      cur := prev_same;
+      {cur != self}.while_do {
+	? {cur.next_same.prev_same = cur};
+	cur := cur.prev_same;
+	? {cur != NULL};
+      };
+    };
+    
+  );
+  
+  
+  //
   // Big block
   //
   
@@ -56,7 +135,7 @@ section PUBLIC
   
   - is_free:BOOLEAN <- ! (( size_and_flags & 1).to_boolean);
   
-  - in_range p:UINTEGER :BOOLEAN <- 
+  - in_range p:UINTEGER :BOOLEAN <-
   ( + limit_up, limit_low:UINTEGER;
     
     limit_low:=get_adress;
@@ -64,10 +143,10 @@ section PUBLIC
     p.in_range limit_low to limit_up
   );
       
-  - make size:NUMERIC <-
-  ( ? {(size&0Fh)=0};
+  - make siz:NUMERIC <-
+  ( ? {(siz&0Fh)=0};
       
-    size_and_flags:=size;
+    size_and_flags:=siz;
     prev:=prev_same:=next_same:=NULL;
   );
 

@@ -1,0 +1,64 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        := MASTER;
+  
+  - category    := MACRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Example the `super' call.";
+  
+section INHERIT  
+  
+  - parent_obj:OBJ := OBJ;
+
+section PRIVATE  
+  
+  + name:STRING_CONSTANT := "MASTER";
+  
+  + method <-
+  (
+    "\tThis method is in MASTER.\n".print;
+    "\tMy context is ".print;
+    name.print;
+    '\n'.print;
+  );
+  
+section PUBLIC  
+  
+  - make <-
+  ( + obj:OBJ;    
+    
+    "\nCall method:\n".print;
+    method;
+
+    "\nCall `super' method:\n".print;
+    parent_obj.method;
+
+    "\nCall the parent method:\n".print;
+    obj := parent_obj;
+    obj.method;        
+  );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

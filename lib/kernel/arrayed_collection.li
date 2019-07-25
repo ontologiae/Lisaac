@@ -117,6 +117,16 @@ section PUBLIC
   );
   
   
+  - append other:SELF <-
+  ( + old_count:INTEGER;
+    old_count := count;
+    ? {other != NULL};
+    (other.lower).to (other.upper) do { j:INTEGER;
+      add_last (other.item j);
+    };      
+    ? {count = other.count + old_count}; 
+  );
+  
   // Interfacing with C:
   
   - to_external:POINTER <-

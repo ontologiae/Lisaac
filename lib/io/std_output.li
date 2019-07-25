@@ -24,11 +24,9 @@ section PUBLIC
   
   - is_connected:BOOLEAN := TRUE;
   
-  - put_character c:CHARACTER <- SYSTEM.write_byte stdout,c;
-  
-  - flush <- flush_stream stdout;
-  
-  - stdout: POINTER <- `stdout`:POINTER;
+  - put_character c:CHARACTER <- basic_io_putc c;
+
+
   
 
 

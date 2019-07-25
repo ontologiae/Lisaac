@@ -79,6 +79,12 @@ section PUBLIC
     (self=value).if block;
     self
   );
+
+  - when value1:CHARACTER or value2:CHARACTER then block:BLOCK :CHARACTER <-
+  (
+    ((self = value1) || {self = value2}).if block;
+    self
+  );
   
   - when first_value:CHARACTER to last_value:CHARACTER then block:BLOCK :CHARACTER <-
   ( ? {first_value<=last_value};

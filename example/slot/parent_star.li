@@ -1,0 +1,43 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        := PARENT_STAR; // OBJ can to be clonable.
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "";
+  
+section INHERIT  
+  
+  - parent_minus:OBJECT := OBJECT;
+  
+section PRIVATE  
+  
+  + parent_value_star:INTEGER;
+  
+  - set_parent_value_star new:INTEGER <-
+  (
+    parent_value_star := new;
+  );
+
+
+
+
+
+
+
+
+
+
+
+
+

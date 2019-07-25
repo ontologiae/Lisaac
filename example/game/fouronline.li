@@ -186,8 +186,7 @@ section PRIVATE
   //
     
   - display_text <-  
-  ( + col:UINTEGER;
-    
+  (     
     '|'.print;
     '1'.to '7' do { c:CHARACTER;
       c.print;

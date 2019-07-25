@@ -35,17 +35,7 @@ section PUBLIC
 
   - put_character c:CHARACTER <-
   (
-    basic_io_putc c,basic_io_stderr;
-  );
-
-  - flush <-
-  (
-    basic_io_flush basic_io_stderr;
-  );
-
-  - basic_io_stderr:POINTER <-
-  (
-    `stderr`:POINTER
+    basic_error_putc c;
   );
 
 

@@ -24,6 +24,25 @@ section INHERIT
   
 section PRIVATE  
   
+  - step_count:INTEGER;  
+  - step_max  :INTEGER := 5;
+  
+  - title str:STRING_CONSTANT <-
+  (
+    step_count := step_count + 1;
+    "Step ".print;
+    step_count.print;
+    '/'.print;
+    step_max.print;
+    " : ".print;
+    str.print;
+    '\n'.print;
+    1.to (str.count + 11) do { j:INTEGER;
+      "=".print;
+    };
+    '\n'.print;
+  );    
+  
   - update file:ABSTRACT_STRING idf id:STRING_CONSTANT with new_text:ABSTRACT_STRING <-
   ( + index:INTEGER;
     + old_buffer,input:STRING;
@@ -59,8 +78,7 @@ section PRIVATE
 	  "  New value is:\n".print;
 	};
       } else {
-	"' file has been updated with:\n".print;
-	input.add_last '\n';
+	"' file has been updated with:\n".print;		
 	index := input.upper + 1;
       };
       new_text.print;
@@ -100,20 +118,20 @@ section PRIVATE
   - file_cshrc   :STRING_CONSTANT := "/.cshrc";
   - file_autoexec:STRING_CONSTANT := "\\autoexec.bat";
   
-  - comment_windows :STRING_CONSTANT := "REM **** LISAAC COMPILER ****\n";
-  - comment_unix    :STRING_CONSTANT := "# **** LISAAC COMPILER ****\n";
+  - comment_windows :STRING_CONSTANT := "\r\nREM **** LISAAC COMPILER ****\r\n";
+  - comment_unix    :STRING_CONSTANT := "\n# **** LISAAC COMPILER ****\n";
   
   - lisaac_bash   :STRING_CONSTANT := "export LISAAC=";
   - lisaac_tcsh   :STRING_CONSTANT := "setenv LISAAC ";
   - lisaac_windows:STRING_CONSTANT := "set LISAAC=";
   
-  - path_bash   :STRING_CONSTANT := "export PATH=";
-  - path_tcsh   :STRING_CONSTANT := "set path=(";
-  - path_windows:STRING_CONSTANT := "set path=";
+  - path_bash   :STRING_CONSTANT := "\nexport PATH=";
+  - path_tcsh   :STRING_CONSTANT := "\nset path=(";
+  - path_windows:STRING_CONSTANT := "\r\nset path=";
   
-  - path_bash_next   :STRING_CONSTANT := "/bin:$PATH";
-  - path_tcsh_next   :STRING_CONSTANT := "/bin $path)";
-  - path_windows_next:STRING_CONSTANT := "\\bin;%path%";
+  - path_bash_next   :STRING_CONSTANT := "/bin:$PATH\n\n";
+  - path_tcsh_next   :STRING_CONSTANT := "/bin $path)\n\n";
+  - path_windows_next:STRING_CONSTANT := "\\bin;%path%\r\n\r\n";
     
   //
   // Detect system and install environment variables.
@@ -184,8 +202,7 @@ section PRIVATE
     // Installation environment variable
     //
         
-    "Step 2/4 : Installation of environment variables.\n\
-    \=================================================\n".print;
+    title "Installation of environment variables.";
     
     (system = system_unknown).if {
       // Fail.
@@ -200,12 +217,10 @@ section PRIVATE
       // Creation environment variables.
       new_text := STRING.create_from_string comment;
       new_text.append lisaac;
-      new_text.append path_current;
-      new_text.add_last '\n';
+      new_text.append path_current; 
       new_text.append path;
       new_text.append path_current;
       new_text.append path_next;
-      new_text.append "\n\n";
       
       update file idf comment with new_text;
     };
@@ -215,7 +230,7 @@ section PRIVATE
   // Install for Emacs.
   //
   
-  - lisaac_mode_comment :STRING_CONSTANT := ";; **** LISAAC MODE ****\n";
+  - lisaac_mode_comment :STRING_CONSTANT := "\n;; **** LISAAC MODE ****\n";
   - lisaac_mode_path    :STRING_CONSTANT := "(setq load-path (cons \"";
   - lisaac_mode_path_end:STRING_CONSTANT := "/emacs/\" load-path))\n"; 
   - lisaac_mode         :STRING_CONSTANT := 
@@ -265,6 +280,7 @@ section PRIVATE
     };
     '\n'.print;
   );
+
 section PUBLIC
   
   + main <-
@@ -277,20 +293,16 @@ section PUBLIC
     path_home    := ENVIRONMENT.get_environment_variable "HOME";
     shell        := ENVIRONMENT.get_environment_variable "SHELL";
     
-    "Step 1/4 : Detection system.\n\
-    \============================\n".print;    
+    title "Detection system.";
     install_variable;
 
-    "Step 3/4 : Installation of `lisaac-mode' for Emacs.\n\
-    \===================================================\n".print;
+    title "Installation of `lisaac-mode' for Emacs.";
     install_emacs;      
     
-    "Step 4/4 : Compilation of Lisaac compiler.\n\
-    \==========================================\n".print;
+    title "Compilation of Lisaac compiler."; 
     install_compiler;
     
-    "Welcome to the Lisaac World !\n\
-    \=============================\n".print;
+    title "Welcome to the Lisaac World !";
     
     "  Installation successfull.\n\
     \  Run `lisaac' to compile.\n\

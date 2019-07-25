@@ -195,7 +195,7 @@ section PUBLIC
   ( + tab:NATIVE_ARRAY[USMALLINT];
     + pos_beg,size,new_capacity:INTEGER;
     
-    ? {! E.is_clonable};
+    //? {! E.is_clonable};
     
     pos_beg := count * element_sizeof + ofs_buf;
     size    := end - beg + 1;

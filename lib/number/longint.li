@@ -43,8 +43,8 @@ section PUBLIC
   );
   
   - to_uinteger:UINTEGER   <- 
-  ( ? {self >= 0};
-    ? {self <=# (UINTEGER.maximum)};
+  ( //? {self >= 0};
+    //? {self <=# (UINTEGER.maximum)};
     to_raw_uinteger
   );
   

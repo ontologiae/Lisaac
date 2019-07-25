@@ -181,7 +181,7 @@ section PUBLIC
   
   - '|'  left 80  other:SELF :SELF <- ~(~self & ~other);
   
-  - '^'  left 80  other:SELF :SELF <- ((~self & other) | (self & ~other));
+  - '^'  left 80  other:SELF :SELF <- (~self & other) | (self & ~other);
 
   //
   // Compatibility Binary operator
@@ -228,6 +228,12 @@ section PUBLIC
   - when value:SELF then block:BLOCK :SELF <-
   (
     (self=value).if block;
+    self
+  );
+  
+  - when value1:SELF or value2:SELF then block:BLOCK :SELF <-
+  (
+    ((self=value1) || {self=value2}).if block;
     self
   );
   
@@ -290,9 +296,9 @@ section PUBLIC
 
   - in_range low:NUMERIC to up:NUMERIC :BOOLEAN <- ((self>=#low) && {self<=#up});
   
-  - one:SELF  <- (1); // Neutral element for "*" and "/".
+  - one:SELF  <- 1; // Neutral element for `*' and `/'.
   
-  - zero:SELF <- (0); // Neutral element for "+" and "-".
+  - zero:SELF <- 0; // Neutral element for `+' and `-'.
   
   - sign:INTEGER <-
   // Sign of Current (0 -1 or 1).

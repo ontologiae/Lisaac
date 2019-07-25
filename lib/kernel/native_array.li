@@ -40,11 +40,8 @@ section PUBLIC
     + result  :NATIVE_ARRAY[E];
     ? {nb_elements > 0};
     
-    //capacity := element_sizeof * nb_elements;
     capacity := nb_elements * element_sizeof;
-    //'A'.print;
     p        :=MEMORY.allocation capacity;
-    //'B'.print;
     result   := `(void*)@p`:NATIVE_ARRAY[E];
     result
   );
@@ -66,15 +63,15 @@ section PUBLIC
   // range [0 .. `new_nb_elts'-1].
   // Old range is copied in the new allocated array.
   // New items are initialized with default values.
-  ( 
-    + new:NATIVE_ARRAY[E];
+  ( + new:NATIVE_ARRAY[E];
+    + old_ptr,new_ptr:POINTER;
+    
     ? {self != NULL};
     ? {old_nb_elts > 0};
     ? {old_nb_elts < new_nb_elts};
-    
-    new := calloc new_nb_elts;  
-  // BSBS: Voir une amelioration avec un MEMORY.realloc (peut etre que la copie n'est pas a faire)
-    new.copy_from self until (old_nb_elts - 1);
+    old_ptr := POINTER.force_conversion self;
+    new_ptr := MEMORY.realloc old_ptr size (old_nb_elts * element_sizeof) to (new_nb_elts * element_sizeof);
+    new := `(void*)@new_ptr`:NATIVE_ARRAY[E];
     new
   );
   

@@ -1,4 +1,4 @@
-/****************************************************************************
+/***************************************************************************
 *                             Lisaac Library                               *
 *                      (c) INRIA 2003 see 'licence.txt' for more details   *
 *                      LORIA - UHP - INRIA - FRANCE                        *
@@ -10,6 +10,7 @@
 section HEADER
   
   + name        := ARRAY[E];
+
   - comment     :=" General purpose resizable ARRAYs .";
   
   - category    := MICRO;
@@ -61,6 +62,13 @@ section PUBLIC
     ? { all_default};
   );
   
+  - create_with_capacity needed_capacity, low:NUMERIC :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.with_capacity needed_capacity, low;
+    result
+  );
   
   - with_capacity needed_capacity, low:NUMERIC <-
   // Create an empty array with `capacity' initialized
@@ -69,7 +77,7 @@ section PUBLIC
     ? { needed_capacity >= 0};
     
     ( capacity < needed_capacity ).if {
-      storage := storage.calloc needed_capacity;
+      storage := NATIVE_ARRAY[E].calloc needed_capacity;
       capacity := needed_capacity;
     };
     lower := low;
@@ -96,10 +104,10 @@ section PUBLIC
     ( needed > 0 ).if {
       ( needed > capacity ).if {
 	( capacity = 0 ).if {
-	  storage := storage.calloc needed;
+	  storage := NATIVE_ARRAY[E].calloc needed;
 	  capacity := needed;
 	} else {
-	  storage := storage.realloc capacity, needed;
+	  storage := storage.realloc capacity with needed;
 	  capacity := needed;
 	};
       };
@@ -111,14 +119,14 @@ section PUBLIC
 	    storage.clear intersize to (capacity - 1);
 	  };
 	}.elseif { offset < 0 } then {
-	  storage.move (- offset), (intersize - offset - 1), offset;
+	  storage.move (- offset) to (intersize - offset - 1) by offset;
 	  ( intersize < capacity ).if {
 	    storage.clear intersize to ( capacity - 1);
 	  };
 	} else {
-	  storage.move 0, (intersize - 1), offset;
-	  storage.clear 0, ( offset - 1);
-	  ( intersize + offset < capacity ).if {
+	  storage.move 0 to (intersize - 1) by offset;
+	  storage.clear 0 to ( offset - 1);
+	  ( (intersize + offset) < capacity ).if {
 	    storage.clear (intersize + offset) to (capacity - 1);
 	  };
 	};
@@ -128,7 +136,7 @@ section PUBLIC
     };
     lower := min_index;
     upper := max_index;
-    
+
     ? { lower = min_index };
     ? { upper = max_index };
   );

@@ -101,7 +101,7 @@ section PUBLIC
   
   - valid_line line:NUMERIC :BOOLEAN <- 
   (
-    lower1 <= line && line <= upper1
+    (lower1 <= line) && { line <= upper1}
   );
   
   
@@ -113,7 +113,7 @@ section PUBLIC
   
   - valid_column column:NUMERIC :BOOLEAN <- 
   (
-    lower2 <= column && column <= upper2
+    (lower2 <= column) && {column <= upper2}
   );
   
   
@@ -126,7 +126,7 @@ section PUBLIC
   
   - valid_index line, column:NUMERIC :BOOLEAN <-
   (
-    valid_line line && valid_column column
+    (valid_line line) && {valid_column column}
   );
   
   

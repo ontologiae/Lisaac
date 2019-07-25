@@ -1,0 +1,192 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        := PYRAMID;
+  
+  - category    := MACRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := 
+   " Solving the problem of the Pyramid for small pyramid only.      \
+   \ This program uses the back-tracking method.                     \
+   \ Its goal is to try to fill a pyramid by making a substraction   \
+   \ between two succesive columns and to take its absolute value.   \
+   \ The result is put on the next line.                             \
+   \ Example:                                                        \
+   \  6   14   15   3   13                                           \
+   \    8    1   12  10                                              \
+   \       7   11   2                                                \
+   \         4    9                                                  \
+   \            5                                                    \
+   \ See also pyramid2, which run faster than this first solution.";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+
+section PRIVATE
+  
+  + size:INTEGER;
+  
+  - max:INTEGER <- (size * (size + 1)) / 2;
+
+  - belongs_to nb:INTEGER :BOOLEAN <-
+  ( + i:INTEGER;
+    + found:BOOLEAN;
+    ? { nb.in_range 1 to max};
+    i := 1;
+    {(i > max) | found}.until_do {
+      found := (nb = elem.item i);
+      i := i + 1;
+    };
+    found
+  );
+
+  - propagate col,val_column_1:INTEGER :BOOLEAN <-
+  ( + stop:BOOLEAN;
+    + line:INTEGER;
+    + val:INTEGER;
+    + result:BOOLEAN;
+    ? { val_column_1.in_range 1 to max};
+    ? { col.in_range 1 to size};
+    (belongs_to val_column_1).if {
+      result := FALSE ;
+    } else {
+      elem.put val_column_1 to (indice 1,col);
+      line := 1;
+      val := val_column_1;
+      result := TRUE;
+      {stop}.until_do {
+	line := line + 1;
+	(line > col).if {
+	  stop := TRUE;
+	} else {
+	  val := val - elem.item (indice (line-1),(col-line+1));
+	  val := val.abs;
+	  (belongs_to val).if {
+	    clear_column col;
+	    stop := TRUE;
+	    result := FALSE;
+	  } else {
+	    elem.put val to (indice line,(col-line+1));
+	  };
+	};
+      };
+    };
+    result
+  );
+
+  - fill_up col:INTEGER :BOOLEAN <-
+  ( + stop,result:BOOLEAN;
+    + nb:INTEGER;
+    ? { col >= 1};
+    (col > size).if {
+      result := TRUE;
+    } else {
+      nb := max;
+      {stop}.until_do {
+	(belongs_to nb).if {
+	  nb := nb - 1;
+	  stop := (nb = 0);
+	}.elseif {propagate col,nb} then {
+	  (fill_up (col + 1)).if {
+	    stop := TRUE;
+	  } else {
+	    clear_column col;
+	    nb := nb - 1;
+	    stop := (nb = 0);
+	  };
+	} else {
+	  nb := nb - 1;
+	  stop := (nb = 0);
+	};
+      };
+      result := (nb > 0);
+    };
+    result
+  );
+
+  + elem:ARRAY[INTEGER];
+  
+  + case_empty:INTEGER;  // = 0 by default
+
+  + biggest_one:INTEGER := 10;
+
+  - indice line,col:INTEGER :INTEGER <-
+  ( + l:INTEGER;
+    + result:INTEGER;
+    ? {line.in_range 1 to size};
+    ? {col.in_range 1 to size};
+    l:= size - line + 1;
+    result := max - ((l * (l + 1)) / 2) + col;
+    ? {result.in_range 1 to max};
+    result
+  );
+
+  - clear_column col:INTEGER <-
+  (
+    ? {col.in_range 1 to size};
+    1.to col do { line:INTEGER;
+      elem.put case_empty to (indice line,(col-line+1));
+    };
+  ); // clear_column
+  
+  - print <-
+  ( + line,col:INTEGER;
+    line := 1;
+    col := 1;
+    1.to max do { nb:INTEGER;
+      (col = 1).if {
+	'\n'.print;
+      };
+      elem.item (indice line,col).print;
+      ' '.print;
+      (col = size - line + 1).if {
+	col := 1 ;
+	line := line + 1 ;
+      } else {
+	col := col + 1;
+      };
+    };
+    '\n'.print;
+  );
+	 
+section PUBLIC
+  
+  - make <-
+  ( 
+    // Read argument.
+    (COMMAND_LINE.upper = 0).if {
+      "Want to compute a small pyramid ?\n\
+      \Enter a small number (> 1): ".print;
+      IO.read_integer;
+      size := IO.last_integer;
+    } else {
+      size := COMMAND_LINE.item 1.to_integer;
+    };
+    (size <= 1).if {
+      "You feel sick ?\n".print;
+    }.elseif {size > biggest_one} then {
+      "Value too big for this method.\n".print;
+    } else {
+      elem := ARRAY[INTEGER].create 1 to max;
+      (fill_up 1).if {
+	"Full pyramid:\n".print;
+	print;
+      } else {
+	"Unable to fill_up such one.\n".print;
+      };
+    };
+  );
+  
+
+
+

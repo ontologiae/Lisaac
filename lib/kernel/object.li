@@ -17,13 +17,7 @@ section HEADER
   - comment     := "Root object.";
 
 section PUBLIC
-  
-  // JBJB
-  - display <- 
-  (
-    "\nObject tout con".print;
-  );
-  
+    
   //
   // Compiler consideration.
   //
@@ -34,7 +28,7 @@ section PUBLIC
 
   - is_debug_mode:BOOLEAN <- `50`;
   
-  - is_ansi:BOOLEAN := TRUE;
+  - is_ansi:BOOLEAN := SYSTEM.is_ansi;
   
   //
   // Control Error.
@@ -58,9 +52,9 @@ section PUBLIC
   
   - check_crash <-
   (
-    print_runtime_stack;
-    die_with_code exit_failure_code;
-    //crash_with_message "Check runtime error.\n";
+    //print_runtime_stack;
+    //die_with_code exit_failure_code;
+    crash_with_message "Check runtime error.\n";  
   );
   
   - crash <-

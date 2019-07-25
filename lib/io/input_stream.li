@@ -17,7 +17,6 @@ section HEADER
   
   - bibliography:="http://IsaacOS.com";
   - author      :="Boutet Jerome (boutet@loria.fr), Benoit Sonntag (bsonntag@loria.fr)";
-  - external    :=`#include <stdio.h>`;
   
 section INHERIT
   
@@ -157,7 +156,7 @@ section PUBLIC
       (state = 0).if {
 	(last_character.is_separator).if {
 	}.elseif { last_character.is_digit} then {
-	  last_integer := last_character.value;
+	  last_integer := last_character.decimal_value;
 	  state := 2;
 	}.elseif { last_character = '-'} then {
 	  sign := TRUE;
@@ -170,23 +169,23 @@ section PUBLIC
       }.elseif {state = 1} then {
 	(last_character.is_separator).if {
 	}.elseif { last_character.is_digit }  then {
-	  last_integer := last_character.value;
+	  last_integer := last_character.decimal_value;
 	  state := 2;
 	} else {
 	  state := 4;
 	};
       } else { // 2
 	( last_character.is_digit ).if {
-	  last_integer := (last_integer * 10) + last_character.value;
+	  last_integer := (last_integer * 10) + last_character.decimal_value;
 	} else {
 	  state := 3;
 	};
       };
       
       end_of_input.if {
-	state.when 0 at 1 then {
+	state.when 0 to 1 then {
 	  state := 4;
-	}.when 2 at 3 then {
+	}.when 2 to 3 then {
 	  state := 3;
 	};
       };
@@ -196,7 +195,7 @@ section PUBLIC
       unread_character;
     };
     ( state = 4 ).if {
-      io.put_string "Error in INPUT_STREAM.read_integer.\n";
+      "Error in INPUT_STREAM.read_integer.\n".print;
       crash;
     };
     sign.if {
@@ -461,10 +460,9 @@ section PUBLIC
     
     ? { end_of_input };
   );
-  
-  
+
 section PRIVATE
   
-  - basic_io_getc stream_pointer:POINTER :CHARACTER <- `fgetc(@stream_pointer)`:(CHARACTER);
+  - basic_io_getc :CHARACTER <- SYSTEM_IO.get_char;
   
-  - basic_io_eof:CHARACTER <- `EOF`:CHARACTER;
+  - basic_io_eof :CHARACTER <- SYSTEM_IO.eof;

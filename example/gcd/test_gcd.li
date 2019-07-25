@@ -1,0 +1,58 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := TEST_GCD;
+  
+  - category    := MACRO;
+  
+  - bibliography:="http://IsaacOS.com";
+
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+  - comment     := "Find the great common divisor between 2 values";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+
+section PRIVATE
+  
+  - gcd value_1,value_2:INTEGER :INTEGER <-
+  // Great Common Divisor of `value_1' and `value_2'.
+  ( + value,result:INTEGER;
+    ? { value_1 > 0};
+    ? { value_2 > 0};
+    result := value_1;
+    value := value_2;
+    {result = value}.until_do {
+      (result > value).if {
+	result := result - value;
+      } else {
+	value := value - result;
+      };
+    };
+    result
+  );
+	 
+section PUBLIC
+
+  - make <-
+  ( + v1,v2:INTEGER;
+    "Enter the first number: ".print;
+    IO.read_integer;
+    v1 := IO.last_integer;
+    "\nEnter the second number: ".print;
+    IO.read_integer;
+    v2 := IO.last_integer;
+    "\nThe Great Common Divisor is: ".print;
+    gcd v1,v2.print;
+    '\n'.print;
+  );

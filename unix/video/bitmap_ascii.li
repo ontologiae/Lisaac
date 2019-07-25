@@ -1,0 +1,80 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := BITMAP_ASCII;
+  
+  - comment     := "Bitmap for text mode";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+section INHERIT
+  
+  * parent_bitmap_generic:BITMAP;
+  
+section PUBLIC
+  
+  - pixel_geometry:PIXEL := PIXEL_ASCII;
+  
+section PRIVATE  
+  
+  //
+  // Data.
+  //
+  
+  // Mapping memory bitmap.
+  + image:FIXED_ARRAY[BMP_LINE_ASCII];
+  
+  - get_line y:INTEGER :BMP_LINE <-
+  ( //? {y < height};
+    image.item y
+  );
+  
+  //
+  // Creation. 
+  //
+
+  - make w,h:NUMERIC <-
+  (
+    width  := w;
+    height := h;
+    //bytes_per_line:=(w * PIXEL_ASCII.size + 7)>>3;
+    image := FIXED_ARRAY[BMP_LINE_ASCII].create h;
+    0.to (image.upper) do { y:INTEGER;
+      image.put (BMP_LINE_ASCII.create w) to y;
+    };
+    clipping_off;
+  );  
+  
+  - make w,h:NUMERIC at offset_begin:UINTEGER bytes_per_line lx:NUMERIC <-
+  ( + offset:UINTEGER;
+    
+    width  := w;
+    height := h;    
+    image := FIXED_ARRAY[BMP_LINE_ASCII].create h;
+    offset:=offset_begin;
+    0.to (image.upper) do { y:INTEGER;
+      image.put (BMP_LINE_ASCII.create w at offset) to y;
+      offset:=offset+lx;
+    };
+    clipping_off;
+  );
+  
+  - print <-
+  (
+    0.to (height - 1) do {h:INTEGER;
+      image.item h.print;
+      '\n'.print;
+    };
+  );
+ 
+

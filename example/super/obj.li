@@ -8,46 +8,43 @@
 
 section HEADER
   
-  - name        := SYSTEM;
+  + name        := OBJ;
   
   - category    := MICRO;
   
   - bibliography:= "http://IsaacOS.com";
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Generic System Object (methods).";
-
-  - external    := `
-#include <stdio.h>
-#include <time.h>
-
-int print_char(char car)
-{
-  fputc(car,stdout);
-};
-
-`;
-
-section PUBLIC
+  - comment     := "Example the `super' call.";
   
-  - exit code:INTEGER <- `exit(@code)`;
+section INHERIT  
   
-  - putb value:USMALLINT to port:USHORTINT <-
-  // Write in port
+  - parent_object:OBJECT := OBJECT;
+
+section PUBLIC  
+  
+  + name:STRING_CONSTANT := "OBJ";
+  
+  + method <-
   (
-    `asm("movw %0,%%dx \n\
-      movb %1,%%al     \n\
-      outb %%al,%%dx  ":"=g"(@port), "=g"(@value))`;
-    );
-    
-  - write_byte stream_pointer:POINTER, byte:CHARACTER <-
-  // Low level buffered output.
-  (
-    `fputc((int)@byte,@stream_pointer)`;
+    "\tThis method is in OBJ.\n".print;
+    "\tMy context is ".print;
+    name.print;
+    '\n'.print;
   );
-       
-  - get_universal_time:ULONGINT <-
-  (
-    `(unsigned long long)time(NULL)`:ULONGINT
-  );
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

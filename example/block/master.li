@@ -1,0 +1,60 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        := MASTER; 
+  
+  - category    := MACRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "";
+  
+section INHERIT  
+    
+  - parent_object:OBJECT := OBJECT;
+  
+section PRIVATE  
+  
+  - action n:INTEGER if_odd odd_block:BLOCK if_even even_block:BLOCK <-
+  (
+    (n.is_even).if {
+      even_block.value;
+    } else {
+      odd_block.value;
+    };
+  );
+      
+section PUBLIC  
+
+  - make <-
+  ( + n:INTEGER;
+    
+    "Entry a number:\n".print;
+    IO.read_integer;
+    n := IO.last_integer;
+    action n 
+    if_odd  { "This integer is odd.\n".print;  }
+    if_even { "This integer is even.\n".print; };         
+  );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

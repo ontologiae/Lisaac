@@ -20,6 +20,7 @@ Directory description.
 ======================
 
 ./lib	      : Standard Library for Lisaac.
+./unix        : Library for Unix and Windows/Dos (Input/Output, File System)
 ./bin	      : Executable file compiler (and C source).
 ./emacs	      : Lisaac mode for Emacs editor.
 ./manual      : Manual reference Lisaac language (PS format).

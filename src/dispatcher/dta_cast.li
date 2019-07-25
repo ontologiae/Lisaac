@@ -2,10 +2,6 @@ Section Header
 
   + name        := DTA_CAST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Cast base";
 
 Section Inherit
@@ -35,10 +31,12 @@ Section Public
   (
     position := p;
     result_expr := t.get_temporary_expr p;
-    (profil_current = NULL).if {
-      context := context_main;
-    } else {
-      context := profil_current.context;
+    ((debug_level_option != 0) && {list_current != PROTOTYPE.external_list}).if {
+      (profil_current = NULL).if {
+        context := context_main;
+      } else {
+        context := profil_current.context;
+      };
     };
   );
 
@@ -46,7 +44,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "DTA_CAST";
   );

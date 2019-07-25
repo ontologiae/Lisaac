@@ -62,9 +62,9 @@ Section Public
   - n_cell:INTEGER := n_col * n_row;
   - n_piece_type:INTEGER := 10;
 
-  - g_ok_pieces:FAST_ARRAY2(OK_PIECES) := FAST_ARRAY2(OK_PIECES).create (n_row,n_col); 
+  - g_ok_pieces:ARRAY2(OK_PIECES) := ARRAY2(OK_PIECES).create (n_row,n_col); 
 
-  - g_island_info:FAST_ARRAY(ISLAND_INFO) := FAST_ARRAY(ISLAND_INFO).create (max_island_offset);
+  - g_island_info:ARRAY(ISLAND_INFO) := ARRAY(ISLAND_INFO).create (max_island_offset);
 
   - g_n_island_info:INTEGER;
 

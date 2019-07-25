@@ -1,0 +1,72 @@
+Section Header
+  
+  + name := Expanded SCISSOR;
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Public
+  
+  + xform:TRANSFORM;
+  + extent0:REAL_32;
+  + extent1:REAL_32;
+  
+  - make <-
+  (
+    (xform = NULL).if { xform := TRANSFORM.create; };
+    extent0 := extent1 := -1.0;
+  );
+    
+  - make (x,y:REAL_32) size (w,h:REAL_32) transform t:TRANSFORM <-
+  ( + ww,hh:REAL_32;
+    ww := w.max 0;
+    hh := h.max 0;    
+    (xform = NULL).if { xform := TRANSFORM.create; };
+    xform.translate (x+ww*0.5,y+hh*0.5);
+    xform.multiply t;
+    (extent0,extent1) := (ww*0.5,hh*0.5);
+  );
+  /*
+  - make_intersect (x,y:REAL_32) size (w,h:REAL_32) <-
+  ( + pxform,invxorm:NATIVE_ARRAY REAL_32;
+    + ex, ey, tex, tey:REAL_32;
+    + ax,ay,aw,ah,minx,miny,maxx,maxy:REAL_32;
+
+    // If no previous scissor has been set, set the scissor as current scissor.
+    (extent_0 < 0).if {
+      make (x,y) size (w,h);
+    } else {
+      //rect    := NATIVE_ARRAY REAL_32.create 4;
+      pxform  := TRANSFORM.create;
+      invxorm := TRANSFORM.create;
+      // Transform the current scissor rect into current transform space.
+      // If there is difference in rotation, this will be approximation.
+      pxform.copy (state.scissor.xform);
+      (ex,ey) := (extent_0,extent_1);
+      invxorm.inverse (state.xform);
+      pxform.multiply invxorm;
+      tex := ex*pxform.item 0.abs + ey*pxform.item 2.abs;
+      tey := ex*pxform.item 1.abs + ey*pxform.item 3.abs;
+      
+      // Intersect rects.            
+      ax := pxform.item 4-tex;
+      ay := pxform.item 5-tey;
+      aw := ah := tex*2;
+      minx := ax.max x;
+      miny := ay.max y;
+      maxx := (ax+aw).min (x+w);
+      maxy := (ay+ah).min (y+h);
+      make (minx,miny) size ((maxx-minx).max 0,(maxy-miny).max 0);
+      //rect.free;
+      pxform.free;
+      invxorm.free;
+    };
+  );
+*/
+  - reset <-
+  (
+    xform.clear;    
+    extent0 := extent1 := -1;
+  );
+  

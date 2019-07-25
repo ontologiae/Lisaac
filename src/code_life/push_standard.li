@@ -2,10 +2,6 @@ Section Header
 
   + name        := PUSH_STANDARD;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Push context for debug mode";
 
 Section Inherit
@@ -18,9 +14,9 @@ Section Public
   // Genere
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   ( + id:INTEGER;
-    + idf:STRING_CONSTANT;
+    + idf:STRING_ALIAS;
 
     idf := ALIASER_LOCAL.push Self;
     

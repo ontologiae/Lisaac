@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := NODE_TYPE;
+  + name    := NODE_TYPE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Switch node for type";
+  - comment := "Switch node for type";
 
 Section Inherit
 
@@ -42,7 +38,7 @@ Section Public
     } else {
       + self:READ_LOCAL;
       self ?= e;
-      ((self != NULL) && {self.variable.name = ALIAS_STR.variable_self}).if {
+      ((self != NULL) && {self.variable.name = "Self"}).if {
         late_binding_self_counter := late_binding_self_counter + 1;
       };
     };
@@ -97,13 +93,22 @@ Section Private
   ( + typ_f:TYPE_FULL;
     + typ:TYPE;
     + lst_typ:TYPES_TMP;
-    + list:FAST_ARRAY(CASE);
+    + list:ARRAY CASE;
     + case:CASE;
     + result:BOOLEAN;
+    + idx,idx2:INTEGER;
 
     typ_f := expr.static_type;
-
-    (typ_f.is_expanded && {typ_f.raw != type_boolean}).if {
+    /*
+    ((data.slot != NULL) && {data.slot.name != NULL} && {data.slot.name == "tmp_name"}).if {
+      warning_error (position,"NODE_TYPE");
+      typ_f.raw.name.print;
+      '\n'.print;
+      TYPES_TMP.print_all;
+    };
+    */
+    
+    ((typ_f.is_expanded || {typ_f.is_strict}) && {typ_f.raw != type_boolean}).if {
       (first_code = NULL).if {
 	first_type := typ_f.raw;
 	first_code := data.product first_type with expr self type_self;
@@ -132,8 +137,9 @@ Section Private
         */
 	(! lst_typ.is_empty).if {
 	  (lst_typ.count = 1).if {
-	    (first_code = NULL).if {
-	      first_type := lst_typ.first;
+            (first_code = NULL).if {
+              idx := lst_typ.first_index;                            
+	      first_type := lst_typ.item idx;
 	      first_code := data.product first_type with expr self type_self;
 	    };
 	  } else {
@@ -152,17 +158,21 @@ Section Private
               "----------------------\n".print;
             };*/
             
-	    (list.count != lst_typ.count).if {
-	      (lst_typ.lower).to (lst_typ.upper) do { j:INTEGER;
-		typ := lst_typ.item j;
-		((j > list.upper) || {typ != list.item j.id}).if {
+            (list.count != lst_typ.count).if {
+              idx  := lst_typ.first_index;
+              idx2 := 0;
+	      {idx != -1}.while_do {
+                typ := lst_typ.item idx;
+                ((idx2 > list.upper) || {typ != list.item idx2.id}).if { 
 		  add_stack_type typ;
 		  //
 		  case := CASE.create typ with (data.product typ with expr self type_self);
-		  list.add case to j;
+		  list.add case to idx2;
 		  //
 		  stack_type.remove_last;
-		};
+                };
+                idx := lst_typ.next_index idx;
+                idx2 := idx2 + 1;
 	      };
 	    };
 	  };
@@ -178,7 +188,7 @@ Section Private
 
   - update_depth self_type:TYPE_FULL :BOOLEAN <-
   ( + result:BOOLEAN;
-    + list:FAST_ARRAY(CASE);
+    + list:ARRAY CASE;
     + new_type_self:TYPE_FULL;
 
     (switch = NULL).if {
@@ -198,7 +208,7 @@ Section Private
       };
     } else {
       list := switch.list;
-
+      //result := TRUE; BSBS: Pas d'impact
       (list.lower).to (list.upper) do { j:INTEGER;
 	(self_type = NULL).if {
           new_type_self := list.item j.id.default.to_strict;
@@ -206,7 +216,7 @@ Section Private
 	  new_type_self := self_type;
 	};
 	add_stack_type (list.item j.id);
-	data.update_branch (list.item j.code) self new_type_self;
+	/*result := result &*/ data.update_branch (list.item j.code) self new_type_self;
 	stack_type.remove_last;
       };
     };
@@ -215,7 +225,7 @@ Section Private
 
 Section Private
 
-  - stack_type:FAST_ARRAY(TYPE) := FAST_ARRAY(TYPE).create_with_capacity 16;
+  - stack_type:ARRAY TYPE := ARRAY TYPE .create_with_capacity 16;
 
   - add_stack_type t:TYPE <-
   (

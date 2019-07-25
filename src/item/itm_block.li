@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := ITM_BLOCK;
+  + name    := ITM_BLOCK;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Instruction block";
+  - comment := "Instruction block";
 
   // BSBS: Memory : Faire la version sans argument (très courant)
 
@@ -62,7 +58,7 @@ Section Public
     list_current.add_last wrt;
     // tmp.self := Self;
     rec := loc.read position;
-    my_self := lookup (ALIAS_STR.variable_self);
+    my_self := lookup "Self";
     val := my_self.read position;
     wrt := tb.slot_self.write position with rec value val;
     list_current.add_last wrt;

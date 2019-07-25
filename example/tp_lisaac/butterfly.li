@@ -1,6 +1,6 @@
 Section Header
 
-  - name := BUTTERFLY;
+  + name := BUTTERFLY;
 
 Section Inherit
 

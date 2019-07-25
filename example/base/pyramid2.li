@@ -2,7 +2,6 @@ Section Header
 
   + name        := PYRAMID2;
 
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Run faster than pyramid.e";
 
 Section Inherit
@@ -19,8 +18,8 @@ Section Private
   // Fill in a `pyramid' of `size' elements.
   (
     ? {size > 1};
-    used := ARRAY(BOOLEAN).create 1 to ((size+1) * size / 2);
-    pyramid := ARRAY2(INTEGER).create (1,1) to (size,size);
+    used := ARRAY(BOOLEAN).create ((size+1) * size / 2);
+    pyramid := ARRAY2(INTEGER).create (size,size);
     (solution 1).if {
       print;
     } else {
@@ -52,11 +51,11 @@ Section Private
       result := TRUE;
     } else {
       nb := used.upper;
-      { result | (nb = 0)}.until_do {
+      {result || {nb = 0}}.until_do {
         (! used.item nb).if {
           result := fill_column column with nb;
         };
-        (! result).if {
+        (result).if_false {
           i := pyramid.lower1;
           {(pyramid.item (i,column) = 0) || { i > pyramid.upper1 }}.until_do {
             remove (i,column);
@@ -72,10 +71,10 @@ Section Private
   - fill_column col:INTEGER with val:INTEGER :BOOLEAN <-
   ( + v,i:INTEGER;
     + result:BOOLEAN;
-    i := 2;
-    put val  to (1,col);
+    i := 1;
+    put val to (0,col);
     {(i > col) | result}.until_do {
-      v := (pyramid.item ((i-1),(col-1)) - pyramid.item ((i-1),col)).abs;
+      v := (pyramid.item (i-1,col-1) - pyramid.item (i-1,col)).abs;
       (used.item v).if {
         result := TRUE;
       } else {
@@ -86,7 +85,7 @@ Section Private
     result.if {
       {i < used.lower}.until_do {
         remove (i,col);
-        i := i-1;
+        i := i - 1;
       };
       result := FALSE;
     } else {
@@ -99,9 +98,9 @@ Section Public
 
   - print <-
   // Display the pyramid to the standart output.
-  ( + blanks:STRING;
+  ( + blanks:STRING_BUFFER;
     "\nSolution found : \n".print;
-    blanks := STRING.create 10;
+    blanks := STRING_BUFFER.create 10;
     pyramid.lower1.to (pyramid.upper1) do { line:INTEGER;
       blanks.print;
       pyramid.lower2.to (pyramid.upper2) do { column:INTEGER;

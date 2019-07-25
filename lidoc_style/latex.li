@@ -1,0 +1,34 @@
+  - begin :=
+  "\\begin{verbatim}\n";
+
+  - end :=
+  "\\end{verbatim}\n";
+
+  - keyword :=
+  "{\\bf{}" + last_string + "}";
+
+  - integer := last_string;
+
+  - character :=
+  "{\\it{}" + last_string + "}";
+
+  - string :=
+  "{\\it{}" + last_string + "}";
+
+  - operator := last_string;
+
+  - prototype :=
+  "<a href=\""+last_string+".html\">\
+  \<font color=\"#008000\">"+last_string+"</font></a>";
+
+  - comment_line :=
+  "{\\it{}" + last_string + "}";
+
+  - comment := "";
+
+  - slot :=
+  "{\\bf{}" + last_string + "}";
+
+  - slot_style := last_string;
+
+  - block := "\\" + last_string;

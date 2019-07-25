@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := GET_TYPE_ID;
+  + name    := GET_TYPE_ID;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Get intern ID object";
+  - comment := "Get intern ID object";
 
 Section Inherit
 
@@ -73,14 +69,14 @@ Section Public
   // Genere.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     (receiver.is_late_binding).if {
       buffer.append "-1";
     } else {
-      buffer.append (ALIAS_STR.separate);
+      buffer.append "__";
       buffer.append (receiver.raw.intern_name);
-      buffer.append (ALIAS_STR.separate); // <=> "__";
+      buffer.append "__";
     };
   );
 
@@ -88,7 +84,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "type_id(";
     receiver.display buffer;

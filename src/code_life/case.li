@@ -2,10 +2,6 @@ Section Header
 
   + name        := CASE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Case for Switch.";
 
 Section Inherit
@@ -98,7 +94,7 @@ Section Public
   // Genere
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     code.genere buffer;
   );

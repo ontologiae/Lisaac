@@ -2,10 +2,6 @@ Section Header
 
   + name        := DTA;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parent for all late binding";
 
 Section Inherit
@@ -16,12 +12,12 @@ Section Public
 
   + result_expr:EXPR;
 
-  + slot:SLOT;
+  + slot:ITM_SLOT;
 
   + self_arg:EXPR;
 
   + context:LOCAL;
-
+  
   //
   // Service
   //
@@ -35,7 +31,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "DTA";
     deferred;
@@ -84,17 +80,17 @@ Section NODE_TYPE, DTA
 
 Section NODE_STYLE, SELF
 
-  - get_argument:FAST_ARRAY(EXPR) <-
-  ( + result:FAST_ARRAY(EXPR);
+  - get_argument:ARRAY EXPR <-
+  ( + result:ARRAY EXPR;
 
-    result := FAST_ARRAY(EXPR).create_with_capacity 1;
+    result := ARRAY EXPR .create_with_capacity 1;
     result.add_last (self_arg.my_copy);
     result
   );
 
 Section DTA
 
-  - finalise typ:TYPE with (expr:EXPR,s:SLOT) in lst:LIST <-
+  - finalise typ:TYPE with (expr:EXPR,s:ITM_SLOT) in lst:LIST <-
   ( + node:NODE_STYLE;
 
     node := NODE_STYLE.create (expr.my_copy,s) with Self result result_expr;
@@ -105,13 +101,13 @@ Section Private
 
   - lookup typ:TYPE with expr:EXPR in lst:LIST <-
   ( + s:SLOT;
-    + name:STRING_CONSTANT;
+    + name:STRING_ALIAS;
     + node_style:NODE_STYLE;
     + r:EXPR;
 
     name := slot.name;
-    s := typ.get_local_slot name;
-    (s = NULL).if {
+    s := typ.get_local_itm_slot name;
+    (s = NULL).if {      
       // Lookup parent.
       // First, evaluate the parent slot in the EXPR r
       // Then chain another NODE_TYPE to dispatch on r
@@ -122,7 +118,7 @@ Section Private
       lst.add_last (NODE_TYPE.create r with Self);
     } else {
       // Direct call.
-      s.is_equal_profil slot;
+      s.verify_profil slot;
       finalise typ with (expr,s) in lst;
     };
     lst.add_last (PROTOTYPE_CST.create (expr.position) type (TYPE_VOID.default)); // BSBS: Alias.

@@ -2,10 +2,6 @@ Section Header
 
   + name        := EXPR_NOT_EQUAL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Not equal binary comparison expression.";
 
 Section Inherit
@@ -14,7 +10,7 @@ Section Inherit
 
 Section Public
 
-  - symbol:STRING_CONSTANT := "!=";
+  - symbol:STRING_ALIAS := "!=";
 
   //
   // Execute.
@@ -93,8 +89,8 @@ Section Public
           count_equal_inter := count_equal_inter + 1;
 
         };
-        type_set_l.free;
         type_set_r.free;
+        type_set_l.free;
       };
     };
 
@@ -105,7 +101,7 @@ Section Public
   // Genere
   //
 
-  - genere buffer:STRING <- // BSBS: a factoriser avec EXPR_EQUAL
+  - genere buffer:STRING_BUFFER <- // BSBS: a factoriser avec EXPR_EQUAL
   (
 
     count_equal_gener := count_equal_gener + 1;

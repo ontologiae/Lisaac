@@ -16,6 +16,7 @@ Section Public
     "The time passed...\n".print;
 
     // QUESTION
+    parent_insect := BUTTERFLY;
 
     "Im always the same insect, but who am I now ?\n".print;
     IO.read_character;

@@ -2,7 +2,6 @@ Section Header
 
   + name        := PARSE_EXPR;
 
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parse arithmetic expression.";
 
 Section Inherit
@@ -16,7 +15,7 @@ Section Private
   //
 
   - index:INTEGER;
-  - source:ABSTRACT_STRING;
+  - source:STRING;
 
   - last_character:CHARACTER;
 
@@ -151,7 +150,7 @@ Section Private
 
 Section Public
 
-  - parse src:ABSTRACT_STRING :EXPR <-
+  - parse src:STRING :EXPR <-
   ( + result:EXPR;
 
     source := src;

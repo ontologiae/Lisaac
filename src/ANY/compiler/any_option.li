@@ -2,10 +2,6 @@ Section Header
 
   + name        := ANY_OPTION;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Option for compiler (see shorter)";
 
 Section Inherit

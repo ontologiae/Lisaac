@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := INTEGER_CST;
+  + name    := INTEGER_CST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Integer constant";
+  - comment := "Integer constant";
 
 Section Inherit
 
@@ -46,13 +42,13 @@ Section Public
   );
 
   - is_signed:BOOLEAN <-
-  ( + typ:STRING_CONSTANT;
+  ( + typ:STRING_ALIAS;
 
     typ := static_type.raw.name;
-    (typ = ALIAS_STR.prototype_integer_64) ||
-    {typ = ALIAS_STR.prototype_integer_32} ||
-    {typ = ALIAS_STR.prototype_integer_16} ||
-    {typ = ALIAS_STR.prototype_integer_8 }
+    (typ = "INTEGER_64") ||
+    {typ = "INTEGER_32"} ||
+    {typ = "INTEGER_16"} ||
+    {typ = "INTEGER_8" }
   );
 
   - is_saturated:BOOLEAN <-
@@ -62,16 +58,16 @@ Section Public
       result := value = -1;
     } else {
       (static_type.raw.name)
-      .when (ALIAS_STR.prototype_uinteger_64) then {
+      .when "UINTEGER_64" then {
 	result := FALSE; // value = 0FFFFFFFFFFFFFFFFh;
       }
-      .when (ALIAS_STR.prototype_uinteger_32) then {
+      .when "UINTEGER_32" then {
 	result := value = 0FFFF_FFFFh;
       }
-      .when (ALIAS_STR.prototype_uinteger_16) then {
+      .when "UINTEGER_16" then {
 	result := value = 0FFFFh;
       }
-      .when (ALIAS_STR.prototype_uinteger_8 ) then {
+      .when "UINTEGER_8" then {
 	result := value = 0FFh;
       };
     };
@@ -124,13 +120,17 @@ Section Public
   // Generation.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
-    buffer.add_last ' ';
-    value.append_in buffer;
-    (value > UINTEGER_32.maximum.to_integer_64).if {
+    (value.in_range (INTEGER_32.minimum) to (INTEGER_32.maximum.to_raw_integer_64)).if {
+      value.append_in buffer;
+    } else {
+      buffer.append " 0x";
+      value.to_hexadecimal_in buffer;
+    };
+    ((value > UINTEGER_32.maximum.to_integer_64) || {static_type.raw.name = "UINTEGER_64"}).if {
       buffer.append "LLU";
-    }.elseif {value > INTEGER.maximum.to_integer_64} then {
+    }.elseif {(value > INTEGER.maximum.to_integer_64) || {static_type.raw.name = "UINTEGER_32"}} then {
       buffer.append "LU";
     };
   );
@@ -139,7 +139,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     static_type.append_name_in buffer;
@@ -156,48 +156,45 @@ Section Private
 
     // Check Range.
     (static_type.raw.name)
-    .when (ALIAS_STR.prototype_uinteger_64) then {
-      (value < 0).if {
-	error := TRUE;
-	max   := 0; // BSBS: A revoir...
-      };
+    .when "UINTEGER_64" then {
+      // Nothing.
     }
-    .when (ALIAS_STR.prototype_uinteger_32) then {
+    .when "UINTEGER_32" then {
       ((value < 0) || {value > UINTEGER_32.maximum.to_integer_64}).if {
 	error := TRUE;
 	max   := UINTEGER_32.maximum.to_integer_64;
       };
     }
-    .when (ALIAS_STR.prototype_uinteger_16) then {
+    .when "UINTEGER_16" then {
       ((value < 0) || {value > UINTEGER_16.maximum.to_integer_64}).if {
 	error := TRUE;
 	max   := UINTEGER_16.maximum.to_integer_64;
       };
     }
-    .when (ALIAS_STR.prototype_uinteger_8) then {
+    .when "UINTEGER_8" then {
       ((value < 0) || {value > UINTEGER_8.maximum.to_integer_64}).if {
 	error := TRUE;
 	max   := UINTEGER_8.maximum.to_integer_64;
       };
     }
-    .when (ALIAS_STR.prototype_integer_64) then {
-      // Nothing. (Pb: BSBS : Can't range test.)
+    .when "INTEGER_64" then {
+      // Nothing. 
     }
-    .when (ALIAS_STR.prototype_integer_32) then {
+    .when "INTEGER_32" then {
       ((value < INTEGER.minimum) || {value > INTEGER.maximum.to_integer_64}).if {
 	error := TRUE;
 	min   := INTEGER.minimum;
 	max   := INTEGER.maximum.to_integer_64;
       };
     }
-    .when (ALIAS_STR.prototype_integer_16) then {
+    .when "INTEGER_16" then {
       ((value < INTEGER_16.minimum) || {value > INTEGER_16.maximum.to_integer_64}).if {
 	error := TRUE;
 	min   := INTEGER_16.minimum;
 	max   := INTEGER_16.maximum.to_integer_64;
       };
     }
-    .when (ALIAS_STR.prototype_integer_8) then {
+    .when "INTEGER_8" then {
       ((value < INTEGER_8.minimum) || {value > INTEGER_8.maximum.to_integer_64}).if {
 	error := TRUE;
 	min   := INTEGER_8.minimum;

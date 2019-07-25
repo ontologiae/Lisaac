@@ -13,9 +13,9 @@ Section Inherit
 
 Section Public
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
-  + local_list:HASHED_DICTIONARY(LOCAL,STRING_CONSTANT);
+  + local_list:HASHED_DICTIONARY(LOCAL,STRING_ALIAS);
 
   + expr_list:LINKED_LIST(EXPR);
 
@@ -32,14 +32,14 @@ Section Public
   // Creation.
   //
 
-  - create p:INTEGER name n:STRING_CONSTANT :SELF <-
+  - create p:INTEGER name n:STRING_ALIAS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name n;
     result
   );
 
-  - make p:INTEGER name n:STRING_CONSTANT <-
+  - make p:INTEGER name n:STRING_ALIAS <-
   (
     position  := p;
     name      := n;
@@ -50,7 +50,7 @@ Section Public
   // Added.
   //
 
-  - set_local_list d:HASHED_DICTIONARY(LOCAL,STRING_CONSTANT) <-
+  - set_local_list d:HASHED_DICTIONARY(LOCAL,STRING_ALIAS) <-
   (
     local_list := d;
   );
@@ -64,7 +64,7 @@ Section Public
   // Access.
   //
 
-  - get_local n:STRING_CONSTANT :LOCAL <-
+  - get_local n:STRING_ALIAS :LOCAL <-
   (
     local_list.fast_reference_at n
   );

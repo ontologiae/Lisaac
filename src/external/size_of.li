@@ -2,10 +2,6 @@ Section Header
 
   + name        := SIZE_OF;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Size of object";
 
 Section Inherit
@@ -73,7 +69,7 @@ Section Public
   // Genere.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.append "sizeof(";
     receiver.raw.put_expanded_declaration buffer;
@@ -84,7 +80,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "size_of(";
     receiver.display buffer;

@@ -2,9 +2,6 @@ Section Header
 
   + name      := LIP_SLOT_DATA;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -13,7 +10,7 @@ Section Inherit
 
 Section Public
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   + value:LIP_CONSTANT;
 
@@ -21,7 +18,7 @@ Section Public
   // Creation.
   //
 
-  - create p:POSITION name n:STRING_CONSTANT value v:LIP_CONSTANT
+  - create p:POSITION name n:STRING_ALIAS value v:LIP_CONSTANT
   argument is_arg:BOOLEAN :SELF <-
   [
     -? {v != NULL};
@@ -44,7 +41,7 @@ Section Public
     result
   );
 
-  - make p:POSITION name n:STRING_CONSTANT value v:LIP_CONSTANT
+  - make p:POSITION name n:STRING_ALIAS value v:LIP_CONSTANT
   argument is_arg:BOOLEAN <-
   (
     position := p;

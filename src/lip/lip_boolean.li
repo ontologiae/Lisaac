@@ -2,9 +2,6 @@ Section Header
 
   + name      := LIP_BOOLEAN;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -51,7 +48,7 @@ Section Public
   // Operation.
   //
 
-  - name:STRING_CONSTANT <- "BOOLEAN";
+  - name:STRING_ALIAS <- "BOOLEAN";
 
   - '!' Self:SELF :LIP_CONSTANT <- get (! value);
 

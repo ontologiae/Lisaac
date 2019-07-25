@@ -2,10 +2,6 @@ Section Header
 
   + name    := CALL_SLOT;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Call slot method.";
 
 Section Inherit
@@ -44,15 +40,15 @@ Section Public
   // Argument.
   //
 
-  + argument_list:FAST_ARRAY(WRITE);
+  + argument_list:ARRAY WRITE;
 
-  + result_list:Expanded SLIM_ARRAY(RESULT); // BSBS: utiliter de RESULT ? => WRITE_LOCAL
+  + result_list:Expanded SLIM_ARRAY RESULT; // BSBS: utiliter de RESULT ? => WRITE_LOCAL
 
   + cop_argument:EXPR;
 
   + is_cop_return:BOOLEAN;
 
-  - set_args args:FAST_ARRAY(WRITE) <-
+  - set_args args:ARRAY WRITE <-
   (
     argument_list := args;
   );
@@ -66,14 +62,14 @@ Section Public
   // Creation.
   //
 
-  - create p:POSITION profil prof:PROFIL with l_arg:FAST_ARRAY(WRITE) cop arg:EXPR :SELF <-
+  - create p:POSITION profil prof:PROFIL with l_arg:ARRAY WRITE cop arg:EXPR :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p profil prof with l_arg cop arg;
     result
   );
 
-  - make p:POSITION profil prof:PROFIL with l_arg:FAST_ARRAY(WRITE) cop arg:EXPR <-
+  - make p:POSITION profil prof:PROFIL with l_arg:ARRAY WRITE cop arg:EXPR <-
   ( + n:INTEGER;
     position := p;
     cop_argument := arg;
@@ -95,15 +91,14 @@ Section Public
   - my_copy:SELF <-
   ( + result:SELF;
     + wrt:WRITE;
-    + new_arg:FAST_ARRAY(WRITE);
+    + new_arg:ARRAY WRITE;
     + res:RESULT;
     result := clone;
     
     //"COPY CALL_SLOT : ".print;
-    //debug_display;
-
+    //debug_display;    
     
-    new_arg := FAST_ARRAY(WRITE).create_with_capacity (argument_list.count);
+    new_arg := ARRAY WRITE .create_with_capacity (argument_list.count);
     (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
       (argument_list.item j = NULL).if {
 	wrt := NULL;
@@ -300,7 +295,15 @@ Section Private
     (result_list.lower).to (result_list.upper) do { j:INTEGER;
       res := result_list.item j;
       (res != NULL).if {  
-        (res.ensure_count != 0).if {
+        ((res.ensure_count != 0) || 
+          { + loc:READ_LOCAL; 
+            loc ?= res.write.value; 
+            (loc = NULL).if { 
+              semantic_error (res.write.position,"Bug Lisaac !!! Sorry Dom ;) ");  
+            };
+            loc.ensure_count > 1
+          }
+        ).if {
           result_list.item j.execute;
         } else {
           result_list.item j.remove;
@@ -366,7 +369,7 @@ Section Public
   // Display.
   //
 
-  - display_style buffer:STRING <-
+  - display_style buffer:STRING_BUFFER <-
   ( + t:HASHED_SET(TYPE);
     buffer.append (profil.name);
     buffer.add_last '(';
@@ -385,7 +388,7 @@ Section Public
     buffer.add_last ')';
   );
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   ( + arg,res:WRITE;
     + i_result:INTEGER;
     
@@ -458,33 +461,37 @@ Section Public
   //
   // Generation.
   //
-
-  - genere buffer:STRING <-
+  
+  - string_cop_arg:STRING_BUFFER := STRING_BUFFER.create 64; 
+  - genere buffer:STRING_BUFFER <-
   ( + val:WRITE;
     + arg:LOCAL;
     + wrt:WRITE_LOCAL;
     + np:INTEGER;
     + low:INTEGER;
     + back,i_result:INTEGER;
+    //+ t:TYPE_FULL;
 
     (cop_argument != NULL).if {
       (
         (argument_list.count >=1) &&
         {argument_list.first != NULL} &&
-        {argument_list.first.variable.name = ALIAS_STR.variable_self}
+        {argument_list.first.variable.name = "Self"}
       ).if {
         low := 1;
       };
       (argument_list.count-low > 0).if {
         back := buffer.count;
         buffer.append "pthread_mutex_lock (&(";
-        cop_argument.genere buffer;
+        string_cop_arg.clear;
+        cop_argument.genere string_cop_arg;
+        buffer.append string_cop_arg;
         buffer.append "->thread.mutex));\n";
         (low).to (argument_list.upper) do { j:INTEGER;
           val := argument_list.item j;
           (val != NULL).if {
             buffer.append indent;
-            cop_argument.genere buffer;
+            buffer.append string_cop_arg;
             buffer.append "->param_";
             np.append_in buffer;
             buffer.append "=(int)";
@@ -492,7 +499,7 @@ Section Public
             buffer.append ";\n";
             np := np + 1;
           } else {
-            "arg null\n".print;
+            //"arg null\n".print;
           };
         };
         buffer.append indent;
@@ -500,7 +507,7 @@ Section Public
           buffer.keep_head back;
         };
       };
-      cop_argument.genere buffer;
+      buffer.append string_cop_arg;
       buffer.append "->thread.procedure = COP_";
       buffer.append (profil.name);
       buffer.append ";\n";
@@ -511,7 +518,7 @@ Section Public
         buffer.append "run_procedure";
       };
       buffer.append "((lith_object *)";
-      cop_argument.genere buffer;
+      buffer.append string_cop_arg;
       buffer.add_last ')';
     } else {
       (result_list.is_empty).if_false {
@@ -551,7 +558,21 @@ Section Public
             (buffer.last != '(').if {
               buffer.add_last ',';
             };
-            val.genere_value buffer;
+            /*
+            t := val.static_type;
+            (
+              (t.is_strict) || {t.is_expanded_ref} || {t.is_expanded}
+            ).if {*/
+              val.genere_value buffer;  
+            /*} else {
+              buffer.append "((";
+              t.raw.put_reference_declaration buffer;
+              buffer.add_last ' ';
+              t.raw.put_reference_star_declaration buffer;
+              buffer.add_last ')';
+              val.genere_value buffer;  
+              buffer.add_last ')';
+            };*/            
           };
         };
         

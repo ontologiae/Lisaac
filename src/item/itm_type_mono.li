@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_TYPE_MONO;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Type simple";
 
 Section Inherit
@@ -14,26 +10,11 @@ Section Inherit
 
 Section Public
 
-  - hash_code:INTEGER <-
-  (
-    string_tmp.clear;
-    append_in string_tmp;
-    string_tmp.print; '\n'.print;
-    deferred;
-    0
-  );
-
   //
   // Runnable.
   //
 
-  - to_run_for p:PARAMETER_TO_TYPE :TYPE_FULL <-
-  (
-    deferred;
-    NULL
-  );
-
-  - to_run_in lst:FAST_ARRAY(TYPE_FULL) for p:PARAMETER_TO_TYPE <-
+  - to_run_in lst:ARRAY TYPE_FULL for p:PARAMETER_TO_TYPE <-
   (
     lst.add_last (to_run_for p);
   );
@@ -51,13 +32,8 @@ Section Public
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     deferred;
   );
 
-  //
-  // Cast.
-  //
-
-  - append_cast_name_in buf:STRING <- deferred;

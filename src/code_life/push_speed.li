@@ -2,10 +2,6 @@ Section Header
 
   + name        := PUSH_SPEED;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Push context for debug mode";
 
 Section Inherit
@@ -18,11 +14,11 @@ Section Public
   
   + back_link:PUSH_SPEED;  
   
-  - name:STRING_CONSTANT;
+  - name:STRING_ALIAS;
   
-  - stack:FAST_ARRAY(PUSH_SPEED) := FAST_ARRAY(PUSH_SPEED).create_with_capacity 64;  
+  - stack:ARRAY PUSH_SPEED := ARRAY PUSH_SPEED .create_with_capacity 64;  
   
-  - start_c_function nam:STRING_CONSTANT <-
+  - start_c_function nam:STRING_ALIAS <-
   (     
     stack.clear;
     name := nam;    
@@ -45,7 +41,7 @@ Section Public
     result
   );
   
-  -genere buffer:STRING <-
+  -genere buffer:STRING_BUFFER <-
   ( + id:INTEGER;
     + old:PUSH_SPEED;
     
@@ -112,7 +108,7 @@ Section Public
   );
   
 /*
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   ( + back:PUSH_SPEED;
     + i:INTEGER;
     + id:UINTEGER_32;

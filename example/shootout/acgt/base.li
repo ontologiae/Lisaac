@@ -41,10 +41,10 @@ Section Public
 
 Section Private
 
-  - acgt:FAST_ARRAY(CHARACTER) :=
-  ( + result:FAST_ARRAY(CHARACTER);
+  - acgt:ARRAY(CHARACTER) :=
+  ( + result:ARRAY(CHARACTER);
 
-    result := FAST_ARRAY(CHARACTER).create_with_capacity 4;
+    result := ARRAY(CHARACTER).create_with_capacity 4;
     result.add_last 'A';
     result.add_last 'C';
     result.add_last 'G';

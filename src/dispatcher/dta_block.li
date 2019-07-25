@@ -2,10 +2,6 @@ Section Header
 
   + name        := DTA_BLOCK;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Lisaac IS A Advanced Compiler";
 
 Section Inherit
@@ -24,14 +20,14 @@ Section Public
   // Creation.
   //
 
-  - create mod:TYPE_BLOCK with larg:FAST_ARRAY(EXPR) :SELF <-
+  - create mod:TYPE_BLOCK with larg:ARRAY EXPR :SELF <-
   ( + result:SELF;
     result := clone;
     result.make mod with larg;
     result
   );
 
-  - make mod:TYPE_BLOCK with larg:FAST_ARRAY(EXPR) <-
+  - make mod:TYPE_BLOCK with larg:ARRAY EXPR <-
   [ -? {mod.position != 0}; ]
   (
     (profil_current = NULL).if {
@@ -49,18 +45,18 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "DTA_BLOCK";
   );
 
 Section NODE_STYLE, SELF
 
-  - get_argument:FAST_ARRAY(EXPR) <-
-  ( + result:FAST_ARRAY(EXPR);
+  - get_argument:ARRAY EXPR <-
+  ( + result:ARRAY EXPR;
     + rd:READ_SLOT;
     (copy_argument).if {
-      result := FAST_ARRAY(EXPR).create_with_capacity (argument_list.count);
+      result := ARRAY EXPR .create_with_capacity (argument_list.count);
       rd ?= argument_list.first;
       result.add_last (rd.receiver.my_copy);
       (argument_list.lower+1).to (argument_list.upper) do { j:INTEGER;
@@ -79,7 +75,7 @@ Section NODE_TYPE, DTA
   ( + result:LIST;
     + t_block:PROFIL_BLOCK;
     + wrt:WRITE;
-    + wrt_larg:FAST_ARRAY(WRITE);
+    + wrt_larg:ARRAY WRITE;
     + call:CALL_SLOT;
     + em:EXPR_MULTIPLE;
     + rd:READ;

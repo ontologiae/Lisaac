@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := CAST;
+  + name    := CAST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Cast type.";
+  - comment := "Cast type.";
 
 Section Inherit
 
@@ -76,12 +72,11 @@ Section Public
     value  := value.execute_link;
     result := Self;
     //
-    ((static_type.raw = type_integer) && {value.is_constant}).if {
+    ((static_type.raw = type_integer) && {value.is_constant}).if { // -------> OK
       result := value;
       new_execute_pass;
-    }.elseif {
-      (ALIAS_STR.is_integer (static_type.raw.name)) &&
-      {value.is_constant} &&
+    }.elseif {  
+      (is_integer (static_type.raw.name)) && {value.is_constant} &&
       { int ?= value;  // BSBS: Merde avc les prototype_cst de type type_id : INTEGER
 	int != NULL
       }
@@ -89,7 +84,7 @@ Section Public
       int.cast_type static_type;
       result := value;
       new_execute_pass;
-    }.elseif {
+    }.elseif { 
       other ?= value;
       (other != NULL) &&
       {other.static_type = static_type}
@@ -100,8 +95,8 @@ Section Public
       lst_typ := TYPES_TMP.new;
       value.get_type lst_typ;
       ((lst_typ.count = 1) && {lst_typ.first = static_type.raw}).if {
-	result := value;
-	new_execute_pass;
+        result := value;
+        new_execute_pass;
       };
       lst_typ.free;
     };
@@ -113,7 +108,7 @@ Section Public
   // Genere.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     buffer.add_last '(';
@@ -129,7 +124,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     static_type.append_name_in buffer;

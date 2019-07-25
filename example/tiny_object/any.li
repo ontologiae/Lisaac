@@ -8,18 +8,18 @@ Section Inherit
 
 Section Public
 
-  - input_name:STRING_CONSTANT;
+  - input_name:STRING_ALIAS;
 
-  - source:STRING;
+  - source:STRING_BUFFER;
 
-  - string_tmp:STRING := STRING.create 250;
+  - string_tmp:STRING_BUFFER := STRING_BUFFER.create 250;
 
   //
   // Program
   //
 
-  - program:HASHED_DICTIONARY(CLASS,STRING_CONSTANT) :=
-  HASHED_DICTIONARY(CLASS,STRING_CONSTANT).create;
+  - program:HASHED_DICTIONARY(CLASS,STRING_ALIAS) :=
+  HASHED_DICTIONARY(CLASS,STRING_ALIAS).create;
 
   - class_master:CLASS;
 
@@ -27,30 +27,30 @@ Section Public
   // Error manager.
   //
 
-  - syntax_error p:INTEGER message msg:ABSTRACT_STRING <-
+  - syntax_error p:INTEGER message msg:STRING <-
   (
     error p style "--SYNTAX---------\n" message msg;
     die_with_code exit_failure_code;
   );
 
-  - semantic_error p:INTEGER message msg:ABSTRACT_STRING <-
+  - semantic_error p:INTEGER message msg:STRING <-
   (
     error p style "--SEMANTIC-------\n" message msg;
     die_with_code exit_failure_code;
   );
 
-  - warning_error p:INTEGER message msg:ABSTRACT_STRING <-
+  - warning_error p:INTEGER message msg:STRING <-
   (
     error p style "--WARNING--------\n" message msg;
   );
 
-  - error p:INTEGER style s:STRING_CONSTANT message msg:ABSTRACT_STRING <-
+  - error p:INTEGER style s:STRING_ALIAS message msg:STRING <-
   ( + l,c,pos:INTEGER;
     + char:CHARACTER;
-    - msg_error:STRING;
+    - msg_error:STRING_BUFFER;
 
     (msg_error = NULL).if {
-      msg_error := STRING.create 256;
+      msg_error := STRING_BUFFER.create 256;
     };
 
     (l,c) := current_position p;
@@ -95,14 +95,14 @@ Section Public
   // String aliaser.
   //
 
-  - get_alias str:ABSTRACT_STRING :STRING_CONSTANT <-
-  ( + result:STRING_CONSTANT;
-    + tmp:ABSTRACT_STRING;
+  - get_alias str:STRING :STRING_ALIAS <-
+  ( + result:STRING_ALIAS;
+    + tmp:STRING;
     ? {str != NULL};
 
     tmp := aliaser_string.reference_at str;
     (tmp = NULL).if {
-      result := STRING_CONSTANT.create_copy str;
+      result := STRING_ALIAS.create_copy str;
       aliaser_string.fast_add result;
     } else {
       result ?= tmp;
@@ -111,11 +111,11 @@ Section Public
     result
   );
 
-  - keyword_inherit:STRING_CONSTANT := "Inherit";
-  - keyword_print:STRING_CONSTANT   := "print";
-  - keyword_new:STRING_CONSTANT     := "New";
-  - keyword_master:STRING_CONSTANT  := "master";
-  - keyword_this:STRING_CONSTANT    := "This";
+  - keyword_inherit:STRING_ALIAS := "Inherit";
+  - keyword_print:STRING_ALIAS   := "print";
+  - keyword_new:STRING_ALIAS     := "New";
+  - keyword_master:STRING_ALIAS  := "master";
+  - keyword_this:STRING_ALIAS    := "This";
 
   //
   // Flags.
@@ -131,10 +131,10 @@ Section Private
   // Aliaser string.
   //
 
-  - aliaser_string:HASHED_SET(ABSTRACT_STRING) :=
-  ( + result:HASHED_SET(ABSTRACT_STRING);
+  - aliaser_string:HASHED_SET(STRING) :=
+  ( + result:HASHED_SET(STRING);
 
-    result := HASHED_SET(ABSTRACT_STRING).create;
+    result := HASHED_SET(STRING).create;
     result.fast_add keyword_inherit;
     result.fast_add keyword_print;
     result.fast_add keyword_new;

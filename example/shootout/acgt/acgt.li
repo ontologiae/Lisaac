@@ -2,9 +2,6 @@ Section Header
 
   + name      := ACGT;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -15,12 +12,12 @@ Section Public
 
   - monome_size:INTEGER;
 
-  - list:FAST_ARRAY(FAST_ARRAY(BASE));
+  - list:ARRAY(ARRAY(BASE));
 
-  - base:FAST_ARRAY(BASE) :=
-  ( + result:FAST_ARRAY(BASE);
+  - base:ARRAY(BASE) :=
+  ( + result:ARRAY(BASE);
     + code:UINTEGER_8;
-    result := FAST_ARRAY(BASE).create_with_capacity (20*(3+1));
+    result := ARRAY(BASE).create_with_capacity (20*(3+1));
     0.to 2 do { f:INTEGER;
       f.to 3 do { s:INTEGER;
         (f+1).to 3 do { t:INTEGER;
@@ -51,11 +48,11 @@ Section Public
 
   - compute_monome <-
   ( + idx:INTEGER;
-    + new_m:FAST_ARRAY(BASE);
+    + new_m:ARRAY(BASE);
     + b:BASE;
     + v:UINTEGER_8;
 
-    new_m := FAST_ARRAY(BASE).create_with_capacity monome_size;
+    new_m := ARRAY(BASE).create_with_capacity monome_size;
     0.to (monome_size-1) do { i:INTEGER;
       v := base.item idx.value;
       b := base.item (idx + v);
@@ -67,7 +64,7 @@ Section Public
   );
 
   - print_monome <-
-  ( + m:FAST_ARRAY(BASE);
+  ( + m:ARRAY(BASE);
     (list.lower).to (list.upper) do { i:INTEGER;
       i.print; ':'.print;
       m := list.item i;
@@ -82,7 +79,7 @@ Section Public
 
   - main <-
   (
-    list := FAST_ARRAY(FAST_ARRAY(BASE)).create_with_capacity 262144;
+    list := ARRAY(ARRAY(BASE)).create_with_capacity 262144;
 
     monome_size := 700000;
     print_base;

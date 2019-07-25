@@ -2,10 +2,6 @@ Section Header
 
   + name    := ITM_OBJECT;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Parent item object";
 
 Section Inherit
@@ -36,10 +32,9 @@ Section Public
     };
   );
 
-  - lookup n:STRING_CONSTANT :LOCAL <-
+  - lookup n:STRING_ALIAS :LOCAL <-
   ( + result:LOCAL;
     + j:INTEGER;
-    ? {n = ALIAS_STR.get n};
 
     j := stack_local.upper;
     {(j < stack_local.lower) || {stack_local.item j.name = n}}.until_do {
@@ -47,14 +42,13 @@ Section Public
     };
     (j >= stack_local.lower).if {
       result := stack_local.item j;
-      ((j < bottom_index) && {result.style != '-'} && {result.name != ALIAS_STR.variable_self}).if {
+      ((j < bottom_index) && {result.style != '-'} && {result.name != "Self"}).if {
         bottom_index := j;
         context_extern := result;
       };
-
     }.elseif {profil_slot != NULL} then {
       result := profil_slot.lookup n;
-      ((result != NULL) && {result.name != ALIAS_STR.variable_self}).if {
+      ((result != NULL) && {result.name != "Self"}).if {
         bottom_index := -1;
 	context_extern := result;
       };
@@ -86,7 +80,7 @@ Section Public
 
   - pop_stack_until stack_top:INTEGER <-
   ( + var,var2:LOCAL;
-    + n:STRING_CONSTANT;
+    + n:STRING_ALIAS;
 
     (verify).if {
       // Verify local.
@@ -94,17 +88,14 @@ Section Public
 	var := stack_local.last;
 	stack_local.remove_last;
 	n := var.name;
-	(
-	  (n != ALIAS_STR.variable_self) &&
-	  {n != ALIAS_STR.variable_tmp}
-	).if {
+	((n != "Self") && {n != "__tmp"}).if {
 	  ((var.ensure_count = 0) && {var.style != ' '}).if {
 	    string_tmp.copy "Local slot `";
-	    string_tmp.append (var.name);
+	    string_tmp.append n;
 	    string_tmp.append "' not used.";
 	    warning_error ((var.position),string_tmp);
 	  };
-	  var2 := lookup (var.name);
+	  var2 := lookup n;
 	  (var2 != NULL).if {
 	    string_tmp.copy "Double declaration for `";
 	    string_tmp.append n;
@@ -113,10 +104,51 @@ Section Public
 	    var2.position.put_position;
 	    var.position.put_position;
 	    POSITION.send_error;
-	  };
+          };
+          check_local_with_slot (var.position) name n;
 	};
       };
     } else {
       stack_local.remove_since stack_top;
+    };
+  );
+  
+  - check_local_with_slot p:POSITION name n:STRING_ALIAS <-
+  [ ? {verify}; ]  
+  ( + slot:ITM_SLOT;
+    
+    (profil_slot != NULL).if {
+      slot := profil_slot.type_self.get_itm_slot n;
+      (slot != NULL).if {
+        string_tmp.copy "Conflict `";
+        string_tmp.append n;
+        string_tmp.append "' name between slot and local.";
+        POSITION.put_error warning text string_tmp;
+        slot.position.put_position;
+        p.put_position;
+        POSITION.send_error;
+      };
+    };
+  );
+  
+  - cmp_verify p:POSITION between t1:TYPE_FULL and t2:TYPE_FULL <-
+  (
+    (verify).if {
+      (
+        ((t1.is_expanded ^ t2.is_expanded) && {t1 != type_pointer.default} && {t2!= type_pointer.default}) || 
+        {(! (t1.is_expanded | t2.is_expanded)) && {! t1.affect_with t2} && {! t2.affect_with t1}}
+      ).if {
+        (
+          ((! t1.is_expanded) || {! t1.is_generic} || {t2 != TYPE_NULL.default}) && 
+          {(! t2.is_expanded) || {! t2.is_generic} || {t1 != TYPE_NULL.default}}
+        ).if {
+          string_tmp.copy "Stupid comparison between `";
+          t1.append_name_in string_tmp;
+          string_tmp.append "' and `";
+          t2.append_name_in string_tmp;
+          string_tmp.append "'.";
+          warning_error (p,string_tmp);
+        };
+      };
     };
   );

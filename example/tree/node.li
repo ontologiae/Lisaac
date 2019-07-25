@@ -2,7 +2,6 @@ Section Header
 
   + name        := NODE;
 
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "The first program.";
 
 Section Inherit
@@ -11,13 +10,13 @@ Section Inherit
 
 Section Public
 
-  + label:ABSTRACT_STRING;
+  + label:STRING;
 
   //
   // Creation.
   //
 
-  - create lab:ABSTRACT_STRING :SELF <-
+  - create lab:STRING :SELF <-
   ( + result:SELF;
 
     result := clone;
@@ -25,7 +24,7 @@ Section Public
     result
   );
 
-  - make lab:ABSTRACT_STRING <-
+  - make lab:STRING <-
   (
     label := lab;
   );
@@ -43,4 +42,4 @@ Section Public
 
 Section Private
 
-  - indent:STRING := STRING.create 250;
+  - indent:STRING_BUFFER := STRING_BUFFER.create 250;

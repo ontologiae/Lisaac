@@ -2,10 +2,6 @@ Section Header
 
   + name        := TYPE_ID;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Virtual type style slot segregation";
 
 Section Inherit
@@ -14,7 +10,7 @@ Section Inherit
 
 Section Private
 
-  - list_id:FAST_ARRAY(TYPE_ID);
+  - list_id:ARRAY TYPE_ID;
 
   - create i:INTEGER :SELF <-
   ( + result:SELF;
@@ -32,9 +28,9 @@ Section Private
 
 Section Public
 
-  - name:STRING_CONSTANT <- ALIAS_STR.prototype_type_id;
+  - name:STRING_ALIAS <- "___TYPE_ID";
 
-  - intern_name:STRING_CONSTANT <- name;
+  - intern_name:STRING_ALIAS <- name;
 
   - get_index idx:INTEGER :TYPE_ID <-
   ( + result:TYPE_ID;
@@ -51,7 +47,7 @@ Section Public
 
   - make_type_id <-
   (
-    list_id := FAST_ARRAY(TYPE_ID).create_with_capacity 3;
+    list_id := ARRAY TYPE_ID .create_with_capacity 3;
     list_id.add_last (create 0);
     list_id.add_last (create 1);
   );
@@ -69,16 +65,16 @@ Section Public
   // Declaration generation.
   //
 
-  - put_generic_declaration buffer:STRING <- buffer.append "int";
+  - put_generic_declaration buffer:STRING_BUFFER <- buffer.append "int";
 
-  - put_reference_star_declaration buffer:STRING; // Nothing.
+  - put_reference_star_declaration buffer:STRING_BUFFER; // Nothing.
 
   //
   // Code source generation.
   //
 
-  - put_id buffer:STRING <- index.append_in buffer;
+  - put_id buffer:STRING_BUFFER <- index.append_in buffer;
 
-  - put_access_id e:EXPR in buffer:STRING <- e.genere buffer;
+  - put_access_id e:EXPR in buffer:STRING_BUFFER <- e.genere buffer;
 
-  - put_value buffer:STRING <- index.append_in buffer;
+  - put_value buffer:STRING_BUFFER <- index.append_in buffer;

@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := ITM_READ_ARG2;
+  + name    := ITM_READ_ARG2;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "For send message with two argument (receiver + argument)\
+  - comment := "For send message with two argument (receiver + argument)\
   \ or simple binary message";
 
 Section Inherit
@@ -38,14 +34,14 @@ Section Public
   // Constructor
   //
 
-  - create p:POSITION name n:STRING_CONSTANT args (a1,a2:ITM_CODE) :SELF <-
+  - create p:POSITION name n:STRING_ALIAS args (a1,a2:ITM_CODE) :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name n args (a1,a2);
     result
   );
 
-  - make p:POSITION name n:STRING_CONSTANT args (a1,a2:ITM_CODE) <-
+  - make p:POSITION name n:STRING_ALIAS args (a1,a2:ITM_CODE) <-
   (
     ? { a2 != NULL };
     position   := p;
@@ -57,44 +53,35 @@ Section Public
   //
   // Runnable
   //
-
+  
+  - to_run:INSTR <-
+  ( + rd0:Strict ITM_READ;
+    + rd1:Strict ITM_READ_ARG1;
+    rd0 ?= arg_first;
+    rd1 ?= arg_first;
+    ((name = "__infix_equal") && {(rd0 != NULL) || {rd1 != NULL}}).if {      
+      warning_error (position,"Useless comparaison. Possible ambiguity between ':=' and '='.");
+    };
+    to_run_expr
+  );
+  
   - to_run_expr:EXPR <-
   ( + result:EXPR;
-    + l_arg:FAST_ARRAY(ITM_CODE);
-    + v1,v2:EXPR;
-    + t1,t2:TYPE_FULL;
+    + l_arg:ARRAY ITM_CODE;
+    + v1,v2:EXPR;   
     + em1,em2:EXPR_MULTIPLE;
 
-    (
-      (name = ALIAS_STR.operator_equal) ||
-      {name = ALIAS_STR.operator_not_equal}
-    ).if {
+    ((name = "__infix_equal") || {name = "__infix_not_equal"}).if {
       v1 := arg_first .to_run_expr;
       v2 := arg_second.to_run_expr;
-      (verify).if {
-	t1 := v1.static_type;
-	t2 := v2.static_type;
-	(
-	  (! t1.is_expanded) &&
-	  {! t2.is_expanded} &&
-	  {! t1.is_sub_type t2} &&
-	  {! t2.is_sub_type t1}
-	).if {
-	  string_tmp.clear;
-	  t1.append_name_in string_tmp;
-	  string_tmp.append " and ";
-	  t2.append_name_in string_tmp;
-	  string_tmp.append " are not comparable.";
-	  warning_error (position,string_tmp);
-	};
-      };
+      cmp_verify position between (v1.static_type) and (v2.static_type);
       em1 ?= v1;
       (em1 != NULL).if {
         em2 ?= v2;
         result := product_cmp (em1.first) with (em2.first);
         (em1.lower+1).to (em1.upper) do { j:INTEGER;
           v2 := product_cmp (em1.item j) with (em2.item j);
-          (name = ALIAS_STR.operator_equal).if {
+          (name = "__infix_equal").if {
             result := EXPR_AND_AND_LOGIC.create position with result and v2;
           } else {
             result := EXPR_OR_OR_LOGIC.create position with result and v2;
@@ -104,7 +91,7 @@ Section Public
         result := product_cmp v1 with v2;
       };
     } else {
-      l_arg := ALIAS_ARRAY(ITM_CODE).new;
+      l_arg := ALIAS_ARRAY ITM_CODE .new;
       l_arg.add_last arg_second;
       result := to_run_with arg_first args l_arg;
     };
@@ -115,7 +102,7 @@ Section Private
 
   - product_cmp v1:EXPR with v2:EXPR :EXPR <-
   ( + result:EXPR;
-    (name = ALIAS_STR.operator_equal).if {
+    (name = "__infix_equal").if {
       result := EXPR_EQUAL.create position with v1 and v2;
     } else {
       result := EXPR_NOT_EQUAL.create position with v1 and v2;

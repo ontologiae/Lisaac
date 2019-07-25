@@ -2,10 +2,6 @@ Section Header
 
   + name        := READ;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Read for local, global or slot";
 
 Section Inherit
@@ -26,6 +22,8 @@ Section Public
   (
     variable.type
   );
+  
+  - ensure_count:INTEGER <- variable.ensure_count;
 
   - my_copy:SELF <-
   ( + result:SELF;
@@ -57,7 +55,7 @@ Section Public
   ( + result:CONSTANT;
     + j:INTEGER;
     + val:EXPR;
-    + req_list:FAST_ARRAY(WRITE);
+    + req_list:ARRAY WRITE;
     //? { variable.require_first != NULL };
     /* BSBS: A REVOIR
     ((variable.require_first = NULL) && {!variable.type.is_expanded}).if {
@@ -180,11 +178,11 @@ Section Public
   // Display.
   //
 
-  - display_ref buffer:STRING <-
-  ( + req_list:FAST_ARRAY(WRITE);
+  - display_ref buffer:STRING_BUFFER <-
+  ( + req_list:ARRAY WRITE;
     //is_verbose.if {
       buffer.add_last '<';
-      //buffer.append (object_id.to_string);
+      //buffer.append (object_id.to_string_buffer);
       buffer.add_last 'R';
       (variable.require_first != NULL).if {
 	variable.require_first.object_id.append_in buffer;
@@ -204,7 +202,7 @@ Section Public
     //};
   );
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append (variable.intern_name);
     buffer.add_last '[';

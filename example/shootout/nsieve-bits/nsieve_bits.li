@@ -8,7 +8,7 @@ Section Inherit
 
 Section Private
 
-  - primes      :FAST_ARRAY(UINTEGER_32);
+  - primes      :ARRAY(UINTEGER_32);
 
   - sizeof_bits :UINTEGER_32 := 4;  
 
@@ -24,12 +24,12 @@ Section Private
     1 << (x % bbits)
   );
 
-  - btest(p: FAST_ARRAY(UINTEGER_32), x :UINTEGER_32) :UINTEGER_32 <-
+  - btest(p: ARRAY(UINTEGER_32), x :UINTEGER_32) :UINTEGER_32 <-
   (
     (p.item (x / bbits)) & bmask x
   );
 
-  - bflip(p: FAST_ARRAY(UINTEGER_32), x :UINTEGER_32) :UINTEGER_32 <-
+  - bflip(p: ARRAY(UINTEGER_32), x :UINTEGER_32) :UINTEGER_32 <-
   ( + t,idx :UINTEGER_32;
     
     idx := x / bbits;
@@ -53,7 +53,7 @@ Section Public
     };
     
     sz := 10000 << param;
-    primes := FAST_ARRAY(UINTEGER_32).create (bsize(sz));
+    primes := ARRAY(UINTEGER_32).create (bsize(sz));
     
     0.to 2 do { m:INTEGER;
       count := 0;

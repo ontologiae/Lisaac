@@ -2,10 +2,6 @@ Section Header
 
   + name      := ARGUMENT;
 
-  - copyright := "2003-2007 Benoit Sonntag";
-
-
-  - author    := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment   := "Argument runnable";
 
 Section Inherit
@@ -14,7 +10,7 @@ Section Inherit
 
 Section Public
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   + type:TYPE_FULL;
 
@@ -22,7 +18,7 @@ Section Public
   // Creation.
   //
 
-  - create p:POSITION name n:STRING_CONSTANT type t:TYPE_FULL :SELF <-
+  - create p:POSITION name n:STRING_ALIAS type t:TYPE_FULL :SELF <-
   ( + result:SELF;
 
     result := clone;
@@ -30,7 +26,7 @@ Section Public
     result
   );
 
-  - make p:POSITION name n:STRING_CONSTANT type t:TYPE_FULL <-
+  - make p:POSITION name n:STRING_ALIAS type t:TYPE_FULL <-
   (
     position := p;
     name := n;

@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_TYPE_STYLE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Type with style";
 
 Section Inherit
@@ -14,9 +10,9 @@ Section Inherit
 
 Section Private
 
-  - dico_ts:FAST_ARRAY(ITM_TYPE_STYLE) := FAST_ARRAY(ITM_TYPE_STYLE).create_with_capacity 32;
+  - dico_ts:ARRAY ITM_TYPE_STYLE := ARRAY ITM_TYPE_STYLE .create_with_capacity 32;
 
-  - create n:STRING_CONSTANT style s:STRING_CONSTANT :SELF <-
+  - create n:STRING_ALIAS style s:UINTEGER_8 :SELF <-
   ( + result:SELF;
 
     result := clone;
@@ -24,17 +20,19 @@ Section Private
     result
   );
 
-  - make n:STRING_CONSTANT style s:STRING_CONSTANT <-
+  - make n:STRING_ALIAS style s:UINTEGER_8 <-
   (
     name  := n;
     style := s;
   );
 
 Section Public
-
-  + style:STRING_CONSTANT;
-
-  - get n:STRING_CONSTANT style s:STRING_CONSTANT :SELF <-
+    
+  + style:UINTEGER_8;
+  
+  - set_list:ITM_TYPE <- get name style (style | TYPE_FULL.list_bit);
+  
+  - get n:STRING_ALIAS style s:UINTEGER_8 :SELF <-
   ( + result:SELF;
     + idx:INTEGER;
 
@@ -42,7 +40,7 @@ Section Public
     {
       (idx <= dico_ts.upper) && {
 	(dico_ts.item idx.name  != n) ||
-	{dico_ts.item idx.style != s}
+        {dico_ts.item idx.style != s} 
       }
     }.while_do {
       idx := idx + 1;

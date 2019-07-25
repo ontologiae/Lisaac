@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_EXTERNAL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "External C without type result";
 
 Section Inherit
@@ -18,14 +14,14 @@ Section Public
   // Constructor
   //
 
-  - create p:POSITION text n:STRING_CONSTANT :SELF <-
+  - create p:POSITION text n:STRING_ALIAS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p text n;
     result
   );
 
-  - make p:POSITION text n:STRING_CONSTANT <-
+  - make p:POSITION text n:STRING_ALIAS <-
   (
     position := p;
     extern   := n;
@@ -37,12 +33,12 @@ Section Public
 
   - to_run_expr:EXPR <-
   ( + result:EXPR;
-    + lst_acc:FAST_ARRAY(EXPR);
+    + lst_acc:ARRAY EXPR;
     + num:INTEGER;
     + exp1,exp2,exp3:EXPR;
     + left,right:EXPR;
     + type:TYPE_FULL;
-
+    
     extern.is_integer.if {
       num := extern.to_integer;
       (num > 31).if {
@@ -125,25 +121,16 @@ Section Public
         };
         */
       }
-      .when 14 then { // top_runtime_stack -> POINTER. BSBS : OBSOLETE !!!!!
-        crash_with_message "Primitive 14: Obsolete !";
-        /*
-	(debug_level_option = 0).if {
-	  result := PROTOTYPE_CST.create position type (TYPE_NULL.default);
-        } else {
-          (is_speed_push).if {
-            result := EXTERNAL_C.create position text "NULL /* itm_external (14) */" 
-            access NULL persistant FALSE type (type_pointer.default);
-          } else {
-            result := EXTERNAL_C.create position text "top_context"
-            access NULL persistant FALSE type (type_pointer.default);
-          };
+      .when 14 then { // `is_cop_actif' for COP
+        (is_cop).if {
+          result := PROTOTYPE_CST.create position type (type_true.default);
+        } else {        
+          result := PROTOTYPE_CST.create position type (type_false.default);
         };
-        */
       }
       .when 15 then { // is_cop_type:BOOLEAN
         type := profil_slot.argument_list.first.type;
-        (type.prototype.style = '-').if {
+        ((is_cop) && {type.prototype.style = '-'}).if {
           result := PROTOTYPE_CST.create position type (type_true.default);
         } else {
           result := PROTOTYPE_CST.create position type (type_false.default);
@@ -165,12 +152,12 @@ Section Public
           result := PROTOTYPE_CST.create position type (type_false.default);
         };
       }
-      .when 20 then { // compiler_built_on -> STRING_CONSTANT.
+      .when 20 then { // compiler_built_on -> STRING_ALIAS.
         string_tmp.clear;
         SYSTEM.get_current_date.append_in string_tmp;
         string_tmp.add_last ' ';
         SYSTEM.get_current_time.append_in string_tmp;
-        result := STRING_CST.create position text (ALIAS_STR.get string_tmp) length (string_tmp.count);
+        result := STRING_CST.create position text (string_tmp.to_string_alias) length (string_tmp.count);
       }
       .when 21 then { // debug_with_code -> BOOLEAN.
         (debug_with_code).if {
@@ -185,14 +172,14 @@ Section Public
       .when 23 then { // compile_date -> UINTEGER_32.
         result := INTEGER_CST.create position value (SYSTEM.get_current_date.encode) type (type_uinteger_32.default);
       }
-      .when 24 then { // OBJECT.type_name -> STRING_CONSTANT
+      .when 24 then { // OBJECT.type_name -> STRING_ALIAS
         type := profil_slot.argument_list.first.type;
         string_tmp.clear;
         type.raw.append_name_in string_tmp;
-        result := STRING_CST.create position text (ALIAS_STR.get string_tmp)
+        result := STRING_CST.create position text (string_tmp.to_string_alias)
         length (string_tmp.count);
       }
-      .when 25 then { // OBJECT.foreach_intern_data action:{ (STRING_CONSTANT,STRING_CONSTANT,T,E); }
+      .when 25 then { // OBJECT.foreach_intern_data action:{ (STRING_ALIAS,STRING_ALIAS,T,E); }
         forall_data_product;
         result := PROTOTYPE_CST.create position type (TYPE_VOID.default);
       }
@@ -237,13 +224,13 @@ Section Private
 
   - product_access slot:SLOT_DATA <-
   ( + arg_sec,arg_nam,arg_typ,arg_val,rec:EXPR;
-    + args:FAST_ARRAY(EXPR);
+    + args:ARRAY EXPR;
 
     (slot.style = '+').if {
       // Section name.
       string_tmp.clear;
       slot.id_section.append_in string_tmp;
-      arg_sec := STRING_CST.create position text (ALIAS_STR.get string_tmp)
+      arg_sec := STRING_CST.create position text (string_tmp.to_string_alias)
       length (string_tmp.count);
       // Name slot.
       arg_nam := STRING_CST.create position text (slot.name)
@@ -255,7 +242,7 @@ Section Private
       (profil_slot.argument_list.first.read position);
       // {}.value.
       rec := (profil_slot.argument_list.second.read position);
-      args := FAST_ARRAY(EXPR).create_with_capacity 5;
+      args := ARRAY EXPR .create_with_capacity 5;
       args.add_last (rec.my_copy);
       args.add_last arg_sec;
       args.add_last arg_nam;

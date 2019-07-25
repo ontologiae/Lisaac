@@ -2,9 +2,6 @@ Section Header
 
   + name        := WRITE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Write local, global or slot";
 
 Section Inherit
@@ -97,6 +94,7 @@ Section Public
     + read:READ;
     + val:INSTR;
     + slot:SLOT_DATA;
+    + rd_loc:READ_LOCAL;
 
     ? { variable != NULL };
     ? { value    != NULL };
@@ -105,9 +103,12 @@ Section Public
     //debug_display;
 
     slot ?= variable;
+    rd_loc ?= value;
     (
       ( // First case : No link.
-        (ensure_count = 0) && {(slot = NULL) || {! slot.id_section.is_mapping}}
+        (ensure_count = 0) && 
+        {(rd_loc = NULL) || {rd_loc.variable.style != 'R'}} && 
+        {(slot = NULL)   || {! slot.id_section.is_mapping}}
       ) ||
       { // Second case : a := a;
 	read ?= value;
@@ -175,7 +176,7 @@ Section Public
   // Genere
   //
 
-  - genere_value buffer:STRING <-
+  - genere_value buffer:STRING_BUFFER <-
   (
     (
       (static_type.is_expanded_ref) &&
@@ -193,7 +194,14 @@ Section Public
       buffer.append "*(";
       value.genere buffer;
       buffer.add_last ')';
-    } else {
+    } else {      
+      ((variable.type.is_strict) && {! value.static_type.is_strict}).if {
+        buffer.add_last '(';
+        variable.type.genere_declaration buffer;
+        buffer.add_last ' ';
+        variable.type.genere_star_declaration buffer;
+        buffer.add_last ')';
+      };      
       value.genere buffer;
     };
   );
@@ -202,7 +210,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     //crash;
     buffer.append (variable.intern_name);
@@ -223,11 +231,11 @@ Section Public
     };
   );
 
-  - display_ref buffer:STRING <-
+  - display_ref buffer:STRING_BUFFER <-
   (
     is_verbose.if {
       buffer.add_last '<';
-      buffer.append (object_id.to_string);
+      buffer.append (object_id.to_string_buffer);
       buffer.append "/E";
       ensure_count.append_in buffer;
       buffer.add_last '>';

@@ -3,7 +3,9 @@
 for i in `find -name "*~"` ; do rm $i ; done
 for i in `find -name "*.c"` ; do rm $i ; done
 for i in `find -name "*.exe"` ; do rm $i ; done
+for i in `find -name "*.apk"` ; do rm $i ; done
 for i in `find -name "avoir.txt"` ; do rm $i ; done
+for i in `find -name "Lia"` ; do rm -rf $i ; done
 
 for i in `find -name "*.li"`
 do

@@ -2,9 +2,6 @@ Section Header
 
   + name    := COP_LOCK;
 
-  - copyright := "2003-2007 Benoit Sonntag";
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "COP in for data or function.";
 
 Section Inherit
@@ -55,8 +52,8 @@ Section Public
   //
   // Generation.
   //
-
-  - genere buffer:STRING <-
+  
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.append "// Pre thread.\n";
     //  buffer.append "print_char('(');\n";
@@ -69,9 +66,11 @@ Section Public
     buffer.append indent;
     buffer.append "void *thread_save;\n";
     buffer.append indent;
-    buffer.append "obj = &((";
+    buffer.append "struct generic_protocop *proto = (struct generic_protocop *)";
     data.genere buffer;
-    buffer.append ")->thread);\n";
+    buffer.append ";\n";
+    buffer.append indent;
+    buffer.append "obj = &(proto->thread);\n";
     buffer.append indent;
     buffer.append "node.next = NULL;\n";
     buffer.append indent;
@@ -102,16 +101,14 @@ Section Public
     buffer.append indent;
     buffer.append "thread_save=pthread_getspecific(current_thread);\n";
     buffer.append indent;
-    buffer.append "pthread_setspecific(current_thread,";
-    data.genere buffer;
-    buffer.add_last ')';
+    buffer.append "pthread_setspecific(current_thread,proto)";
   );
 
   //
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "COP_LOCK(";
     data.display buffer;

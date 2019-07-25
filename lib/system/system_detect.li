@@ -1,0 +1,127 @@
+Section Header
+
+  + name := SYSTEM_DETECT;
+
+  - author        := "Mildred Ki'Lya <mildred593(at)online.fr>";
+  - copyright     := "2008 Mildred Ki'Lya";
+  - bibliography  := "";
+  - comment       := "Detect charecteristics of the system/C compiler";
+
+  // Don't hesitate to add others slots to detect your platform.
+
+Section Inherit
+
+  - parent :Expanded OBJECT;
+
+Section Public
+
+  - end_of_line :STRING_ALIAS <-
+  (
+    is_win32.if {
+      end_of_line := "\n\r";
+    } else {
+      end_of_line := "\n";
+    };
+    end_of_line
+  );
+
+  - is_unix :BOOLEAN <-
+  ( + true :TRUE;
+    + false :FALSE;
+    `
+    #ifdef __unix__
+    @true
+    #else
+    @false
+    #endif
+    `:BOOLEAN(TRUE,FALSE)
+  );
+
+  - is_windows :BOOLEAN <- is_win32;
+
+  - is_win32 :BOOLEAN <-
+  ( + true :TRUE;
+    + false :FALSE;
+    `
+    #ifdef WIN32
+    @true
+    #else
+    @false
+    #endif
+    `:BOOLEAN(TRUE,FALSE)
+  );
+
+  - is_stdc :BOOLEAN <-
+  ( + true :TRUE;
+    + false :FALSE;
+    `
+    #ifdef __STDC__
+    @true
+    #else
+    @false
+    #endif
+    `:BOOLEAN(TRUE,FALSE)
+  );
+
+  - is_gnuc :BOOLEAN <-
+  ( + true :TRUE;
+    + false :FALSE;
+    `
+    #ifdef __GNUC__
+    @true
+    #else
+    @false
+    #endif
+    `:BOOLEAN(TRUE,FALSE)
+  );
+
+  - is_elf :BOOLEAN <-
+  ( + true :TRUE;
+    + false :FALSE;
+    `
+    #ifdef __ELF__
+    @true
+    #else
+    @false
+    #endif
+    `:BOOLEAN(TRUE,FALSE)
+  );
+
+  - is_i383 :BOOLEAN <-
+  ( + true :TRUE;
+    + false :FALSE;
+    `
+    #ifdef __i386__
+    @true
+    #else
+    @false
+    #endif
+    `:BOOLEAN(TRUE,FALSE)
+  );
+
+  - is_linux :BOOLEAN <-
+  ( + true :TRUE;
+    + false :FALSE;
+    `
+    #ifdef __linux__
+    @true
+    #else
+    @false
+    #endif
+    `:BOOLEAN(TRUE,FALSE)
+  );
+
+  - is_gnu_linux :BOOLEAN <-
+  ( + true :TRUE;
+    + false :FALSE;
+    `
+    #ifdef __gnu_linux__
+    @true
+    #else
+    @false
+    #endif
+    `:BOOLEAN(TRUE,FALSE)
+  );
+
+// kate: hl Lisaac v0.2; indent-width 2; space-indent on; replace-tabs off;
+// kate: tab-width 8; remove-trailing-space on;

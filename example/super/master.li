@@ -11,7 +11,7 @@ Section Inherit
 
 Section Public
 
-  + name:STRING_CONSTANT := "MASTER";
+  + name:STRING_ALIAS := "MASTER";
 
   + method <-
   (

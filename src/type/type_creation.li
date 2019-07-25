@@ -2,10 +2,6 @@ Section Header
 
   + name    := TYPE_CREATION(E);
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Type without style";
 
 Section Inherit
@@ -43,7 +39,7 @@ Section Public
   // Display.
   //
 
-  - append_name_in buf:STRING <-
+  - append_name_in buf:STRING_BUFFER <-
   (    
     buf.append name;
     buf.add_last '#';

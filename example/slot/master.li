@@ -49,7 +49,7 @@ Section Private
   ( - local:OBJ;
 
     (local = NULL).if {
-      local := OBJ.clone;
+      local := OBJ.create;
       local.set_value 100;
     } else {
       local.set_value (local.value + 1);
@@ -62,7 +62,7 @@ Section Private
   ( + local:OBJ;
 
     (local = NULL).if {
-      local := OBJ.clone;
+      local := OBJ.create;
       local.set_value 100;
     } else {
       local.set_value (local.value + 1);
@@ -132,9 +132,9 @@ Section Private
   // Service.
   //
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
-  - set_name new:STRING_CONSTANT <-
+  - set_name new:STRING_ALIAS <-
   (
     name := new;
   );
@@ -249,8 +249,8 @@ Section Public
 
     " ---> ORIGINAL.parent := PARENT.clone \n\
     \ ---> ORIGINAL.parent.set_value 2\n\n".print;
-    parent_minus := PARENT_MINUS.clone;
-    parent_plus  := PARENT_PLUS.clone;
+    parent_minus := PARENT_MINUS.create;
+    parent_plus  := PARENT_PLUS.create;
     parent_value_minus    := 2;
     parent_value_plus     := 2;
     parent_value_minus_expanded := 2;
@@ -269,8 +269,8 @@ Section Public
     \===============\n\n".print;
 
     " ---> ORIGINAL.global := OBJ.clone\n\n".print;
-    global_minus := OBJ.clone;
-    global_plus  := OBJ.clone;
+    global_minus := OBJ.create;
+    global_plus  := OBJ.create;
     Self.display;
     copy.display;
     "!!!!! The `-' global data slot is shared with COPY object.\n\n".print;

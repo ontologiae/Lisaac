@@ -8,7 +8,7 @@ Section Header
 
 Section Private
 
-  - b:STRING_CONSTANT := " bottles ";
+  - b:STRING_ALIAS := " bottles ";
 
 Section Public
 

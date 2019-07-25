@@ -2,7 +2,6 @@ Section Header
 
   + name        := NODE_COMPOSITE;
 
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "The composite tree node.";
 
 Section Inherit
@@ -22,7 +21,7 @@ Section Public
   // Creation.
   //
 
-  - make lab:ABSTRACT_STRING <-
+  - make lab:STRING <-
   (
     parent_node.make lab;
     children := LINKED_LIST(NODE).create;

@@ -10,9 +10,9 @@ Section Public
   
   - puts tab:NATIVE_ARRAY(CHARACTER) <- `puts(@tab)`;
   
-  - buffer :STRING;
+  - buffer :STRING_BUFFER;
     
-  - iub_pairs:STRING_CONSTANT := "ATCGBVDHKMRY";
+  - iub_pairs:STRING_ALIAS := "ATCGBVDHKMRY";
   
   - iub_complement :NATIVE_ARRAY(CHARACTER) := NATIVE_ARRAY(CHARACTER).create 256; 
     
@@ -77,9 +77,9 @@ Section Public
 
   - main <-
   ( + mlen   :INTEGER;
-    + line:STRING;
+    + line:STRING_BUFFER;
    
-    buffer := STRING.create 16777216;
+    buffer := STRING_BUFFER.create 16777216;
     mlen := 128;
     build_iub_complement;
               

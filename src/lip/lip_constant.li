@@ -2,9 +2,6 @@ Section Header
 
   + name      := LIP_CONSTANT;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -13,7 +10,7 @@ Section Inherit
 
 Section Public
 
-  - name:STRING_CONSTANT <- ( deferred; NULL);
+  - name:STRING_ALIAS <- ( deferred; NULL);
 
   - copy:LIP_CONSTANT <-
   (

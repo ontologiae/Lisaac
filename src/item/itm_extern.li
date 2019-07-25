@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_EXTERN;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parent for externals";
 
 Section Inherit
@@ -18,25 +14,25 @@ Section Public
   // Data
   //
 
-  + extern:STRING_CONSTANT;
+  + extern:STRING_ALIAS;
 
   //
   // Constructor.
   //
 
-  - last_code:STRING_CONSTANT;
+  - last_code:STRING_ALIAS;
 
-  - get_access:FAST_ARRAY(EXPR) <-
+  - get_access:ARRAY EXPR <-
   ( + idx,base:INTEGER;
     + e:EXPR;
-    + loc:STRING_CONSTANT;
+    + loc:STRING_ALIAS;
     + var:VARIABLE;
-    + access_list:FAST_ARRAY(EXPR);
+    + access_list:ARRAY EXPR;
 
     string_tmp2.copy extern;
     idx := string_tmp2.index_of '@' since (string_tmp2.lower);
-    (idx <= string_tmp2.count).if {
-      access_list := ALIAS_ARRAY(EXPR).new;
+    (idx <= string_tmp2.upper).if {
+      access_list := ALIAS_ARRAY EXPR .new;
       {idx > string_tmp2.upper}.until_do {
 	base := idx;
 	idx  := idx + 1;
@@ -54,7 +50,7 @@ Section Public
 	string_tmp.is_empty.if {
 	  syntax_error (position,"Incorrect external local slot access.");
 	};
-	loc := ALIAS_STR.get string_tmp;
+	loc := string_tmp.to_string_alias;
 	var := lookup loc;
 	(var = NULL).if {
 	  string_tmp.copy "External local slot access `";
@@ -74,9 +70,9 @@ Section Public
 	string_tmp2.insert_string "(@)" to base;
 	idx := string_tmp2.index_of '@' since (base+2);
       };
-      access_list := ALIAS_ARRAY(EXPR).copy access_list;
+      access_list := ALIAS_ARRAY EXPR .copy access_list;
     };
-    last_code := ALIAS_STR.get string_tmp2;
+    last_code := string_tmp2.to_string_alias;
     access_list
   );
 
@@ -84,7 +80,7 @@ Section Public
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     buffer.add_last '`';
     buffer.append extern;

@@ -2,10 +2,6 @@ Section Header
 
   + name        := TYPE_NULL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Special type NULL";
 
 Section Inherit
@@ -14,9 +10,9 @@ Section Inherit
 
 Section Public
 
-  - name:STRING_CONSTANT <- ALIAS_STR.variable_null;
+  - name:STRING_ALIAS <- "NULL";
 
-  - intern_name:STRING_CONSTANT <- name;
+  - intern_name:STRING_ALIAS <- name;
 
   //
   // Creation.
@@ -24,16 +20,18 @@ Section Public
 
   - make_null <-
   (
-//    index       := index_count;
-    index_count := index_count + 1;
+    //type_list.add_last Self;
+    index := index_max;
+    index_max := index_max + 1;
+    
     dico_type.fast_put Self to name;
-    slot_run := FAST_ARRAY(SLOT).create_with_capacity 1; // BSBS: Plus utile !
+    slot_run := ARRAY SLOT.create_with_capacity 1; // BSBS: Plus utile !
     default := TYPE_FULL.create Self with 0;
   );
 
-  - get_local_slot n:STRING_CONSTANT :SLOT <- NULL;
+  - get_local_slot n:STRING_ALIAS for arg_itm:ARRAY ITM_CODE in arg_expr:ARRAY EXPR :SLOT <- NULL;
 
-  - get_path_slot n:STRING_CONSTANT :SLOT <- NULL;
+  - get_path_slot n:STRING_ALIAS :SLOT <- NULL;
 
   //
   // Error.
@@ -84,14 +82,14 @@ Section Public
   // Code source generation.
   //
 
-  - put_id buffer:STRING <-
+  - put_id buffer:STRING_BUFFER <-
   (
     put_value buffer;
   );
 
-  - put_access_id e:EXPR in buffer:STRING <- e.genere buffer;
+  - put_access_id e:EXPR in buffer:STRING_BUFFER <- e.genere buffer;
 
-  - put_value buffer:STRING <-
+  - put_value buffer:STRING_BUFFER <-
   (
     buffer.append name;
   );

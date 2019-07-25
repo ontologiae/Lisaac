@@ -1,0 +1,155 @@
+Section Header
+
+  + name := TEST_CORE;
+  
+  - comment := "Mandelbrot generation for test core capacities. (COP project)";
+    
+Section Inherit
+
+  + parent_area:Expanded AREA;
+
+  + parent_g_expr:Expanded G_EXPR;
+    
+Section Public
+  
+  - core_list:ARRAY(CORE);
+  - result_list:ARRAY(INTEGER);
+  
+  - physical_core:INTEGER;
+  - sample_max:INTEGER;
+  
+  - busy:MUTEX;
+  
+  - background:ABSTRACT_BITMAP;
+  
+  - main <-
+  ( + core:CORE;
+    (
+      (COMMAND_LINE.count != 3) || 
+      {!COMMAND_LINE.item 1.is_integer} || {COMMAND_LINE.item 1.to_integer<1} || 
+      {!COMMAND_LINE.item 2.is_integer} || {COMMAND_LINE.item 2.to_integer<1}
+    ).if {
+      "Usage:\n\
+      \  test_core <physical_nb_core> <sample_max>\n\n\
+      \Example with 4 physicals cores and until 10 samples parallel: \n\
+      \  test_core 4 10\n\n\
+      \Note: `sample_max' in [1..16], value by default 16.\n\n".print;
+      die_with_code 0;
+    };
+    
+    physical_core := COMMAND_LINE.item 1.to_integer;
+    sample_max := COMMAND_LINE.item 2.to_integer.min 16;    
+    busy := MUTEX.create;
+    background := BITMAP(PIXEL_32).create_size (width_min,height_min);
+    background.color white;
+    G_FONT.put "Please wait..." size 14 in background to (4,4);    
+    //
+    
+    result_list := ARRAY(INTEGER).create_with_capacity sample_max;
+    core_list := ARRAY(CORE).create_with_capacity sample_max;
+    0.to (sample_max-1) do { i:INTEGER;
+      core := CORE.create i;
+      core_list.add_last core;
+    };
+    
+    VIDEO.make_size (width_min+50,height_min+50);
+    TIMER.add_client Self;
+    DESK.make VIDEO with (
+      G_OUT.create "Core test" justify (G_OUT.center) / G_RAW.create (Self.fix_height.fix_width)
+    );
+          
+  );
+  
+  - receive msg:EVENT <-
+  ( - j:INTEGER;
+    + core:CORE;
+    + begin,end:UINTEGER_64;
+            
+    (j < sample_max).if {
+      busy.lock;
+      j := j + 1;      
+      begin := SYSTEM.get_universal_time;            
+      0.to (j-1) do { i:INTEGER;
+        core := core_list.item i;
+        `/* BUG */`;
+        core.mandelbrot;
+      };                
+      wait_all;      
+      end := SYSTEM.get_universal_time;      
+      result_list.add_last (end-begin);
+      //
+      "For ".print;
+      j.print;
+      " times: ".print;
+      result_list.last.print;
+      "s.\n".print;                              
+      put_background;
+      busy.unlock;      
+      refresh;
+    };
+  );
+  
+  - width_min:INTEGER  := 512;
+
+  - height_min:INTEGER := 400;
+  
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  (
+    update rac from (x,y) size (w,h);
+  );
+  
+  - string_tmp:STRING_BUFFER := STRING_BUFFER.create 50;
+  
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
+  ( 
+    clipping (x0,y0) to (x1,y1);
+    put_bitmap background to (0,0);            
+  );
+  
+  - put_background <-
+  ( + xx,yy:INTEGER;
+    + time_base:INTEGER;
+    
+    background.rectangle_fill (0,0) to (x_max,y_max) color 0BB_BB_BBh;
+    //        
+    (result_list.count > 0).if { 
+      time_base := result_list.item 0;
+      background.line (0,y_max-20) to (x_max,y_max-20) color black;
+      0.to (sample_max-1) do { j:INTEGER;
+        background.line (j*32+4,64) to (j*32+4,y_max) color black;      
+        string_tmp.clear;
+        (j+1).append_in string_tmp;
+        G_FONT.put string_tmp size 14 in background to ((j+1)*32-16,y_max-18);
+        //
+        xx := j*32+12;
+        yy := (y_max-20-time_base*(j+1)*2).max 0;
+        background.rectangle_fill (xx-3,yy) to (xx+3,y_max-21) color green;
+        //
+        xx := j*32+20;
+        (j < physical_core).if { 
+          yy := y_max-20-time_base*2;
+        } else {
+          yy := y_max-20-(time_base*(j+1)/physical_core)*2;
+        };
+        background.rectangle_fill (xx-3,yy) to (xx+3,y_max-21) color blue;
+        //
+        (j < result_list.count).if {
+          xx := j*32+28;
+          yy := y_max-20-(result_list.item j)*2;
+          background.rectangle_fill (xx-3,yy) to (xx+3,y_max-21) color red;
+        };
+      };    
+    };    
+    background.rectangle_fill (2,2) to (250,60) color 0DD_DD_DDh;        
+    background.color green;
+    G_FONT.put "Theoretical times with 1 core" size 14 in background to (4,4);
+    //
+    string_tmp.copy "Theoretical times with ";
+    physical_core.append_in string_tmp;
+    string_tmp.append " cores";
+    background.color blue;
+    G_FONT.put string_tmp size 14 in background to (4,24);
+    //
+    background.color red;
+    G_FONT.put "Real times" size 14 in background to (4,44);
+  );

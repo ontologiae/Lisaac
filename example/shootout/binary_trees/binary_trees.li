@@ -31,7 +31,7 @@ Section Public
       max_depth := n;
     };
     stretch_depth := max_depth+1;
-    short_lived_tree := TREENODE.clone;
+    short_lived_tree := TREENODE.create;
     check := short_lived_tree.bottom_up_tree (0,stretch_depth).item_check;
 
     "stretch tree of depth ".print;
@@ -40,7 +40,7 @@ Section Public
     check.print;
     '\n'.print;
     
-    long_lived_tree := TREENODE.clone.bottom_up_tree (0, max_depth);
+    long_lived_tree := TREENODE.create.bottom_up_tree (0, max_depth);
     depth := min_depth;
     {depth <= max_depth}.while_do {
       iterations := 1 << (max_depth - depth  + min_depth);

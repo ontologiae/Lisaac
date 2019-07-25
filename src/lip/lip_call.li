@@ -2,9 +2,6 @@ Section Header
 
   + name      := LIP_CALL;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -15,7 +12,7 @@ Section Public
 
   + receiver:LIP_CODE;
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   + argument:LIP_CODE;
 
@@ -23,14 +20,14 @@ Section Public
   // Creation.
   //
 
-  - create p:POSITION receiver rec:LIP_CODE name n:STRING_CONSTANT with arg:LIP_CODE :SELF <-
+  - create p:POSITION receiver rec:LIP_CODE name n:STRING_ALIAS with arg:LIP_CODE :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p receiver rec name n with arg;
     result
   );
 
-  - make p:POSITION receiver rec:LIP_CODE name n:STRING_CONSTANT with arg:LIP_CODE <-
+  - make p:POSITION receiver rec:LIP_CODE name n:STRING_ALIAS with arg:LIP_CODE <-
   [
     -? {p.code != 0};
   ]
@@ -50,7 +47,7 @@ Section Public
     + val,rec:LIP_CONSTANT;
     + str:LIP_STRING;
     + int:LIP_INTEGER;
-    + path:STRING_CONSTANT;
+    + path:STRING_ALIAS;
     + is_rec:BOOLEAN;
     + idx:INTEGER;
 
@@ -61,7 +58,7 @@ Section Public
     (argument != NULL).if {
       val := argument.run_expr;
     };
-    (name = ALIAS_STR.slot_print).if {
+    (name = "print").if {
       (rec = NULL).if {
         semantic_error (position,"Incorrect type.");
       };
@@ -69,23 +66,28 @@ Section Public
         warning_error (position,"No argument for `print' method.");
       };
       rec.print;
-    }.elseif {name = ALIAS_STR.slot_die_with_code} then {
+    }.elseif {name = "build_label"} then {
+      ((val = NULL) || {(str ?= val) = NULL}).if {
+        semantic_error (position,"String argument needed.");
+      };
+      BUILD_LABEL.on (str.value);
+    }.elseif {name = "die_with_code"} then {
       int ?= val;
       (int = NULL).if {
         semantic_error (position,"Integer argument needed.");
       };
       die_with_code (int.value);
-    }.elseif {name = ALIAS_STR.slot_help_command} then {
+    }.elseif {name = "help_command"} then {
       (val != NULL).if {
         warning_error (position,"No argument for `help_command' method.");
       };
       LISAAC.show_help;
-    }.elseif {name = ALIAS_STR.slot_compiler_version} then {
+    }.elseif {name = "compiler_version"} then {
       (val != NULL).if {
         warning_error (position,"No argument for `compiler_version' method.");
       };
       LISAAC.show_version;
-    }.elseif {name = ALIAS_STR.slot_path} then {
+    }.elseif {name = "path"} then {
       str ?= val;
       (str = NULL).if {
         semantic_error (position,"String argument needed.");
@@ -94,7 +96,7 @@ Section Public
       ((! path.is_empty) && {path.last = '*'}).if {
         string_tmp.copy path;
         string_tmp.remove_last 1;
-        path := ALIAS_STR.get string_tmp;
+        path := string_tmp.to_string_alias;
         is_rec := TRUE;
       };
       ((path.is_empty) || {path.first != '/'}).if {
@@ -106,12 +108,12 @@ Section Public
           string_tmp.remove_last (string_tmp.upper-idx);
         };
         string_tmp.append path;
-        path := ALIAS_STR.get string_tmp;
+        path := string_tmp.to_string_alias;
       };
       (path.is_empty).if_false {
         load_directory path is_recursive is_rec;
       };
-    }.elseif {name = ALIAS_STR.slot_run} then {
+    }.elseif {name = "run"} then {
       str ?= val;
       (str = NULL).if {
         semantic_error (position,"String argument needed.");
@@ -149,7 +151,7 @@ Section Public
     (argument != NULL).if {
       val := argument.run_expr;
     };
-    (name = ALIAS_STR.slot_run).if {
+    (name = "run").if {
       str ?= val;
       (str = NULL).if {
         semantic_error (position,"String argument needed.");
@@ -158,7 +160,7 @@ Section Public
       str.append_in string_tmp;
       res := ENVIRONMENT.execute_command string_tmp;
       result := LIP_INTEGER.get res;
-    }.elseif {name = ALIAS_STR.slot_get_integer} then {
+    }.elseif {name = "get_integer"} then {
       {
         IO.read_line;
         (IO.last_string.is_integer).if_false {
@@ -166,9 +168,9 @@ Section Public
         };
       }.do_until {IO.last_string.is_integer};
       result := LIP_INTEGER.get (IO.last_string.to_integer);
-    }.elseif {name = ALIAS_STR.slot_get_string} then {
+    }.elseif {name = "get_string"} then {
       IO.read_line;
-      result := LIP_STRING.get (ALIAS_STR.get (IO.last_string));
+      result := LIP_STRING.get (IO.last_string.to_string_alias);
     } else {
       slot := get_data name;
       (slot = NULL).if {
@@ -188,39 +190,40 @@ Section Public
     result
   );
 
-  - load_directory path:ABSTRACT_STRING is_recursive is_rec:BOOLEAN <-
+  - load_directory path:STRING is_recursive is_rec:BOOLEAN <-
   ( + entry:ENTRY;
     + dir:DIRECTORY;
-    + var,val:STRING_CONSTANT;
+    + var,val:STRING_ALIAS;
 
     entry := FILE_SYSTEM.get_entry path;
     ((entry != NULL) && {entry.is_directory} && {entry.open}).if {
-      dir ?= entry;
+      dir ?= entry;      
       ((dir.name.first.is_upper) && {dir.name.is_upper}).if {
         string_tmp.copy (dir.name);
         string_tmp.to_lower;
-        var := ALIAS_STR.get string_tmp;                
+        var := string_tmp.to_string_alias;  
         val := LIP_CODE.get_string var;
         (val = NULL).if {
           string_tmp.copy "Lip slot `";
           string_tmp.append var;
           string_tmp.append "' is not found for `";
           string_tmp.append path;
-          string_tmp.append "' path.\n";
+          string_tmp.append "' path.\n(Frequently error: Bad use of uppercase in your path).\n";
           semantic_error (position,string_tmp);
         };
         string_tmp.copy path;
         string_tmp.add_last '/';
         string_tmp.append val;                
-        load_directory (ALIAS_STR.get string_tmp) is_recursive is_rec;        
+        load_directory (string_tmp.to_string_alias) is_recursive is_rec;        
       } else {
+        //dir.print;
         (dir.lower).to (dir.upper) do { j:INTEGER;
-          entry := dir.item j;
+          entry := dir.item j;          
           (entry.name.has_suffix ".li").if {
             path_file.add_last (entry.path);
           }.elseif {(is_rec) && {entry.is_directory}} then {
-            load_directory (entry.path) is_recursive TRUE;
-          };
+            load_directory (entry.path) is_recursive TRUE;            
+          };          
         };
       };
     } else {

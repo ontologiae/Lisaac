@@ -2,98 +2,37 @@ Section Header
 
   + name        := TYPES;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Aliser TYPE collection.";
 
 Section Inherit
 
   - parent_any:ANY := ANY;
-
-Section TYPES
-
-   + storage:NATIVE_ARRAY(TYPE);
-  //+ types_set:NATIVE_ARRAY(UINTEGER_64);
-  // Internal access to storage location.
-  // Avec types tmp  <- types evoluant en taille !! tmp pour construire un ensemble !
-
-Section LISAAC
-
-  - size:INTEGER;
-
+  
 Section Public
-
-  - lower:INTEGER := 0;
-
-  + upper:INTEGER := -1; // Upper index bound.
-
-  - count:INTEGER <- upper + 1;
-
-  - is_empty:BOOLEAN <- upper = -1;
-
-  - first:TYPE <-
-  [ -? {! is_empty}; ]
-  (
-    storage.item 0
-  );
-
-  - second:TYPE <-
-  [ -? {upper >= 1}; ]
-  (
-    storage.item 1
-  );
-
-  - last:TYPE <-
-  [ -? {! is_empty}; ]
-  (
-    storage.item upper
-  );
+  
+  - first_index:INTEGER <- (deferred; -1);
+  
+  - count:INTEGER <- (deferred; 0);
+  
+  - next_index i:INTEGER :INTEGER <- -1;
+  
+  - is_empty:BOOLEAN <- count = 0;
+    
+  - first:TYPE <- (deferred; NULL);
 
   - item i:INTEGER :TYPE <-
-  [ -? {i.in_range lower to upper}; ]
   (
-    storage.item i
-  )
-  [ +? {Result != NULL};            ];
-
-  - Self:SELF '~=' Right 60 other:TYPES :BOOLEAN <-
-  (
-    (Self = other) ||
-    {
-      (upper = other.upper) &&
-      {(is_empty) || {storage.fast_memcmp (other.storage) until (upper + 1)}}
-    }
-  );
-
-  - Self:SELF '<=' Right 60 other:TYPES :BOOLEAN <-
-  // True, if `Self' is include in `other'.
-  ( + result:BOOLEAN;
-    + j1,j2:INTEGER;
-    + t:TYPE;
-
-    (upper <= other.upper).if {
-      j1 := j2 := lower;
-      result := TRUE;
-      {(j1 <= upper) && {result}}.while_do {
-	t := item j1;
-	{(j2 <= other.upper) && {other.item j2 != t}}.while_do {
-	  j2 := j2 + 1;
-	};
-	result := (j2 <= other.upper);
-	j1 := j1 + 1;
-      };
-    };
-    result
+    deferred;
+    NULL
   );
 
   - intersection_is_empty other:TYPES :BOOLEAN <-
   ( + i1,i2:INTEGER;
     + result:BOOLEAN;
+    
     (
       (is_empty) || {other.is_empty} ||
-      {last.index < other.first.index} || {first.index > other.last.index}
+      {item (count-1).index < other.first.index} || {first.index > other.item (other.count-1).index}
     ).if {
       result := TRUE;
     } else {
@@ -103,23 +42,7 @@ Section Public
           {(i2 < other.count) && {other.item i2.index < item i1.index}}.while_do { i2 := i2 + 1; };
         };
       }.do_while {(i1 < count) && {i2 < other.count} && {item i1 != other.item i2}};
-      result := (i1 > upper) || {i2 > other.upper};
-      /*
-      (result).if {
-        print; '\n'.print;
-        other.print; '\n'.print;
-        "-----------\n".print;
-      };
-      */
-    };
-    result
-  );
-
-  - hash_code:INTEGER <-
-  ( + result:INTEGER;
-
-    (! is_empty).if {
-      result := last.index; //last(upper << 8) + last.index;
+      result := (i1 >= count) || {i2 >= other.count};
     };
     result
   );
@@ -128,47 +51,15 @@ Section Public
   // Display.
   //
 
-  - append_in buf:STRING <-
-  (
-    (! is_empty).if {
-      (lower).to (upper - 1) do { j:INTEGER;
-	item j.append_name_in buf;
-	buf.add_last '(';
-	item j.index.append_in buf;
-	buf.append ") x ";
-      };
-      last.append_name_in buf;
-      buf.add_last '(';
-      last.index.append_in buf;
-      buf.add_last ')';
-    } else {
-      buf.append "<Vide>";
-    };
+  - types_append_in buf:STRING_BUFFER <-
+  ( 
+    deferred;
   );
 
-  - print <-
+  - types_print <-
   (
     string_tmp.clear;
-    append_in string_tmp;
+    types_append_in string_tmp;
     string_tmp.print;
   );
 
-Section TYPES_TMP
-
-  - create tab:TYPES_TMP :TYPES <-
-  ( + result:TYPES;
-
-    result := clone;
-    result.make tab;
-    result
-  );
-
-  - make tab:TYPES_TMP <-
-  ( + up:INTEGER;
-
-    up := tab.upper;
-    storage := NATIVE_ARRAY(TYPE).calloc_intern (up + 1);
-    storage.copy_from (tab.storage) until up;
-    upper := up;
-    size := size + count * 4;
-  );

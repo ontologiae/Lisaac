@@ -1,0 +1,49 @@
+Section Header
+
+  + name     := SYSTEM_IO;
+
+  - comment  := "Lower level for Input / Output";
+
+  - external := `
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Hardware 'print_char' */
+void print_char(char);
+
+/* Hardware 'exit' */
+void die_with_code(long);
+`;
+
+Section Public
+  
+  - set_view g:G_WIN_IN :G_WIN_IN <- 
+  (
+    //  g_win_in := g
+    g
+  );
+  
+  //- g_win_in:G_WIN_IN;
+  
+   - print_error_char byte:CHARACTER <-
+  // Low level buffered error output.
+  (
+    `fputc((int)@byte,stderr)`;
+  );
+
+  - get_char :CHARACTER <- `fgetc(stdin)`:(CHARACTER);
+
+  - eof:CHARACTER <- `EOF`:CHARACTER;
+
+Section External, Public  
+  
+  - print_char byte:CHARACTER <-
+  // Low level buffered output.
+  ( 
+    `fputc((int)@byte,stdout)`;
+  );
+  
+  - die_with_code code:INTEGER <-
+  ( 
+    `exit(@code)`;
+  );

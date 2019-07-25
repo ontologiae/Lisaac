@@ -1,0 +1,19 @@
+Section Header
+
+  + name        := HASHABLE;
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - hash_code:INTEGER <-
+  // The hash-code value of `Current'.
+  (
+    deferred;
+    // ? {  result >= 0 };
+    0
+  );
+
+

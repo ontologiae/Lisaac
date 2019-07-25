@@ -15,7 +15,7 @@ Section Public
     + four:REAL_64;
     + delta0,delta1:REAL_64;
     + mod_w,wm1:INTEGER;
-    + cmd:STRING;
+    + cmd:STRING_BUFFER;
     + civ:REAL_64;        
     
     iter := 50;

@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := ITM_STRING;
+  + name    := ITM_STRING;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "String constant";
+  - comment := "String constant";
 
 Section Inherit
 
@@ -14,20 +10,20 @@ Section Inherit
 
 Section Public
 
-  + string:STRING_CONSTANT;
+  + string:STRING_ALIAS;
 
   //
   // Constructor
   //
 
-  - create p:POSITION text n:STRING_CONSTANT :SELF <-
+  - create p:POSITION text n:STRING_ALIAS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p text n;
     result
   );
 
-  - make p:POSITION text n:STRING_CONSTANT <-
+  - make p:POSITION text n:STRING_ALIAS <-
   (
     position := p;
     string   := n;
@@ -36,7 +32,7 @@ Section Public
   //
   // Runnable
   //
-
+    
   - to_run_expr:EXPR <-
   ( + result:EXPR;
     + slt:SLOT_DATA;
@@ -45,18 +41,14 @@ Section Public
 
     len := length;
     result := STRING_CST.create position text string length len;
-    // count
-    slt := type_string_constant.get_local_slot (ALIAS_STR.slot_count).slot_data_intern;
-    wrt := slt.write position with (result.my_copy) value (
-      INTEGER_CST.create position value len type (slt.type)
-    );
+    // upper
+    wrt := STRING_CST.slot_upper.write position with (result.my_copy) 
+    value (INTEGER_CST.create position value (len-1) type (slt.type));
     wrt.set_quiet_generation;
     list_current.add_last wrt;
     // storage
-    slt := type_string_constant.get_local_slot (ALIAS_STR.slot_storage).slot_data_intern;
-    wrt := slt.write position with (result.my_copy) value (
-      NATIVE_ARRAY_CHARACTER_CST.create position text string
-    );
+    wrt := STRING_CST.slot_storage.write position with (result.my_copy) 
+    value (NATIVE_ARRAY_CHARACTER_CST.create position text string);
     wrt.set_quiet_generation;
     list_current.add_last wrt;
     //
@@ -67,7 +59,7 @@ Section Public
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     buffer.add_last '\"';
     buffer.append string;

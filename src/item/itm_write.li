@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := ITM_WRITE;
+  + name    := ITM_WRITE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Parent for all write";
+  - comment := "Parent for all write";
 
 Section Inherit
 
@@ -22,7 +18,7 @@ Section Public
 
   + value:ITM_CODE;
 
-  - type:STRING_CONSTANT <-
+  - type:STRING_ALIAS <-
   (
     deferred;
     NULL
@@ -51,8 +47,8 @@ Section Public
   // Access.
   //
 
-  - get_simple_name:STRING_CONSTANT <-
-  ( + result:STRING_CONSTANT;
+  - get_simple_name:STRING_ALIAS <-
+  ( + result:STRING_ALIAS;
     + without_arg:ITM_READ;
 
     without_arg ?= assign;
@@ -68,7 +64,7 @@ Section Public
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     assign.append_in buffer;
     buffer.append type;
@@ -77,7 +73,7 @@ Section Public
 
 Section Private
 
-  - affect name:STRING_CONSTANT with v:EXPR :EXPR <-
+  - affect name:STRING_ALIAS with v:EXPR :EXPR <-
   ( + loc:LOCAL;
     + result:EXPR;
 
@@ -112,48 +108,56 @@ Section Private
     result
   );
 
-  - affect_slot name:STRING_CONSTANT with v:EXPR :EXPR <-
+  - affect_slot name:STRING_ALIAS with v:EXPR :EXPR <-
   ( + loc:VARIABLE;
-    + slot:SLOT;
-    + slot_dta:SLOT_DATA;
+    + slo:ITM_SLOT;    
     + node:NODE;
     + result:EXPR;
     + rec:EXPR;
-    + type:TYPE;
+    + typ:TYPE;
     + em:EXPR_MULTIPLE;
     + new_val:EXPR;
-    + lst:FAST_ARRAY(EXPR);
+    + lst:ARRAY EXPR;
+    + types:ARRAY TYPE_FULL;
+    + type:TYPE_FULL;
+    + itm_tm:ITM_TYPE_MULTI;
 
-    loc := lookup (ALIAS_STR.variable_self);
+    loc := lookup "Self";
     rec := loc.read position;
     //
-    type := rec.static_type.raw;
-    slot := type.get_slot name;
-    (slot = NULL).if {
+    typ := rec.static_type.raw;
+    slo := typ.get_itm_slot name;
+    (slo = NULL).if {
       string_tmp.copy "Slot `";
       string_tmp.append name;
       string_tmp.append "' not found in static type ";
-      type.append_name_in string_tmp;
+      typ.append_name_in string_tmp;
       string_tmp.add_last '.';
       semantic_error (position,string_tmp);
     };
-    // Control type.
+    // Control type.    
     em ?= v;
-    slot_dta := slot.slot_data;
     (em != NULL).if {
+      itm_tm ?= slo.result_type;
+      types := ALIAS_ARRAY TYPE_FULL.new;
+      itm_mu.to_run_in types for profil_slot;
+      //
       lst := em.expr_list;
       (lst.lower).to (lst.upper - 1) do { j:INTEGER;
-	new_val := (lst.item j).check_type (slot.slot_data_list.item j.type) with (slot.position);
-	lst.put new_val to j;
+        new_val := (lst.item j).check_type (types.item j) with (slot.position);
+        lst.put new_val to j;
       };
-      new_val := (lst.last).check_type (slot_dta.type) with (slot.position);
+      new_val := (lst.last).check_type (types.last) with (slot.position);
       lst.put new_val to (lst.upper);
       new_val := em;
+      //
+      ALIAS_ARRAY TYPE_FULL.free types;
     } else {
-      new_val := v.check_type (slot_dta.type) with (slot.position);
+      type := slo.result_type.to_run_for profil_slot;
+      new_val := v.check_type type with (slo.position);
     };
     //
-    node := NODE.new_write position slot slot receiver rec value new_val;
+    node := NODE.new_write position slot slo receiver rec value new_val;
     list_current.add_last node;
     result := node.result_expr;
     result

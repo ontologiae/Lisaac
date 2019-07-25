@@ -5,14 +5,14 @@ Section Header
 Section Public
 
   - main <-
-  ( + col1:FAST_ARRAY(INTEGER);
+  ( + col1:ARRAY(INTEGER);
     + col2:LINKED_LIST(INTEGER);
     + action1:{INTEGER;};
     //+ action2:{INTEGER;};
     + somme:INTEGER;
 
     // Creation d'un tableau de 5 elements de 0 à 4 :
-    col1 := FAST_ARRAY(INTEGER).create_with_capacity 5;
+    col1 := ARRAY(INTEGER).create_with_capacity 5;
     // Création d'une liste chainee:
     col2 := LINKED_LIST(INTEGER).create;
 

@@ -1,0 +1,180 @@
+Section Header
+
+  + name    := FILE;
+
+  - copyright   := "2003-2007 Benoit Sonntag, Jerome Hilbert";
+
+  - comment := "Abstract File Management";
+
+Section Inherit
+
+  - parent_entry:ENTRY := ENTRY;
+
+Section Public
+
+  - cursor:UINTEGER_32 <-
+  [
+    -? {is_open};
+  ]
+  (
+    deferred;
+    0
+  );
+
+  - size:UINTEGER_32 <-
+  (
+    deferred;
+    0
+  );
+
+  - set_cursor n:UINTEGER_32 <-
+  [
+    -? {is_open};
+    -? {n <= size};
+  ]
+  (
+    deferred;
+  );
+
+  //
+  // Update.
+  //
+
+  - is_empty:BOOLEAN <- size = 0;
+  // Is collection empty ?
+
+  //
+  // Read.
+  //
+  
+Section Private
+  
+  - tmp_uinteger_8:NATIVE_ARRAY(UINTEGER_8) := NATIVE_ARRAY(UINTEGER_8).create 8;
+  
+Section Public
+  
+  - read_uinteger_8:UINTEGER_8 <-
+  (
+    physical_read tmp_uinteger_8 size 1;
+    tmp_uinteger_8.item 0
+  );
+  
+  - read_integer_16:INTEGER_16 <-
+  (
+    physical_read tmp_uinteger_8 size 2;    
+    (tmp_uinteger_8.item 1.to_integer_16 << 8) | tmp_uinteger_8.item 0
+  );
+  
+  - read_uinteger_16:UINTEGER_16 <-
+  (
+    physical_read tmp_uinteger_8 size 2;    
+    (tmp_uinteger_8.item 1.to_uinteger_16 << 8) | tmp_uinteger_8.item 0
+  );
+  
+  - read dest:OBJECT :INTEGER <-
+  // WARNING: It's good for Mapping objects, else serializable is necessary.
+  [
+    -? {is_open};
+  ]
+  ( + buf:NATIVE_ARRAY(UINTEGER_8);
+    buf := CONVERT(OBJECT,NATIVE_ARRAY(UINTEGER_8)).on dest;
+    physical_read buf size (dest.object_size)
+  );
+
+  - read dest:ARRAYED size nb_elt:INTEGER :INTEGER <-
+  [
+    -? {is_open};
+  ]
+  ( + buf:NATIVE_ARRAY(UINTEGER_8);
+    + index,s:INTEGER;
+    + result:INTEGER;
+    + new_count:INTEGER;
+
+    new_count := dest.count + nb_elt;
+    dest.set_capacity new_count;
+    buf := dest.to_native_array_uinteger_8;
+    index := dest.count * dest.element_sizeof;
+    s := nb_elt * dest.element_sizeof;
+    result := physical_read (buf+index) size s;
+    dest.set_count new_count;
+    ? {result % dest.element_sizeof = 0};
+    result / dest.element_sizeof
+  );
+
+  //
+  // Write.
+  //
+  
+  - write src:OBJECT :INTEGER <-
+  ( + buf:NATIVE_ARRAY(UINTEGER_8);
+    buf := CONVERT(OBJECT,NATIVE_ARRAY(UINTEGER_8)).on src;
+    physical_write buf size (src.object_size)
+  );
+
+  - write src:ARRAYED from start:INTEGER size nb_elt:INTEGER :INTEGER <-
+  [
+    -? {is_open};
+  ]
+  ( + buf:NATIVE_ARRAY(UINTEGER_8);
+    + index,s:INTEGER;
+    + result:INTEGER;
+
+    buf := src.to_native_array_uinteger_8;
+    index := (start-src.lower) * src.element_sizeof;
+    s := nb_elt * src.element_sizeof;
+    result := physical_write (buf+index) size s;
+    ? {result % src.element_sizeof = 0};
+    result / src.element_sizeof
+  );
+
+  - write src:ARRAYED size nb_elt:INTEGER :INTEGER <-
+  (
+    write src from (src.lower) size nb_elt
+  );
+
+  //
+  // Close.
+  //
+
+  - close <-
+  (
+    deferred;
+  )
+  [
+    +? {! is_open};
+  ];
+
+  - open_read_only:BOOLEAN <-
+  (
+    deferred;
+  );
+
+Section FILE
+
+  - physical_read buf:NATIVE_ARRAY(UINTEGER_8) size s:INTEGER :INTEGER <-
+  [
+    -? {is_open};
+  ]
+  (
+    deferred;
+    0
+  )
+  [
+    +? { (cursor = Old cursor + s ) || {cursor = size} };
+  ];
+
+  - physical_write buf:NATIVE_ARRAY(UINTEGER_8) size s:INTEGER :INTEGER <-
+  [
+    -? {is_open};
+  ]
+  (
+    deferred;
+    0
+  )
+  [
+    +? {cursor = Old cursor + s};
+  ];
+
+
+
+

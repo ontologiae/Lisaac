@@ -2,10 +2,6 @@ Section Header
 
   + name    := ITM_ARG;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "One argument";
 
 Section Inherit
@@ -14,17 +10,22 @@ Section Inherit
 
 Section Public
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
-  + type:ITM_TYPE_MONO;
+  + type:ITM_TYPE;
 
   - upper:INTEGER := 0;
-
+  
+  - hash_code:INTEGER <-
+  (
+    name.hash_code + type.hash_code
+  );
+    
   //
   // Creation.
   //
 
-  - create p:POSITION name n:STRING_CONSTANT type t:ITM_TYPE_MONO :SELF <-
+  - create p:POSITION name n:STRING_ALIAS type t:ITM_TYPE :SELF <-
   ( + result:SELF;
 
     result := SELF.clone;
@@ -32,7 +33,7 @@ Section Public
     result
   );
 
-  - make p:POSITION name n:STRING_CONSTANT type t:ITM_TYPE_MONO <-
+  - make p:POSITION name n:STRING_ALIAS type t:ITM_TYPE <-
   (
     position := p;
     name     := n;
@@ -43,15 +44,15 @@ Section Public
   // Running.
   //
 
-  - item idx:INTEGER :ITM_TYPE_MONO <-
+  - item idx:INTEGER :ITM_TYPE <-
   ( ? {idx = 0};
     type
   );
 
-  - to_run_in arg_lst:FAST_ARRAY(LOCAL) for p:PARAMETER_TO_TYPE <-
-  ( + t:ITM_TYPE_MONO;
+  - to_run_in arg_lst:ARRAY LOCAL for p:PARAMETER_TO_TYPE <-
+  ( + t:ITM_TYPE;
 
-    (name = ALIAS_STR.variable_self).if {
+    (name = "Self").if {
       t := ITM_TYPE_SIMPLE.type_self;
     } else {
       t := type;
@@ -59,6 +60,9 @@ Section Public
     arg_lst.add_last (
       LOCAL.create position name name style ' ' type (t.to_run_for p)
     );
+    (verify).if {
+      check_local_with_slot position name name;
+    };
   );
 
   - get_index_type p:ITM_TYPE_PARAMETER :INTEGER <-
@@ -69,31 +73,28 @@ Section Public
     result
   );
 
-  - check larg:FAST_ARRAY(EXPR) index idx:INTEGER for p:PARAMETER_TO_TYPE :INTEGER <-
-  ( + new_expr:EXPR;
-
-    new_expr := larg.item idx.check_type (type.to_run_for p) with position;
-    larg.put new_expr to idx;
-    idx + 1
+  - check arg:EXPR for p:PARAMETER_TO_TYPE :EXPR <-
+  ( 
+    arg.check_type (type.to_run_for p) with position
   );
 
   //
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     buffer.append name;
     buffer.add_last ':';
     type.append_in buffer;
   );
 
-  - shorter_in buf:STRING <-
+  - shorter_in buf:STRING_BUFFER <-
   (
-    (name = ALIAS_STR.variable_self).if {
-      put name to buf like (ALIAS_STR.short_keyword);
+    (name = "Self").if {
+      put name to buf like "keyword";
     } else {
-      put name to buf like (ALIAS_STR.short_local);
+      put name to buf like "local";
     };
     buf.add_last ':';
     type.shorter_in buf;

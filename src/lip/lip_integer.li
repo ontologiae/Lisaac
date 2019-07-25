@@ -2,9 +2,6 @@ Section Header
 
   + name      := LIP_INTEGER;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -13,7 +10,7 @@ Section Inherit
 
 Section Private
 
-  - storage:FAST_ARRAY(LIP_INTEGER) := FAST_ARRAY(LIP_INTEGER).create_with_capacity 10;
+  - storage:ARRAY LIP_INTEGER := ARRAY LIP_INTEGER .create_with_capacity 10;
 
   - set_value v:INTEGER <-
   (
@@ -49,7 +46,7 @@ Section Public
   // Operation.
   //
 
-  - name:STRING_CONSTANT <- "INTEGER";
+  - name:STRING_ALIAS <- "INTEGER";
 
   - '-' Self:SELF :LIP_CONSTANT <-
   (

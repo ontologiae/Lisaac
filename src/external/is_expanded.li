@@ -2,10 +2,6 @@ Section Header
 
   + name        := IS_EXPANDED;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "True, if `Self' is Expanded type.";
 
 Section Inherit
@@ -85,7 +81,7 @@ Section Public
   // Genere.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     crash_with_message "IS_EXPANDED.genere !";
   );
@@ -94,7 +90,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "is_expanded(";
     receiver.display buffer;

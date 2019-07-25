@@ -2,10 +2,6 @@ Section Header
 
   + name    := ITM_SLOT_OPERATOR;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Slot item";
 
 Section Inherit
@@ -14,9 +10,9 @@ Section Inherit
 
 Section Public
 
-  + pretty_name:STRING_CONSTANT;
+  + pretty_name:STRING_ALIAS;
 
-  - set_pretty_name n:STRING_CONSTANT <-
+  - set_pretty_name n:STRING_ALIAS <-
   (
     pretty_name := n;
   );
@@ -27,12 +23,12 @@ Section Public
 
   + priority_and_level:INTEGER;
 
-  - associativity:STRING_CONSTANT <-
-  ( + result:STRING_CONSTANT;
+  - associativity:STRING_ALIAS <-
+  ( + result:STRING_ALIAS;
     (priority_and_level >= 0).if {
-      result := ALIAS_STR.keyword_left;
+      result := "Left";
     } else {
-      result := ALIAS_STR.keyword_right;
+      result := "Right";
     };
     result
   );
@@ -42,9 +38,9 @@ Section Public
     priority_and_level.abs
   );
 
-  - set_associativity p:STRING_CONSTANT priority l:INTEGER <-
+  - set_associativity p:STRING_ALIAS priority l:INTEGER <-
   (
-    (p = ALIAS_STR.keyword_left).if {
+    (p = "Left").if {
       priority_and_level := l;
     } else {
       priority_and_level := -l;
@@ -55,11 +51,11 @@ Section Public
   // Display.
   //
 
-  - pretty_name_in buffer:STRING <-
+  - pretty_name_in buffer:STRING_BUFFER <-
   (
-    (name.has_prefix (ALIAS_STR.slot_postfix)).if {
+    (name.has_prefix "__postfix").if {
       buffer.append "Postfix '";
-    }.elseif {name.has_prefix (ALIAS_STR.slot_infix)} then {
+    }.elseif {name.has_prefix "__infix"} then {
       buffer.append "Infix '";
     } else {
       buffer.append "Prefix '";
@@ -70,35 +66,35 @@ Section Public
 
 Section ITM_SLOT
 
-  - shorter_profile_intern_in buf:STRING <-
+  - shorter_profile_intern_in buf:STRING_BUFFER <-
   (
-    (name.has_prefix (ALIAS_STR.slot_postfix)).if {
+    (name.has_prefix "__postfix").if {
       argument_list.first.shorter_in buf;
       buf.add_last ' ';
       buf.add_last '\'';
-      put pretty_name to buf like (ALIAS_STR.short_slot);
+      put pretty_name to buf like "slot";
       buf.add_last '\'';
       buf.add_last ' ';
-    }.elseif {name.has_prefix (ALIAS_STR.slot_infix)} then {
+    }.elseif {name.has_prefix "__infix"} then {
       argument_list.first.shorter_in buf;
       buf.add_last ' ';
       buf.add_last '\'';
-      put pretty_name to buf like (ALIAS_STR.short_slot);
+      put pretty_name to buf like "slot";
       buf.add_last '\'';
       (priority_and_level != 0).if {
         buf.add_last ' ';
-        put associativity to buf like (ALIAS_STR.short_keyword);
+        put associativity to buf like "keyword";
         buf.add_last ' ';
         string_tmp.clear;
         priority.append_in string_tmp;
-        put string_tmp to buf like (ALIAS_STR.short_keyword);
+        put string_tmp to buf like "keyword";
       };
       buf.add_last ' ';
       argument_list.second.shorter_in buf;
       buf.add_last ' ';
     } else {
       buf.add_last '\'';
-      put pretty_name to buf like (ALIAS_STR.short_slot);
+      put pretty_name to buf like "slot";
       buf.add_last '\'';
       buf.add_last ' ';
       argument_list.first.shorter_in buf;

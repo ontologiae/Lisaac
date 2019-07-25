@@ -1,31 +1,79 @@
 Section Header
 
-  + name        := ITM_TYPE;
+  + name    := ITM_TYPE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Parent for all type";
+  - comment := "Parent for all type";
 
 Section Inherit
 
   - parent_any:ANY := ANY;
 
 Section Public
+  
+  - count:INTEGER <- 1;
 
+  - lower:INTEGER <- 0;
+
+  - upper:INTEGER <- 0;
+
+  - item i:INTEGER :ITM_TYPE <- Self;
+
+  - last:ITM_TYPE <- Self;
+
+  - first:ITM_TYPE <- Self;
+  
+  //
+  //
+  //
+  
+  - is_list:BOOLEAN <- 
+  ( 
+    string_tmp.clear;
+    append_in string_tmp;
+    string_tmp.print;
+    deferred; 
+    FALSE
+  );
+  
+  - set_list:ITM_TYPE <- 
+  (
+    string_tmp.clear;
+    append_in string_tmp;
+    string_tmp.print;
+    deferred;
+    NULL
+  );
+  
   - print <-
   (
     string_tmp.clear;
     append_in string_tmp;
     string_tmp.print;
   );
+  
+  - hash_code:INTEGER <-
+  (
+    string_tmp.clear;
+    append_in string_tmp;
+    string_tmp.print; '\n'.print;
+    deferred;
+    0
+  );
+  
+  - append_in buffer:STRING_BUFFER <- deferred;
 
-  - append_in buffer:STRING <- deferred;
+  - shorter_in buf:STRING_BUFFER <- deferred;
+  
+  - to_run_for p:PARAMETER_TO_TYPE :TYPE_FULL <-
+  (
+    string_tmp.clear;
+    append_in string_tmp;
+    string_tmp.print; '\n'.print;
+    deferred;
+    NULL
+  );
 
-  - shorter_in buf:STRING <- deferred;
-
-  - to_run_in lst:FAST_ARRAY(TYPE_FULL) for p:PARAMETER_TO_TYPE <-
+  - to_run_in lst:ARRAY TYPE_FULL for p:PARAMETER_TO_TYPE <-
   (
     deferred;
   );
@@ -35,3 +83,9 @@ Section Public
     deferred;
     NULL
   );
+  
+  //
+  // Cast.
+  //
+
+  - append_cast_name_in buf:STRING_BUFFER <- deferred;

@@ -1,0 +1,58 @@
+Section Header
+  
+  + name      := STORAGE;
+
+  - copyright := "2017 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (benoit.sonntag@lisaac.org)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  //
+  // Creation.
+  //
+
+  - create:SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make;
+    result
+  );
+
+  - make <-
+  ( 
+    get_m := MUTEX.create;
+    put_m := MUTEX.create;
+    get_m.lock;
+  );
+  
+Section Private
+  
+  + get_m:MUTEX;  
+  + put_m:MUTEX;
+  
+  + value:INTEGER;
+  
+Section Public
+  
+  - put x:INTEGER <-
+  ( 
+    put_m.lock;
+    value := x;
+    get_m.unlock;
+  );
+
+  - get:INTEGER <-
+  ( + result:INTEGER;
+        
+    get_m.lock;    
+    result := value;
+    put_m.unlock;
+    result
+  );
+

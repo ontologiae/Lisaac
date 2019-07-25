@@ -1,10 +1,7 @@
 Section Header
 
-  + name      := SLIM_ARRAY(E); // BSBS: A mettre en Expanded.
+  + name      := SLIM_ARRAY E; // BSBS: A mettre en Expanded.
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Insert
@@ -19,7 +16,7 @@ Section Private
   + counter:INTEGER;
 
   // Utilisé comme first et tableau
-  + array:NATIVE_ARRAY(E);
+  + array:NATIVE_ARRAY E;
 
   // MHMH :
   // Une capacité à 0 signifie que l'on utilise array comme stockage.
@@ -65,7 +62,7 @@ Section Public
     // Allocation si nécessaire :
     (n > 1).if
     {
-      array := NATIVE_ARRAY(E).create n;
+      array := NATIVE_ARRAY E .create n;
       capacity := n;
     };
   );
@@ -79,7 +76,7 @@ Section Public
     + return:E;
 
     (capacity = 0).if
-    { return := CONVERT(NATIVE_ARRAY(E), E).on array; }
+    { return := CONVERT(NATIVE_ARRAY E, E).on array; }
     else
     { return := array.item 0; };
 
@@ -91,7 +88,7 @@ Section Public
     + return:E;
 
     (capacity = 0).if
-    { return := CONVERT(NATIVE_ARRAY(E), E).on array; }
+    { return := CONVERT(NATIVE_ARRAY E, E).on array; }
     else
     { return := array.item upper; };
 
@@ -103,7 +100,7 @@ Section Public
     + return:E;
 
     (capacity = 0).if
-    { return := CONVERT(NATIVE_ARRAY(E), E).on array; }
+    { return := CONVERT(NATIVE_ARRAY E, E).on array; }
     else
     { return := array.item i;};
 
@@ -117,7 +114,7 @@ Section Public
   - put e:E to i:INTEGER <-
   (
     (capacity = 0).if
-    { array := CONVERT(E, NATIVE_ARRAY(E)).on e; }
+    { array := CONVERT(E, NATIVE_ARRAY E).on e; }
     else
     { array.put e to i;};
   );
@@ -128,16 +125,16 @@ Section Public
     {
       (counter = 0).if
       {
-        array := CONVERT(E, NATIVE_ARRAY(E)).on e;
+        array := CONVERT(E, NATIVE_ARRAY E).on e;
         counter := counter + 1;
       }
       else
       {
         + tmp:E;
         // Sauvegarde élément courant :
-        tmp := CONVERT(NATIVE_ARRAY(E), E).on array;
+        tmp := CONVERT(NATIVE_ARRAY E, E).on array;
         // Création tableau :
-        array := NATIVE_ARRAY(E).create 4;
+        array := NATIVE_ARRAY E .create 4;
         capacity := 4;
         counter := 2;
         // Restauration éléments :
@@ -234,7 +231,7 @@ Section Public
       first := e;
     } else {
       (list = NULL).if {
-        list := FAST_ARRAY(E).create_with_capacity 4;
+        list := ARRAY E .create_with_capacity 4;
       };
       list.add_last e;
     };

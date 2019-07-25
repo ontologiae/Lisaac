@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := COMMON;
+  + name     := COMMON;
 
-  - copyright   := "2009 Mildred Ki'Lya";
-
-  - bibliography:= "http://IsaacOS.com";
-  - author      := "Mildred Ki'Lya <http://ki.lya.online.fr>";
-  - comment     := "Common code to shorter and the compiler";
+  - comment  := "Common code to shorter and the compiler";
 
   - external := `#include "path.h"`;
 
@@ -16,10 +12,10 @@ Section Inherit
 
 Section Public
 
-  - version :STRING_CONSTANT := "0.40";
+  - version :STRING_ALIAS := "0.42";
 
-  - command_line_header name:STRING_CONSTANT :STRING_CONSTANT <-
-  ( + before, after :STRING_CONSTANT;
+  - command_line_header name:STRING_ALIAS :STRING_ALIAS <-
+  ( + before, after :STRING_ALIAS;
     + total_length, count :INTEGER;
     total_length := 60;
     before :=
@@ -46,16 +42,17 @@ Section Public
     };
     string_tmp2.append string_tmp;
     string_tmp2.append after;
-    ALIAS_STR.get string_tmp2
+    string_tmp2.to_string_alias
   );
 
-  - command_line_footer:STRING_CONSTANT :=
+  - command_line_footer:STRING_ALIAS :=
     "                                                                \n\
     \Bug report:                                                     \n\
-    \    post in: benoit.sonntag@lisaac.org                          \n";
+    \-----------                                                     \n\
+    \  post in: benoit.sonntag@lisaac.org                            \n";
 
   - print_info <-
-  ( + debug_code, lisaac_optim :STRING_CONSTANT;
+  ( + debug_code, lisaac_optim :STRING_ALIAS;
 
     compiler_debug_with_code.if {
       debug_code := " (with source code)";
@@ -84,10 +81,10 @@ Section Public
     };
   );
 
-  - path_lisaac_builtin:STRING_CONSTANT <-
-  ( + path:NATIVE_ARRAY(CHARACTER);
+  - path_lisaac_builtin:STRING_ALIAS <-
+  ( + path:NATIVE_ARRAY CHARACTER;
     + j :INTEGER;
-    path := `LISAAC_DIRECTORY`:NATIVE_ARRAY(CHARACTER);
+    path := `LISAAC_DIRECTORY`:NATIVE_ARRAY CHARACTER;
     string_tmp.clear;
     j := 0;
     {path.item j != '\0'}.while_do {
@@ -97,26 +94,26 @@ Section Public
     ((string_tmp.last != '/') && {string_tmp.last != '\\'}).if {
       string_tmp.add_last '/';
     };
-    path_lisaac_builtin := ALIAS_STR.get string_tmp;
+    path_lisaac_builtin := string_tmp.to_string_alias;
     path_lisaac_builtin
   );
 
-  - path_lisaac_env:STRING_CONSTANT <-
-  ( + path_str :STRING;
+  - path_lisaac_env:STRING_ALIAS <-
+  ( + path_str :STRING_BUFFER;
     path_str := ENVIRONMENT.get_environment_variable "LISAAC_DIRECTORY";
     (path_str != NULL).if {
       string_tmp.copy path_str;
       ((string_tmp.last != '/') && {string_tmp.last != '\\'}).if {
         string_tmp.add_last '/';
       };
-      path_lisaac_env := ALIAS_STR.get string_tmp;
+      path_lisaac_env := string_tmp.to_string_alias;
     } else {
       path_lisaac_env := NULL;
     };
     path_lisaac_env
   );
 
-  - path_lisaac:STRING_CONSTANT <-
+  - path_lisaac:STRING_ALIAS <-
   (
     (path_lisaac_env != NULL).if {
       path_lisaac := path_lisaac_env;

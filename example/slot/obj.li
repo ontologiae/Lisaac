@@ -10,7 +10,9 @@ Section Inherit
   - parent_object:OBJECT := OBJECT;
 
 Section Public
-
+  
+  - create:SELF <- clone;
+  
   + value:INTEGER;
 
   - set_value new:INTEGER <-

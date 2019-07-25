@@ -4,7 +4,7 @@ Section Header
   
 Section Inherit
   
-  + parent_string:Expanded STRING;
+  + parent_string:Expanded STRING_BUFFER;
   
 Section Public
   
@@ -34,7 +34,7 @@ Section Public
     capacity := count;
   );
   
-  - Self:SELF '~=' Left 40 other:ABSTRACT_STRING :BOOLEAN <-
+  - Self:SELF '~=' Left 40 other:STRING :BOOLEAN <-
   ( + result:BOOLEAN;
    
     ((count = other.count) && {hash_code = other.hash_code}).if {

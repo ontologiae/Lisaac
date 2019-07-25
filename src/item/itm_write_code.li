@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := ITM_WRITE_CODE;
+  + name    := ITM_WRITE_CODE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Assignment slot with new code";
+  - comment := "Assignment slot with new code";
 
 Section Inherit
 
@@ -14,7 +10,7 @@ Section Inherit
 
 Section Public
 
-  - type:STRING_CONSTANT <- "<-";
+  - type:STRING_ALIAS <- "<-";
 
   //
   // Runnable
@@ -26,28 +22,28 @@ Section Public
     + rec:EXPR;
     + node:NODE;
     + result:EXPR;
-    + type:TYPE_FULL;
-    + slot:SLOT;
-    + name:STRING_CONSTANT;
+    + typ:TYPE_FULL;
+    + slo:ITM_SLOT;
+    + name:STRING_ALIAS;
 
     itm_read ?= assign;
     name := itm_read.name;
     ? {itm_read != NULL};
-    loc := lookup (ALIAS_STR.variable_self);
+    loc := lookup "Self";
     rec := loc.read position;
     //
-    type     := rec.static_type;
-    slot     := type.get_slot name;
-    (slot = NULL).if {
+    typ  := rec.static_type;
+    slo := typ.get_itm_slot name;
+    (slo = NULL).if {
       string_tmp.copy "Slot `";
       string_tmp.append name;
       string_tmp.append "' not found in static type ";
-      type.append_name_in string_tmp;
+      typ.append_name_in string_tmp;
       string_tmp.add_last '.';
       semantic_error (position,string_tmp);
     };
     //
-    node := NODE.new_write position slot slot receiver rec code value;
+    node := NODE.new_write position slot slo receiver rec code value;
     list_current.add_last node;
     result := node.result_expr;
 

@@ -1,0 +1,19 @@
+Section Header
+  
+  + name := PEN_CLOSE;
+  
+Section Inherit
+  
+  + parent_pen_cmd:Expanded PEN_CMD;
+  
+Section Public
+  
+  - to_path pc:PATH_CACHE <-
+  (
+    pc.paths.last.close;
+  );
+  
+  - free <- 
+  (
+    // Nothing.
+  );

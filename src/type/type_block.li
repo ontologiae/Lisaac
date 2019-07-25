@@ -2,10 +2,6 @@ Section Header
 
   + name    := TYPE_BLOCK;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Virtual type for BLOCK manager";
 
 Section Inherit
@@ -14,7 +10,7 @@ Section Inherit
 
 Section Private
 
-  - dico:FAST_ARRAY(TYPE_BLOCK) := FAST_ARRAY(TYPE_BLOCK).create_with_capacity 2048;
+  - dico:ARRAY TYPE_BLOCK := ARRAY TYPE_BLOCK .create_with_capacity 2048;
 
 Section TYPE_BLOCK //,PROFIL_BLOCK
 
@@ -22,14 +18,14 @@ Section TYPE_BLOCK //,PROFIL_BLOCK
   // Creation.
   //
 
-  - create a_list:FAST_ARRAY(TYPE_FULL) and_result r_list:FAST_ARRAY(TYPE_FULL) :SELF <-
+  - create a_list:ARRAY TYPE_FULL and_result r_list:ARRAY TYPE_FULL :SELF <-
   ( + result:SELF;
     result := clone;
     result.make a_list and_result r_list;
     result
   );
 
-  - make a_list:FAST_ARRAY(TYPE_FULL) and_result r_list:FAST_ARRAY(TYPE_FULL) <-
+  - make a_list:ARRAY TYPE_FULL and_result r_list:ARRAY TYPE_FULL <-
   (
     argument_list := a_list;
     result_list   := r_list;
@@ -43,19 +39,19 @@ Section Public
     type_block.set_late_binding;
   );
 
-  - intern_name:STRING_CONSTANT <- type_block.intern_name;
+  - intern_name:STRING_ALIAS <- type_block.intern_name;
 
   - is_block:BOOLEAN := TRUE;
 
-  + argument_list:FAST_ARRAY(TYPE_FULL);
-  + result_list:FAST_ARRAY(TYPE_FULL);
+  + argument_list:ARRAY TYPE_FULL;
+  + result_list:ARRAY TYPE_FULL;
 
   - get_expr_for p:POSITION :EXPR <-
   ( + result:EXPR;
-    + lst:FAST_ARRAY(EXPR);
+    + lst:ARRAY EXPR;
 
     (result_list.count > 1).if {
-      lst := FAST_ARRAY(EXPR).create_with_capacity (result_list.count);
+      lst := ARRAY EXPR.create_with_capacity (result_list.count);
       (result_list.lower).to (result_list.upper) do { j:INTEGER;
         lst.add_last (result_list.item j.get_temporary_expr p);
       };
@@ -69,26 +65,26 @@ Section Public
   );
 
   - get t:ITM_TYPE_BLOCK with p:PARAMETER_TO_TYPE :TYPE_FULL <-
-  ( + a_list:FAST_ARRAY(TYPE_FULL);
-    + r_list:FAST_ARRAY(TYPE_FULL);
+  ( + a_list:ARRAY TYPE_FULL;
+    + r_list:ARRAY TYPE_FULL;
 
     // Argument.
-    a_list := ALIAS_ARRAY(TYPE_FULL).new;
+    a_list := ALIAS_ARRAY TYPE_FULL.new;
     (t.type_argument != NULL).if {
       t.type_argument.to_run_in a_list for p;
     };
-    a_list := ALIAS_ARRAY(TYPE_FULL).alias a_list;
+    a_list := ALIAS_ARRAY TYPE_FULL.alias a_list;
     // Result.
-    r_list := ALIAS_ARRAY(TYPE_FULL).new;
+    r_list := ALIAS_ARRAY TYPE_FULL.new;
     (t.type_result != NULL).if {
       t.type_result.to_run_in r_list for p;
     };
-    r_list := ALIAS_ARRAY(TYPE_FULL).alias r_list;
+    r_list := ALIAS_ARRAY TYPE_FULL.alias r_list;
     //
     get_direct a_list and_result r_list.default
   );
 
-  - get_direct a_list:FAST_ARRAY(TYPE_FULL) and_result r_list:FAST_ARRAY(TYPE_FULL) :TYPE_BLOCK <-
+  - get_direct a_list:ARRAY TYPE_FULL and_result r_list:ARRAY TYPE_FULL :TYPE_BLOCK <-
   ( + idx:INTEGER;
     + result:TYPE_BLOCK;
 
@@ -109,23 +105,86 @@ Section Public
     };
     result
   );
-
+  
+  - Self:SELF '==' Right 60 other:E :BOOLEAN <-
+  ( + result:BOOLEAN;
+    + o:TYPE_BLOCK;
+    + oo:PROFIL_BLOCK;
+    + i:INTEGER;
+    oo ?= other;
+    (oo != NULL).if {
+      o := oo.to_type_block;
+    } else {
+      o ?= other;
+    };
+    /*
+    (o != NULL).if {
+      string_tmp.clear;
+      append_name_in string_tmp;
+      string_tmp.append " <=> ";
+      o.append_name_in string_tmp;
+      string_tmp.add_last '\n';
+      string_tmp.print;
+    };*/
+    (
+      (o != NULL) && 
+      {argument_list.count = o.argument_list.count} && 
+      {result_list.count = o.result_list.count}
+    ).if {
+      //"Test arg & result...\n".print;
+      result := TRUE;
+      i := argument_list.lower;
+      {(result) && {i <= argument_list.upper}}.while_do {
+        result := argument_list.item i == o.argument_list.item i;
+        /*
+        (result).if_false {
+          string_tmp.clear;
+          argument_list.item i.display string_tmp;
+          string_tmp.append " != ";
+          o.argument_list.item i.display string_tmp;
+          string_tmp.add_last '\n';
+          string_tmp.print;
+        };*/
+        i := i + 1;
+      };
+      i := result_list.lower;
+      {(result) && {i <= result_list.upper}}.while_do {
+        result := result_list.item i == o.result_list.item i;
+        /*
+        (result).if_false {
+          string_tmp.clear;
+          result_list.item i.display string_tmp;
+          string_tmp.append " != ";
+          o.result_list.item i.display string_tmp;
+          string_tmp.add_last '\n';
+          string_tmp.print;
+        };*/
+        i := i + 1;
+      };
+    };
+    //(result).if_true { "OK!!\n".print; };
+    result    
+  );
+  
   - prototype:PROTOTYPE <- type_block.prototype;
-
-  - get_slot n:STRING_CONSTANT :SLOT <-
+  
+Section NODE
+  
+  - get_slot n:STRING_ALIAS for arg_itm:ARRAY ITM_CODE in arg_expr:ARRAY EXPR :SLOT <-
   (
-    type_block.get_slot n
+    type_block.get_slot n for arg_itm in arg_expr
   );
 
-  - get_local_slot n:STRING_CONSTANT :SLOT <-
+  - get_local_slot n:STRING_ALIAS for arg_itm:ARRAY ITM_CODE in arg_expr:ARRAY EXPR :SLOT <-
   (
-    type_block.get_local_slot n
+    type_block.get_local_slot n for arg_itm in arg_expr
   );
-
-  - get_path_slot n:STRING_CONSTANT :SLOT <-
-  (
-    type_block.get_path_slot n
-  );
+  
+Section Public
+  
+  - get_itm_slot n:STRING_ALIAS :ITM_SLOT <- type_block.get_itm_slot n;
+  
+  - get_path_slot n:STRING_ALIAS :SLOT <- type_block.get_path_slot n;
 
   - genere_struct <- type_block.genere_struct;
 
@@ -138,15 +197,15 @@ Section Public
   // Code source generation.
   //
 
-  - put_id buffer:STRING <- index.append_in buffer;
+  - put_id buffer:STRING_BUFFER <- index.append_in buffer;
 
-  - put_access_id e:EXPR in buffer:STRING <-
+  - put_access_id e:EXPR in buffer:STRING_BUFFER <-
   (
     buffer.append "(int)";
     e.genere buffer;
   );
 
-  - put_value buffer:STRING <-
+  - put_value buffer:STRING_BUFFER <-
   (
     buffer.append "(void *)";
     index.append_in buffer;
@@ -185,7 +244,7 @@ Section Public
   // Display.
   //
 
-  - append_name_in buf:STRING <-
+  - append_name_in buf:STRING_BUFFER <-
   (
     buf.add_last '{';
     (argument_list.is_empty).if_false {
@@ -214,3 +273,4 @@ Section Public
     // Debug
     //buf.append "(TYPE_BLOCK)";
   );
+  

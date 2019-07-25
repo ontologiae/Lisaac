@@ -2,10 +2,6 @@ Section Header
 
   + name      := SLOT_CODE;
 
-  - copyright := "2003-2007 Benoit Sonntag";
-
-
-  - author    := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment   := "Slot with method";
 
 Section Inherit
@@ -28,28 +24,32 @@ Section Public
   // Dynamic profil.
   //
 
-  + profil:FAST_ARRAY(PROFIL_SLOT);
+  + profil:ARRAY PROFIL_SLOT;
 
-  - get_profil args:FAST_ARRAY(EXPR) self type_self:TYPE_FULL :(PROFIL, FAST_ARRAY(WRITE)) <-
+  - get_profil args:ARRAY EXPR self type_self:TYPE_FULL :(PROFIL, ARRAY WRITE) <-
   [
     -? {type_self != NULL};
   ]
   ( + result:PROFIL_SLOT;
-    + res_lst:FAST_ARRAY(WRITE);
+    + res_lst:ARRAY WRITE;
     + pro:PROFIL_SLOT;
-    + j,i:INTEGER;
+    + j,i,idx:INTEGER;
     + loc:LOCAL;
     + typ:TYPE_FULL;
     + typ_block:PROFIL_BLOCK;
     + typ_list:TYPES_TMP;
-    + pro_list:FAST_ARRAY(PROFIL_SLOT);
+    + pro_list:ARRAY PROFIL_SLOT;
     + is_new:BOOLEAN;
 
-    (args = NULL).if {
+    (id_section.is_external).if {
       // For auto-load external section.
-      result := PROFIL_SLOT.clone;
-      profil.add_last result;
-      is_new := TRUE;
+      (profil.is_empty).if {
+        result := PROFIL_SLOT.my_clone;
+        profil.add_last result;
+        is_new := TRUE;
+      } else {
+        result := profil.first;
+      };
     } else {
       // Block Detect.
       j := args.lower;
@@ -58,14 +58,27 @@ Section Public
         (typ.raw.is_block).if {
           typ_list := TYPES_TMP.new;
           args.item j.get_type typ_list;
-          (typ_list.first = TYPE_NULL).if {
+          idx := typ_list.first_index;
+          (idx = -1).if {
+            args.item j.debug_display;
+            ( + rd:READ;
+              rd ?= args.item j;
+              rd.variable.require_first.debug_display;
+              rd ?= rd.variable.require_first.value;
+              rd.variable.require_first.debug_display;
+            );
+            //list_current.debug_display;
+            semantic_error (position,"Lisaac BUG!!! SLOT_CODE l.61");
+          };
+          (typ_list.item idx = TYPE_NULL).if {
             (typ_list.count > 1).if {
-              typ_block ?= typ_list.second;
+              idx := typ_list.next_index idx;
+              typ_block ?= typ_list.item idx;
             } else {
               typ := NULL;
             };
           } else {
-            typ_block ?= typ_list.first;
+            typ_block ?= typ_list.item idx;
           };
           typ_list.free;
         };
@@ -88,24 +101,31 @@ Section Public
         };
 
         (result = NULL).if {
-          result := PROFIL_SLOT.clone;
+          result := PROFIL_SLOT.my_clone;
           result.set_context_sensitive;
           typ_block.profil_list.add_last result;
           is_new := TRUE;
         };
       } else {
         // Select classic Profil (no block).
-        (id_section.is_external).if {
-          result := profil.first;
-        } else {
+        //(id_section.is_external).if {
+        //  (profil
+        //  result := profil.first;
+        //} else {
           j := profil.lower;
           {(j <= profil.upper) && {result = NULL}}.while_do {
             pro := profil.item j;
-            ((pro.type_self = NULL) || {pro.type_self == type_self}).if {
+            ((pro.type_self = NULL) || {pro.type_self == type_self}).if {  // BSBS: simple '=' non ???
               result := pro;
               i := args.lower + 1;
               {(i <= args.upper) && {result != NULL}}.while_do {
                 loc := pro.argument_list.item i;
+                
+                "SLOT_CODE:>>>>> ".print; 
+                args.item i.static_type.print; '/'.print;
+                loc.require_first.value.static_type.print;
+                '\n'.print;
+                
                 (
                   (loc != NULL) && {loc.require_first != NULL} &&
                   {args.item i.static_type != loc.require_first.value.static_type} &&
@@ -118,13 +138,10 @@ Section Public
             };
             j := j + 1;
           };
-        };
+        //};
         (result = NULL).if {
-          result := PROFIL_SLOT.clone;
+          result := PROFIL_SLOT.my_clone;
           profil.add_last result;
-          ((id_section.is_external) && {profil.count > 1}).if {
-            semantic_error (position,"Polymorphic External slot is not possible.");
-          };
           is_new := TRUE;
         };
       };
@@ -156,7 +173,14 @@ Section Public
 
     parent_slot := base;
     value := val;
-    profil := FAST_ARRAY(PROFIL_SLOT).create_with_capacity 1;
+    profil := ARRAY PROFIL_SLOT .create_with_capacity 1;
+    
+    "SLOT_CODE: ".print;
+    (argument_list.lower).to (argument_list.upper) do { i:INTEGER;
+      string_tmp.clear;
+      argument_list.item i.append_in string_tmp; string_tmp.print; ','.print;
+    };
+    '\n'.print;
   );
 
   //
@@ -165,7 +189,7 @@ Section Public
 
   + last_type_contract:TYPE;
   + is_require:BOOLEAN;
-
+/*
   - previous_contract:ITM_LIST <-
   ( + slot:ITM_SLOT;
     + contract:ITM_LIST;
@@ -177,39 +201,54 @@ Section Public
     };
     (slot != NULL).if {
       (is_require).if {
-	contract := slot.require;
+	contract := slot.pattern_in;
       } else {
-	contract := slot.ensure;
+	contract := slot.pattern_out;
       };
       last_type_contract := last_type_contract.last_type_contract;
     };
     contract
   );
-
+*/
   - create_code is_first:BOOLEAN <-
   ( + contract:ITM_LIST;
     + slot:ITM_SLOT;
-    + result:EXPR;
+    + result,res:EXPR;
     + mul:EXPR_MULTIPLE;
     + nb_result_list:INTEGER;
-
-    verify := is_first;
-    // Require
-    is_require := TRUE;
-    contract := require;
+    
+    verify := is_first;    
+    
+    // Invariant in
     last_type_contract := receiver_type;
+    (last_type_contract.pattern_in != NULL).if {
+      res := last_type_contract.pattern_in.to_run_expr;
+      res.to_run_contract "Prototype entry violated";
+    };
+        
+    // Section in
+    (id_section.pattern_in != NULL).if {
+      res := id_section.pattern_in.to_run_expr;
+      res.to_run_contract "Section entry violated";
+    };
+      
+    // Require    
+    is_require := TRUE;
+    last_type_contract := receiver_type;
+    contract := pattern_in;    
     (contract = NULL).if {
       slot := receiver_type.search_require name;
       (slot != NULL).if {
 	(verify).if {
-	  is_equal_profil slot;
+	  itm_slot.is_equal_profil slot;
 	};
-	contract := slot.require;
+	contract := slot.pattern_in;
 	last_type_contract := receiver_type.last_type_contract;
       };
     };
     (contract != NULL).if {
-      contract.to_run_expr;
+      res := contract.to_run_expr;
+      res.to_run_contract "Require violated";
     };
 
     // Body.
@@ -242,21 +281,36 @@ Section Public
 
     // Ensure
     is_require := FALSE;
-    contract := ensure;
+    contract := pattern_out;
     last_type_contract := receiver_type;
     (contract = NULL).if {
       slot := receiver_type.search_ensure name;
       (slot != NULL).if {
 	(verify).if {
-	  is_equal_profil slot;
+	  itm_slot.is_equal_profil slot;
 	};
-	contract := slot.ensure;
+        contract := slot.pattern_out;        
 	last_type_contract := receiver_type.last_type_contract;
       };
     };
     (contract != NULL).if {
-      contract.to_run_expr;
+      res := contract.to_run_expr;
+      res.to_run_contract "Ensure violated";      
     };
+    
+    // Section out
+    (id_section.pattern_out != NULL).if {
+      res := id_section.pattern_out.to_run_expr;
+      res.to_run_contract "Section exit violated";
+    };
+    
+    // Invariant out
+    last_type_contract := receiver_type;
+    (last_type_contract.pattern_out != NULL).if {
+      res := last_type_contract.pattern_out.to_run_expr;
+      res.to_run_contract "Prototype exit violated";
+    };
+        
     // Result.
     (id_section.is_interrupt).if {
       list_current.add_first (
@@ -283,7 +337,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append name;
     (argument_list.lower).to (argument_list.upper) do { j:INTEGER;

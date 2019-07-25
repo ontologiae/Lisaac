@@ -1,0 +1,35 @@
+Section Header
+
+  + name := FIBONACCI; // recursive with n complexity example
+  
+Section Public
+  
+  - fibonacci n:INTEGER : (INTEGER, INTEGER) <-
+  ( + f1,f2:INTEGER;
+    
+    (n <= 1).if {
+      (f1,f2) := (1,1);
+    } else {
+      (f1,f2) := fibonacci (n-1);
+      (f1,f2) := (f2, f1+f2);
+    };
+    f1,f2
+  );
+  
+  - main <-
+  ( + n,f1,f2:INTEGER;
+
+    (COMMAND_LINE.count > 1).if {
+      n := COMMAND_LINE.item 1 .to_integer;
+    } else {
+      n := 10;
+    };
+    (f1,f2) := fibonacci n;
+    "fibonacci of ".print;
+    n.print;
+    " is ".print;
+    f2.print; 
+    '\n'.print;
+  );
+  
+  

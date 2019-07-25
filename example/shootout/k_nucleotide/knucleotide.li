@@ -8,20 +8,20 @@ Section Inherit
   
 Section Public
   
-  - buffer:STRING;
+  - buffer:STRING_BUFFER;
   
   - dico:HASHED_SET(SORTER);
   
-  - idf:STRING_CONSTANT := "GGTATTTTAATTTATAGT";
+  - idf:STRING_ALIAS := "GGTATTTTAATTTATAGT";
   - key:SORTER;
   - key2:SORTER;
   
   - main <-
   (
-    key := SORTER.clone;
-    key2 := SORTER.clone;
+    key := SORTER.my_clone;
+    key2 := SORTER.my_clone;
     // Read file.
-    buffer := STRING.create 10240;
+    buffer := STRING_BUFFER.create 10240;
     {      
       buffer.clear;
       IO.read_line_in buffer;      
@@ -64,7 +64,7 @@ Section Public
         
     new_key := dico.reference_at key;
     (new_key = NULL).if {      
-      new_key := key.clone;      
+      new_key := key.my_clone;      
       dico.add new_key;
     } else {
       new_key.inc_freq;
@@ -129,7 +129,7 @@ Section Public
       s := array.item j;
       s.print;      
       freq := s.freq;
-      ((100.0*freq.to_real_64)/cnt).print_format_c " %.3f\n";      
+      ((100.0*freq)/cnt).print_format_c " %.3f\n";      
     };
     '\n'.print;
   );

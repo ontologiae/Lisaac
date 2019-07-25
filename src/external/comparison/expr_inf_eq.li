@@ -2,10 +2,6 @@ Section Header
 
   + name        := EXPR_INF_EQ;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Inferior or equal binary comparison expression.";
 
 Section Inherit
@@ -14,7 +10,7 @@ Section Inherit
 
 Section Public
 
-  - symbol:STRING_CONSTANT := "<=";
+  - symbol:STRING_ALIAS := "<=";
 
   //
   // Execute.

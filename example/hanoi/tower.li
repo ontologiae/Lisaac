@@ -28,13 +28,13 @@ Section Public
   - full_make n:INTEGER <-
   ( ? {n >= 1};
 
-    t := ARRAY(INTEGER).create 1 to n;
-    n.downto 1 do { i:INTEGER;
-      t.put (n-i+1) to i;
+    t := ARRAY(INTEGER).create n;
+    (n-1).downto 0 do { i:INTEGER;
+      t.put (n-i) to i;
     };
-    top := n;
+    top := n-1;
 
-    ? {nb = n};
+    ? {nb+1 = n};
     ? {top = nb};
     ? {t.item top = 1};
   );
@@ -48,10 +48,10 @@ Section Public
 
   - empty_make n:INTEGER <-
   ( ? {n >= 1};
-    t := ARRAY(INTEGER).create 1 to n;
-    top := 1;
-    ? {nb = n};
-    ? {top = 1};
+    t := ARRAY(INTEGER).create n;
+    top := 0;
+    ? {nb+1 = n};
+    ? {top = 0};
   );
 
 Section HANOI
@@ -62,7 +62,7 @@ Section HANOI
   ( + nb_of_free_slots, nb_of_used_slots:INTEGER;
     ? {d.in_range d to nb};
     nb_of_used_slots := t.item d;
-    nb_of_free_slots := nb - nb_of_used_slots;
+    nb_of_free_slots := nb+1 - nb_of_used_slots;
     nb_of_free_slots.downto 1 do { i:INTEGER;
       ' '.print;
     };
@@ -83,10 +83,10 @@ Section HANOI
 
     result := t.item top;
     t.put 0 to top;
-    (top > 1).if {
+    (top > 0).if {
       top := top - 1;
     };
-    ? { top >= 1};
+    ? { top >= 0};
     result
   );
 

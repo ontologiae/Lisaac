@@ -1,9 +1,8 @@
 Section Header
 
-  + name      := LISAAC;
+  + name    := LISAAC;
 
-  - author   := "Sonntag Benoit";
-  - comment  := "The main prototype";
+  - comment := "The main prototype";
 
 Section Inherit
 
@@ -28,23 +27,25 @@ Section Public
 
 Section Private
 
-  - output_name     :STRING_CONSTANT;
-  - output_extension:STRING_CONSTANT;
+  - output_name     :STRING_ALIAS;
+  - output_extension:STRING_ALIAS;
 
-  - input_name:STRING_CONSTANT;
+  - input_name:STRING_ALIAS;
 
   //
   // Command.
   //
 
-  - begin_usage: STRING_CONSTANT :=
+  - begin_usage: STRING_ALIAS :=
   "Usage:                                                          \n\
+  \------                                                          \n\
   \  lisaac [<lip_file.lip>] [<input_file[.li]>] {<Options>}       \n\
   \                                                                \n\
   \  Note: without <lip_file> the nearest `make.lip' file is       \n\
   \        interpreted.                                            \n\
   \                                                                \n\
-  \Options:                                                        \n";
+  \Options:                                                        \n\
+  \--------                                                        \n";
 
 
   - display_usage <-
@@ -58,16 +59,16 @@ Section Private
   //
 
   - read_options <-
-  ( + cmd:STRING;
+  ( + cmd:STRING_BUFFER;
     + j,i,k:INTEGER;
     + f:POINTER;
     + lip_ok:BOOLEAN;
     + s:LIP_SLOT_CODE;
-    + t:STRING_CONSTANT;
+    + t:STRING_ALIAS;
     + arg:LIP_CONSTANT;
     + is_path_list:BOOLEAN;
     + hook_after_load_lip :{};
-
+        
     hook_after_load_lip := {};
 
     // Default value.
@@ -75,13 +76,13 @@ Section Private
     // Read argument.
     j := 1;
     {j > COMMAND_LINE.upper}.until_do {
-      cmd := COMMAND_LINE.item j;
-      (cmd.item 1='-').if {
+      cmd := COMMAND_LINE.item j;            
+      (cmd.item 0 = '-').if {        
 	//
 	// Lecture des options :
         //
-        ((cmd.count >= 3) && {cmd.item 2 = '-'}).if {
-          (cmd.item 3)
+        ((cmd.count >= 3) && {cmd.item 1 = '-'}).if {
+          (cmd.item 2)
           .when 'v' then {
             verbose_level := 1;
           }
@@ -93,12 +94,9 @@ Section Private
           }
           .when 'g' then {
             is_readable := is_graph := TRUE;
-          }
-          .when 's' then {
-            is_speed_push := TRUE;
           };
         } else {
-          (lip_ok).if_false {
+          (lip_ok).if_false {            
             load_lip "make.lip";
             hook_after_load_lip.value;
             lip_ok := TRUE;
@@ -106,8 +104,8 @@ Section Private
           string_tmp.copy cmd;
           string_tmp.remove_first 1;
           string_tmp.replace_all '-' with '_';
-          s := LIP_CODE.get_method (ALIAS_STR.get string_tmp);
-          ((s = NULL) || {s.section != ALIAS_STR.section_public}).if {
+          s := LIP_CODE.get_method (string_tmp.to_string_alias);
+          ((s = NULL) || {s.section != "Public"}).if {
             "ERROR: Option `".print;
             cmd.print;
             "' not found.\n".print;
@@ -124,19 +122,19 @@ Section Private
             cmd := COMMAND_LINE.item j;
             t := s.argument.value.name;
             arg := NULL;
-            (t = ALIAS_STR.prototype_boolean).if {
+            (t = "BOOLEAN").if {
               cmd.to_upper;
               (cmd ~= "TRUE").if {
                 arg := LIP_BOOLEAN.get TRUE;
               }.elseif {cmd ~= "FALSE"} then {
                 arg := LIP_BOOLEAN.get FALSE;
               };
-            }.elseif {t = ALIAS_STR.prototype_integer} then {
+            }.elseif {t = "INTEGER"} then {
               (cmd.is_integer).if {
                 arg := LIP_INTEGER.get (cmd.to_integer);
               };
             } else {
-              arg := LIP_STRING.get (ALIAS_STR.get cmd);
+              arg := LIP_STRING.get (cmd.to_string_alias);
             };
             (arg = NULL).if {
               "ERROR: Incorrect type for `".print;
@@ -156,7 +154,7 @@ Section Private
 	//
 	// Input name & Current Directory.
         //
-        (cmd.has_suffix ".lip").if {
+        (cmd.has_suffix ".lip").if {          
           // .lip
           (lip_ok).if {
             "ERROR: Put options after `".print;
@@ -180,10 +178,10 @@ Section Private
           ((i > string_tmp.lower) && {i > k}).if {
             string_tmp.remove_last (string_tmp.upper-i+1);
           };
-          input_name := ALIAS_STR.get (string_tmp);
+          input_name := string_tmp.to_string_alias;
           hook_after_load_lip := {
-            LIP_CODE.put_string input_name to (ALIAS_STR.slot_input_file);
-            LIP_CODE.put_string input_name to (ALIAS_STR.slot_output_file);
+            LIP_CODE.put_string input_name to "input_file";
+            LIP_CODE.put_string input_name to "output_file";
           };
           // get dirname
           i := last_index_str (string_tmp,'/');
@@ -192,7 +190,7 @@ Section Private
           } else {
             string_tmp.remove_last (string_tmp.upper-i);
           };
-          input_path := ALIAS_STR.get (string_tmp);
+          input_path := string_tmp.to_string_alias;
         };
       };
       j := j+1;
@@ -221,17 +219,19 @@ Section Private
     };
 
     // Loading variable.
-    input_name         := LIP_CODE.get_string  (ALIAS_STR.slot_input_file);
-    output_name        := LIP_CODE.get_string  (ALIAS_STR.slot_output_file);
-    output_extension   := LIP_CODE.get_string  (ALIAS_STR.slot_output_extension);
-    debug_level_option := LIP_CODE.get_integer (ALIAS_STR.slot_debug_level);
-    debug_with_code    := LIP_CODE.get_boolean (ALIAS_STR.slot_debug_with_code);
-    is_all_warning     := LIP_CODE.get_boolean (ALIAS_STR.slot_is_all_warning);
-    is_optimization    := LIP_CODE.get_boolean (ALIAS_STR.slot_is_optimization);    
-    inline_level       := LIP_CODE.get_integer (ALIAS_STR.slot_inline_level);
-    is_statistic       := LIP_CODE.get_boolean (ALIAS_STR.slot_is_statistic);
-    is_quiet           := LIP_CODE.get_boolean (ALIAS_STR.slot_is_quiet);    
-    is_library         := LIP_CODE.get_boolean (ALIAS_STR.slot_is_library);
+    input_name         := LIP_CODE.get_string  "input_file";
+    output_name        := LIP_CODE.get_string  "output_file";
+    output_extension   := LIP_CODE.get_string  "output_extension";
+    debug_level_option := LIP_CODE.get_integer "debug_level";
+    debug_with_code    := LIP_CODE.get_boolean "debug_with_code";
+    is_all_warning     := LIP_CODE.get_boolean "is_all_warning";
+    is_optimization    := LIP_CODE.get_boolean "is_optimization";
+    inline_level       := LIP_CODE.get_integer "inline_level";
+    is_statistic       := LIP_CODE.get_boolean "is_statistic";
+    is_quiet           := LIP_CODE.get_boolean "is_quiet";    
+    is_library         := LIP_CODE.get_boolean "is_library";
+    is_cop             := LIP_CODE.get_boolean "is_cop";
+    is_speed_push      := LIP_CODE.get_boolean "is_speed_push";
     //
     ((input_name = NULL) || {input_name.is_empty}).if {
       "ERROR: `input_file' is empty.\n".print;
@@ -245,15 +245,15 @@ Section Private
       string_tmp.copy "./";
     } else {
       string_tmp.remove_last (string_tmp.upper-i);
-      string_tmp2.remove_first i;
+      string_tmp2.remove_first (i+1);
     };
-    LIP_CALL.load_directory (ALIAS_STR.get string_tmp) is_recursive FALSE;
+    LIP_CALL.load_directory (string_tmp.to_string_alias) is_recursive FALSE;
     //
     string_tmp.copy (path_file.last);
     i := last_index_str (string_tmp,'/');
     string_tmp.remove_last (string_tmp.upper-i);
-    input_path := ALIAS_STR.get string_tmp;
-    input_name := ALIAS_STR.get string_tmp2;
+    input_path := string_tmp.to_string_alias;
+    input_name := string_tmp2.to_string_alias;
     //
     ((output_name = NULL) || {output_name.is_empty}).if {
       (input_path = NULL).if {
@@ -262,17 +262,17 @@ Section Private
         string_tmp.copy input_path;
       };
       string_tmp.append input_name;
-      output_name := ALIAS_STR.get string_tmp;
-      LIP_CODE.put_string output_name to (ALIAS_STR.slot_output_file);
+      output_name := string_tmp.to_string_alias;
+      LIP_CODE.put_string output_name to "output_file";
     };
     ((output_extension = NULL) || {output_extension.is_empty}).if {
-      output_extension := ALIAS_STR.extension_c;
-      LIP_CODE.put_string output_extension to (ALIAS_STR.slot_output_extension);
+      output_extension := ".c";
+      LIP_CODE.put_string output_extension to "output_extension";
     };
     LIP_CODE.init_path_file FALSE;
   );
 
-  - put_trace_code buf:STRING <-
+  - put_trace_code buf:STRING_BUFFER <-
   ( + proto:PROTOTYPE;
 
     ((debug_level_option != 0) || {CALL_NULL.is_necessary}).if {
@@ -292,7 +292,7 @@ Section Private
 
     (debug_level_option != 0).if {            
       buf.append "char *trace[";
-      buf.append (PROTOTYPE.prototype_list.count.to_string);
+      PROTOTYPE.prototype_list.count.append_in buf;
       buf.append "]={\n";
       (PROTOTYPE.prototype_list.lower).to (PROTOTYPE.prototype_list.upper-1) do {
 	j:INTEGER;
@@ -315,7 +315,7 @@ Section Private
       //
 
       (debug_with_code).if {
-	+ src:FAST_ARRAY(POSITION);
+	+ src:ARRAY POSITION;
 
         title "SOURCE LINE REFERENCE" in output_decl;
 
@@ -360,120 +360,120 @@ Section Private
       (is_speed_push).if {
         buf.append
         "void _li_swap(long a,long b)                                      \n\
-        \{ long i,tmp;                                                     \n\ /* } */
-        \  for (i=3;i<__li_mountain[1];i+=3) {                             \n\ /* } */
+        \{ long i,tmp;                                                     \n\ 
+        \  for (i=3;i<__li_mountain[1];i+=3) {                             \n\ 
         \    if (__li_mountain[i+2] == a*3) __li_mountain[i+2] = b*3; else \n\
-        \    if (__li_mountain[i+2] == b*3) __li_mountain[i+2] = a*3;      \n\ /* { */
+        \    if (__li_mountain[i+2] == b*3) __li_mountain[i+2] = a*3;      \n\ 
         \  }                                                               \n\
-        \  for (i=0;i<3;i++) {                                             \n\ /* } */
+        \  for (i=0;i<3;i++) {                                             \n\ 
         \    tmp = __li_mountain[a * 3 + i];                               \n\
         \    __li_mountain[a * 3 + i] = __li_mountain[b * 3 + i];          \n\
-        \    __li_mountain[b * 3 + i] = tmp;                               \n\ /* { */
-        \  };                                                              \n\ /* { */
+        \    __li_mountain[b * 3 + i] = tmp;                               \n\ 
+        \  };                                                              \n\ 
         \};                                                                \n\
         \ \n\
         \void _li_quicksort(long low,long up)                              \n\
-        \{ long i,j,pivot,tmp;                                             \n\ /* } */
-        \  if (low < up) {                                                 \n\ /* } */
+        \{ long i,j,pivot;                                                 \n\ 
+        \  if (low < up) {                                                 \n\ 
         \    pivot = __li_mountain[low*3];                                 \n\
         \    i = low;                                                      \n\ 
         \    j = up + 1;                                                   \n\
         \    do {                                                          \n\ 
         \      do ++i; while ((__li_mountain[i*3] <= pivot) && (i <= up)); \n\
         \      do --j; while (__li_mountain[j*3] > pivot);                 \n\
-        \      if (i < j) _li_swap(i,j);                                   \n\ /* { */
+        \      if (i < j) _li_swap(i,j);                                   \n\ 
         \    } while (i < j);                                              \n\ 
         \    _li_swap(low,j);                                              \n\
         \    _li_quicksort(low,j-1);                                       \n\
-        \    _li_quicksort(j+1,up);                                        \n\ /* { */
-        \  };                                                              \n\ /* { */
+        \    _li_quicksort(j+1,up);                                        \n\ 
+        \  };                                                              \n\ 
         \}                                                                 \n\
         \ \n\
         \void __li_fix_order_mountain()                           \n\
-        \{ int j,i;                                               \n\ /* }*/
-        \  long index,prev,cur;                                   \n\
+        \{ int j;                                                 \n\ 
+        \  long prev,cur;                                         \n\
         \  prev = -1;                                             \n\
-        \  for (j=0;j<__li_mountain[1];j+=3) {                    \n\ /* } */
+        \  for (j=0;j<__li_mountain[1];j+=3) {                    \n\ 
         \    cur = __li_mountain[j];                              \n\
-        \    if (cur == prev) {                                   \n\ /* } */
-        \      __li_mountain[j] = __li_mountain[j-3]+1;           \n\ /* { */
-        \    } else {                                             \n\ /* } */
-        \      __li_mountain[j] = __li_mountain[j] << 16;         \n\ /* { */
+        \    if (cur == prev) {                                   \n\ 
+        \      __li_mountain[j] = __li_mountain[j-3]+1;           \n\ 
+        \    } else {                                             \n\ 
+        \      __li_mountain[j] = __li_mountain[j] << 16;         \n\ 
         \    }                                                    \n\
-        \    prev = cur;                                          \n\ /* { */
-        \  }                                                      \n\ /* { */
+        \    prev = cur;                                          \n\ 
+        \  }                                                      \n\ 
         \}                                                        \n\
         \ \n\
         \void __li_display_mountain()                 \n\
-        \{ int i;                                     \n\ /* } */
-        \  for (i=3;i<__li_mountain[1];i+=3) {        \n\ /* } */
+        \{ int i;                                     \n\ 
+        \  for (i=3;i<__li_mountain[1];i+=3) {        \n\ 
         \    print_integer(i);                        \n\
-        \    print_string(\": \");                    \n\ /* { */
+        \    print_string(\": \");                    \n\
         \    print_integer_h(__li_mountain[i]);       \n\
-        \    print_string(\", \");                    \n\ /* { */
+        \    print_string(\", \");                    \n\
         \    print_integer_h(__li_mountain[i+1]);     \n\
-        \    print_string(\", \");                    \n\ /* { */
+        \    print_string(\", \");                    \n\
         \    print_integer(__li_mountain[i+2]);       \n\
-        \    print_string(\"\\n\");                   \n\ /* { */
-        \  };                                         \n\ /* { */
+        \    print_string(\"\\n\");                   \n\
+        \  };                                         \n\
         \}                                            \n\ 
         \ \n\
         \void _li_display_stack(long top)        \n\
-        \{ long j;                               \n\ /* } */
-        \  long *stack;                          \n\
+        \{ long j;                               \n\ 
+        \  long *stack = NULL;                   \n\
         \  print_string(\"Stack:\");             \n\
         \  print_integer_h(top);                 \n\
         \  print_string(\"\\n\");                \n\
-        \  for (j=0;j<20;j++) {                  \n\ /* } */
+        \  for (j=0;j<20;j++) {                  \n\ 
         \    print_integer_h(stack[(top>>3)+j]); \n\
-        \    print_string(\"\\n\");              \n\ /* { */
+        \    print_string(\"\\n\");              \n\ 
         \  }                                     \n\
-        \  print_string(\"- End -\\n\");         \n\ /* { */
+        \  print_string(\"- End -\\n\");         \n\ 
         \}                                       \n\
         \ \n\
-        \long __li_get_top()                          \n\
+        \/*long __li_get_top()                          \n\
         \{ long result;                               \n\
-        \  asm(\"movq %%rsp,%0\": \"=r\" (result) : );\n\ /* } */
-        \  return result;                             \n\ /* { */
-        \}                                            \n\ 
+        \  asm(\"movq %%rsp,%0\": \"=r\" (result) : );\n\ 
+        \  return result;                             \n\ 
+        \}*/                                            \n\ 
         \ \n\
         \long tmp_rsp; \n\
         \long __li_get_back_index(long idx,long rsp_current)                                    \n\
-        \{ long result,rip,i,beg,end;                                                           \n\ /* } */
+        \{ long result,rip,i,/*beg,*/end;                                                       \n\ 
         \  long *stack = NULL;                                                                  \n\
         \  result = __li_mountain[idx+2];                                                       \n\ 
-        \  if (result == -1) {                                                                  \n\ /* } */        
+        \  if (result == -1) {                                                                  \n\         
         \    tmp_rsp = rsp_current;                                                             \n\
         \    result = 0;                                                                        \n\
-        \    do {                                                                               \n\ /* } */
+        \    do {                                                                               \n\ 
         \      rip = stack[tmp_rsp >> 3];                                                       \n\
-        \      if ((rip>(__li_mountain[3]>>16)) && (rip<(__li_mountain[0]>>16))) {              \n\ /* } */
+        \      if ((rip>(__li_mountain[3]>>16)) && (rip<(__li_mountain[0]>>16))) {              \n\ 
         \        i = 3;                                                                         \n\ 
-        \        do {                                                                           \n\ /* } */
-        \          beg = __li_mountain[i]>>16;                                                  \n\
+        \        do {                                                                           \n\ 
+        \          /*beg = __li_mountain[i]>>16;*/                                              \n\
         \          end = __li_mountain[i+1];                                                    \n\        
-        \          do {                                                                         \n\ /* } */
-        \            i += 3;                                                                    \n\ /* { */
+        \          do {                                                                         \n\ 
+        \            i += 3;                                                                    \n\ 
         \          } while ((rip<end) && (rip>(__li_mountain[i]>>16)));                         \n\
-        \          if (rip < end) {                                                             \n\ /* } */
-        \            result = i-3;                                                              \n\ /* { */
-        \          }                                                                            \n\ /* { */
-        \        } while ((result == 0) && (i < __li_mountain[1]));                             \n\ /* { */
+        \          if (rip < end) {                                                             \n\ 
+        \            result = i-3;                                                              \n\ 
+        \          }                                                                            \n\ 
+        \        } while ((result == 0) && (i < __li_mountain[1]));                             \n\ 
         \      }                                                                                \n\
-        \      tmp_rsp += 8;                                                                    \n\ /* { */          
-        \    } while (result == 0);                                                             \n\ /* { */          
+        \      tmp_rsp += 8;                                                                    \n\           
+        \    } while (result == 0);                                                             \n\           
         \  }                                                                                    \n\  
-        \  return result;                                                                       \n\  /* { */
+        \  return result;                                                                       \n\ 
         \}                                                                                      \n\ 
         \ \n\
         \void __li_sub_stack_print(long idx_mount,long up)            \n\
-        \{ long idx_new,up_new,code,j;                                \n\ /* } */
-        \  if (idx_mount > 0) {                                       \n\ /* } */
+        \{ long idx_new,up_new,code,j;                                \n\ 
+        \  if (idx_mount > 0) {                                       \n\ 
         \    idx_new = __li_get_back_index(idx_mount,up);             \n\  
         \    up_new = tmp_rsp;                                        \n\
         \    __li_sub_stack_print(idx_new,up_new);                    \n\
         \    code = __li_mountain[idx_mount+1];                       \n";
-        (debug_with_code).if {                                             /* }}(  */
+        (debug_with_code).if {
           buf.append
           "    print_string(\"Line #\");                             \n\
           \    print_integer(__src[code].pos >> 17);                 \n\
@@ -482,15 +482,15 @@ Section Private
           \    print_string(\" in \");                               \n\
           \    print_string(trace[__src[code].pos & 0x1FF]);         \n\
           \    print_string(\".\\n\");                               \n\
-          \    print_string(__src[code].line);                       \n\ /* } */
+          \    print_string(__src[code].line);                       \n\
           \    print_char('\\n');                                    \n\
           \    for (j=0;j < ((__src[code].pos >> 9) & 0xFF);j++) {   \n\
-          \      if (__src[code].line[j]=='\\t') print_char('\\t');  \n\ /* } */
-          \      else print_char(' ');                               \n\ /* ( */
+          \      if (__src[code].line[j]=='\\t') print_char('\\t');  \n\
+          \      else print_char(' ');                               \n\
           \    };                                                    \n\
           \    print_char('^');                                      \n\
           \    print_char('\\n');                                    \n"; 
-        } else {                                                            /* }}{ */
+        } else {                                                        
           buf.append 
           "    print_string(\"Line #\");                                \n\               
           \    print_integer(code >> 17);                               \n\
@@ -501,31 +501,33 @@ Section Private
           \    print_string(\".\\n\");                                  \n"; 
         };
         buf.append /* { */
-        "  };                                                         \n\ /* } */
-        \};                                                           \n\ /* { */
+        "  };                                                         \n\ 
+        \};                                                           \n\ 
         \ \n\ /* } */
         \void lisaac_stack_print(long up)                             \n\  
-        \{ long idx_mount,top;                                        \n\ /* } */       
+        \{ long idx_mount,i;                                          \n\ 
         \  __li_fix_order_mountain();                                 \n\
         \  _li_quicksort(1,(__li_mountain[1]/3)-1);                   \n\
         \  print_string(\"\\n============== BOTTOM ==============\\n\"); \n\
         \  asm(\"movq %%rsp,%0\": \"=r\" (tmp_rsp) : );               \n\
         \  idx_mount = __li_get_back_index(0,tmp_rsp);                \n\
+        \  for (i=0;i<up;i++)                                         \n\
+        \    idx_mount = __li_get_back_index(idx_mount,tmp_rsp);      \n\        
         \  __li_sub_stack_print(idx_mount,tmp_rsp);                   \n\
-        \  print_string(\"================ TOP ===============\\n\"); \n\  /* { */
+        \  print_string(\"================ TOP ===============\\n\"); \n\ 
         \}                                            \n\ /* { */
         \ \n";                  
       } else {
         buf.append
         "void lisaac_push_first(_____CONTEXT *path,unsigned long code)\n\
-        \{ \n";                                                            /* } */
-        (debug_level_option = 20).if {                                     /* }}( */    
+        \{ \n";                                                           
+        (debug_level_option = 20).if {                                    
           buf.append
           "  _____CONTEXT *cur,loop;\n\
           \  cur = top_context; \n\
           \  while ((cur != (void *)0) && (cur != path)) cur = cur->back; \n\
           \  if (cur == path) {\n\
-          \    loop.back = top_context;\n\                                 /* } */
+          \    loop.back = top_context;\n\                                
           \    loop.code = code; \n\
           \    lisaac_stack_print((long)&loop);\n\
           \    print_string(\"COMPILER: Debug context looping detected !\\n\");\n\
@@ -535,31 +537,31 @@ Section Private
         buf.append
         "  path->back  = top_context;\n\
         \  path->code  = code;\n\
-        \  top_context = path;\n\                                          /* ( */
+        \  top_context = path;\n\                                         
         \} \n\      
         \  \n\
         \void lisaac_push(_____CONTEXT *path,unsigned long code)\n\
         \{ \n\
-        \  path->code  = code;\n\                                          /* } */
-        \  top_context = path;\n\                                          /* ( */
+        \  path->code  = code;\n\                                         
+        \  top_context = path;\n\                                         
         \} \n\
         \  \n\
         \  \n\
         \void lisaac_stack_print(long step)           \n\
         \{ _____CONTEXT *back,*next,*up;              \n\
-        \  int j;	                              \n\                  /* } */
+        \  int j;	                              \n\                 
         \  up = top_context;                          \n\
         \  for (j=0;j<step;j++) up = up->back;        \n\
         \  next = (void *)0;                          \n\
         \  while (up != (void *)0) {                  \n\
-        \    back = up -> back;                       \n\                  /* } */
+        \    back = up -> back;                       \n\                 
         \    up -> back = next;                       \n\
         \    next = up;                               \n\
-        \    up = back;                               \n\                  /* ( */
+        \    up = back;                               \n\                 
         \  };                                         \n\            
         \  print_string(\"\\n============== BOTTOM ==============\\n\"); \n\
         \  while (next != (void *)0) {                \n";                 
-        (debug_with_code).if {                                             /* }}(  */
+        (debug_with_code).if {                                            
           buf.append
           "    print_string(\"Line #\");                           \n\
           \    print_integer(__src[next->code].pos >> 17);         \n\
@@ -568,15 +570,15 @@ Section Private
           \    print_string(\" in \");                             \n\
           \    print_string(trace[__src[next->code].pos & 0x1FF]); \n\
           \    print_string(\".\\n\");                             \n\
-          \    print_string(__src[next->code].line);               \n\     /* } */
+          \    print_string(__src[next->code].line);               \n\    
           \    print_char('\\n');                                  \n\
           \    for (j=0;j < ((__src[next->code].pos >> 9) & 0xFF);j++) {\n\
-          \      if (__src[next->code].line[j]=='\\t') print_char('\\t');\n\   /* } */
-          \      else print_char(' ');\n\                                  /* ( */
+          \      if (__src[next->code].line[j]=='\\t') print_char('\\t');\n\ 
+          \      else print_char(' ');\n\                                  
           \    };                                                  \n\
           \    print_char('^');                                    \n\
           \    print_char('\\n');                                  \n";          
-        } else {                                                           /* }( */
+        } else {                                                           
           buf.append
           "    print_string(\"Line #\");                \n\
           \    print_integer(next->code >> 17);         \n\
@@ -588,15 +590,15 @@ Section Private
         };
         buf.append
         "    next = next -> back;                     \n\               
-        \  };                                         \n\                  /* { */
-        \  print_string(\"================ TOP ===============\\n\"); \n\  /* ) */
-        \  top_context = (void *)0;                   \n\                  /* { */
+        \  };                                         \n\                  
+        \  print_string(\"================ TOP ===============\\n\"); \n\  
+        \  top_context = (void *)0;                   \n\                  
         \}                                            \n\ 
         \ \n";
       };
       buf.append
       "void print_integer(long n)           \n\
-      \{ long val;                          \n\ /* } */
+      \{ long val;                          \n\ 
       \  char car;                          \n\
       \  if (n<0) { print_char('-'); n=-n;};\n\
       \  car = (n % 10) + '0';              \n\
@@ -605,28 +607,28 @@ Section Private
       \  print_char(car);                   \n\
       \} \n\n\
       \void print_integer_h_2(unsigned long n,long l) \n\
-      \{ unsigned long val,v,j;            \n\ /* } */
+      \{ unsigned long val,v,j;            \n\ 
       \  char car;                           \n\
       \  v = n & 0xF;                        \n\
       \  if (v < 10) car = v + '0'; else car = (v-10) + 'A'; \n\
       \  val = n >> 4;                       \n\
       \  if (val != 0) print_integer_h_2(val,l-1); else \n\
       \  for (j=0;j<l;j++) print_string(\"-\"); \n\
-      \  print_char(car);                    \n\ /* { */
+      \  print_char(car);                    \n\ 
       \} \n\
       \ \n\
       \void print_integer_h(unsigned long n)  \n\
-      \{                                      \n\ /* } */
-      \  print_integer_h_2(n,15);             \n\ /* { */
+      \{                                      \n\
+      \  print_integer_h_2(n,15);             \n\
       \} \n\
       \ \n\n";
     };
   );
 
   - load_main_object <-
-  ( + type_gen:FAST_ARRAY(ITM_TYPE_MONO);
-    + itm_type_character:ITM_TYPE_MONO;
-    + itm_type_n_a_character:ITM_TYPE_MONO;
+  ( + type_gen:ARRAY ITM_TYPE;
+    + itm_type_character:ITM_TYPE;
+    + itm_type_n_a_character:ITM_TYPE;
 
     // NULL, VOID, CONTEXT
     TYPE_NULL.make_null;
@@ -634,54 +636,46 @@ Section Private
     TYPE_CONTEXT.make_context;
     TYPE_ID.make_type_id; // Pas utile !
     // Other prototype.
-    type_true    := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_true)
-    style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_false   := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_false)
-    style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_boolean := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_boolean)
-    style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_integer := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_integer)
-    style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_real    := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_real)
-    style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_integer_32 := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_integer_32)
-    style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_uinteger_32 := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_uinteger_32)
-    style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_string_constant := ITM_TYPE_SIMPLE.get (ALIAS_STR.prototype_string_constant)
-    .to_run_for NULL.raw;
-    itm_type_character   := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_character)
-    style (ALIAS_STR.keyword_expanded);
+    type_true    := ITM_TYPE_STYLE.get "TRUE"    style 1.to_run_for NULL.raw;
+    type_false   := ITM_TYPE_STYLE.get "FALSE"   style 1.to_run_for NULL.raw;
+    type_boolean := ITM_TYPE_STYLE.get "BOOLEAN" style 1.to_run_for NULL.raw;
+    type_integer := ITM_TYPE_STYLE.get "INTEGER" style 1.to_run_for NULL.raw;
+    type_real_64 := ITM_TYPE_STYLE.get "REAL_64" style 1.to_run_for NULL.raw;
+    type_integer_32:=ITM_TYPE_STYLE.get "INTEGER_32" style 1.to_run_for NULL.raw;
+    type_uinteger_32:=ITM_TYPE_STYLE.get "UINTEGER_32" style 1.to_run_for NULL.raw;
+    type_string_alias:=ITM_TYPE_SIMPLE.get "STRING_ALIAS".to_run_for NULL.raw;
+    itm_type_character:=ITM_TYPE_STYLE.get "CHARACTER" style 1;
     type_character := itm_type_character.to_run_for NULL.raw;
-    type_block     := ITM_TYPE_SIMPLE.get (ALIAS_STR.prototype_block).to_run_for NULL.raw;
+    type_block     := ITM_TYPE_SIMPLE.get "BLOCK".to_run_for NULL.raw;
     //
-    type_pointer   := ITM_TYPE_SIMPLE.get (ALIAS_STR.prototype_pointer).to_run_for NULL.raw;
-    // NATIVE_ARRAY(CHARACTER)
-    type_gen  := ALIAS_ARRAY(ITM_TYPE_MONO).new;
+    type_pointer   := ITM_TYPE_SIMPLE.get "POINTER".to_run_for NULL.raw;
+    type_object    := ITM_TYPE_SIMPLE.get "OBJECT" .to_run_for NULL.raw;        
+    // NATIVE_ARRAY CHARACTER
+    type_gen  := ALIAS_ARRAY ITM_TYPE .new;
     type_gen.add_last itm_type_character;
-    type_gen  := ALIAS_ARRAY(ITM_TYPE_MONO).alias type_gen;
-    itm_type_n_a_character := ITM_TYPE_GENERIC.get (ALIAS_STR.prototype_native_array)
-    style NULL with type_gen;
+    type_gen  := ALIAS_ARRAY ITM_TYPE .alias type_gen;
+    itm_type_n_a_character := ITM_TYPE_GENERIC.get "NATIVE_ARRAY"
+    style 0 with type_gen;
     type_n_a_character := itm_type_n_a_character.to_run_for NULL.raw;
-    // NATIVE_ARRAY[NATIVE_ARRAY(CHARACTER)]
-    type_gen  := ALIAS_ARRAY(ITM_TYPE_MONO).new;
+    // NATIVE_ARRAY (NATIVE_ARRAY CHARACTER)
+    type_gen  := ALIAS_ARRAY ITM_TYPE .new;
     type_gen.add_last itm_type_n_a_character;
-    type_gen  := ALIAS_ARRAY(ITM_TYPE_MONO).alias type_gen;
-    type_n_a_n_a_character := ITM_TYPE_GENERIC.get (ALIAS_STR.prototype_native_array)
-    style NULL with type_gen.to_run_for NULL.raw;
+    type_gen  := ALIAS_ARRAY ITM_TYPE .alias type_gen;
+    type_n_a_n_a_character := ITM_TYPE_GENERIC.get "NATIVE_ARRAY"
+    style 0 with type_gen.to_run_for NULL.raw;
     // Input.
     string_tmp.copy input_name;
     string_tmp.to_upper;
-    type_input   := ITM_TYPE_SIMPLE.get (ALIAS_STR.get string_tmp).to_run_for NULL.raw;
+    type_input   := ITM_TYPE_SIMPLE.get (string_tmp.to_string_alias).to_run_for NULL.raw;
     //
     (debug_level_option != 0).if {
       // Load for `print_char' and `die_with_code'
-      ITM_TYPE_SIMPLE.get (ALIAS_STR.prototype_system_io).to_run_for NULL;
+      ITM_TYPE_SIMPLE.get "SYSTEM_IO".to_run_for NULL;
     };
     ? {type_input != NULL};
   );
 
-  - print msg:STRING_CONSTANT stat n:INTEGER for t:INTEGER <-
+  - print msg:STRING_ALIAS stat n:INTEGER for t:INTEGER <-
   ( + pour_mil:INTEGER;
 
     (t != 0).if {
@@ -700,8 +694,8 @@ Section Private
 
 Section Public
 
-  - tab:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create 128;
-  - tab_null:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create 128;
+  - tab:ARRAY INTEGER := ARRAY INTEGER .create 128;
+  - tab_null:ARRAY INTEGER := ARRAY INTEGER .create 128;
 
   //
   // Creation.
@@ -712,13 +706,10 @@ Section Public
     //+ entry:ENTRY;
     + begin_time,end_time:UINTEGER_64;
     + time:INTEGER;
-    + txt:STRING;
+    + txt:STRING_BUFFER;
     + s:LIP_SLOT_CODE;
     + f:POINTER;
-    + tmp,tmp2:INTEGER;
-
-    ALIAS_STR.make;
-
+    
     begin_time := SYSTEM.get_universal_time;
 
     //
@@ -770,11 +761,10 @@ Section Public
 
     // Compilation.
     type_input.prototype.depend;
-
+        
     // Type / Struct.
     title "TYPE" in output_decl;
-    
-    
+        
     output_decl.append
     "/* Generic Object */\n\
     \struct ___OBJ {\n\
@@ -784,7 +774,133 @@ Section Public
 
     // Function header.
     title "FUNCTION HEADER" in output_code;
-
+    
+    (is_cop).if {
+      output_decl.append
+      "#include <pthread.h>                                    \n\
+      \#include <limits.h>                                     \n\
+      \                                                        \n\
+      \void print_char(char car);                              \n\
+      \void die_with_code(long code);                           \n\
+      \                                                        \n\            
+      \static pthread_key_t current_thread;                    \n\
+      \static pthread_attr_t thread_attr;                      \n\
+      \pthread_t c_thread;                                     \n\            
+      \pthread_mutex_t main_mutex;                             \n\
+      \int thread_counter;                                     \n\
+      \volatile int thread_counter_busy;                       \n\
+      \                                                        \n\
+      \// One `stack' per Thread:                              \n\ 
+      \static char thread_stack[512][PTHREAD_STACK_MIN];       \n\
+      \                                                        \n\
+      \typedef struct lith_object_struct lith_object;          \n\
+      \typedef struct lith_node_struct lith_node;              \n\
+      \struct lith_node_struct {                               \n\
+      \  pthread_mutex_t mutex;                                \n\
+      \  lith_node *next;                                      \n\
+      \  lith_object *object;                                  \n\
+      \};                                                      \n\
+      \struct lith_object_struct {                             \n\
+      \  unsigned long __id; // Just for late binding.         \n\
+      \  lith_node *first;                                     \n\
+      \  lith_node *last;                                      \n\
+      \  lith_object *(*procedure)(lith_object *obj,pthread_mutex_t *mutex);    \n\
+      \  pthread_mutex_t mutex;                                \n\
+      \};                                                      \n\
+      \struct {                                                \n\
+      \  lith_node *first;                                     \n\
+      \  pthread_mutex_t mutex;                                \n\
+      \} pool;                                                 \n\
+      \                                                        \n\
+      \struct generic_protocop {                               \n\
+      \  lith_object thread;                                   \n\
+      \};                                                      \n\
+      \                                                        \n\
+      \void *thread_life(void *ptr)                            \n\
+      \{ lith_node node,*n;                                    \n\
+      \  lith_object *obj,*new_obj;                            \n\
+      \                                                        \n\
+      \  pthread_mutex_init(&node.mutex,NULL);                 \n\
+      \  pthread_mutex_lock(&node.mutex);                      \n\
+      \  node.object = (lith_object *)ptr;                     \n\
+      \  do {                                                  \n\
+      \    // Append fifo object.                              \n\
+      \    obj = node.object;                                  \n\
+      \    node.next = NULL;                                   \n\
+      \    n = obj->last;                                      \n\
+      \    if (n == NULL) {                                    \n\
+      \      obj->first = &node;                               \n\
+      \      pthread_mutex_unlock(&node.mutex);                \n\
+      \    } else {                                            \n\
+      \      n->next = &node;                                  \n\
+      \    };                                                  \n\
+      \    obj->last = &node;                                  \n\
+      \    pthread_setspecific(current_thread,(void *)obj);    \n\
+      \    // Run procedure.                                   \n\
+      \    new_obj = obj->procedure(obj,&node.mutex);          \n\
+      \    // Remove fifo object.                              \n\
+      \    pthread_mutex_lock(&obj->mutex);                    \n\
+      \    n = obj->first->next;                               \n\
+      \    if (n != NULL) {                                    \n\
+      \      pthread_mutex_unlock(&n->mutex);                  \n\
+      \    } else {                                            \n\
+      \      obj->last = NULL;                                 \n\
+      \    };                                                  \n\
+      \    obj->first = n;                                     \n\
+      \    pthread_mutex_unlock(&obj->mutex);                  \n\
+      \    if (new_obj != NULL) {                              \n\
+      \      node.object = new_obj;                            \n\
+      \    } else {                                            \n\
+      \      // Add in pool.                                   \n\
+      \      pthread_mutex_lock(&pool.mutex);                  \n\
+      \      node.next = pool.first;                           \n\
+      \      pool.first = &node;                               \n\
+      \      thread_counter_busy--;                            \n\
+      \      if (thread_counter_busy == 0) {                   \n\
+      \        pthread_mutex_unlock(&main_mutex);              \n\
+      \      };                                                \n\
+      \      pthread_mutex_unlock(&pool.mutex);                \n\
+      \      // Sleep.                                         \n\
+      \      pthread_mutex_lock(&node.mutex);                  \n\
+      \    };                                                  \n\
+      \  } while (1);                                          \n\
+      \  return NULL;                                          \n\
+      \};                                                      \n\
+      \                                                        \n\
+      \void run_procedure(lith_object *obj)                    \n\
+      \{ lith_node *node;                                      \n\
+      \  char *msg=\"COP Error!\\n\";                          \n\
+      \  // Pool manager.                                      \n\
+      \  pthread_mutex_lock(&pool.mutex);                      \n\
+      \  node = pool.first;                                    \n\
+      \  if (node != NULL) {                                   \n\
+      \    pool.first = node->next;                            \n\
+      \  } else {                                              \n\
+      \    thread_counter++;                                   \n\
+      \  };                                                    \n\
+      \  thread_counter_busy++;                                \n\
+      \  /*if (thread_counter_busy == 1) {                       \n\
+      \    pthread_mutex_lock(&main_mutex);                    \n\
+      \  };*/                                                    \n\
+      \  pthread_mutex_unlock(&pool.mutex);                    \n\
+      \  // Run thread.                                        \n\
+      \  if (node == NULL) {                                   \n\
+      \    pthread_attr_setstack(&thread_attr, thread_stack[thread_counter],PTHREAD_STACK_MIN);            \n\
+      \    if ((thread_counter>512) || pthread_create(&c_thread,&thread_attr, thread_life, (void *)obj)) { \n\
+      \      while (*msg != 0) print_char(*(msg++));           \n\
+      \      die_with_code(1);                                 \n\
+      \    };                                                  \n\
+      \  } else {                                              \n\
+      \    node->object = obj;                                 \n\
+      \    pthread_mutex_unlock(&node->mutex);                 \n\
+      \  };                                                    \n\
+      \};                                                      \n\
+      \                                                        \n\
+      \void wait_all()                                         \n\
+      \{                                                       \n\
+      \  pthread_mutex_lock(&main_mutex);                      \n\
+      \}                                                     \n\n";
+    };
     // Debug source code.
     (debug_level_option != 0).if {
       output_code.append "/* Debug Manager */\n";
@@ -810,7 +926,10 @@ Section Public
     // Extern source code.
     output_code.append "/* Source code */\n";
     PROFIL_LIST.genere_handler output_code;
-
+    ((STRING_CST.slot_hash_code != NULL) && {STRING_CST.slot_hash_code.require_count > 0}).if {
+      output_code.append "static void init_string_alias();\n";
+    };
+    
     // Source code.
     title "SOURCE CODE" in output_code;
 
@@ -829,16 +948,25 @@ Section Public
     indent.remove_last 2;
     output_code.append indent;
     output_code.append "}\n\n";
-
+    
+    (is_cop).if {
+      "Parallel slot's list detected:\n\
+      \------------------------------\n".print;
+    };
+    
     PROFIL_LIST.genere output_code;
 
     TYPE.genere_all_struct;
     output_decl.append "\nvoid *table_type[";
     TYPE.id_counter_without_type.append_in output_decl;
     output_decl.append "];\n";
-
-    // String Constant.
     
+    ((STRING_CST.slot_hash_code != NULL) && {STRING_CST.slot_hash_code.require_count > 0}).if {
+      output_code.append "static void init_string_alias() {\n";
+      output_code.append (STRING_CST.output_init);
+      output_code.append "};\n";
+    };
+        
     // Trace code.
     put_trace_code output_code;
 
@@ -858,9 +986,10 @@ Section Public
     FS_MIN.write file_output with output_decl size (output_decl.count);
     FS_MIN.write file_output with output_glob size (output_glob.count);
     (STRING_CST.output_count != 0).if {
-      txt := STRING_CST.output;
+      txt := STRING_CST.output;      
       FS_MIN.write file_output with txt size (txt.count);
-    };
+    };    
+    //
     FS_MIN.write file_output with output_code size (output_code.count);
     FS_MIN.close file_output;
     //
@@ -885,17 +1014,24 @@ Section Public
       FS_MIN.close f;
     };
     //
+    (is_all_warning).if {
+      (PROTOTYPE.prototype_dico.lower).to (PROTOTYPE.prototype_dico.upper) do { j:INTEGER;
+        PROTOTYPE.prototype_dico.item j.detect_slot_not_used;        
+      };
+    };
+    
+    //
     end_time := SYSTEM.get_universal_time;
     (is_quiet).if_false {
-      STD_ERROR.put_string " => ";
+      " => ".print;
       time := (end_time - begin_time).to_integer;
       (time >= 120).if {
-	STD_ERROR.put_integer (time/60);
-	STD_ERROR.put_string " minutes, ";
+	(time/60).print;
+	" minutes, ".print;
 	time := time % 60;
       };
-      STD_ERROR.put_integer time;
-      STD_ERROR.put_string " second(s).\n";
+      time.print;
+      " second(s).\n".print;
       //
       (POSITION.nb_warning != 0).if {
 	STD_ERROR.put_string " => ";
@@ -904,6 +1040,7 @@ Section Public
       };
     };
     (is_statistic).if {
+      //+ tmp,tmp2:INTEGER;
       STD_ERROR.put_string "  Local counter        : ";
       STD_ERROR.put_integer (LIST.local_counter);
       STD_ERROR.put_string "\n";
@@ -915,13 +1052,14 @@ Section Public
       print "  Call on Expanded     : " stat late_binding_expanded_counter for late_binding_counter;
       print "  Call on Self         : " stat late_binding_self_counter     for late_binding_counter;
       //
-      print "  Recursivity function : "
-      stat (PROFIL.counter_recursivity_function) for (PROFIL.counter_function);
+      //print "  Recursivity function : "
+      //stat (PROFIL.counter_recursivity_function) for (PROFIL.counter_function);
       //
       (is_optimization).if {
 	"  Invariant loop score : ".print; count_invariant.print; '\n'.print;
       };
       //
+      /*
       "Type set size vs argument number:\n".print;
       tmp2 := 0;
       (PROFIL.nb_arg_size_type.lower).to (PROFIL.nb_arg_size_type.upper) do { i:INTEGER;
@@ -989,6 +1127,7 @@ Section Public
           i.print; '='.print; tab_null.item i.print; '\n'.print;
         };
       };
+      */
 
       /*
       // Counter on '==' and '!='
@@ -1116,10 +1255,8 @@ Section Public
     //
     // Execute finality command (front end).
     //
-    // Executing `front_end':    
-    LIP_CODE.put_boolean is_cop to (ALIAS_STR.slot_is_cop);
-    LIP_CODE.put_boolean is_speed_push to (ALIAS_STR.slot_is_speed_push);
-    s := LIP_CODE.get_method (ALIAS_STR.slot_back_end);
+    // Executing `front_end':        
+    s := LIP_CODE.get_method "back_end";
     (s = NULL).if {
       "Warning: Slot `back_end' not found in *.lip file.\n".print;
     } else {

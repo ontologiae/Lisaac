@@ -1,0 +1,84 @@
+Section Header
+
+  + name    := Expanded REAL_32_32;
+
+  - export  := REAL_32, REAL_64;
+
+  - comment := "signed 32.32 fixed float.";
+
+  - type    := `signed long long `;
+  - default := (0.to_raw_real_32_32);
+
+Section Insert
+
+  - parent_signed_fixed_real:SIGNED_FIXED_REAL := SIGNED_FIXED_REAL;
+
+Section SELF
+
+  - shift_bits:INTEGER <- 32;
+
+Section Public
+
+  - round:INTEGER <-
+  // Rounded integral value.
+  ( + result:INTEGER;
+    result := to_raw_integer;
+    ((result & 8000_0000h) != 0).if {
+      result := (result >> shift_bits) + 1;
+    } else {
+      result := result >> shift_bits;
+    };
+    result
+  );
+
+  //
+  // Range.
+  //
+
+  - minimum:INTEGER_64  <- INTEGER_32.minimum;
+
+  - maximum:UINTEGER_64 <- INTEGER_32.maximum;
+
+  //
+  // Convertion format with test.
+  //
+
+  - to_real_32_32:REAL_32_32 <- Self;
+
+  //
+  // Convertion
+  //
+
+  - append_in buffer:STRING_BUFFER <-
+  // Append in the `buffer' the equivalent of `to_string'. No new STRING_BUFFER
+  // creation during the process.
+  ( + val:INTEGER;
+    + old_count,new_count:INTEGER;
+    ? {buffer!=NULL};
+
+    val := to_raw_integer;
+
+    (val < 0).if {
+      val := - val;
+      buffer.extend '-';
+    };
+    (val >> 16).append_in buffer;
+    buffer.extend '.';
+
+    old_count:=buffer.count;
+    //     1/65536 = 0.00390625 => 8 digit.
+    (((val & 0FFFF_FFFFh).to_uinteger_64 * 100000000)>>32).to_integer.append_in buffer;
+    new_count:=old_count+8;
+    {buffer.count!=new_count}.while_do {
+      buffer.insert '0' to old_count;
+    };
+  );
+
+
+
+
+
+
+
+
+

@@ -14,6 +14,7 @@ const char *re_e;
 
   - lip <-
   (
+    message_install "(Debian: sudo apt-get install libpcre3-dev)";
     add_lib "-lpcre";
   );
 
@@ -25,7 +26,7 @@ Section Public
   
   - mem:NATIVE_ARRAY(INTEGER) := NATIVE_ARRAY(INTEGER).create 3;
   
-  - fb_subst(dst,src:STRING, p:STRING_CONSTANT,r:STRING_CONSTANT) :INTEGER <-
+  - fb_subst(dst,src:STRING_BUFFER, p:STRING_ALIAS,r:STRING_ALIAS) :INTEGER <-
   // Substitute pattern p with replacement r, copying from src to dst buffer. 
   ( + pos:INTEGER;
         
@@ -47,7 +48,7 @@ Section Public
     dst.count
   );
 
-  - fb_countmatches (src:STRING, p:STRING_CONSTANT) :INTEGER <-
+  - fb_countmatches (src:STRING_BUFFER, p:STRING_ALIAS) :INTEGER <-
   // Count all matches with pattern p in src buffer. 
   ( + pos,count:INTEGER;
     
@@ -61,10 +62,10 @@ Section Public
     count
   );
 
-  - variants:FAST_ARRAY(STRING_CONSTANT) := 
-  ( + result:FAST_ARRAY(STRING_CONSTANT);
+  - variants:ARRAY(STRING_ALIAS) := 
+  ( + result:ARRAY(STRING_ALIAS);
     
-    result := FAST_ARRAY(STRING_CONSTANT).create_with_capacity 9;
+    result := ARRAY(STRING_ALIAS).create_with_capacity 9;
     result.add_last "agggtaaa|tttaccct";         result.add_last "[cgt]gggtaaa|tttaccc[acg]";
     result.add_last "a[act]ggtaaa|tttacc[agt]t"; result.add_last "ag[act]gtaaa|tttac[agt]ct";
     result.add_last "agg[act]taaa|ttta[agt]cct"; result.add_last "aggg[acg]aaa|ttt[cgt]ccct";
@@ -73,10 +74,10 @@ Section Public
     result
   );
 
-  - subst:FAST_ARRAY(STRING_CONSTANT) := 
-  ( + result:FAST_ARRAY(STRING_CONSTANT);
+  - subst:ARRAY(STRING_ALIAS) := 
+  ( + result:ARRAY(STRING_ALIAS);
     
-    result := FAST_ARRAY(STRING_CONSTANT).create_with_capacity 22;
+    result := ARRAY(STRING_ALIAS).create_with_capacity 22;
     result.add_last "B"; result.add_last "(c|g|t)"; 
     result.add_last "D"; result.add_last "(a|g|t)";
     result.add_last "H"; result.add_last "(a|c|t)";
@@ -91,16 +92,16 @@ Section Public
     result
   );
   
-  - string_tmp:STRING := STRING.create 512;
+  - string_tmp:STRING_BUFFER := STRING_BUFFER.create 512;
   
   - main <-
-  ( + seq:FAST_ARRAY(STRING);
+  ( + seq:ARRAY(STRING_BUFFER);
     + ilen, clen, slen:INTEGER;
     + flip:INTEGER;
     
-    seq := FAST_ARRAY(STRING).create_with_capacity 2;
-    seq.add_last (STRING.create (5.mb));
-    seq.add_last (STRING.create (5.mb));
+    seq := ARRAY(STRING_BUFFER).create_with_capacity 2;
+    seq.add_last (STRING_BUFFER.create (5.mb));
+    seq.add_last (STRING_BUFFER.create (5.mb));
     read_stdin (seq.first);    
     
     ilen := seq.first.count;
@@ -130,7 +131,7 @@ Section Public
   
 Section Private
   
-  - read_stdin str:STRING <-
+  - read_stdin str:STRING_BUFFER <-
   // BS: put this function in library...
   ( + storage:NATIVE_ARRAY(CHARACTER);
     + n,cap:INTEGER;
@@ -150,7 +151,7 @@ Section Private
   // External Function.
   //
   
-  - pcre_compile p:STRING_CONSTANT <-
+  - pcre_compile p:STRING_ALIAS <-
   ( + storage:NATIVE_ARRAY(CHARACTER);
     storage := p.storage;
     `re = pcre_compile(@storage, PCRE_CASELESS, &re_e, &re_eo, NULL)`;
@@ -161,7 +162,7 @@ Section Private
     `re_ex = pcre_study(re, 0, &re_e)`;
   );
   
-  - pcre_exec src:STRING position pos:INTEGER mem m:NATIVE_ARRAY(INTEGER) :INTEGER <-
+  - pcre_exec src:STRING_BUFFER position pos:INTEGER mem m:NATIVE_ARRAY(INTEGER) :INTEGER <-
   ( + storage:NATIVE_ARRAY(CHARACTER);
     + len:INTEGER;
     storage := src.storage;

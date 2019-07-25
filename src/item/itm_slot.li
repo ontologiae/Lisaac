@@ -2,32 +2,30 @@ Section Header
 
   + name    := ITM_SLOT;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Slot item";
 
 Section Inherit
 
   + parent_named:Expanded NAMED;
-
+  
+  + parent_pattern:Expanded ITM_PATTERN;
+  
 Section Public
 
   //
   // Shorter information.
   //
 
-  + comment:STRING_CONSTANT;
+  + comment:STRING_ALIAS;
 
-  - set_comment str:STRING_CONSTANT <-
+  - set_comment str:STRING_ALIAS <-
   (
     comment := str;
   );
 
-  + comment_chapter:STRING_CONSTANT;
+  + comment_chapter:STRING_ALIAS;
 
-  - set_comment_chapter c:STRING_CONSTANT <-
+  - set_comment_chapter c:STRING_ALIAS <-
   (
     comment_chapter := c;
   );
@@ -42,6 +40,13 @@ Section Public
   //
   // Profil
   //
+  
+  + is_used:BOOLEAN;
+  
+  - set_used <-
+  (
+    is_used := TRUE;
+  );
 
   + id_section:SECTION_;
 
@@ -54,10 +59,12 @@ Section Public
     result
   );
 
-  + argument_list:FAST_ARRAY(ITM_ARGUMENT);
+  + argument_list:ARRAY ITM_ARGUMENT;
 
   + result_type:ITM_TYPE;
-
+  
+  + is_with_list:BOOLEAN;
+  
   - set_result_type t:ITM_TYPE <-
   ( + tm:ITM_TYPE_MONO;
 
@@ -85,7 +92,7 @@ Section Public
     result_type := t;
   );
 
-  - set_argument_list p:FAST_ARRAY(ITM_ARGUMENT) <-
+  - set_argument_list p:ARRAY ITM_ARGUMENT with_list is_lst:BOOLEAN <-
   (
     ((p.count > 1) || {p.first.count > 1}).if {
       (id_section.is_interrupt).if {
@@ -96,9 +103,10 @@ Section Public
       };
     };
     argument_list := p;
+    is_with_list := is_lst;
   );
 
-  - get_argument_type i:INTEGER :ITM_TYPE_MONO <-
+  - get_argument_type i:INTEGER :ITM_TYPE <-
   ( + idx,j:INTEGER;
     + arg:ITM_ARGUMENT;
 
@@ -131,19 +139,20 @@ Section Public
 	(other.position).put_position;
 	POSITION.send_error;
       };
-      (id_section != other.id_section).if {
+      (id_section == other.id_section).if_false {
 	POSITION.put_error warning text
-	"Invariance section declaration invalid.";
-	position.put_position;
-	(other.position).put_position;
+        "Invariance section declaration invalid.";
+        id_section.position.put_position;
+        position.put_position;
+        other.id_section.position.put_position;
+        other.position.put_position;        
 	POSITION.send_error;
       };
       (
         ((other.argument_list = NULL) ^ (argument_list = NULL)) ||
         {(argument_list != NULL) && {argument_list.count != other.argument_list.count}}
       ).if {
-        POSITION.put_error warning text
-        "Invariance argument number.";
+        POSITION.put_error warning text "Invariance argument number.";
         position.put_position;
         (other.position).put_position;
         POSITION.send_error;
@@ -185,7 +194,7 @@ Section Public
     0
   );
 
-  - associativity:STRING_CONSTANT <-
+  - associativity:STRING_ALIAS <-
   (
     crash_with_message "ITM_SLOT.associativity.";
     NULL
@@ -200,9 +209,6 @@ Section Public
   //
   // Value.
   //
-
-  + require:ITM_LIST;
-  + ensure:ITM_LIST;
 
   + value:ITM_CODE;
 
@@ -220,28 +226,18 @@ Section Public
     };
   );
 
-  - set_require e:ITM_LIST <-
-  (
-    require := e;
-  );
-
-  - set_ensure e:ITM_LIST <-
-  (
-    ensure := e;
-  );
-
   //
   // Constructeur.
   //
 
-  - create p:POSITION name n:STRING_CONSTANT feature sec:SECTION_ :SELF <-
+  - create p:POSITION name n:STRING_ALIAS feature sec:SECTION_ :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name n feature sec;
     result
   );
 
-  - make p:POSITION name n:STRING_CONSTANT feature sec:SECTION_ <-
+  - make p:POSITION name n:STRING_ALIAS feature sec:SECTION_ <-
   (
     name        := n;
     position    := p;
@@ -269,21 +265,83 @@ Section Public
     result
   );
 
-  - check_argument_type larg:FAST_ARRAY(EXPR) for p:PARAMETER_TO_TYPE <-
-  ( + idx:INTEGER;
-    + a:ITM_ARGUMENT;
-
+  - check_arguments larg:ARRAY EXPR for p:PARAMETER_TO_TYPE <-
+  ( + a:ITM_ARGUMENT;
+    + e:EXPR;
+    
     (argument_list.lower).to (argument_list.upper) do { i:INTEGER;
       a := argument_list.item i;
-      idx := a.check larg index idx for p;
+      e := a.check (larg.item i) for p;
+      larg.put e to i;
     };
   );
-
+  
+  - get_argument_list_with arg_expr:ARRAY EXPR :ARRAY ITM_ARGUMENT <-
+  ( + j:INTEGER;
+    + itm_slot:ITM_SLOT;
+    + result,s:SLOT;
+    + la,ls:ARRAY ITM_ARGUMENT;
+    + a:ITM_ARGUMENT;
+    + arg:ITM_ARG;
+    + em:EXPR_MULTIPLE;    
+    + names:ARRAY STRING_ALIAS;
+    + t:ITM_TYPE_MULTI;
+    + ts:ARRAY ITM_TYPE;
+    
+    verify_itm_slot_parent itm_slot;
+    la := argument_list;  
+    (argument_list != NULL).if {
+      (is_with_list).if {        
+        la := ALIAS_ARRAY ITM_ARGUMENT.new;
+        ls := itm_slot.argument_list;          
+        (ls.lower).to (ls.upper) do { i:INTEGER;
+          a := ls.item i;            
+          name.print; " 1\n".print;
+          ((arg ?= a; arg != NULL) && {arg.type.is_list}).if {
+            name.print; " 2\n".print;
+            em ?= arg_expr.item i;
+            (em != NULL).if {                
+              name.print; " 3\n".print;
+              names := ALIAS_ARRAY STRING_ALIAS.new;
+              ts := ALIAS_ARRAY ITM_TYPE.new;
+              1.to (em.cardinality) do { j:INTEGER;
+                string_tmp.copy (arg.name);
+                string_tmp.append "__";
+                j.append_in string_tmp;
+                names.add_last (string_tmp.to_string_alias);
+                ts.add_last (arg.type);
+              };
+              ts := ALIAS_ARRAY ITM_TYPE.alias ts;
+              t := ITM_TYPE_MULTI.get ts;
+              names := ALIAS_ARRAY STRING_ALIAS.alias names;
+              a := ITM_ARGS.create (a.position) name names type t;
+            };
+            la.add_last a;
+          } else {
+            la.add_last a;              
+          };          
+        };
+          
+        (la.count > 1).if {
+          (la.lower).to (la.upper) do { i:INTEGER;
+            string_tmp.clear;
+            la.item i.append_in string_tmp; string_tmp.print; ','.print;
+          };
+          '\n'.print;
+          arg_expr.count.print;
+          '\n'.print;
+        };
+        la := ALIAS_ARRAY ITM_ARGUMENT.alias la;
+      };
+    };    
+    la
+  );
+  
   //
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     buffer.append name;
     (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
@@ -295,13 +353,13 @@ Section Public
     result_type.append_in buffer;
   );
 
-  - pretty_name:STRING_CONSTANT <-
+  - pretty_name:STRING_ALIAS <-
   (
     crash_with_message "ITM_SLOT.pretty_name.";
     NULL
   );
 
-  - pretty_name_in buffer:STRING <-
+  - pretty_name_in buffer:STRING_BUFFER <-
   ( + j:INTEGER;
 
     j := name.lower;
@@ -317,13 +375,13 @@ Section Public
     buffer.add_last (name.last);
   );
 
-  - shorter_profile_in buf:STRING <-
+  - shorter_profile_in buf:STRING_BUFFER <-
   (
     // style.
     (style = '+').if {
-      put "+" to buf like (ALIAS_STR.short_slot_style);
+      put "+" to buf like "slot_style";
     } else {
-      put "-" to buf like (ALIAS_STR.short_slot_style);
+      put "-" to buf like "slot_style";
     };
     shorter_profile_intern_in buf;
     // Result.
@@ -335,7 +393,7 @@ Section Public
 
 Section ITM_SLOT
 
-  - shorter_profile_intern_in buf:STRING <-
+  - shorter_profile_intern_in buf:STRING_BUFFER <-
   ( + j,i:INTEGER;
     // Name + arguments.
     string_tmp.clear;
@@ -345,7 +403,7 @@ Section ITM_SLOT
     i := argument_list.lower+1;
     {j < name.upper}.while_do {
       ((name.item j = '_') && {name.item (j+1) = '_'}).if {
-        put string_tmp to buf like (ALIAS_STR.short_slot);
+        put string_tmp to buf like "slot";
         buf.add_last ' ';
         argument_list.item i.shorter_in buf;
         buf.add_last ' ';
@@ -358,7 +416,7 @@ Section ITM_SLOT
       };
     };
     string_tmp.add_last (name.last);
-    put string_tmp to buf like (ALIAS_STR.short_slot);
+    put string_tmp to buf like "slot";
     (i <= argument_list.upper).if {
       buf.add_last ' ';
       argument_list.last.shorter_in buf;
@@ -371,27 +429,23 @@ Section Private
   - default_value v:ITM_CODE in t:PROTOTYPE :ITM_CODE <-
   ( //+ lst:ITM_LIST;
     + s:ITM_SLOT;
-    + n:STRING_CONSTANT;
-    + sec:SECTION_;
-    + larg:FAST_ARRAY(ITM_ARGUMENT);
+    + n:STRING_ALIAS;
+    + larg:ARRAY ITM_ARGUMENT;
     + a:ITM_CODE;
 
     // Add function for init.
     string_tmp.copy "__init_";
     string_tmp.append name;
-    n := ALIAS_STR.get string_tmp;
-    sec := SECTION_.get_name (ALIAS_STR.section_public);
-    larg := FAST_ARRAY(ITM_ARGUMENT).create_with_capacity 1;
+    n := string_tmp.to_string_alias;
+    larg := ARRAY ITM_ARGUMENT .create_with_capacity 1;
     larg.add_last (
-      ITM_ARG.create (v.position)
-      name (ALIAS_STR.variable_self)
-      type (ITM_TYPE_SIMPLE.type_self)
+      ITM_ARG.create (v.position) name "Self" type (ITM_TYPE_SIMPLE.type_self)
     );
-    s := ITM_SLOT.create (v.position) name n feature sec;
+    s := ITM_SLOT.create (v.position) name n feature (SECTION_.standard_public);
     s.set_affect '<';
     ? {result_type != NULL};
     s.set_value v type t;
-    s.set_argument_list larg;
+    s.set_argument_list larg with_list FALSE;
     s.set_result_type result_type;
     t.slot_list.fast_put s to (s.name);
     (t.generic_count = 0).if {

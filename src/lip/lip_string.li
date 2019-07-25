@@ -2,9 +2,6 @@ Section Header
 
   + name      := LIP_STRING;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -13,13 +10,13 @@ Section Inherit
 
 Section Private
 
-  - storage:FAST_ARRAY(LIP_STRING) := FAST_ARRAY(LIP_STRING).create_with_capacity 10;
+  - storage:ARRAY LIP_STRING := ARRAY LIP_STRING .create_with_capacity 10;
 
 Section Public
 
-  + value:STRING_CONSTANT;
+  + value:STRING_ALIAS;
 
-  - set_value v:STRING_CONSTANT <-
+  - set_value v:STRING_ALIAS <-
   (
     value := v;
   );
@@ -28,7 +25,7 @@ Section Public
   // Creation.
   //
 
-  - get str:STRING_CONSTANT :LIP_STRING <-
+  - get str:STRING_ALIAS :LIP_STRING <-
   ( + result:LIP_STRING;
     (storage.is_empty).if {
       result := clone;
@@ -49,7 +46,7 @@ Section Public
   // Operation.
   //
 
-  - name:STRING_CONSTANT <- "STRING";
+  - name:STRING_ALIAS <- "STRING";
 
   - copy:LIP_CONSTANT <-
   (
@@ -63,7 +60,7 @@ Section Public
     string_tmp.print;
   );
 
-  - append_in str:STRING <-
+  - append_in str:STRING_BUFFER <-
   ( + i:INTEGER;
     + car:CHARACTER;
 
@@ -122,7 +119,7 @@ Section LIP_CONSTANT
   (
     string_tmp.copy value;
     string_tmp.append (other.value);
-    value := ALIAS_STR.get string_tmp;
+    value := string_tmp.to_string_alias;
     other.free;
     Self
   );

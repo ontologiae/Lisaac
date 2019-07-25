@@ -12,7 +12,7 @@ Section Private
   // Command.
   //
 
-  - usage: STRING_CONSTANT :=
+  - usage: STRING_ALIAS :=
   "----------------------------------------------------------------\n\
   \--                      Tiny Object - V.0.1                   --\n\
   \--                   LSIIT - ULP - CNRS - FRANCE              --\n\
@@ -36,7 +36,7 @@ Section Private
   //
 
   - read_options <-
-  ( + cmd:STRING;
+  ( + cmd:STRING_BUFFER;
     + j:INTEGER;
 
     j := 1;
@@ -66,7 +66,7 @@ Section Public
     // Read file.
     file_input := FS_MIN.open_read input_name;
     sz := FS_MIN.file_size file_input;
-    source := STRING.create (sz+1);
+    source := STRING_BUFFER.create (sz+1);
     FS_MIN.read file_input in source size sz;
     FS_MIN.close file_input;
 

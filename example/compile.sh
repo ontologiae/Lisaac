@@ -1,5 +1,5 @@
 #!/bin/bash
 
 for i in `find -name "*.li"` ; do 
-  cat $i | grep -q "\- main <" && echo Compile $i && lisaac $i -q -boost
+  cat $i | grep -q "\- main <" && echo Compile $i && lisaac $i -q -hyper_boost
 done

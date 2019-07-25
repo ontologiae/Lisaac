@@ -1,0 +1,350 @@
+Section Header
+  
+  + name := TEST2D;
+  
+Section Inherit 
+  - parent_constant_pen:CONSTANT_PEN := CONSTANT_PEN;  
+  - parent_paper:PAPER := PAPER;
+  
+Section Public 
+
+  - draw pen:PEN lines (x,y:REAL_32) size (w,h:REAL_32) time t:REAL_32 <-
+  ( + pad,s,fx, fy:REAL_32;
+    - pts:ARRAY REAL_32;
+    - joins,caps:ARRAY INTEGER;
+    
+    (pts = NULL).if {
+      pts := ARRAY REAL_32.create (4*2);
+      joins := ARRAY INTEGER.create_with_capacity 3;
+      caps  := ARRAY INTEGER.create_with_capacity 3;
+      joins.add_last (pen.miter);
+      joins.add_last (pen.round);
+      joins.add_last (pen.bevel);
+      caps.add_last (pen.butt);
+      caps.add_last (pen.round);
+      caps.add_last (pen.square);
+    };
+
+    pad := 5.0; 
+    s := w/9.0 - pad*2;
+    
+    pen.save;
+    pts.put (-s*0.25 + (t*0.3).cos * s*0.5) to 0;
+    pts.put           ((t*0.3).sin * s*0.5) to 1;
+    pts.put                       (-s*0.25) to 2;
+    pts.put                               0 to 3;
+    pts.put                        (s*0.25) to 4;
+    pts.put                               0 to 5;
+    pts.put (s*0.25 + (-t*0.3).cos * s*0.5) to 6;
+    pts.put          ((-t*0.3).sin * s*0.5) to 7;
+
+    0.to 2 do { i:INTEGER;
+      0.to 2 do { j:INTEGER;
+        fx := x + s*0.5 + (j).to_real_32/3.0*w + pad;
+        fy := y - s*0.5 + (i).to_real_32/3.0*h + pad;
+        
+        pen.line_cap  (caps .item i);
+        pen.line_join (joins.item j);
+        
+        pen.stroke_width (s*0.3);
+        pen.stroke_color (COLOR.rgba(0,0,0,160));
+        pen.begin_path;
+        pen.move_to (fx+pts.item 0, fy+pts.item 1);
+        pen.line_to (fx+pts.item 2, fy+pts.item 3);
+        pen.line_to (fx+pts.item 4, fy+pts.item 5);
+        pen.line_to (fx+pts.item 6, fy+pts.item 7);
+        pen.stroke;
+        
+        pen.line_cap   (pen.butt);
+        pen.line_join (pen.bevel);
+        
+        pen.stroke_width 1.0;
+        pen.stroke_color (COLOR.rgba(0,192,255,255));
+        pen.begin_path;
+        pen.move_to (fx+pts.item 0, fy+pts.item 1);
+        pen.line_to (fx+pts.item 2, fy+pts.item 3);
+        pen.line_to (fx+pts.item 4, fy+pts.item 5);
+        pen.line_to (fx+pts.item 6, fy+pts.item 7);
+        pen.stroke;
+      };
+    };
+    pen.restore;
+  );
+
+  - draw pen:PEN graph (x,y:REAL_32) size (w,h:REAL_32) time t:REAL_32 <-
+  ( + dx:REAL_32;	
+    + bg:PAINT;
+    - samples,sx,sy:ARRAY REAL_32;
+    
+    (samples = NULL).if {
+      samples := ARRAY REAL_32.create 6;
+      sx := ARRAY REAL_32.create 6;
+      sy := ARRAY REAL_32.create 6;
+    };
+    dx := w/5.0;
+    
+    samples.put ((1.0+(t*1.2345 +(t*0.33457).cos*0.44).sin)*0.5) to 0;
+    samples.put ((1.0+(t*0.68363+(t*    1.3).cos*1.55).sin)*0.5) to 1;
+    samples.put ((1.0+(t*1.1642 +(t*0.33457).cos*1.24).sin)*0.5) to 2;
+    samples.put ((1.0+(t*0.56345+(t*   1.63).cos*0.14).sin)*0.5) to 3;
+    samples.put ((1.0+(t*1.6245 +(t*  0.254).cos* 0.3).sin)*0.5) to 4;
+    samples.put ((1.0+(t*0.345  +(t*   0.03).cos* 0.6).sin)*0.5) to 5;
+
+    0.to 5 do { i:INTEGER; 
+      sx.put                 (x+dx*i) to i;
+      sy.put (y+h*samples.item i*0.8) to i;
+    };
+    
+    // Graph background
+    bg := PAINT.create_linear (x,y) to (x,y+h) 
+    color (COLOR.rgba(0,160,192,0)) to (COLOR.rgba(0,160,192,64));
+    pen.begin_path;
+    pen.move_to (sx.first,sy.first);
+    1.to 5 do { i:INTEGER;
+      pen.bezier_w1 (sx.item (i-1)+dx*0.5,sy.item (i-1))
+      w2 (sx.item i-dx*0.5,sy.item i)
+      to (sx.item i,sy.item i);
+    };
+    pen.line_to (x+w, y+h);
+    pen.line_to (  x, y+h);
+    pen.fill_paint bg;
+    pen.fill;
+    bg.free;
+    
+    // Graph line
+    pen.begin_path;
+    pen.move_to (sx.first, sy.first+2);
+    1.to 5 do { i:INTEGER;
+      pen.bezier_w1 (sx.item (i-1)+dx*0.5,sy.item (i-1)+2)
+      w2 (sx.item i-dx*0.5,sy.item i+2) 
+      to (sx.item i,sy.item i+2);
+    };
+    pen.stroke_color (COLOR.rgba(0,0,0,32));
+    pen.stroke_width 3.0;
+    pen.stroke;
+
+    pen.begin_path;
+    pen.move_to (sx.first,sy.first);
+    1.to 5 do { i:INTEGER; 
+      pen.bezier_w1 (sx.item (i-1)+dx*0.5,sy.item (i-1))
+      w2 (sx.item i-dx*0.5,sy.item i)
+      to (sx.item i,sy.item i);
+    };
+    pen.stroke_color (COLOR.rgba(0,160,192,255));
+    pen.stroke_width 3.0;
+    pen.stroke;
+
+    // Graph sample pos
+    0.to 5 do { i:INTEGER;
+      bg := PAINT.create_radial (sx.item i,sy.item i+2) radius (3.0,8.0)
+      color (COLOR.rgba(0,0,0,32)) to (COLOR.rgba(0,0,0,0));
+      pen.begin_path;
+      pen.rect(sx.item i-10,sy.item i-10+2) size (20,20);
+      pen.fill_paint bg;
+      pen.fill;
+      bg.free;
+    };
+    
+    pen.begin_path;
+    0.to 5 do { i:INTEGER;
+      pen.circle (sx.item i,sy.item i) radius 4.0;
+    };
+    pen.fill_color (COLOR.rgba(0,160,192,255));
+    pen.fill;
+        
+    pen.begin_path;
+    0.to 5 do { i:INTEGER;
+      pen.circle (sx.item i,sy.item i) radius 2.0;
+    };
+    pen.fill_color (COLOR.rgba(220,220,220,255));
+    pen.fill;
+    
+    pen.stroke_width 1.0;    
+  );
+  
+  - draw pen:PEN eye (x,y:REAL_32) size (w,h:REAL_32) 
+  pos (mx,my:REAL_32) time t:REAL_32 <-
+  ( + bg,gloss:PAINT;
+    + ex,ey,lx,ly:REAL_32;
+    + rx,ry,dx,dy,d,br,blink:REAL_32;
+   
+    (ex,ey) := (w*0.23,h*0.5);
+    (lx,ly) := (x+ex,y+ey);
+    
+    rx := x + w - ex;
+    ry := y + ey;
+    br := ((ex < ey).ok ex or ey) * 0.5;
+    blink := 1.0 - ((t*0.5).sin ** 200.0)*0.8;
+    
+    bg := PAINT.create_linear (x,y+h*0.25) to (x+w*0.1,y+h)    
+    color (COLOR.rgba(220,220,220,255)) to (COLOR.rgba (128,128,128,255));
+    pen.begin_path;
+    pen.ellipse (lx,ly) radius (ex,ey);    
+    pen.fill_paint bg;
+    pen.fill;
+    bg.free;
+    
+    dx := (mx - rx) / (ex * 10);
+    dy := (my - ry) / (ey * 10);
+    d := (dx*dx+dy*dy).sqrt;
+    (d > 1.0).if { 
+      dx := dx/d; dy := dy/d; 
+    };
+    dx := dx*ex*0.4;
+    dy := dy*ey*0.5;    
+    
+    pen.begin_path;
+    pen.ellipse (lx+dx,ly+dy+ey*0.25*(1.0-blink)) radius (br,br*blink);
+    pen.fill_color (COLOR.rgba(32,32,32,255));
+    pen.fill;
+    
+    gloss := PAINT.create_radial (lx-ex*0.25,ly-ey*0.5) radius (ex*0.1,ex*0.75)
+    color (COLOR.rgba(255,255,255,128)) 
+    to (COLOR.rgba(255,255,255,0));    
+    pen.begin_path;
+    pen.ellipse (lx,ly) radius (ex,ey);
+    pen.fill_paint gloss;
+    pen.fill;    
+    gloss.free;            
+  );
+  
+  - draw pen:PEN color_wheel (x,y:REAL_32) size (w,h:REAL_32) time t:REAL_32 <-
+  ( + r0,r1:REAL_32;
+    + ax,ay, bx,by, cx,cy:REAL_32;
+    + aeps,r:REAL_32;
+    + hue:REAL_32;
+    + paint:PAINT;
+    hue := (t * 0.12).sin;
+    pen.save;
+  
+    cx := x + w*0.5;
+    cy := y + h*0.5;
+    r1 := ((w < h).ok w or h) * 0.5 - 5.0;
+    r0 := r1 - 20.0;
+    aeps := 0.5 / r1;	// half a pixel arc length in radians (2pi cancels out).
+  
+    0.to 5 do { i:INTEGER;
+      + a0,a1:REAL_32;
+      a0 := i.to_real_32 / 6.0 * REAL_32.pi * 2.0 - aeps;
+      a1 := (i.to_real_32+1.0) / 6.0 * REAL_32.pi * 2.0 + aeps;
+      pen.begin_path;
+      pen.arc (cx,cy) radius r0 angle (a0,a1) direction (pen.cst_cw );
+      pen.arc (cx,cy) radius r1 angle (a1,a0) direction (pen.cst_ccw);
+      pen.close_path;
+      ax := cx + a0.cos * (r0+r1)*0.5;
+      ay := cy + a0.sin * (r0+r1)*0.5;
+      bx := cx + a1.cos * (r0+r1)*0.5;
+      by := cy + a1.sin * (r0+r1)*0.5;
+      paint := PAINT.create_linear (ax,ay) to (bx,by)
+      color (COLOR.hsla(a0/(REAL_32.pi*2),1.0,0.55) alpha 255)
+      to    (COLOR.hsla(a1/(REAL_32.pi*2),1.0,0.55) alpha 255);
+      pen.fill_paint paint;
+      pen.fill;
+      paint.free;
+    };
+    
+    pen.begin_path;
+    pen.circle (cx,cy) radius (r0-0.5);
+    pen.circle (cx,cy) radius (r1+0.5);
+    pen.stroke_color (COLOR.rgba(0,0,0,64));
+    pen.stroke_width 1.0;
+    pen.stroke;
+  
+    // Selector
+    pen.save;
+    
+    pen.translate (cx,cy);
+    pen.rotate (hue*REAL_32.pi*2);
+  
+    // Marker on
+    
+    pen.stroke_width 2.0;
+    pen.begin_path;
+    pen.rect (r0-1,-3) size (r1-r0+2,6);    
+    pen.stroke_color (COLOR.rgba(255,255,255,192));
+    pen.stroke;
+    
+    paint := PAINT.create_box (r0-3,-5) size (r1-r0+6,10) radius 2 feather 4
+    color (COLOR.rgba(0,0,0,128)) to (COLOR.rgba(0,0,0,0));
+    pen.begin_path;
+    pen.rect (r0-2-10,-4-10) size (r1-r0+4+20,8+20);
+    pen.rect (r0-2,-4) size (r1-r0+4,8);
+    pen.path_winding cst_cw; // Holes
+    pen.fill_paint paint;
+    pen.fill;
+    paint.free;
+    
+    // Center triangle
+    r := r0 - 6;
+    ax := ( 120.0/180.0*REAL_32.pi).cos * r;
+    ay := ( 120.0/180.0*REAL_32.pi).sin * r;
+    bx := (-120.0/180.0*REAL_32.pi).cos * r;
+    by := (-120.0/180.0*REAL_32.pi).sin * r;
+    
+    pen.begin_path;
+    pen.move_to (r,0);
+    pen.line_to (ax,ay);
+    pen.line_to (bx,by);
+    pen.close_path;
+    paint := PAINT.create_linear (r,0) to (ax,ay) 
+    color (COLOR.hsla (hue,1.0,0.5) alpha 255) to (COLOR.rgba(255,255,255,255));
+    pen.fill_paint paint;
+    pen.fill;
+    paint.free;
+
+    paint := PAINT.create_linear ((r+ax)*0.5,ay*0.5) to (bx,by)
+    color (COLOR.rgba(0,0,0,0)) to (COLOR.rgba(0,0,0,255));
+    pen.fill_paint paint;
+    pen.fill;
+    paint.free;
+    pen.stroke_color (COLOR.rgba(0,0,0,64));
+    pen.stroke;
+
+    pen.restore;  
+    pen.restore;    
+  );
+  
+  - draw_mouse p:PEN <-
+  ( + stat,x,y:INTEGER;
+    p.begin_path;
+    0.to 9 do { i:INTEGER;
+      stat := p.mouse.item (i*3);
+      (stat != 0).if {                
+        x := p.mouse.item (i*3 + 1);
+        y := p.mouse.item (i*3 + 2);              
+        p.circle (x,y) radius 100;
+        p.stroke_color (COLOR.rgb (255,255,255));
+        p.stroke;
+      };
+    };
+  );
+
+Section Public
+   
+  - draw p:PEN <-
+  ( + t:REAL_32;
+    
+    t := CLOCK.seconds;
+    
+    draw p graph (0,150) size (p.win_width,p.win_height) time t;
+      
+    draw p lines (50,p.win_height/4) size (p.win_width-20,p.win_height/2) time t;
+    
+    draw p eye (p.win_width-200,150) 
+    size (300,200) pos (
+      ((t*  1).cos*p.win_width ).to_integer.abs,
+      ((t*0.5).sin*p.win_height).to_integer
+    ) time t;
+
+    draw p color_wheel (p.win_width-250,p.win_height-250)
+    size (250.0,250.0) time t;      
+    
+    draw_mouse p;
+    
+  );
+  
+  - main <-
+  ( 
+    PAPER.make (480,800) title "Test LI2D";        
+    PAPER.run Self;
+  );

@@ -1,11 +1,7 @@
 Section Header
 
-  + name    := ALIAS_ARRAY(E);
+  + name    := ALIAS_ARRAY E;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Aliser collection.";
 
 Section Inherit
@@ -14,13 +10,13 @@ Section Inherit
 
 Section Private
 
-  - bucket:HASHED_SET(FAST_ARRAY(E)) :=
-  HASHED_SET(FAST_ARRAY(E)).create;
+  - bucket:HASHED_SET(ARRAY E) :=
+  HASHED_SET(ARRAY E).create;
 
-  - free_list:FAST_ARRAY(FAST_ARRAY(E)) :=
-  FAST_ARRAY(FAST_ARRAY(E)).create_with_capacity 5;
+  - free_list:ARRAY(ARRAY E) :=
+  ARRAY(ARRAY E).create_with_capacity 5;
 
-  - empty_list:FAST_ARRAY(E) := FAST_ARRAY(E).create_with_capacity 0;
+  - empty_list:ARRAY E := ARRAY E .create_with_capacity 0;
 
 Section Public
 
@@ -28,11 +24,11 @@ Section Public
   // Temporary manager.
   //
 
-  - new:FAST_ARRAY(E) <-
-  ( + result:FAST_ARRAY(E);
+  - new:ARRAY E <-
+  ( + result:ARRAY E;
 
     (free_list.is_empty).if {
-      result := FAST_ARRAY(E).create_with_capacity 16;
+      result := ARRAY E .create_with_capacity 16;
     } else {
       result := free_list.last;
       free_list.remove_last;
@@ -41,15 +37,15 @@ Section Public
     result
   );
 
-  - alias tmp:FAST_ARRAY(E) :FAST_ARRAY(E) <-
-  ( + result:FAST_ARRAY(E);
+  - alias tmp:ARRAY E :ARRAY E <-
+  ( + result:ARRAY E;
 
     (tmp.is_empty).if {
       result := empty_list;
     } else {
       result := bucket.reference_at tmp;
       (result = NULL).if {
-        result := FAST_ARRAY(E).create_with_capacity (tmp.count);
+        result := ARRAY E .create_with_capacity (tmp.count);
         result.copy_collection tmp;
         bucket.fast_add result;
       };
@@ -58,16 +54,16 @@ Section Public
     result
   );
 
-  - copy tmp:FAST_ARRAY(E) :FAST_ARRAY(E) <-
-  ( + result:FAST_ARRAY(E);
+  - copy tmp:ARRAY E :ARRAY E <-
+  ( + result:ARRAY E;
 
-    result := FAST_ARRAY(E).create_with_capacity (tmp.count);
+    result := ARRAY E .create_with_capacity (tmp.count);
     result.copy_collection tmp;
     free tmp;
     result
   );
 
-  - free tmp:FAST_ARRAY(E) <-
+  - free tmp:ARRAY E <-
   (
     tmp.clear;
     free_list.add_last tmp;

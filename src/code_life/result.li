@@ -2,9 +2,6 @@ Section Header
 
   + name      := RESULT;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -58,8 +55,12 @@ Section Public
   );
 
   - execute:INSTR <-
-  (
-    write ?= write.execute;
+  ( + new_wrt:WRITE;
+    new_wrt ?= write.execute;
+    (new_wrt = NULL).if {      
+      semantic_error (position,"BUG LISAAC: Contact me.");
+    };
+    write := new_wrt;
     Self
   );
 
@@ -84,7 +85,7 @@ Section Public
 
   - execute_unlink:INSTR  <- write.execute_unlink;
 
-  - display buffer:STRING <- 
+  - display buffer:STRING_BUFFER <- 
   (
     write.display buffer;    
   );

@@ -9,10 +9,10 @@ Section Inherit
 Section Private
 
   - fannkuch(n:INTEGER) :INTEGER <-
-  ( + perm            :FAST_ARRAY(INTEGER);
-    + perm1           :FAST_ARRAY(INTEGER);
-    + count           :FAST_ARRAY(INTEGER);
-    + max_perm        :FAST_ARRAY(INTEGER);
+  ( + perm            :ARRAY(INTEGER);
+    + perm1           :ARRAY(INTEGER);
+    + count           :ARRAY(INTEGER);
+    + max_perm        :ARRAY(INTEGER);
     + exit, exit1     :BOOLEAN;    
     + check           :INTEGER;
     + perm0           :INTEGER;
@@ -23,10 +23,10 @@ Section Private
     + r, m            :INTEGER;
     m := n - 1;
 
-    perm     := FAST_ARRAY(INTEGER).create n;
-    count    := FAST_ARRAY(INTEGER).create n;
-    max_perm := FAST_ARRAY(INTEGER).create n;
-    perm1    := FAST_ARRAY(INTEGER).create_with_capacity n;
+    perm     := ARRAY(INTEGER).create n;
+    count    := ARRAY(INTEGER).create n;
+    max_perm := ARRAY(INTEGER).create n;
+    perm1    := ARRAY(INTEGER).create_with_capacity n;
 
     0.to m do { i:INTEGER;
       perm1.add_last i; 

@@ -2,13 +2,9 @@ Section Header
 
   + name        := SLOT;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parent for slot runnable";
 
-Section Inherit
+Section Inherit // BSBS: Passer en Insert
 
   + parent_itm_slot:ITM_SLOT := ITM_SLOT;
 
@@ -19,26 +15,43 @@ Section Public
   + slot_id:SLOT_DATA;
 
   + receiver_type:TYPE;
-
+  
+  + argument_list:ARRAY ITM_ARGUMENT;
+  
+  - itm_slot:ITM_SLOT <- parent_itm_slot;
+  
   //
   // Creation.
   //
 
-  - create s:ITM_SLOT type t:TYPE :SLOT <-
+  - create s:ITM_SLOT for larg:ARRAY ITM_ARGUMENT type t:TYPE :SLOT <-
   ( + result:SLOT;
 
     result := clone;
-    result.make s type t
+    result.make s for larg type t
   );
 
-  - make s:ITM_SLOT type t:TYPE :SLOT <-
+  - make s:ITM_SLOT for diagram:ARRAY ITM_ARGUMENT type t:TYPE :SLOT <-
   ( + result:SLOT;
-
+        
+    (diagram = NULL).if {
+      argument_list := s.argument_list;
+    } else {
+      argument_list := diagram;
+    };
+    (argument_list.lower).to (argument_list.upper) do { i:INTEGER;
+      string_tmp.clear;
+      argument_list.item i.append_in string_tmp; string_tmp.print; ','.print;
+    };
+    "SLOT:".print; s.name.print; ' '.print; argument_list.count.print; '\n'.print;
+    //
+    s.set_used;
     parent_itm_slot := s;
     receiver_type := t;
     //
     (affect = '<').if {
       // Code.
+      "SLOT: AV create intern!\n".print;
       result := slot_code_intern := SLOT_CODE.create Self with value;
     } else {
       // Data
@@ -99,7 +112,8 @@ Section Public
   - add_style v:ITM_CODE :INTEGER <-
   ( + slot:SLOT_CODE;
     + result:INTEGER;
-
+    
+    "SLOT: AV create style!\n".print;
     slot := SLOT_CODE.create common_slot with v;
     (slot_code_intern = NULL).if {
       slot_code_intern := slot;
@@ -108,7 +122,7 @@ Section Public
       result := 1;
     } else {
       (slot_code_list = NULL).if {
-	slot_code_list := FAST_ARRAY(SLOT_CODE).create_with_capacity 1;
+	slot_code_list := ARRAY SLOT_CODE .create_with_capacity 1;
       };
       slot_code_list.add_last slot;
       (slot_id = NULL).if {
@@ -118,6 +132,11 @@ Section Public
       result := slot_code_list.upper + 2;
     };
     result
+  );
+  
+  - verify_profil other:SLOT <- 
+  (
+    itm_slot.is_equal_profil (other.itm_slot);
   );
 
   //
@@ -136,8 +155,8 @@ Section Public
   + slot_data_intern:SLOT_DATA; // Index 0
   + slot_code_intern:SLOT_CODE; // Index 1
 
-  + slot_code_list:FAST_ARRAY(SLOT_CODE); // Index x+2
-  + slot_data_list:FAST_ARRAY(SLOT_DATA); // Vector data slot
+  + slot_code_list:ARRAY SLOT_CODE; // Index x+2
+  + slot_data_list:ARRAY SLOT_DATA; // Vector data slot
 
   - create_slot_data <-
   ( + typ:TYPE_FULL;
@@ -146,7 +165,7 @@ Section Public
 
     tm ?= result_type;
     (tm != NULL).if {
-      slot_data_list := FAST_ARRAY(SLOT_DATA).create_with_capacity (tm.count-1);
+      slot_data_list := ARRAY SLOT_DATA .create_with_capacity (tm.count-1);
       (tm.lower).to (tm.upper-1) do { k:INTEGER;
 	typ := tm.item k.to_run_for receiver_type;
 	slot_data_list.add_last (

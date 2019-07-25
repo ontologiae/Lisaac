@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := VARIABLE;
+  + name    := VARIABLE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Parent for all variable";
+  - comment := "Parent for all variable";
 
 Section Inherit
 
@@ -15,12 +11,14 @@ Section Inherit
 Section Public
 
   - is_local:BOOLEAN <- FALSE;
+  
+  - is_result:BOOLEAN <- FALSE;
 
   //
   // Creation.
   //
 
-  - create p:POSITION name n:STRING_CONSTANT type t:TYPE_FULL :SELF <-
+  - create p:POSITION name n:STRING_ALIAS type t:TYPE_FULL :SELF <-
   ( + result:SELF;
 
     result := clone;
@@ -28,11 +26,11 @@ Section Public
     result
   );
 
-  - make p:POSITION name n:STRING_CONSTANT type t:TYPE_FULL <-
+  - make p:POSITION name n:STRING_ALIAS type t:TYPE_FULL <-
   ( + tmp:TYPES_TMP;
     position := p;
     name := n;
-    intern_name := ALIAS_STR.get_intern n;
+    intern_name := get_intern n;
     type := t;
     (is_static).if {
       tmp := TYPES_TMP.new;
@@ -47,9 +45,9 @@ Section Public
   //
   //
 
-  + intern_name:STRING_CONSTANT;
+  + intern_name:STRING_ALIAS;
 
-  - set_intern_name n:STRING_CONSTANT <-
+  - set_intern_name n:STRING_ALIAS <-
   (
     intern_name := n;
   );
@@ -75,8 +73,7 @@ Section Public
   //
 
   - is_static:BOOLEAN <-
-  ((type.is_expanded) && {type.raw != type_boolean}) ||
-  {name = ALIAS_STR.variable_self};
+  ((type.is_expanded) && {type.raw != type_boolean}) || {name = "Self"};
 
   + type_set:TYPES;
 
@@ -88,7 +85,7 @@ Section Public
     ensure_count := c;
   );
 
-  + require_list:FAST_ARRAY(WRITE);
+  + require_list:ARRAY WRITE;
   + require_first:WRITE;
   - require_count:INTEGER <-
   ( + result:INTEGER;
@@ -102,7 +99,7 @@ Section Public
     result
   );
 
-  - set_require w:WRITE list wl:FAST_ARRAY(WRITE) <-
+  - set_require w:WRITE list wl:ARRAY WRITE <-
   (
     require_first := w;
     require_list  := wl;
@@ -123,7 +120,7 @@ Section Public
     ((is_optimization_type_set) && {! busy_set.is_empty}).if {
       (! busy_set.fast_has Self).if {
         ((level_type < level_pass) && {! is_static}).if {
-          busy_set.fast_add Self;
+          busy_set.fast_add_without_control Self;
           sub_get_type t;
         } else {
           t.union type_set;
@@ -132,12 +129,12 @@ Section Public
     } else {
       ((level_type < level_pass) && {! is_static}).if {
         ((is_executing_pass) || {require_first != NULL}).if {
-          level_type := level_pass;
-          busy_set.fast_add Self;
+          level_type := level_pass;          
+          //busy_set.fast_add Self;
           tmp_type := TYPES_TMP.new;
           sub_get_type tmp_type;
           type_set := tmp_type.update type_set;
-          busy_set.clear;
+          //busy_set.clear;
         };
       };
       t.union type_set;
@@ -198,7 +195,7 @@ Section Public
       require_first := wrt;
     } else {
       (require_list = NULL).if {
-	require_list := FAST_ARRAY(WRITE).create_with_capacity 1;
+	require_list := ARRAY WRITE .create_with_capacity 1;
       };
       require_list.add_last wrt;
     };
@@ -223,9 +220,6 @@ Section Public
   (
     write_direct p with r value val
   );
-
-  - cnt:INTEGER;
-  - wrt:WRITE;
 
   - write_direct p:POSITION with r:EXPR value val:EXPR :WRITE <-
   ( + e:WRITE;
@@ -350,11 +344,12 @@ Section Public
     */
     ensure_count := ensure_count - 1;
     (ensure_count < 0).if {
+      //warning_error(e.position,"VARIABLE.unread");
       "C'est : ".print;
       e.debug_display;
       "\n dans :\n".print;
       //list_current.debug_display;
-      '\n'.print;
+      //'\n'.print;
       crash;
     };
   /*
@@ -371,7 +366,7 @@ Section Public
   // Display.
   //
 
-  - display_require buffer:STRING <-
+  - display_require buffer:STRING_BUFFER <-
   ( + rd:READ;
 
     (require_first != NULL).if {
@@ -400,7 +395,7 @@ Section Public
     };
   );
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append intern_name;
     buffer.add_last ':';
@@ -408,22 +403,24 @@ Section Public
     //buffer.append (type.intern_name);
   );
 
-  - display_type buffer:STRING <-
-  (
+  - display_type buffer:STRING_BUFFER <-
+  ( + j:INTEGER;
     buffer.add_last '{';
     (type_set.is_empty).if_false {
-      (type_set.lower).to (type_set.upper - 1) do { j:INTEGER;
+      j := type_set.first_index;
+      {j != -1}.while_do {
 	buffer.append (type_set.item j.intern_name);
-	buffer.add_last 'x';
+        buffer.add_last 'x';
+        j := type_set.next_index j;
       };
-      buffer.append (type_set.last.intern_name);
+      buffer.remove_last 1; 
     };
     buffer.add_last '}';
   );
 
 Section VARIABLE, PROTOTYPE
 
-  - list_variable_block:FAST_ARRAY(VARIABLE) := FAST_ARRAY(VARIABLE).create_with_capacity 64;
+  - list_variable_block:ARRAY VARIABLE := ARRAY VARIABLE .create_with_capacity 64;
 
   - check_variable_block <-
   (

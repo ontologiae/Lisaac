@@ -2,10 +2,6 @@ Section Header
 
   + name        := PUSH;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Push context for debug mode";
 
 Section Inherit
@@ -14,9 +10,11 @@ Section Inherit
 
 Section PUSH,LISAAC
 
-  - source_line:FAST_ARRAY(POSITION) :=
-  FAST_ARRAY(POSITION).create_with_capacity 32_000;
-
+  - source_line:ARRAY POSITION :=
+  ARRAY POSITION .create_with_capacity 32_000;
+  
+  - my_clone:SELF <- clone;
+  
 Section Public
     
   + context:LOCAL;
@@ -34,23 +32,22 @@ Section Public
 
   - create pos:POSITION context v:LOCAL first f:BOOLEAN :PUSH <-
   ( + result:PUSH;
-    ? {v != NULL};
-    
+        
     (is_speed_push).if {
-      result := PUSH_SPEED.clone;
+      result := PUSH_SPEED.my_clone;
     } else {
-      result := PUSH_STANDARD.clone;
+      result := PUSH_STANDARD.my_clone;
     };
     result.make pos context v first f;
     result
   );
 
   - make pos:POSITION context v:LOCAL first f:BOOLEAN <-
-  ( ? {pos.code != 0};
+  [
+    ? {pos.code != 0};
     ? {v != NULL};
-    (v = NULL).if {
-      crash_with_message "PUSH";
-    };
+  ]
+  (   
     position := pos;
     context := v;
     is_first := f;
@@ -105,7 +102,7 @@ Section Public
   // Genere
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   ( 
     deferred;
   );
@@ -114,7 +111,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "push(";
     buffer.append (context.intern_name);

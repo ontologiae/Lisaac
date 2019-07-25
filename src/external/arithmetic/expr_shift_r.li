@@ -2,10 +2,6 @@ Section Header
 
   + name        := EXPR_SHIFT_R;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Add Binary Expression.";
 
 Section Inherit
@@ -14,7 +10,7 @@ Section Inherit
 
 Section Public
 
-  + symbol:STRING_CONSTANT := ">>";
+  + symbol:STRING_ALIAS := ">>";
 
   //
   // Execute.
@@ -32,7 +28,7 @@ Section Public
   );
 
   - exec left_cst:INTEGER_CST and right_cst:INTEGER_CST :EXPR <-
-  //-- C1 >> C2  -> C3
+  //-- C1 >> C2  -> C3 // BSBS: Pb on ne sait pas si signé ou non (64 bits)
   //-- C1 >> -C2 -> Error.
   (
     (right_cst.value < 0).if {
@@ -60,7 +56,7 @@ Section Public
 
   - exec_left  left_cst:INTEGER_CST :EXPR <-
   //-- 0 >> E            -> 0
-  //-- -1(signed) >> E   -> -1(signed)
+  //-- -1(signed) >> E   -> -1(signed) // BSBS: Pb on ne sait pas si signé ou non (64 bits)
   ( + result:EXPR;
 
     (left_cst.value = 0).if {

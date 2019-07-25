@@ -1,26 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-//                            Lisaac Installer                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////  
-
+//
 // file LIP : LIsaac Path directory and make LIsaac Project system.
-
+//
 Section Private
   
   //
@@ -32,7 +12,7 @@ Section Private
   + input_file      :STRING; // is input file name value without extension.
   + output_file     :STRING; // is output file name value without extension.
   + output_extension:STRING; // is extension of `output_file'
-  + is_speed_push:BOOLEAN; // --s => More speed for debug mode
+  + is_speed_push:BOOLEAN := TRUE; // See `old_push' function.
   
   // Debug information.
   + debug_level:INTEGER := 15;
@@ -44,7 +24,7 @@ Section Private
   + inline_level:INTEGER := 5;
   
   // Generate code.
-  + is_cop:BOOLEAN;     // Correct value after compilation.
+  + is_cop:BOOLEAN := FALSE; 
   + is_library:BOOLEAN; // For build a lisaac library C 
   + execute_back_end:BOOLEAN := TRUE;
   + execute_status_code:INTEGER := 0;
@@ -52,6 +32,9 @@ Section Private
   // Other.
   + is_statistic:BOOLEAN;
   + is_quiet:BOOLEAN;
+  
+  + is_o3:BOOLEAN;
+  + is_tcc:BOOLEAN;
   
   //
   // Other variables.
@@ -62,7 +45,10 @@ Section Private
   + execute_file:STRING;
   
   + target:STRING := "unix";
-    
+  + is_apple:BOOLEAN := TRUE;
+  
+  + cc:STRING := "gcc";
+  
   //
   // Service
   //
@@ -70,27 +56,36 @@ Section Private
   + exit_success_code:INTEGER := 0;
   
   + exit_failure_code:INTEGER := 1;
-      
+  
+  + message:STRING := "";
+  
+  - message_install msg:STRING <-
+  (
+    message := msg;
+  );
+  
   - add_lib lib:STRING <-
   (
     (target = "windows").if {
       run "echo int main(){ return(1); } > __tmp__.c";    
-      (run ("gcc __tmp__.c -o __tmp__ " + lib + " > NUL") = 0).if {
+      (run (cc + " __tmp__.c -o __tmp__ " + lib + " > NUL") = 0).if {
         lib_gcc := lib_gcc + " " + lib;
         run "del __tmp__.c __tmp__.exe";
       } else {
-        "\nERROR: `" + lib + "' library for GCC not found.\n".print;
+        "\nERROR: `" + lib + "' library for `"+cc+"' not found.\n".print;
         run "del __tmp__.c";
+        message.print;
         die_with_code exit_failure_code;
-      };    
+        };    
     } else {
       run "echo \"int main(){ return(1); }\" > __tmp__.c";
-      (run ("gcc __tmp__.c -o __tmp__ " + lib + " 2> /dev/null") = 0).if {
+      (run (cc + " __tmp__.c -o __tmp__ " + lib + " 2> /dev/null") = 0).if {
         lib_gcc := lib_gcc + " " + lib;
         run "rm __tmp__.c __tmp__";
       } else {
-        ("\nERROR: `" + lib + "' library for GCC not found.\n").print;
+        ("\nERROR: `" + lib + "' library for `"+cc+"' not found.\n").print;
         run "rm __tmp__.c";
+        message.print;
         die_with_code exit_failure_code;
       };          
     };
@@ -131,15 +126,16 @@ Section Private
   //
   // Execute function.
   //
-  
+    
   - general_front_end <-
-  (
+  (    
     path "lib/*";
+    old_push; // BSBS: Pour l'instant...
   );
   
   - general_back_end <-
   (
-    (execute_back_end).if {
+    ((execute_back_end) & (target != "android")).if {
       (is_cop).if {
         lib_gcc := lib_gcc + " -lpthread";
       };
@@ -148,20 +144,76 @@ Section Private
       } else {
         execute_file := output_file;
       };
-      option_gcc := option_gcc + " -O3 -U_FORTIFY_SOURCE -fomit-frame-pointer ";
-      (is_library).if {
-        execute_fail ("gcc " + output_file + output_extension + " -c " + option_gcc);
-      } else {
-        (is_speed_push).if {
-          execute_fail ("gcc " + output_file + output_extension + " -S " + option_gcc + lib_gcc);
-          execute_fail ("./build_label " + output_file + ".s");
-          execute_fail ("gcc " + input_file + "_label.s -o "+ output_file + option_gcc + lib_gcc);
+      (option_gcc != " -g").if {
+        (is_o3).if {
+          option_gcc := option_gcc + " -O3";
         } else {
-          execute_fail ("gcc " + output_file + output_extension + " -o " + output_file + option_gcc + lib_gcc);
+          option_gcc := option_gcc + " -O2";
+        };
+      };
+      option_gcc := option_gcc + " -Wall -U_FORTIFY_SOURCE -Wno-parentheses-equality -Wstrict-overflow=0 "; // -fomit-frame-pointer 
+      
+      (is_tcc).if {
+        (is_library).if {
+          execute_fail ("tcc " + output_file + output_extension + " -c ");
+        } else {
+          execute_fail ("tcc " + output_file + output_extension + " -o " + output_file + lib_gcc);
+        };
+      } else {              
+        //execute_fail ("sed -i 's/ = \\*((\\*COLOR__/ = ((\\*COLOR__/' "+
+        //output_file + output_extension);
+        
+        //execute_fail ("sed -i 's/ = \\*((\\*VERTEX__/ = ((\\*VERTEX__/' "+
+        //output_file + output_extension);
+        /*
+        execute_fail ("sed -i 's/ = \\*((\\*PATH_LOW__/ = ((\\*PATH_LOW__/' "+
+        output_file + output_extension);
+        execute_fail ("sed -i 's/ = \\*((\\*SHADER__/ = ((\\*SHADER__/' "+
+        output_file + output_extension);
+        execute_fail ("sed -i 's/ = \\*((\\*FRAG__/ = ((\\*FRAG__/' "+
+        output_file + output_extension);
+        execute_fail ("sed -i 's/)((\\*FRAG__/)((FRAG__/' "+
+        output_file + output_extension);
+        execute_fail ("sed -i 's/\\*)(\\*FRAG__/\\*)(FRAG__/' "+
+        output_file + output_extension);
+        execute_fail ("sed -i 's/,((\\*FRAG__/,((FRAG__/' "+
+        output_file + output_extension);
+        */
+        (is_library).if {
+          execute_fail (cc+" " + output_file + output_extension + " -c " + option_gcc);
+        } else {
+          ((is_speed_push) & (debug_level > 0)).if {
+            execute_fail (cc+" " + output_file + output_extension + " -S " + option_gcc + lib_gcc);
+            build_label (output_file + ".s");
+            execute_fail (cc+" " + input_file + "_label.s -o "+ output_file + option_gcc + lib_gcc);
+          } else {
+            execute_fail (cc+" " + output_file + output_extension + " -o " + output_file + option_gcc + lib_gcc);
+          };
         };
       };
     } else {
+      //execute_fail ("sed -i 's/ = \\*((\\*COLOR__/ = ((\\*COLOR__/' "+
+      //output_file + output_extension);
+      /*
+      execute_fail ("sed -i 's/ = \\*((\\*VERTEX__/ = ((\\*VERTEX__/' "+
+      output_file + output_extension);
+      execute_fail ("sed -i 's/ = \\*((\\*PATH_LOW__/ = ((\\*PATH_LOW__/' "+
+      output_file + output_extension);
+      execute_fail ("sed -i 's/ = \\*((\\*SHADER__/ = ((\\*SHADER__/' "+
+      output_file + output_extension);
+      execute_fail ("sed -i 's/ = \\*((\\*FRAG__/ = ((\\*FRAG__/' "+
+      output_file + output_extension);
+      execute_fail ("sed -i 's/)((\\*FRAG__/)((FRAG__/' "+
+      output_file + output_extension);
+      execute_fail ("sed -i 's/\\*)(\\*FRAG__/\\*)(FRAG__/' "+
+      output_file + output_extension);
+      execute_fail ("sed -i 's/,((\\*FRAG__/,((FRAG__/' "+
+      output_file + output_extension);
+      */
       ("Written: " + output_file + output_extension + "\n").print;
+      (target = "android").if {
+        execute_fail (lisaac+"lia/run.sh " + output_file);
+      };
     };
   );
   
@@ -179,9 +231,8 @@ Section Private
   
 Section Public
   
-   
   //
-  // Debug information.
+  // Debug information:
   // 
     
   - no_debug <-  
@@ -213,8 +264,14 @@ Section Public
     is_all_warning := TRUE;
   );
   
+  - old_push <-
+  // Use old stack saving for debug mode.
+  (
+    is_speed_push := FALSE;
+  );
+  
   //
-  // Optimization.
+  // Optimization:
   //
 
   - optim <-
@@ -230,6 +287,13 @@ Section Public
     optim;    
   );
   
+  - hyper_boost <-
+  // Simple boost, with `-O3' option for GCC
+  (
+    boost;
+    is_o3 := TRUE;
+  );
+  
   - i level:INTEGER <-
   // Inlining level [1..5000] (default: 15)
   (
@@ -241,8 +305,32 @@ Section Public
   );
     
   //
-  // Generate code.
+  // Generate code:
   //
+  
+  - compiler cmd:STRING <-
+  // Used `cmd' as C compiler.
+  (
+    cc := cmd;
+  );
+  
+  - cop <-
+  // Active Concurrence Object Prototype.
+  (
+    is_cop := TRUE;
+  );
+  
+  - tcc <-
+  // Used TCC (Tiny C Compiler) for `back_end' operation.
+  (
+    (run "command -v tcc > /dev/null 2> /dev/null" != 0).if {
+      "Error: Tiny C Compiler not found.\n\
+      \(Debian: sudo apt-get install tcc)\n".print;
+      die_with_code exit_failure_code;
+    };
+    is_speed_push := FALSE;
+    is_tcc := TRUE;
+  );
   
   - o outputfile:STRING <-  
   // Change output file (default: `input_file').
@@ -269,7 +357,7 @@ Section Public
   );
   
   //
-  // Other.
+  // Other:
   //
 
   - add_path str:STRING <-
@@ -291,7 +379,7 @@ Section Public
   );
   
   //
-  // Information.
+  // Information:
   //
   
   - s <-

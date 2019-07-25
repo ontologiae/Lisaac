@@ -1,0 +1,31 @@
+Section Header
+  
+  + name      := MAIN;
+
+  - copyright := "2017 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (benoit.sonntag@lisaac.org)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - main <-
+  ( + storage:STORAGE;
+    + text:MUTEX;
+    
+    text    := MUTEX.create;
+    storage := STORAGE.create;
+    
+    PRODUCT .make storage print text;
+    CONSUMES.make storage print text;
+    
+    PRODUCT .run;    
+    CONSUMES.run;
+    
+    wait_all;
+  );
+

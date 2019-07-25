@@ -1,0 +1,180 @@
+Section Header
+  
+  + name := PAPER;
+  
+  - lip <- 
+  (
+    message_install "(Debian: sudo apt-get install freeglut3-dev)\n";
+    add_lib "-lGL";
+    message_install "(Debian: sudo apt-get install libglfw3-dev)\n\
+    \         sudo apt-get install libgles2-mesa-dev)\n";
+    add_lib "-lglfw";
+  );
+  
+  - external := `
+#include <stdio.h>  
+#include <string.h>  
+//#define STB_IMAGE_IMPLEMENTATION
+#define GLFW_INCLUDE_ES3
+#include <GLFW/glfw3.h>
+    
+void errorcb(int error, const char* desc)
+{ printf("GLFW error %d: %s\n", error, desc); }
+
+static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
+{// NVG_NOTUSED(scancode);
+ // NVG_NOTUSED(mods);
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    glfwSetWindowShouldClose(window, GL_TRUE);
+}
+`;
+  
+Section Inherit
+  
+  - parent_constant_pen:CONSTANT_PEN := CONSTANT_PEN;
+  
+Section Private
+  
+  + window:POINTER;
+  
+  + loc_pen:PEN;
+  
+  - back_r:REAL_32;
+  - back_g:REAL_32;
+  - back_b:REAL_32;
+  - back_a:REAL_32;
+
+Section Public
+  
+  - make (w,h:INTEGER) title t:STRING_ALIAS <-
+  (
+    make (w,h) color (COLOR.rgbaf(0.3,0.3,0.32,1.0)) title t;
+  );
+  
+  - make (w,h:INTEGER) color c:COLOR title t:STRING_ALIAS <-
+  ( + win:POINTER;
+    + tc:NATIVE_ARRAY(CHARACTER);
+    back_r := c.r;
+    back_g := c.g;
+    back_b := c.b;
+    back_a := c.a;
+    (`glfwInit()`:INTEGER = 0).if { 
+      "Failed to init GLFW.\n".print; 
+      die_with_code exit_failure_code;
+    };
+    `glfwSetErrorCallback(errorcb)`;
+    `glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API)`;
+    `glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2)`;
+    `glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0)`;
+    
+    tc := t.to_external;
+    win := window := `glfwCreateWindow(@w,@h,@tc, NULL, NULL)`:POINTER;
+    (window.is_null).if { 
+      `glfwTerminate()`; 
+      die_with_code exit_failure_code; 
+    };
+    `glfwSetKeyCallback(@win, key)`;
+    `glfwMakeContextCurrent(@win)`;
+   
+    PEN_GL.init (antialias | stencil_strokes | debug);
+    loc_pen := PEN.create; 
+    `glfwSwapInterval(0)`;
+  );
+
+  - run app:CONSTANT_PEN <-
+  ( + win_width,win_height:INTEGER;
+    + fb_width,fb_height:INTEGER;
+    + px_ratio,xs,ys:REAL_64;
+    + rl,gl,bl,al:REAL_32;
+    + pen:PEN;
+    + lisaac_app:PAPER;
+    
+    lisaac_app ?= app;
+    
+    pen := loc_pen;
+    {! window_close}.while_do {
+      (win_width,win_height) := window_size;
+      (fb_width,fb_height) := framebuffer_size;
+      px_ratio := fb_width.to_real_64 / win_width.to_real_64;
+    
+      pen.set_size (win_width,win_height);
+      (xs,ys) := cursor_pos;
+      pen.mouse.put 1 to 0;
+      pen.mouse.put (xs.to_integer) to 1;
+      pen.mouse.put (ys.to_integer) to 2;
+          
+      // Update and render
+      `glViewport(0, 0, @fb_width, @fb_height)`;
+      (rl,gl,bl,al) := (back_r,back_g,back_b,back_a);
+      `glClearColor(@rl,@gl,@bl,@al)`;      
+      `glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT)`;
+    
+      PEN_GL.gl_enable (`GL_BLEND`:INTEGER);
+      PEN_GL.gl_blend_func (`GL_SRC_ALPHA`:INTEGER,`GL_ONE_MINUS_SRC_ALPHA`:INTEGER);
+      PEN_GL.gl_enable (`GL_CULL_FACE`:INTEGER);
+      PEN_GL.gl_disable (`GL_DEPTH_TEST`:INTEGER);
+    
+      pen.begin_frame (win_width,win_height) ratio px_ratio;
+    
+      lisaac_app.draw pen;
+    
+      pen.restore;
+      pen.end_frame;    
+      display;
+      COLOR.stack.clear;    
+      //die_with_code 0;
+    };
+    pen.delete;
+    `glfwTerminate()`;
+  );
+  
+  - draw p:PEN <-
+  (
+    deferred;
+  );
+     
+Section Private
+  
+  - cursor_pos:(REAL_64,REAL_64) <-
+  ( + w:POINTER;
+    + rx,ry:REAL_64;
+    w := window;
+    `{ double x,y; glfwGetCursorPos(@w, &x, &y)`;
+    (rx,ry) := (`x`:REAL_64,`y`:REAL_64);
+    `}`;
+    rx,ry
+  );
+  
+  - window_close:BOOLEAN <-
+  ( + w:POINTER;
+    w := window;
+    `glfwWindowShouldClose(@w)`:INTEGER != 0
+  );  
+        
+  - display <-
+  ( + w:POINTER;
+    w := window;
+    `glEnable(GL_DEPTH_TEST)`;
+    `glfwSwapBuffers(@w)`;
+    `glfwPollEvents()`;
+  );
+  
+  - window_size:(INTEGER,INTEGER) <-
+  ( + win:POINTER;
+    + w,h:INTEGER;
+    win := window;
+    `{ int w,h; glfwGetWindowSize(@win, &w, &h)`;
+    (w,h) := (`w`:INTEGER,`h`:INTEGER);
+    `}`;
+    w,h    
+  );
+  
+  - framebuffer_size:(INTEGER,INTEGER) <-
+  ( + win:POINTER;
+    + w,h:INTEGER;
+    win := window;
+    `{ int w,h; glfwGetFramebufferSize(@win, &w, &h)`;
+    (w,h) := (`w`:INTEGER,`h`:INTEGER);
+    `}`;
+    w,h    
+  );

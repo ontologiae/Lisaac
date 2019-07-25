@@ -17,3 +17,7 @@ Section Private
   (
     parent_value_minus := new;
   );
+  
+Section Public
+  
+  - create:SELF <- clone;

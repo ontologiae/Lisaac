@@ -1,0 +1,28 @@
+Section Header
+
+  + name        :=FILE_SYSTEM;
+
+  - comment     :="File System manager for Unix.";
+
+  - external := `#include <unistd.h>`; // For `getcwd'
+
+Section Inherit
+
+  + parent_directory:DIRECTORY <-
+  ( + cwd:NATIVE_ARRAY(CHARACTER);
+    + result:DIRECTORY;
+
+    DIRECTORY.string_tmp.clear;
+    cwd := DIRECTORY.string_tmp.to_external;
+    `getcwd(@cwd,255)`;
+    DIRECTORY.string_tmp.from_external cwd;
+
+    result ?= DIRECTORY_UNIX.physical_get_entry (DIRECTORY.string_tmp);
+    DIRECTORY.alias.put result to (result.path);
+    ? {result != NULL};
+    parent_directory := result
+  );
+
+
+
+

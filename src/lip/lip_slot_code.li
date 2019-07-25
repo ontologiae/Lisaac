@@ -2,9 +2,6 @@ Section Header
 
   + name      := LIP_SLOT_CODE;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -13,36 +10,34 @@ Section Inherit
 
 Section Public
 
-  + section:STRING_CONSTANT;
+  + section:STRING_ALIAS;
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   + argument:LIP_SLOT_DATA;
 
   + code:LIP_CODE;
 
-  + comment:STRING_CONSTANT;
+  + comment:STRING_ALIAS;
 
-  // + comment_chapter:STRING_CONSTANT;
+  + comment_chapter:STRING_ALIAS;
 
-  - set_comment c:STRING_CONSTANT <-
+  - set_comment c:STRING_ALIAS <-
   (
     comment := c;
   );
 
-  /*
-  - set_comment_chapter cmt:STRING_CONSTANT <-
+  - set_comment_chapter cmt:STRING_ALIAS <-
   (
     comment_chapter := cmt;
-  );
-  */
+  );  
 
   //
   // Creation.
   //
 
-  - create p:POSITION section sec:STRING_CONSTANT
-  name n:STRING_CONSTANT
+  - create p:POSITION section sec:STRING_ALIAS
+  name n:STRING_ALIAS
   argument arg:LIP_SLOT_DATA
   code c:LIP_CODE :LIP_SLOT_CODE <-
   ( + result:LIP_SLOT_CODE;
@@ -59,8 +54,8 @@ Section Public
     result
   );
 
-  - make p:POSITION section sec:STRING_CONSTANT
-  name n:STRING_CONSTANT
+  - make p:POSITION section sec:STRING_ALIAS
+  name n:STRING_ALIAS
   argument arg:LIP_SLOT_DATA
   code c:LIP_CODE <-
   (
@@ -99,9 +94,18 @@ Section Public
   //
   // Print.
   //
-
+  
+  - last_chapter:STRING_ALIAS;
+  
   - print <-
   (
+    ((comment_chapter != NULL) && {last_chapter != comment_chapter}).if {            
+      '\n'.print;
+      comment_chapter.print;      
+      '\n'.print;
+    };
+    last_chapter := comment_chapter;
+    
     "  -".print;
     name.print;
     (argument != NULL).if {

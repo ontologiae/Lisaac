@@ -2,10 +2,6 @@ Section Header
 
   + name        := NATIVE_ARRAY_CHARACTER_CST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "String constant";
 
 Section Inherit
@@ -18,20 +14,20 @@ Section Public
   // Value.
   //
 
-  + string:STRING_CONSTANT;
+  + string:STRING_ALIAS;
 
   //
   // Creation.
   //
 
-  - create p:POSITION text n:STRING_CONSTANT :SELF<-
+  - create p:POSITION text n:STRING_ALIAS :SELF<-
   ( + result:SELF;
     result := clone;
     result.make p text n;
     result
   );
 
-  - make p:POSITION text n:STRING_CONSTANT <-
+  - make p:POSITION text n:STRING_ALIAS <-
   (
     position := p;
     string   := n;
@@ -54,7 +50,7 @@ Section Public
   // Generation.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.add_last '\"';
     buffer.append string;
@@ -65,7 +61,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.add_last '\"';
     buffer.append string;

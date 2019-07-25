@@ -11,10 +11,10 @@ Section Inherit
 
 Section Public
   
-  - base_vecs:FAST_ARRAY(UINTEGER_32) := 
-  ( + r:FAST_ARRAY(UINTEGER_32);
+  - base_vecs:ARRAY(UINTEGER_32) := 
+  ( + r:ARRAY(UINTEGER_32);
     
-    r := FAST_ARRAY(UINTEGER_32).create_with_capacity (METEOR_CONTEST.n_piece_type);
+    r := ARRAY(UINTEGER_32).create_with_capacity (METEOR_CONTEST.n_piece_type);
     r.add_last 010Fh; r.add_last 00CBh; r.add_last 01087h; r.add_last 0427h; 
     r.add_last 0465h; r.add_last 00C7h; r.add_last 08423h; r.add_last 00a7h;
     r.add_last 0187h; r.add_last 008Fh;
@@ -26,13 +26,13 @@ Section Public
   - all_piece_mask:INTEGER := (1 << n_piece_type) - 1;
   - skip_piece:UINTEGER_32 := 5; // it's magic!
   
-  - s_base_piece:FAST_ARRAY2(PIECE) := 
-  FAST_ARRAY2(PIECE).create (METEOR_CONTEST.n_piece_type,n_orient);
+  - s_base_piece:ARRAY2(PIECE) := 
+  ARRAY2(PIECE).create (METEOR_CONTEST.n_piece_type,n_orient);
            
-  + m_instance:FAST_ARRAY(INSTANCE) := FAST_ARRAY(INSTANCE).create_with_capacity 
+  + m_instance:ARRAY(INSTANCE) := ARRAY(INSTANCE).create_with_capacity 
   (METEOR_CONTEST.n_parity);
  
-  - set_coord_list (vec:UINTEGER_32,pts:FAST_ARRAY2(INTEGER)) <- // Static ?
+  - set_coord_list (vec:UINTEGER_32,pts:ARRAY2(INTEGER)) <- // Static ?
   ( + ipt:INTEGER;
     + mask:UINTEGER_32;
     
@@ -50,7 +50,7 @@ Section Public
     };
   );
 
-  - to_bit_vector pts:FAST_ARRAY2(INTEGER) :UINTEGER_32 <- // Static
+  - to_bit_vector pts:ARRAY2(INTEGER) :UINTEGER_32 <- // Static
   ( + y, x:INTEGER;
     + result:UINTEGER_32;
     
@@ -62,7 +62,7 @@ Section Public
     result
   );
 
-  - shift_up_lines (pts:FAST_ARRAY2(INTEGER), shift:INTEGER) <- // static
+  - shift_up_lines (pts:ARRAY2(INTEGER), shift:INTEGER) <- // static
   ( + rx,ry:INTEGER;
     // vertical shifts have a twist
     0.to (n_elem-1) do { ipt:INTEGER;
@@ -78,7 +78,7 @@ Section Public
     };
   );    
 
-  - shift_to_x0(pts:FAST_ARRAY2(INTEGER), instance:INSTANCE, offset_row:INTEGER) :INTEGER <- // static
+  - shift_to_x0(pts:ARRAY2(INTEGER), instance:INSTANCE, offset_row:INTEGER) :INTEGER <- // static
   (
     // .. determine shift
     + x, y, offset,rx,ry:INTEGER;
@@ -159,11 +159,11 @@ Section Public
 
   - gen_orientation (vec:UINTEGER_32 , i_orient:UINTEGER_32, target:PIECE) <- // static
   ( + y,x,rot,x_new,y_new,y_min,y_max,h,w:INTEGER;
-    + pts:FAST_ARRAY2(INTEGER);
+    + pts:ARRAY2(INTEGER);
     + v_even,v_odd:INSTANCE; 
     + flip:BOOLEAN;
     // get (x,y) coordinates
-    pts := FAST_ARRAY2(INTEGER).create (n_elem,METEOR_CONTEST.n_dim);
+    pts := ARRAY2(INTEGER).create (n_elem,METEOR_CONTEST.n_dim);
     set_coord_list (vec, pts);
     
     rot := i_orient % 6;

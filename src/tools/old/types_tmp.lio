@@ -1,0 +1,325 @@
+Section Header
+
+  + name    := TYPES_TMP;
+
+  - comment := "Aliser TYPE collection.";
+
+Section Inherit
+
+  + parent_types_set:Expanded TYPES_SET;
+
+Section Private
+
+  - bucket:ARRAY(TYPES) := ARRAY(TYPES).create_with_capacity 256;
+
+  - free_list:ARRAY(TYPES_TMP) := ARRAY(TYPES_TMP).create_with_capacity 5;
+
+  - create_types_tmp:TYPES_TMP <-
+  ( + result:TYPES_TMP;
+
+    result := clone;
+    result.make_types_tmp;
+    result
+  );
+
+  - make_types_tmp <-
+  (
+    storage_count := 4;
+    storage  := NATIVE_ARRAY(UINTEGER_64).create storage_count;
+    count := 0;
+    first_index := -1;
+  )
+  [ +? {is_empty}; ];
+
+Section Public
+
+  - print_all <-
+  ( + t:TYPES;
+    
+    (bucket.lower).to (bucket.upper) do { j:INTEGER;      
+      t := bucket.item j;      
+      t.print; '\n'.print;        
+    };
+  );
+
+Section Public
+
+  - types_empty:TYPES := TYPES_SET;
+
+  //
+  // Creation.
+  //
+
+  - new:TYPES_TMP <-
+  ( + result:TYPES_TMP;
+
+    (free_list.is_empty).if {
+      result := create_types_tmp;
+    } else {
+      result := free_list.last;
+      free_list.remove_last;
+    };
+    result
+  );
+
+  - update t:TYPES :TYPES <-
+  [
+    -? { + tmp:TYPES_TMP; tmp ?= t; tmp = NULL};
+  ]
+  ( + result:TYPES;
+
+    ((t != NULL) && {t.count = count}).if {
+      result := t;
+      free;
+    } else {
+      result := to_types;
+    };
+    result
+  );
+
+  - to_types:TYPES <-
+  ( + result,t:TYPES;
+    + idx,j:INTEGER;
+    + tset:TYPES_SET;
+
+    (is_empty).if {
+      result := types_empty;
+    } else {
+      idx := bucket.lower;
+      {(idx <= bucket.upper) && {result = NULL}}.while_do {
+        t := bucket.item idx;        
+        ((t.count = count) && {first_index = t.first_index}).if {
+          (t.count = 1).if {
+            result := t;
+          }.elseif {tset ?= t; storage_count >= tset.storage_count} then {            
+            j := 0;
+            {(j < tset.storage_count) && {tset.storage.item j = storage.item j}}.while_do {
+              j := j + 1;
+            };
+            (j = tset.storage_count).if {
+              result := t;
+            };            
+          };
+        };
+        idx := idx + 1;
+      };
+      (result = NULL).if {
+        (count = 1).if {
+          result := TYPES_SINGLE.create Self;
+        } else {
+          result := TYPES_SET.create Self;
+        };
+        bucket.add_last result;
+      };
+    };
+    free;
+    result
+  );
+
+  - clear <-
+  (
+    0.to (storage_count-1) do { j:INTEGER;
+      storage.put 0 to j;
+    };
+    count := 0;
+    first_index := -1;
+  );
+
+  - free <-
+  (
+    clear;
+    free_list.add_last Self;
+  );
+
+  //
+  // Update list.
+  //
+
+  - remove i:INTEGER <-
+  ( + idx,idx2,j:INTEGER;
+    + mask,s:UINTEGER_64;
+    
+    idx  := (i >> 6) - (first_index >> 6);
+    idx2 := i & 03Fh;
+    mask := `(uint64_t)1`:UINTEGER_64 /*1.to_uinteger_64*/ << idx2;
+    s := storage.item idx;
+    ((s & mask) != 0).if { 
+      storage.put (s ^ mask) to idx;
+      count := count - 1;
+      (count = 0).if {
+        first_index := -1;
+      }.elseif {first_index = i} then {                
+        j := 0;
+        {storage.item j = 0}.while_do {
+          j := j + 1;
+        };
+        (j != 0).if {
+          first_index := (((first_index >> 6) + j) << 6) - 1;
+          first_index := next_index first_index;  
+          storage.move j to (storage_count-1) by (-j);
+          storage.clear (storage_count-j) to (storage_count - 1);          
+        } else {
+          first_index := next_index first_index;
+        };        
+      };
+    };
+  );
+
+  - add t:TYPE <-
+  ( + idx,idx2,new_cnt:INTEGER;
+    + mask,s:UINTEGER_64;
+    
+    idx2 := t.index & 03Fh;  
+    mask := `(uint64_t)1`:UINTEGER_64 /*1.to_uinteger_64*/ << idx2;      
+    (is_empty).if {
+      first_index := t.index;      
+      storage.put mask to 0;
+      count := 1;
+    } else {
+      idx  := (t.index >> 6) - (first_index >> 6);
+      (idx > (storage_count-1)).if {
+        new_cnt := idx + 1;
+        storage := storage.realloc storage_count with new_cnt;
+        storage_count := new_cnt;
+      }.elseif {idx < 0} then {
+        idx := -idx;
+        new_cnt := storage_count + idx + 1;
+        storage := storage.realloc storage_count with new_cnt;
+        storage.move 0 to (storage_count - 1) by idx;
+        storage.clear 0 to (idx-1);        
+        storage_count := new_cnt;
+        idx := 0;
+      };            
+      
+      s := storage.item idx;
+      ((s & mask) = 0).if { 
+        storage.put (s | mask) to idx;
+        count := count + 1;
+        first_index := first_index.min (t.index);
+      };
+    };
+    /*
+    "Add: ".print; t.name.print; 
+    " (".print; 
+    storage.item 0.print; ':'.print;
+    t.index.print; 
+    ")\n".print;
+    
+    print_all;
+    IO.read_character;
+    */
+  );
+    
+  - union other:TYPES <-
+  ( + idx,oidx,n,b,e,n_cnt,begin,begin_o,end,end_o:INTEGER;
+    + s1,s2:UINTEGER_64;
+    + o:TYPES_SET;
+    
+    (other.count = 1).if {
+      add (other.first);
+    }.elseif {other.count != 0} then {
+      o ?= other;
+      (is_empty).if {        
+        n_cnt := o.storage_count;
+        (storage_count < n_cnt).if {          
+          storage := NATIVE_ARRAY(UINTEGER_64).calloc_intern n_cnt;
+          storage_count := n_cnt;
+        };
+        storage.copy_from (o.storage) until (n_cnt-1);
+        first_index := other.first_index;
+        count := other.count;
+      } else {
+        //"// UNION /////////////////////\n".print;
+        //print; " U ".print; other.print; " = \n".print;
+            
+        idx  := first_index   >> 6;
+        oidx := o.first_index >> 6;
+        b := idx - oidx;
+        e := (idx+storage_count) - (oidx+o.storage_count);
+        (b > 0).if {        
+          n_cnt := b;        
+          begin := begin_o := b;
+          (e > 0).if {
+            end := end_o := o.storage_count - 1;            
+          } else {
+            end := end_o := o.storage_count + e - 1;
+          };          
+        } else {
+          begin   := -b;
+          begin_o := 0;
+          (e > 0).if {            
+            end   := storage_count - e - 1;
+            end_o := o.storage_count - 1;
+          } else {
+            n_cnt := n_cnt - e;
+            end   := storage_count -1;
+            end_o := o.storage_count + e - 1; 
+          };
+        };
+        (n_cnt != 0).if {
+          n_cnt := storage_count + n_cnt;
+          storage := storage.realloc storage_count with n_cnt;
+          (b > 0).if {
+            storage.move 0 to (storage_count - 1) by b;
+            storage.copy_from (o.storage) until (b-1);
+          };          
+          (e < 0).if {
+            storage.slice_copy (o.storage) to (end + 1) from (end_o+1) to (o.storage_count-1);
+          };
+          storage_count := n_cnt;
+        };
+          
+        {begin <= end}.while_do {
+          s1 := storage.item begin;
+          s2 := o.storage.item begin_o;
+          storage.put (s1 | s2) to begin;
+          n := n + count_bits (s1 & s2);
+          begin   := begin + 1;
+          begin_o := begin_o + 1;
+        };
+        first_index := o.first_index.min first_index;
+        count := count + o.count - n;      
+          
+        //print; '\n'.print;
+        //IO.read_character;
+      };
+    };
+  );
+
+Section Private
+  
+  - count_bits x:UINTEGER_64 :INTEGER <-
+  ( + result:INTEGER;
+    + mask:UINTEGER_64;    
+    (x != 0).if {
+      ((x+1) = 0).if {
+        result := 64;
+      } else {
+        mask := 1;
+        {mask != 0}.while_do {
+          ((x & mask) != 0).if {
+            result := result + 1;
+          };
+          mask := mask << 1;
+        };
+      };
+    };
+    result
+  );
+  
+Section TYPES  
+  
+  - storage_count_minimal:INTEGER <-
+  ( + result:INTEGER;
+    result := storage_count;
+    {(result > 0) && {storage.item (result - 1) = 0}}.while_do {
+      result := result - 1;
+    };
+    result
+  );
+
+
+
+
+
+

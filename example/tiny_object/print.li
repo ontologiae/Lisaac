@@ -2,9 +2,6 @@ Section Header
 
   + name      := PRINT;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The print";
 
 Section Inherit
@@ -13,20 +10,20 @@ Section Inherit
 
 Section Public
 
-  + text:STRING_CONSTANT;
+  + text:STRING_ALIAS;
 
   //
   // Creation.
   //
 
-  - create p:INTEGER text t:STRING_CONSTANT :SELF <-
+  - create p:INTEGER text t:STRING_ALIAS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p text t;
     result
   );
 
-  - make p:INTEGER text t:STRING_CONSTANT <-
+  - make p:INTEGER text t:STRING_ALIAS <-
   (
     position := p;
     text     := t;

@@ -2,9 +2,6 @@ Section Header
 
   + name      := LIP_CODE;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -13,21 +10,21 @@ Section Inherit
 
 Section Public
 
-  - list_parent:FAST_ARRAY(STRING_CONSTANT) := FAST_ARRAY(STRING_CONSTANT).create_with_capacity 1;
+  - list_parent:ARRAY STRING_ALIAS := ARRAY STRING_ALIAS .create_with_capacity 1;
 
-  - list_method:FAST_ARRAY(LIP_SLOT_CODE) := FAST_ARRAY(LIP_SLOT_CODE).create_with_capacity 32;
+  - list_method:ARRAY LIP_SLOT_CODE := ARRAY LIP_SLOT_CODE .create_with_capacity 32;
 
-  - list_data:HASHED_DICTIONARY(LIP_SLOT_DATA,STRING_CONSTANT) :=
-  HASHED_DICTIONARY(LIP_SLOT_DATA,STRING_CONSTANT).create;
+  - list_data:HASHED_DICTIONARY(LIP_SLOT_DATA,STRING_ALIAS) :=
+  HASHED_DICTIONARY(LIP_SLOT_DATA,STRING_ALIAS).create;
 
-  - stack:FAST_ARRAY(LIP_SLOT_DATA) := FAST_ARRAY(LIP_SLOT_DATA).create_with_capacity 8;
+  - stack:ARRAY LIP_SLOT_DATA := ARRAY LIP_SLOT_DATA .create_with_capacity 8;
 
-  - get_data n:STRING_CONSTANT :LIP_SLOT_DATA <-
+  - get_data n:STRING_ALIAS :LIP_SLOT_DATA <-
   (
     list_data.fast_reference_at n
   );
 
-  - get_method n:STRING_CONSTANT :LIP_SLOT_CODE <-
+  - get_method n:STRING_ALIAS :LIP_SLOT_CODE <-
   ( + j:INTEGER;
     + result:LIP_SLOT_CODE;
 
@@ -47,7 +44,7 @@ Section Public
 
     (list_method.lower).to (list_method.upper) do { j:INTEGER;
       slot := list_method.item j;
-      (slot.section = ALIAS_STR.section_public).if {
+      (slot.section = "Public").if {
         is_ok := TRUE;
         slot.print;
       };
@@ -57,7 +54,7 @@ Section Public
     };
   );
 
-  - get_integer n:STRING_CONSTANT :INTEGER <-
+  - get_integer n:STRING_ALIAS :INTEGER <-
   ( + d:LIP_SLOT_DATA;
     + int:LIP_INTEGER;
     + result:INTEGER;
@@ -77,7 +74,7 @@ Section Public
     result
   );
 
-  - get_boolean n:STRING_CONSTANT :BOOLEAN <-
+  - get_boolean n:STRING_ALIAS :BOOLEAN <-
   ( + d:LIP_SLOT_DATA;
     + bool:LIP_BOOLEAN;
     + result:BOOLEAN;
@@ -97,14 +94,14 @@ Section Public
     result
   );
 
-  - get_string n:STRING_CONSTANT :STRING_CONSTANT <-
+  - get_string n:STRING_ALIAS :STRING_ALIAS <-
   ( + d:LIP_SLOT_DATA;
     + str:LIP_STRING;
-    + result:STRING_CONSTANT;
+    + result:STRING_ALIAS;
 
     d := get_data n;
     (d = NULL).if {
-      "Warning: Slot `".print;
+      "Warning: Lip slot `".print;
       n.print;
       "' not found.\n".print;
     } else {
@@ -117,7 +114,7 @@ Section Public
     result
   );
 
-  - put_string v:STRING_CONSTANT to n:STRING_CONSTANT <-
+  - put_string v:STRING_ALIAS to n:STRING_ALIAS <-
   ( + d:LIP_SLOT_DATA;
     + str:LIP_STRING;
 
@@ -135,7 +132,7 @@ Section Public
     };
   );
 
-  - put_boolean v:BOOLEAN to n:STRING_CONSTANT <-
+  - put_boolean v:BOOLEAN to n:STRING_ALIAS <-
   ( + d:LIP_SLOT_DATA;
 
     d := get_data n;
@@ -168,7 +165,7 @@ Section Public
   - call_front_end <-
   ( + s:LIP_SLOT_CODE;
     // Executing `front_end':
-    s := LIP_CODE.get_method (ALIAS_STR.slot_front_end);
+    s := LIP_CODE.get_method "front_end";
     (s = NULL).if {
       "Slot `front_end' not found in *.lip file.\n".print;
       die_with_code exit_failure_code;
@@ -178,14 +175,28 @@ Section Public
 
   - init_path_file order:BOOLEAN <-
   ( + k,i:INTEGER;
-    + p1,p2:STRING_CONSTANT;
+    + p1,p2:STRING_ALIAS;
 
     (order).if {
-      path_file.bubble_sort_with { (a,b:STRING_CONSTANT);
-        b < a
+      path_file.bubble_sort_with { (a,b:STRING_ALIAS);
+        + ii,ai,bi,up:INTEGER;
+        + ac,bc:CHARACTER;
+        + result:BOOLEAN;                
+        ii := a.lower;
+        up := a.upper.min (b.upper);
+        {(ii <= up) && {a.item ii = b.item ii}}.while_do { ii := ii + 1; };
+        ai := bi := ii;
+        {(ai <= a.upper) && {(ac := a.item ai) != '/'}}.while_do { ai := ai + 1; };
+        {(bi <= b.upper) && {(bc := b.item bi) != '/'}}.while_do { bi := bi + 1; };
+        ((ac = '/') ^ (bc = '/')).if {          
+          result := ac = '/';          
+        } else {
+          result := a.item ii > b.item ii; 
+        };
+        result
       };
     } else {
-      path_file.bubble_sort_with { (a,b:STRING_CONSTANT);
+      path_file.bubble_sort_with { (a,b:STRING_ALIAS);
         b !< a
       };
     };
@@ -202,9 +213,12 @@ Section Public
         {(i < path_begin) && {p1.item i = p2.item i}}.while_do {
           i := i + 1;
         };
-        path_begin := i;
+        {(i > 0) && {p1.item i != '/'}}.while_do {
+          i := i -1;
+        };
+        path_begin := i;        
       };
       k := k - 1;
     };
-    path_begin := (path_begin - 1).max 1;
+    path_begin := (path_begin - 1).max 0;
   );

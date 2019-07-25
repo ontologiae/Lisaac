@@ -1,0 +1,221 @@
+Section Header
+  
+  + name := NON_CLONEABLE;
+  
+Section Public
+
+  //
+  // Compiler consideration.
+  //
+
+  - object_size:INTEGER <- `12`;
+
+  //- pointer_size:INTEGER <- POINTER.pointer_size;
+
+  - is_debug_mode:BOOLEAN <- debug_level != 0;
+
+  - debug_level:INTEGER               <- `11`;
+  - compiler_inlining_level:INTEGER   <- `18`;
+  - compiler_optimization:BOOLEAN     <- `19`;
+  - compiler_built_on:STRING_ALIAS <- `20`;
+  - compiler_debug_with_code:BOOLEAN  <- `21`;
+  - compile_time:TIME                 <- TIME.create_csecond `22`;
+  - compile_date:DATE                 <- DATE.decode `23`;
+
+  - is_ansi:BOOLEAN := SYSTEM.is_ansi;
+
+  //
+  // Control Error.
+  //
+
+  - print_runtime_stack_after step:INTEGER <-
+  (
+    (debug_level != 0).if {
+      `lisaac_stack_print(@step)`;
+    };
+  );
+  
+  - print_runtime_stack <- print_runtime_stack_after 3;
+
+  - wait_all_the_time <- 
+  (
+    (is_cop_active).if {
+      `pthread_join(c_thread, NULL)`;
+    };
+  );
+
+  - crash_with_message msg:STRING after step:INTEGER<-
+  (
+    print_runtime_stack_after step;
+    msg.print;
+    '\n'.print;
+    die_with_code exit_failure_code;
+  );
+  
+  - crash_with_message msg:STRING <-
+  (
+    crash_with_message msg after 5;
+  );
+
+  - die_with_code exit_code:INTEGER <- SYSTEM.exit exit_code;
+  // Terminate execution with exit status code `exit_code'.
+
+  - exit_success_code:INTEGER := 0;
+
+  - exit_failure_code:INTEGER := 1;
+
+  - deferred <-
+  ( 
+    crash_with_message "Slot deferred.";
+  );
+  
+  - deferred_with_message str:STRING <-
+  ( 
+    crash_with_message ("Slot deferred.\n"+str);
+  );
+
+  - crash <-
+  ( 
+    crash_with_message "Crash system.";
+  );
+
+  - not_yet_implemented <-
+  ( 
+    crash_with_message "Sorry, Some Feature is Not Yet Implemented.";
+  );
+  
+  // 
+  // Slot_in/_out, Section_in/_out, Prototype_in/_out 
+  //
+    
+  - contract typ:STRING boolean tst:BOOLEAN <-
+  (   
+    ((debug_level >= 10) && {! tst}).if {
+      crash_with_message (typ+".") after 7; 
+    };
+  );
+  
+  - contract typ:STRING block_boolean tst:{BOOLEAN} <- 
+  (
+    ((debug_level >= 10) && {! tst.value}).if {
+      crash_with_message (typ+".") after 7; 
+    };  
+  );
+  
+  - contract typ:STRING abstract_string msg:STRING <- 
+  (
+    ((debug_level >= 10) && {msg != NULL}).if {
+      crash_with_message (typ+": "+msg) after 7; 
+    };  
+  );
+  
+  - contract typ:STRING block_abstract_string tst:{STRING} <- 
+  ( + msg:STRING;
+    ((debug_level >= 10) && {msg := tst.value; msg != NULL}).if { 
+      crash_with_message (typ+": "+msg) after 7; 
+    };
+  );
+    
+  //
+  // Common Function.
+  //
+
+  - Self:SELF '=='  Right 60 other:E :BOOLEAN <- ( deferred; FALSE);
+
+  - Self:SELF '!==' Right 60 other:OBJECT :BOOLEAN <- (! (Self == other));
+  
+  - to_pointer:POINTER <- CONVERT(SELF,POINTER).on Self;
+
+  - to_string_buffer :STRING_BUFFER <- to_pointer.to_string_buffer;
+
+  - to_string :STRING <- to_string_buffer;
+
+  - print <- to_string.print;
+
+  - println <- to_string.println;
+
+  - dynamic_type:SELF <- SELF;
+
+  - same_dynamic_type other:OBJECT :BOOLEAN <-
+  ( + convert:SELF;
+    convert ?= other;
+    convert != NULL
+  );
+
+  - to_self_on obj:OBJECT :SELF <-
+  [
+    -? {obj != NULL};
+  ]
+  ( + result:SELF;
+
+    result ?= obj;
+    result
+  )
+  [
+    +? {Result != NULL};
+  ];
+
+  //
+  // Reflexivity.
+  //
+
+  - type_name:STRING_ALIAS <- `24`;
+
+  - foreach_data action:{ (STRING_ALIAS,INTEGER,INTEGER); } <-
+  (
+    foreach_intern_data {
+      (sec:STRING_ALIAS,nam:STRING_ALIAS,typ:INTEGER,val:INTEGER);
+      (sec == "Mapping").if {
+        action.value (nam,typ,val);
+      };
+    };
+  );
+
+  - foreach_set_data action:{ (STRING_ALIAS,T); T} <-
+  (
+    foreach_set_intern_data { (sec:STRING_ALIAS,nam:STRING_ALIAS,typ:T);
+      + r:T;
+      (sec == "Public").if {
+        r := action.value (nam,typ);
+      };
+      r
+    };
+  );
+
+  //
+  // The Guru section (Don't touch, don't use !)
+  //
+
+  - is_expanded_type:BOOLEAN  <- `0`;
+
+  - type_id_intern:INTEGER    <- `1`;
+
+  - is_cop_type:BOOLEAN       <- `15`;
+
+  - copy_intern_in other:SELF <- `*@other = *@Self`;
+  
+  - is_cop_active:BOOLEAN <- `14`;
+  
+  - wait_all <-   
+  (
+    (is_cop_active).if {
+      `wait_all()`;
+    };
+  );
+  
+  - i_life:SELF <- `@Self`:SELF;
+  
+Section Public
+
+  //
+  // Reflexivity Private
+  //
+
+  // BSBS: a simplifier qd les types parameters ds les blocks seront good.
+
+//  - foreach_intern_data_action (sec,nam:STRING_ALIAS,typ:T,val:V)
+//  with action:{ (STRING_ALIAS,STRING_ALIAS,T,E); } <- `25`;
+
+  - foreach_intern_data action:{ (STRING_ALIAS,STRING_ALIAS,INTEGER,INTEGER); } <- `25`;
+
+  - foreach_set_intern_data action:{ (STRING_ALIAS,STRING_ALIAS,T); T} <- `26`;

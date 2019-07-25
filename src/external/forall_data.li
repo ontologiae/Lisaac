@@ -1,11 +1,8 @@
 Section Header
 
-  + name      := FORALL_DATA;
+  + name    := FORALL_DATA;
 
-  - copyright := "2003-2009 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
-  - comment   := "The main prototype";
+  - comment := "The main prototype";
 
 Section Inherit
 
@@ -15,7 +12,7 @@ Section Public
 
   + action:ITM_READ_ARG2;
 
-  + list_data:FAST_ARRAY(COUPLE(SLOT_DATA,EXPR));
+  + list_data:ARRAY (COUPLE (SLOT_DATA,EXPR));
 
   //
   // Creation.
@@ -29,12 +26,12 @@ Section Public
   );
 
   - make t:TYPE_FULL action ac:ITM_BLOCK <-
-  ( + lst:FAST_ARRAY(SLOT);
+  ( + lst:ARRAY SLOT;
     + dta:SLOT_DATA;
     + c:COUPLE(SLOT_DATA,EXPR);
 
-    action := ITM_READ_ARG2.create (ac.position) name (ALIAS_STR.slot_value) args (,);
-    list_data := FAST_ARRAY(COUPLE(SLOT_DATA,EXPR)).create;
+    action := ITM_READ_ARG2.create (ac.position) name "value" args (,);
+    list_data := ARRAY (COUPLE (SLOT_DATA,EXPR)).create;
     t.add_reflexivity Self;
     lst := t.slot_run;
     (lst.lower).to (lst.upper) do { i:INTEGER;
@@ -77,7 +74,7 @@ Section Public
   // Genere.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     (list_data.lower).to (list_data.upper) do { i:INTEGER;
       list_data.item i.second.genere buffer;
@@ -88,7 +85,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "Forall_data:\n";
     indent.append "  ";

@@ -2,7 +2,6 @@ Section Header
 
   + name        := HANOI;
 
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "The classic Tower of Hanoi game.";
 
 Section Inherit
@@ -56,7 +55,6 @@ Section Private
       discus := source.remove_discus;
       destination.add_discus discus;
       move ((how_many-1),intermediate,source,destination);
-      //'F'.print; '\n'.print;
     };
   );
 
@@ -65,7 +63,7 @@ Section Public
   - print <-
   (
     '\n'.print;
-    nb.downto 1 do { i:INTEGER;
+    (nb-1).downto 0 do { i:INTEGER;
       ' '.print;
       tower1.show_a_discus i;
       ' '.print;

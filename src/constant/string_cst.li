@@ -1,26 +1,28 @@
 Section Header
 
-  + name        := STRING_CST;
+  + name    := STRING_CST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "String constant";
+  - comment := "String constant";
 
 Section Inherit
 
   + parent_constant:Expanded CONSTANT;
 
 Section Public
+  
+  - slot_hash_code:SLOT_DATA;
+  - slot_storage:SLOT_DATA;
+  - slot_upper:SLOT_DATA;
+  
+  - output:STRING_BUFFER :=
+  ( + result:STRING_BUFFER;
 
-  - output:STRING :=
-  ( + result:STRING;
-
-    result := STRING.create 256;
-    title "STRING CONSTANT" in result;
+    result := STRING_BUFFER.create 256;
+    title "STRING ALIAS" in result;
     result
   );
+  
+  - output_init:STRING_BUFFER := STRING_BUFFER.create 256;
 
   - output_count:INTEGER;
 
@@ -28,25 +30,30 @@ Section Public
   // Value.
   //
 
-  + string:STRING_CONSTANT;
+  + string:STRING_ALIAS;
 
   //
   // Creation.
   //
 
-  - create p:POSITION text n:STRING_CONSTANT length len:INTEGER :SELF<-
+  - create p:POSITION text n:STRING_ALIAS length len:INTEGER :SELF<-
   ( + result:SELF;
     result := clone;
     result.make p text n length len;
     result
   );
 
-  - make p:POSITION text n:STRING_CONSTANT length len:INTEGER <-
+  - make p:POSITION text n:STRING_ALIAS length len:INTEGER <-
   (
     position := p;
     string   := n;
     dico_string.put len to n;
-    static_type := type_string_constant.default;
+    static_type := type_string_alias.default;
+    (slot_hash_code = NULL).if {
+      slot_hash_code := static_type.get_slot "hash_code" for NULL in NULL.slot_data_intern;
+      slot_upper     := static_type.get_slot "upper"     for NULL in NULL.slot_data_intern;
+      slot_storage   := static_type.get_slot "storage"   for NULL in NULL.slot_data_intern;
+    };
   );
 
   - my_copy:SELF <- clone;
@@ -65,17 +72,18 @@ Section Public
   // Generation.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   ( + idx,count,cur:INTEGER;
+    + s:SLOT_DATA;
     - is_init:BOOLEAN;
     - is_storage:BOOLEAN;
-    - is_count:BOOLEAN;
+    - is_upper:BOOLEAN;
+    - is_hashcode:BOOLEAN;
 
     (is_init).if_false {
-      is_storage := type_string_constant.get_local_slot (ALIAS_STR.slot_storage)
-      .slot_data_intern.ensure_count != 0;
-      is_count   := type_string_constant.get_local_slot (ALIAS_STR.slot_count)
-      .slot_data_intern.ensure_count != 0;
+      is_storage := slot_storage.require_count > 0;
+      is_upper   := slot_upper.require_count > 0;
+      is_hashcode:= slot_hash_code.require_count > 0;
       is_init := TRUE;
     };
 
@@ -86,33 +94,89 @@ Section Public
 
       cur := output.count - 1;
       output.append "__";
-      output.append (type_string_constant.intern_name);
+      output.append (type_string_alias.intern_name);
       output.append " __string_";
       idx.append_in output;
       output.add_last '=';
-      output.add_last '{';
-      (static_type.is_late_binding).if {
-        output.append "__";
-        output.append (static_type.raw.intern_name);
-        output.append "__,";
+      ((static_type.is_late_binding) || {is_hashcode}).if {
+        output.add_last '{';
+        (static_type.is_late_binding).if {
+          output.append "__";
+          output.append (static_type.raw.intern_name);
+          output.append "__,";
+        };
       };
-      (is_count).if {
-        count.append_in output;
-        output.add_last ',';
+      ((is_upper) || {is_storage}).if {
+        output.add_last '{';
+        (is_upper).if {
+          (count-1).append_in output;
+          output.add_last ',';
+        };
+        (is_storage).if {
+          output.add_last '\"';
+          output.append string;
+          {(output.count - cur) > 78}.while_do {          
+            (output.item (cur+77) = '\\').if {
+              cur := cur+1;
+            };
+            output.insert_string "\\\n" to (cur+78);
+            cur := cur + 78;
+          };
+          output.add_last '\"';          
+        };        
+        output.add_last '}';        
       };
-      (is_storage).if {
-	output.add_last '\"';
-	output.append string;
-	{(output.count - cur) > 78}.while_do {
-	  output.insert_string "\\\n" to (cur+78);
-	  cur := cur + 78;
-	};
-	output.add_last '\"';
-      } else {
-        output.remove_last 1;
+      ((static_type.is_late_binding) || {is_hashcode}).if {
+        (is_hashcode).if {
+          (output.last != ',').if { output.add_last ','; };
+          string_tmp.copy string;          
+          string_tmp.to_without_escape;
+          string_tmp.hash_code.append_in output;        
+        };
+        output.add_last '}';
       };
-      output.append "};\n";
+      output.append ";\n";
+      //
       dico_string.fast_put (-idx) to string;
+      //
+      (PROFIL_SLOT.profil_add_alias != NULL).if {
+        (PROFIL_SLOT.profil_hash_code_alias = NULL).if {
+          semantic_error (position,"Method slot `STRING_ALIAS.hash_code_intern' not found.");
+        };
+        (SLOT_DATA.data_hash_code_alias = NULL).if {
+          semantic_error (position,"Data slot `STRING_ALIAS.hash_code' not found.");
+        };        
+        // Test Static HashCode and Dynamic hashcode:
+        output_init.append "  if (";
+        output_init.append "__string_";
+        idx.append_in output_init;
+        output_init.add_last '.';
+        output_init.append (SLOT_DATA.data_hash_code_alias.intern_name);
+        output_init.append "!=";
+        output_init.append (PROFIL_SLOT.profil_hash_code_alias.name);
+        output_init.append "(&__string_";
+        idx.append_in output_init;
+        output_init.append ")) { print_string(\"ERROR[";
+        output_init.append string;
+        output_init.append "]\\n\"); };\n";
+        
+        // Refresh Dynamic hashcode:
+        output_init.append "  __string_";
+        idx.append_in output_init;
+        output_init.add_last '.';
+        output_init.append (SLOT_DATA.data_hash_code_alias.intern_name);
+        output_init.append " = ";        
+        output_init.append (PROFIL_SLOT.profil_hash_code_alias.name);
+        output_init.append "(&__string_";
+        idx.append_in output_init;
+        output_init.append ");\n  ";
+        
+        // Append in Aliaser:
+        output_init.append (PROFIL_SLOT.profil_add_alias.name);
+        output_init.append "(&__string_";
+        idx.append_in output_init;
+        output_init.append ");\n";
+      };
     } else {
       idx := -count;
     };
@@ -121,12 +185,12 @@ Section Public
     idx.append_in buffer;
     buffer.add_last ')';
   );
-
+    
   //
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.add_last '\"';
     buffer.append string;
@@ -136,8 +200,8 @@ Section Public
 
 Section Private
 
-  - dico_string:HASHED_DICTIONARY(INTEGER,STRING_CONSTANT) :=
-  HASHED_DICTIONARY(INTEGER,STRING_CONSTANT).create;
+  - dico_string:HASHED_DICTIONARY(INTEGER,STRING_ALIAS) :=
+  HASHED_DICTIONARY(INTEGER,STRING_ALIAS).create;
 
 
 

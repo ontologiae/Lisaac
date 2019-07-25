@@ -92,9 +92,9 @@ Section Public
     count
   );
 
-  - get_result str:STRING :STRING <-
-  ( + numstr: STRING;
-    numstr := STRING.create 512;
+  - get_result str:STRING_BUFFER :STRING_BUFFER <-
+  ( + numstr: STRING_BUFFER;
+    numstr := STRING_BUFFER.create 512;
 
     get_number(same_count, numstr);
 

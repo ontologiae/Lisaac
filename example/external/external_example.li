@@ -30,4 +30,5 @@ Section Public
 
     a := `@a + 2`:INTEGER; // External C with return value.
     `printf("Display with C function and access local Lisaac variable (%d)\n",@a)`;
+
   );

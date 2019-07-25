@@ -2,10 +2,6 @@ Section Header
 
   + name        := CALL_NULL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Call on NULL";
 
 Section Inherit
@@ -34,8 +30,8 @@ Section Public
   // Genere.
   //
 
-  - genere buffer:STRING <-
-  ( + code:STRING_CONSTANT;
+  - genere buffer:STRING_BUFFER <-
+  ( + code:STRING_ALIAS;
     (debug_level_option != 0).if {
       code :=
       "lisaac_stack_print(0); \
@@ -55,7 +51,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "Call on NULL";
   );

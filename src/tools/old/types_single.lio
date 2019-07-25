@@ -1,0 +1,62 @@
+Section Header
+
+  + name        := TYPES_SINGLE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Aliser TYPE collection. Singleton!";
+
+Section Inherit
+
+  - parent_types:TYPES := TYPES;
+
+Section TYPES_SINGLE
+
+  + type:TYPE;
+    
+Section Public
+  
+  - first_index:INTEGER <- type.index;
+      
+  - first:TYPE <-type;
+
+  - intersection_is_empty other:TYPES :BOOLEAN <-
+  ( + os:TYPE_SINGLE;
+    
+    os ?= other;
+    (os = NULL).if {
+      result := other.intersection_is_empty Self;
+    } else {
+      result := type != os.type;
+    };
+    result
+  );
+
+  //
+  // Display.
+  //
+
+  - append_in buf:STRING <-
+  ( 
+    type.append_name_in buf;
+    buf.add_last '(';
+    type.index.append_in buf;
+    buf.add_last ')';
+  );
+
+Section TYPES_TMP
+
+  - create tab:TYPES_TMP :TYPES_SINGLE <-
+  ( + result:TYPES_SINGLE;
+
+    result := clone;
+    result.make tab;
+    result
+  );
+
+  - make tab:TYPES_TMP <-
+  ( 
+    type := tab.first;
+  );

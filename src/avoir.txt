@@ -1,0 +1,2 @@
+./code_life/read_local.li:    slot_msg ?= type_object.get_slot slot_nam for NULL in NULL;
+./item/itm_read.li:      slot_msg := rec_type.get_slot name for larg in args;      

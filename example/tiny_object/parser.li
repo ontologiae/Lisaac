@@ -26,7 +26,7 @@ Section Private
     result
   );
 
-  - last_string:STRING_CONSTANT;
+  - last_string:STRING_ALIAS;
 
   - read_space:BOOLEAN <-
   ( + posold,pos,pos2:INTEGER;
@@ -85,7 +85,7 @@ Section Private
     ((position != pos) | (last_character != 0.to_character))
   );
 
-  - read_keyword st:ABSTRACT_STRING :BOOLEAN <-
+  - read_keyword st:STRING :BOOLEAN <-
   ( + posold,j:INTEGER;
     + result:BOOLEAN;
     (read_space).if {
@@ -260,7 +260,7 @@ Section Private
   - read_body slot:SLOT :BOOLEAN <-
   //++ body       : '(' [ local_list ] '|' { code ';' } ')'
   ( + result:BOOLEAN;
-    + lst:HASHED_DICTIONARY(LOCAL,STRING_CONSTANT);
+    + lst:HASHED_DICTIONARY(LOCAL,STRING_ALIAS);
     + code:EXPR;
     + this:LOCAL;
     (read_character '(').if {
@@ -285,12 +285,12 @@ Section Private
     result
   );
 
-  - read_local_list:HASHED_DICTIONARY(LOCAL,STRING_CONSTANT) <-
+  - read_local_list:HASHED_DICTIONARY(LOCAL,STRING_ALIAS) <-
   //++ local_list : local { ',' local }
-  ( + result:HASHED_DICTIONARY(LOCAL,STRING_CONSTANT);
+  ( + result:HASHED_DICTIONARY(LOCAL,STRING_ALIAS);
     + loc:LOCAL;
 
-    result := HASHED_DICTIONARY(LOCAL,STRING_CONSTANT).create;
+    result := HASHED_DICTIONARY(LOCAL,STRING_ALIAS).create;
     loc := read_local;
     (loc != NULL).if {
       result.add loc to (loc.name);
@@ -308,7 +308,7 @@ Section Private
   - read_local:LOCAL <-
   //++ local      : IDENTIFIER ':' CAP_IDENTIFIER
   ( + result:LOCAL;
-    + n:STRING_CONSTANT;
+    + n:STRING_ALIAS;
     + t:CLASS;
     (read_identifier).if {
       n := last_string;

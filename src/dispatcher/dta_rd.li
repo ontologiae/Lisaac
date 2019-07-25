@@ -2,10 +2,6 @@ Section Header
 
   + name    := DTA_RD;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Read site";
 
 Section Inherit
@@ -21,13 +17,13 @@ Section Public
   - parameter_to_type p:ITM_TYPE_PARAMETER :TYPE_FULL <-
   ( + result:TYPE_FULL;
 
-    (p.name = ALIAS_STR.prototype_self).if {
+    (p.name = "SELF").if {
       // For Self.
       result := self_arg.static_type;
     } else {
       // For genericity.
-      result := slot.receiver_type.parameter_to_type p;
-      //result := self_arg.static_type.raw.parameter_to_type p;
+      //result := slot.receiver_type.parameter_to_type p;
+      result := self_arg.static_type.raw.parameter_to_type p;
     };
 
     result
@@ -37,8 +33,7 @@ Section Public
   // Creation.
   //
 
-  - create p:POSITION call sl:SLOT self arg:EXPR intern flag:BOOLEAN :SELF <-
-  [ -? {p != 0}; ]
+  - create p:POSITION call sl:ITM_SLOT self arg:EXPR intern flag:BOOLEAN :SELF <-
   ( + result:SELF;
 
     result := clone;
@@ -46,17 +41,19 @@ Section Public
     result
   );
 
-  - make p:POSITION call sl:SLOT self arg:EXPR intern flag:BOOLEAN <-
+  - make p:POSITION call sl:ITM_SLOT self arg:EXPR intern flag:BOOLEAN <-
   ( ? {sl != NULL};
     position    := p;
     slot        := sl;
     self_arg    := arg;
     result_expr := get_expr_result;
-    is_intern   := flag;
-    (profil_current = NULL).if {
-      context := context_main;
-    } else {
-      context := profil_current.context;
+    is_intern   := flag;    
+    ((debug_level_option != 0) && {list_current != PROTOTYPE.external_list}).if {
+      (profil_current = NULL).if {
+        context := context_main;
+      } else {
+        context := profil_current.context;
+      };
     };
   );
 
@@ -64,7 +61,7 @@ Section Public
   //
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "DTA_READ";
   );

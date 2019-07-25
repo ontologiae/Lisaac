@@ -2,10 +2,6 @@ Section Header
 
   + name        := DTA_RD_ARGS;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Read site with arguments";
 
 Section Inherit
@@ -18,17 +14,17 @@ Section Public
 
   // Add.
 
-  + argument_list:FAST_ARRAY(EXPR);
+  + argument_list:ARRAY EXPR;
 
   + copy_argument:BOOLEAN;
 
   - parameter_to_type p:ITM_TYPE_PARAMETER :TYPE_FULL <-
   ( + result:TYPE_FULL;
     + idx:INTEGER;
-    // For Genericity.
-    result := slot.receiver_type.parameter_to_type p;
+    // For Genericity or SELF.
+    result := parent_dta_rd.parameter_to_type p;
     (result = NULL).if {
-      // For Self + type parametric.
+      // For type parametric.
       idx := slot.get_index_argument_type p;
       (idx != - 1).if {
         result := argument_list.item idx.static_type;
@@ -41,7 +37,7 @@ Section Public
   // Creation.
   //
 
-  - create p:POSITION call sl:SLOT with args:FAST_ARRAY(EXPR) intern flag:BOOLEAN :SELF <-
+  - create p:POSITION call sl:ITM_SLOT with args:ARRAY EXPR intern flag:BOOLEAN :SELF <-
   [ -? {p != 0}; ]
   ( + result:SELF;
 
@@ -50,17 +46,19 @@ Section Public
     result
   );
 
-  - make p:POSITION call sl:SLOT with args:FAST_ARRAY(EXPR) intern flag:BOOLEAN <-
+  - make p:POSITION call sl:ITM_SLOT with args:ARRAY EXPR intern flag:BOOLEAN <-
   (
     position      := p;
     slot          := sl;
     argument_list := args;
     result_expr   := get_expr_result;
     is_intern     := flag;
-    (profil_current = NULL).if {
-      context := context_main;
-    } else {
-      context := profil_current.context;
+    ((debug_level_option != 0) && {list_current != PROTOTYPE.external_list}).if {
+      (profil_current = NULL).if {
+        context := context_main;
+      } else {
+        context := profil_current.context;
+      };
     };
   );
 
@@ -68,7 +66,7 @@ Section Public
   // Just for ITM_EXPRESSION
   //
 
-  - create_partial p:POSITION call sl:SLOT :SELF <-
+  - create_partial p:POSITION call sl:ITM_SLOT :SELF <-
   ( + result:SELF;
 
     result := clone;
@@ -76,7 +74,7 @@ Section Public
     result
   );
 
-  - make_partial p:POSITION call sl:SLOT <-
+  - make_partial p:POSITION call sl:ITM_SLOT <-
   (
     position := p;
     slot := sl;
@@ -86,7 +84,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "DTA_RD_ARGS:";
     buffer.append (slot.name);
@@ -108,11 +106,11 @@ Section Public
 
 Section NODE_STYLE, SELF
 
-  - get_argument:FAST_ARRAY(EXPR) <-
-  ( + result:FAST_ARRAY(EXPR);
+  - get_argument:ARRAY EXPR <-
+  ( + result:ARRAY EXPR;
 
     (copy_argument).if {
-      result := FAST_ARRAY(EXPR).create_with_capacity (argument_list.count);
+      result := ARRAY EXPR .create_with_capacity (argument_list.count);
       (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
 	result.add_last (argument_list.item j.my_copy);
       };

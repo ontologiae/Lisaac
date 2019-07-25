@@ -10,26 +10,26 @@ Section Private
   
   - nbodies : INTEGER;
   
-  - bodies:NATIVE_ARRAY(Expanded PLANET);
+  - bodies:NATIVE_ARRAY(PLANET);
   
-  - b:Strict PLANET;
-  - b2:Strict PLANET;
+  - b:PLANET;
+  - b2:PLANET;
   - dx:REAL_64;
   - dy:REAL_64; 
   - dz:REAL_64;
   - distance:REAL_64;
-  - mag : REAL_64;
+  - mag:REAL_64;
   
 Section External
   
   - advance (dt:REAL_64,n:INTEGER) <-
   (     
     0.to n do { i : INTEGER;          
-      b := bodies.item i.this;            
+      b := bodies.item i;            
 
       (i + 1).to n do { j : INTEGER;		
 
-        b2 := bodies.item j.this;	
+        b2 := bodies.item j;	
 
         dx := b.x - b2.x;
         dy := b.y - b2.y;
@@ -49,7 +49,7 @@ Section External
       };      
     };        
     0.to n do { i : INTEGER;
-      b := bodies.item i.this;
+      b := bodies.item i;
 
       b.set_x (b.x + dt * b.vx);
       b.set_y (b.y + dt * b.vy);
@@ -58,26 +58,24 @@ Section External
   );
 
   - energy n:INTEGER :REAL_64 <-
-  ( + e : REAL_64;
-    + b : Strict PLANET;    
-    + b2 : Strict PLANET;
-    + dx, dy, dz : REAL_64;
-    + distance : REAL_64;
+  ( + e:REAL_64;
+    + lb:PLANET;    
+    + lb2:PLANET;
+    + ldx,ldy,ldz:REAL_64;
+    + dis:REAL_64;
 
     0.to nbodies do { i : INTEGER;      
-      b := bodies.item i.this;
-      e := e + b.mass * 0.5 * (b.vx * b.vx + b.vy * b.vy + b.vz * b.vz);
-
+      lb := bodies.item i;
+      e := e + lb.mass * 0.5 * (lb.vx * lb.vx + lb.vy * lb.vy + lb.vz * lb.vz);      
       (i + 1).to nbodies do { j : INTEGER;		
-        b2 := bodies.item j.this;
+        lb2 := bodies.item j;
 
-        dx := b.x - b2.x;
-        dy := b.y - b2.y;
-        dz := b.z - b2.z;
-
-        distance := (dx * dx + dy * dy + dz * dz).sqrt;
-
-        e := e - (b.mass * b2.mass) / distance;
+        ldx := lb.x - lb2.x;
+        ldy := lb.y - lb2.y;
+        ldz := lb.z - lb2.z;
+        dis := (ldx * ldx + ldy * ldy + ldz * ldz).sqrt;
+        
+        e := e - (lb.mass * lb2.mass) / dis;
       };
     };
 
@@ -85,43 +83,48 @@ Section External
   );
 
   - offset_momentum n:INTEGER <-
-  ( + px, py, pz : REAL_64;
-    + b : Strict PLANET;
-    0.to n do { i : INTEGER;			
-      b := bodies.item i.this;
-      px := px + b.vx * b.mass;
-      py := py + b.vy * b.mass;
-      pz := pz + b.vz * b.mass;
+  ( + px,py,pz:REAL_64;
+    + lb:PLANET;
+    
+    0.to n do { i:INTEGER;			
+      lb := bodies.item i;
+      px := px + lb.vx * lb.mass;
+      py := py + lb.vy * lb.mass;
+      pz := pz + lb.vz * lb.mass;
     };
 
     bodies.first.set_speed_to (
       - px / PLANET.solar_mass,
       - py / PLANET.solar_mass,
       - pz / PLANET.solar_mass
-    );	
-
+    );	    
   );
+  
 Section Public
 
   - main <-
   ( + n:INTEGER;		
-
-    n := COMMAND_LINE.item 1.to_integer;
+    
+    (COMMAND_LINE.count < 2).if {
+      n := 1_000;
+    } else {
+      n := COMMAND_LINE.item 1.to_integer;
+    };
     nbodies := 4;
-    bodies  := NATIVE_ARRAY(Expanded PLANET).calloc_intern nbodies;
+    bodies  := NATIVE_ARRAY(PLANET).calloc_intern (nbodies+1);
 
-    bodies.item 0.make_sun;
-    bodies.item 1.make_jupiter;
-    bodies.item 2.make_saturn;
-    bodies.item 3.make_uranus;
-    bodies.item 4.make_neptune;
+    bodies.put (PLANET.create.sun)     to 0;
+    bodies.put (PLANET.create.jupiter) to 1;
+    bodies.put (PLANET.create.saturn)  to 2;
+    bodies.put (PLANET.create.uranus)  to 3;
+    bodies.put (PLANET.create.neptune) to 4;
 
     offset_momentum nbodies;
 
     energy nbodies.print_format_c "%.9f\n";
 
     1.to n do { i:INTEGER;
-      advance (`0.01`:REAL_64,nbodies);      
+      advance (0.01,nbodies);      
     };
     
     energy nbodies.print_format_c "%.9f\n";

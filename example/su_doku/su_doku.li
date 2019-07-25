@@ -14,7 +14,7 @@ Section Private
   // Data.
   //
 
-  - array  :FAST_ARRAY2(INTEGER) := FAST_ARRAY2(INTEGER).create (9,9);
+  - array  :ARRAY2(INTEGER) := ARRAY2(INTEGER).create (9,9);
 
   //
   // Example.
@@ -132,7 +132,7 @@ Section Private
     is_found
   );
 
-  - graph_table:FAST_ARRAY2(G_IN);
+  - graph_table:ARRAY2(G_IN);
 
   - array_to_graph <-
   ( + val:INTEGER;
@@ -174,7 +174,7 @@ Section Public
   ( + c1,l1,c2,l2,r:G_EXPR;
     + g:G_IN;
 
-    graph_table := FAST_ARRAY2(G_IN).create (9,9);
+    graph_table := ARRAY2(G_IN).create (9,9);
     0.to 2 do { xx:INTEGER;
       c2 := NULL;
       0.to 2 do { yy:INTEGER;

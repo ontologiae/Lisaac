@@ -2,9 +2,6 @@ Section Header
 
   + name      := LIP_AFFECT;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -13,7 +10,7 @@ Section Inherit
 
 Section Public
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   + value:LIP_CODE;
 
@@ -21,14 +18,14 @@ Section Public
   // Creation.
   //
 
-  - create p:POSITION name n:STRING_CONSTANT value val:LIP_CODE :SELF <-
+  - create p:POSITION name n:STRING_ALIAS value val:LIP_CODE :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name n value val;
     result
   );
 
-  - make p:POSITION name n:STRING_CONSTANT value val:LIP_CODE <-
+  - make p:POSITION name n:STRING_ALIAS value val:LIP_CODE <-
   (
     position := p;
     name := n;

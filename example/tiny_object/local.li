@@ -13,7 +13,7 @@ Section Inherit
 
 Section Public
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   + type:CLASS;
 
@@ -21,14 +21,14 @@ Section Public
   // Creation.
   //
 
-  - create p:INTEGER name n:STRING_CONSTANT type t:CLASS :SELF <-
+  - create p:INTEGER name n:STRING_ALIAS type t:CLASS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name n type t;
     result
   );
 
-  - make p:INTEGER name n:STRING_CONSTANT type t:CLASS <-
+  - make p:INTEGER name n:STRING_ALIAS type t:CLASS <-
   (
     position := p;
     name     := n;

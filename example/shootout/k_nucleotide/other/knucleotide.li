@@ -8,7 +8,7 @@ Section Inherit
   
 Section Public
   
-  - buffer:STRING;
+  - buffer:STRING_BUFFER;
   
   - dico1:HASHED_SET(SORTER);
   - dico2:HASHED_SET(SORTER);
@@ -18,14 +18,14 @@ Section Public
   - dico12:HASHED_SET(SORTER);
   - dico18:HASHED_SET(SORTER);
   
-  - idf:STRING_CONSTANT := "GGTATTTTAATTTATAGT";
+  - idf:STRING_ALIAS := "GGTATTTTAATTTATAGT";
   - key:SORTER;
   
   - main <-
   (
     key := SORTER.clone;
     // Read file.
-    buffer := STRING.create 10240;
+    buffer := STRING_BUFFER.create 10240;
     {      
       buffer.clear;
       IO.read_line_in buffer;      
@@ -128,7 +128,7 @@ Section Public
   );
   
   - array:NATIVE_ARRAY(SORTER) := NATIVE_ARRAY(SORTER).create 16;
-  - string_tmp:STRING := STRING.create 5;
+  - string_tmp:STRING_BUFFER := STRING_BUFFER.create 5;
   
   - sort dico:HASHED_SET(SORTER) <-
   ( + count,low,up,i,freq:INTEGER;

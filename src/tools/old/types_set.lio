@@ -1,0 +1,161 @@
+Section Header
+
+  + name        := TYPES_SET;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Aliser TYPE collection.";
+
+Section Inherit
+
+  - parent_types:TYPES := TYPES;
+
+Section TYPES
+
+  + storage:NATIVE_ARRAY(UINTEGER_64);
+  
+  + storage_count:INTEGER;
+  
+Section Public
+  
+  + first_index:INTEGER;
+  
+  + count:INTEGER;
+  
+  - next_index i:INTEGER :INTEGER <-
+  ( + idx,idx2,result,fi:INTEGER;
+    + mask,s:UINTEGER_64;
+    
+    result := -1;
+    fi   := first_index >> 6;
+    idx  := ((i+1) >> 6) - fi;  
+    idx2 := (i+1) & 3Fh;    
+    s := storage.item idx;
+    (idx2 = 0).if {
+      mask := 1;
+      {(idx < storage_count) && {s = 0}}.while_do {
+        idx := idx + 1;
+        s := storage.item idx;
+      };
+    } else {
+      mask := `(uint64_t)1`:UINTEGER_64 /*1.to_uinteger_64*/ << idx2;
+    };    
+    {(idx < storage_count) && {result = -1}}.while_do {      
+      ((s & mask) != 0).if {
+        result := ((idx+fi) << 6) | idx2;
+      } else {
+        mask := mask << 1;
+        (mask = 0).if {
+          mask := 1;
+          idx2 := 0;
+          {
+            idx := idx + 1;
+            s := storage.item idx;
+          }.do_while {(idx < storage_count) && {s = 0}};
+        } else {
+          idx2 := idx2 + 1;
+        };
+      };
+    };
+    result
+  );
+  
+  - first:TYPE <-
+  (
+    item first_index
+  );
+
+  - intersection_is_empty other:TYPES :BOOLEAN <-
+  ( + idx,oidx,loop,fi,ofi:INTEGER;
+    + s,os:UINTEGER_64;
+    + result:BOOLEAN;
+    + ts:TYPES_SINGLE;
+    + o:TYPES_SET;
+    
+    ts ?= other;
+    (ts != NULL).if {
+      not_yet_implemented;
+    };
+    
+    o ?= other;    
+    (first_index < o.first_index).if {
+      result := o.intersection_is_empty Self;
+    } else {
+      fi  := first_index >> 6;
+      ofi := o.first_index >>6;    
+      (fi > (ofi + o.storage_count)).if {
+        result := TRUE;
+      }.elseif {(first_index != o.first_index) && {Self != other}} then {  
+        idx  := 0;
+        oidx := fi - ofi;
+        loop := storage_count.min (o.storage_count - oidx);
+        result := TRUE;
+        {(loop > 0) && {result}}.while_do {
+          s  := storage.item idx;
+          os := o.storage.item oidx;
+          result := (s & os) = 0;
+          idx  := idx  + 1;
+          oidx := oidx + 1;
+          loop := loop - 1;
+        };    
+      };
+    };
+    result
+  );
+
+  //
+  // Display.
+  //
+
+  - append_in buf:STRING <-
+  ( + j:INTEGER;
+    + s:UINTEGER_64;
+    (! is_empty).if {
+      buf.add_last '+';
+      ((first_index >> 6) << 6).append_in buf;
+      buf.add_last ' ';
+      (storage_count-1).downto 0 do { k:INTEGER;
+        s := storage.item k;
+        ( s>>48          ).to_hexadecimal_in buf format 4; //buf.add_last `\'';
+        ((s>>32) & 0FFFFh).to_hexadecimal_in buf format 4; //buf.add_last '\'';
+        ((s>>16) & 0FFFFh).to_hexadecimal_in buf format 4; //buf.add_last '\'';
+        ( s      & 0FFFFh).to_hexadecimal_in buf format 4;                
+        buf.add_last '|';        
+      };      
+      buf.add_last ':';
+      j := first_index;
+      {j != -1}.while_do {
+	item j.append_name_in buf;
+	buf.add_last '(';
+	item j.index.append_in buf;
+        buf.add_last ')';
+        j := next_index j;
+        (j != -1).if {
+          buf.append " x ";
+        };
+      };            
+    } else {
+      buf.append "<Vide>";
+    };
+  );
+
+Section TYPES_TMP
+
+  - create tab:TYPES_TMP :TYPES <-
+  ( + result:SELF;
+
+    result := clone;
+    result.make tab;
+    result
+  );
+
+  - make tab:TYPES_TMP <-
+  ( 
+    storage_count := tab.storage_count_minimal;
+    storage := NATIVE_ARRAY(UINTEGER_64).calloc_intern storage_count;
+    storage.copy_from (tab.storage) until (storage_count-1);
+    count := tab.count;
+    first_index := tab.first_index;
+  );

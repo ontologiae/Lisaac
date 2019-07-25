@@ -2,10 +2,6 @@ Section Header
 
   + name    := WRITE_LOCAL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Write local";
 
 Section Inherit
@@ -82,8 +78,8 @@ Section Public
   // Genere
   //
 
-  - genere buffer:STRING <-
-  ( + idf:STRING_CONSTANT;
+  - genere buffer:STRING_BUFFER <-
+  ( + idf:STRING_ALIAS;
 
     idf := ALIASER_LOCAL.write Self;
 
@@ -104,8 +100,8 @@ Section Public
     };
   );
   
-  - genere_first_result buffer:STRING <-
-  ( + idf:STRING_CONSTANT;
+  - genere_first_result buffer:STRING_BUFFER <-
+  ( + idf:STRING_ALIAS;
 
     idf := ALIASER_LOCAL.write Self;
     (local.is_result).if {
@@ -116,8 +112,8 @@ Section Public
     buffer.add_last '=';
   );
   
-  - genere_argument_result buffer:STRING <-
-  ( + idf:STRING_CONSTANT;
+  - genere_argument_result buffer:STRING_BUFFER <-
+  ( + idf:STRING_ALIAS;
 
     idf := ALIASER_LOCAL.write Self;
     buffer.add_last '&';

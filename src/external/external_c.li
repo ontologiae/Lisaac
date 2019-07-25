@@ -2,10 +2,6 @@ Section Header
 
   + name        := EXTERNAL_C;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit";
   - comment     := "External C instruction.";
 
 Section Inherit
@@ -38,16 +34,16 @@ Section Public
   // External value.
   //
 
-  + code:STRING_CONSTANT;
-  + access_list:FAST_ARRAY(EXPR);
+  + code:STRING_ALIAS;
+  + access_list:ARRAY EXPR;
 
   //
   // Creation.
   //
 
   - create p:POSITION
-  text c:STRING_CONSTANT
-  access ac:FAST_ARRAY(EXPR)
+  text c:STRING_ALIAS
+  access ac:ARRAY EXPR
   persistant per:BOOLEAN
   type t:TYPE_FULL :SELF <-
   ( + result:SELF;
@@ -57,8 +53,8 @@ Section Public
   );
 
   - make p:POSITION
-  text c:STRING_CONSTANT
-  access ac:FAST_ARRAY(EXPR)
+  text c:STRING_ALIAS
+  access ac:ARRAY EXPR
   persistant per:BOOLEAN
   type t:TYPE_FULL <-
   (
@@ -71,11 +67,11 @@ Section Public
 
   - my_copy:SELF <-
   ( + result:SELF;
-    + new_access:FAST_ARRAY(EXPR);
+    + new_access:ARRAY EXPR;
     + val:EXPR;
 
     (access_list != NULL).if {
-      new_access := FAST_ARRAY(EXPR).create_with_capacity (access_list.count);
+      new_access := ARRAY EXPR.create_with_capacity (access_list.count);
       (access_list.lower).to (access_list.upper) do { j:INTEGER;
 	val := access_list.item j.my_copy;
 	new_access.add_last val;
@@ -134,7 +130,7 @@ Section Public
     Self
   );
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   ( + idx,beg:INTEGER;
 
     ((is_graph) && {is_persistant}).if {
@@ -185,8 +181,8 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
-  (
+  - display buffer:STRING_BUFFER <-
+  ( + j:INTEGER;
     buffer.add_last '`';
     buffer.append code;
     ((access_list != NULL) && { ! access_list.is_empty}).if {
@@ -202,12 +198,13 @@ Section Public
     static_type.append_name_in buffer;
     (living_type != NULL).if {
       buffer.add_last '(';
-      (living_type.lower).to (living_type.upper-1) do { j:INTEGER;
+      j := living_type.first_index;
+      {j != -1}.while_do {        
 	buffer.append (living_type.item j.intern_name);
-	buffer.add_last ',';
+        buffer.add_last ',';
+        j := living_type.next_index j;
       };
-      buffer.append (living_type.last.intern_name);
-      buffer.add_last ')';
+      buffer.put ')' to (buffer.upper);
     };
     display_ref buffer;
   );

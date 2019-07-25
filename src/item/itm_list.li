@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_LIST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Instruction list";
 
 Section Inherit
@@ -21,11 +17,11 @@ Section Public
   // Data
   //
 
-  + local_list:FAST_ARRAY(ITM_LOCAL);  // `+'
+  + local_list:ARRAY ITM_LOCAL;  // `+'
 
-  + static_list:FAST_ARRAY(ITM_LOCAL); // `-'
+  + static_list:ARRAY ITM_LOCAL; // `-'
 
-  + code:FAST_ARRAY(ITM_CODE);
+  + code:ARRAY ITM_CODE;
 
   + is_check_name:BOOLEAN;
 
@@ -51,19 +47,19 @@ Section Public
   // Added
   //
 
-  - set_local_list l:FAST_ARRAY(ITM_LOCAL) <-
+  - set_local_list l:ARRAY ITM_LOCAL <-
   (
     ? {! l.is_empty};
     local_list := l;
   );
 
-  - set_static_list l:FAST_ARRAY(ITM_LOCAL) <-
+  - set_static_list l:ARRAY ITM_LOCAL <-
   (
     ? {! l.is_empty};
     static_list := l;
   );
 
-  - set_code c:FAST_ARRAY(ITM_CODE) <-
+  - set_code c:ARRAY ITM_CODE <-
   (
     code := c;
   );
@@ -103,7 +99,7 @@ Section Public
     + result_top:INTEGER;
     + result:EXPR;
     + nb_result:INTEGER;
-    + lr:FAST_ARRAY(EXPR);
+    + lr:ARRAY EXPR;
 
     stack_top  := stack_local .upper + 1;
     result_top := stack_result.upper + 1;
@@ -135,7 +131,7 @@ Section Public
     } else {
       (nb_result > 1).if {
 	// Creation Vector.
-	lr := FAST_ARRAY(EXPR).create_with_capacity nb_result;
+	lr := ARRAY EXPR .create_with_capacity nb_result;
 	(result_top).to (stack_result.upper) do { j:INTEGER;
 	  lr.add_last (stack_result.item j.read position);
 	};
@@ -156,7 +152,7 @@ Section Public
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     (code.count = 1).if {
       buffer.add_last '(';
@@ -176,7 +172,7 @@ Section Public
 
 Section ITM_LIST, ITM_RESULT
 
-  - stack_result:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 16;
+  - stack_result:ARRAY LOCAL := ARRAY LOCAL .create_with_capacity 16;
 
 
 

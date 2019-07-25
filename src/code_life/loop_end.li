@@ -2,10 +2,6 @@ Section Header
 
   + name    := LOOP_END;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Loop end (call tail recursive).";
 
 Section Inherit
@@ -72,7 +68,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "goto ";
     buffer.append (loop.name);
@@ -83,7 +79,7 @@ Section Public
   // Generation.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.append "goto ";
     buffer.append (loop.name);

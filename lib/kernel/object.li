@@ -1,0 +1,90 @@
+Section Header
+
+  + name    := OBJECT;
+
+  - comment := "Root object.";
+  
+Section Inherit
+  
+  - parent_non_cloneable:NON_CLONEABLE := NON_CLONEABLE;
+  
+Section Public
+  
+  - clone_allocation_size:UINTEGER_CPU;
+
+  - clone_total_size:UINTEGER_CPU:=0;
+
+  - add_clone_total_size siz:UINTEGER_CPU <- (clone_total_size := clone_total_size+siz;);
+  
+Section SELF
+  
+  - cnt_clone:INTEGER;
+  
+  - clone:SELF <-
+  ( + result:SELF;
+    + ptr:POINTER;
+    + sz:UINTEGER_CPU;
+    + typ_id:INTEGER;
+/*
+    type_name.print;
+    "\n".print;
+    */
+
+    sz := object_size;
+    (sz = 0).if {
+      result := Self;
+    } else {
+      typ_id := type_id_intern;
+      ptr := `malloc(((unsigned long)(@sz + 3)) & 0xFFFFFFFC)`:POINTER; // ANDROID
+      ( + tmp:INTEGER; tmp := cnt_clone;
+       // `printf("%ld\n",@tmp)`;
+      );
+      cnt_clone := cnt_clone + 1;
+      
+      (cnt_clone > 1000).if {
+        //crash_with_message "Fuite memory!\n";
+      };
+      
+      clone_allocation_size := clone_allocation_size + sz;
+
+      // MHMH: enregistrement taille :
+      clone_total_size := clone_total_size + sz;
+/* ANDROID
+      (typ_id = -1).if
+      {
+        ptr := MEMORY.alloc_size sz;
+      } else
+      {
+        ptr := MEMORY.alloc_type (typ_id.to_uinteger_32) size sz;
+      };
+ */
+      result := CONVERT(POINTER,SELF).on ptr;
+      //MEMORY.copy to_pointer to ptr size (CONVERT(POINTER,UINTEGER_32).on sz);
+      copy_intern_in result;
+      (is_cop_type).if {
+        `((lith_object *)@result)->first = NULL`;
+        `((lith_object *)@result)->last  = NULL`;
+      };
+    };
+    result
+  );
+
+Section SELF  
+
+  - free_allocation_memory <-
+  // Static free, don't use with GC.
+  ( + ptr:POINTER;
+    + sz:UINTEGER_CPU;
+    + typ_id:INTEGER;
+
+    sz := object_size;
+    (sz != 0).if
+    {
+      typ_id := type_id_intern;
+      //ptr := `free(@Self)`;
+      clone_allocation_size := clone_allocation_size - sz;
+      ptr := to_pointer;
+      (typ_id = -1).if { MEMORY.free ptr size sz; }
+      else {  MEMORY.free ptr type (typ_id.to_uinteger_32); };
+    };
+  );

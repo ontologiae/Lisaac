@@ -2,10 +2,6 @@ Section Header
 
   + name        := DTA_WR_CODE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Write site with code";
 
 Section Inherit
@@ -22,7 +18,7 @@ Section Public
   // Creation.
   //
 
-  - create p:POSITION slot sl:SLOT self arg:EXPR code v:ITM_CODE :SELF <-
+  - create p:POSITION slot sl:ITM_SLOT self arg:EXPR code v:ITM_CODE :SELF <-
   [ -? {p != 0}; ]
   ( + result:SELF;
 
@@ -31,17 +27,19 @@ Section Public
     result
   );
 
-  - make p:POSITION slot sl:SLOT self arg:EXPR code v:ITM_CODE <-
+  - make p:POSITION slot sl:ITM_SLOT self arg:EXPR code v:ITM_CODE <-
   (
     position    := p;
     slot        := sl;
     self_arg    := arg;
     result_expr := PROTOTYPE_CST.create (v.position) type (TYPE_VOID.default);
     code        := v;
-    (profil_current = NULL).if {
-      context := context_main;
-    } else {
-      context := profil_current.context;
+    ((debug_level_option != 0) && {list_current != PROTOTYPE.external_list}).if {
+      (profil_current = NULL).if {
+        context := context_main;
+      } else {
+        context := profil_current.context;
+      };
     };
   );
 
@@ -49,7 +47,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "DTA_WR_CODE:";
     buffer.append (slot.name);
@@ -61,7 +59,7 @@ Section Public
 
 Section DTA
 
-  - finalise typ:TYPE with (expr:EXPR,s:SLOT) in lst:LIST <-
+  - finalise typ:TYPE with (expr:EXPR,s:ITM_SLOT) in lst:LIST <-
   ( + id:PROTOTYPE_CST;
     + pos:POSITION;
 

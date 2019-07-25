@@ -1,0 +1,28 @@
+Section Header
+  
+  - name := HELLO;
+
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+   
+Section Public
+  
+  - somme (as:INTEGER, ...) val o:INTEGER :INTEGER <-
+  ( + result:INTEGER;
+    
+    { a:INTEGER;
+      result := result + a;
+    }.value as;
+    result + o
+  );
+      
+  - main <-
+  ( /*+ r:INTEGER;
+    r := somme (1,2,3) val 4;
+    `/* @r */`;*/
+    
+    "Hello\n".print;
+    "Hi\n".print;
+  );
+  

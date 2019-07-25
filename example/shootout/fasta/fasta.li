@@ -22,11 +22,11 @@ Section Private
 
   - index        :INTEGER;
   
-  - iub          :FAST_ARRAY(FREQUENCY); 
+  - iub          :ARRAY(FREQUENCY); 
   
-  - homo_sapiens :FAST_ARRAY(FREQUENCY); 
+  - homo_sapiens :ARRAY(FREQUENCY); 
 
-  - alu :STRING_CONSTANT :=
+  - alu :STRING_ALIAS :=
             "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG\
             \GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA\
             \CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT\
@@ -35,9 +35,9 @@ Section Private
             \AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC\
             \AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA";
 
-  - alub    :FAST_ARRAY(CHARACTER) := FAST_ARRAY(CHARACTER).create (alu.count);
+  - alub    :ARRAY(CHARACTER) := ARRAY(CHARACTER).create (alu.count);
   
-  - bbuffer :FAST_ARRAY(CHARACTER) := FAST_ARRAY(CHARACTER).create buffer_size;
+  - bbuffer :ARRAY(CHARACTER) := ARRAY(CHARACTER).create buffer_size;
   
   - rand (max:REAL_64) :REAL_64 <-
   (
@@ -47,7 +47,7 @@ Section Private
 
   - create_iub <-
   ( 
-    iub := FAST_ARRAY(FREQUENCY).create_with_capacity 15;
+    iub := ARRAY(FREQUENCY).create_with_capacity 15;
     iub.add_last(FREQUENCY.create('a', 0.27));
     iub.add_last(FREQUENCY.create('c', 0.12));
     iub.add_last(FREQUENCY.create('g', 0.12));
@@ -67,14 +67,14 @@ Section Private
 
   - create_homo_sapiens <-
   (
-    homo_sapiens := FAST_ARRAY(FREQUENCY).create_with_capacity 4;
+    homo_sapiens := ARRAY(FREQUENCY).create_with_capacity 4;
     homo_sapiens.add_last(FREQUENCY.create('a', 0.3029549426680));
     homo_sapiens.add_last(FREQUENCY.create('c', 0.1979883004921));
     homo_sapiens.add_last(FREQUENCY.create('g', 0.1975473066391));
     homo_sapiens.add_last(FREQUENCY.create('t', 0.3015094502008));
   );
 
-  - make_cumulative (a:FAST_ARRAY(FREQUENCY)) <-
+  - make_cumulative (a:ARRAY(FREQUENCY)) <-
   ( + cp :REAL_64;
     0.to (a.upper) do { i:INTEGER;
       cp := cp + (a.item i).p;
@@ -82,7 +82,7 @@ Section Private
     };
   );
 
-  - select_random a:FAST_ARRAY(FREQUENCY) :CHARACTER <-
+  - select_random a:ARRAY(FREQUENCY) :CHARACTER <-
   ( + return_char :CHARACTER;
     + random :REAL_64;
     + i,up:INTEGER;
@@ -107,7 +107,7 @@ Section Private
   
   - pick:NATIVE_ARRAY(CHARACTER) := NATIVE_ARRAY(CHARACTER).create (line_length + 1);
   
-  - make_random_fasta(id, desc:STRING_CONSTANT, a :FAST_ARRAY(FREQUENCY), n:INTEGER) <-
+  - make_random_fasta(id, desc:STRING_ALIAS, a :ARRAY(FREQUENCY), n:INTEGER) <-
   ( + m :INTEGER;
     + n_temp :INTEGER;
    
@@ -131,7 +131,7 @@ Section Private
     };
   );
 
-  - make_repeat_fasta(id, desc:STRING_CONSTANT, alu:STRING_CONSTANT, n:INTEGER ) <-
+  - make_repeat_fasta(id, desc:STRING_ALIAS, palu:STRING_ALIAS, n:INTEGER ) <-
   ( + k, kn,j,i,idx :INTEGER;
 
     '>'.print;
@@ -140,7 +140,7 @@ Section Private
     desc.print;
     '\n'.print;
     
-    kn := alu.count;
+    kn := palu.count;
     k := 1;
     i := n;
     {i >= 1}.while_do {         
@@ -150,7 +150,7 @@ Section Private
         (k > kn).if {
            k := 1;
         };
-        pick.put (alu.item k) to idx;
+        pick.put (palu.item k) to idx;
         k := k + 1;
         j := j - 1;
         idx := idx + 1;

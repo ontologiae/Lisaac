@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := ITM_LOCAL;
+  + name    := ITM_LOCAL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Local declaration slot";
+  - comment := "Local declaration slot";
 
 Section Inherit
 
@@ -18,22 +14,22 @@ Section Public
   // Data
   //
 
-  + type:ITM_TYPE_MONO;
+  + type:ITM_TYPE;
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   //
   // Constructor
   //
 
-  - create p:POSITION name n:STRING_CONSTANT :SELF <-
+  - create p:POSITION name n:STRING_ALIAS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name n;
     result
   );
 
-  - create p:POSITION name n:STRING_CONSTANT type t:ITM_TYPE_MONO :SELF <-
+  - create p:POSITION name n:STRING_ALIAS type t:ITM_TYPE :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name n;
@@ -41,7 +37,7 @@ Section Public
     result
   );
 
-  - make p:POSITION name n:STRING_CONSTANT <-
+  - make p:POSITION name n:STRING_ALIAS <-
   (
     name     := n;
     position := p;
@@ -51,7 +47,7 @@ Section Public
   // Set
   //
 
-  - set_type t:ITM_TYPE_MONO <-
+  - set_type t:ITM_TYPE <-
   (
     type := t;
   );
@@ -74,7 +70,7 @@ Section Public
   // Static local slot.
   ( + result:LOCAL;
     + slot:ITM_SLOT;
-    + larg:FAST_ARRAY(ITM_ARGUMENT);
+    + larg:ARRAY ITM_ARGUMENT;
     + arg:ITM_ARGUMENT;
     + proto:PROTOTYPE;
 
@@ -90,15 +86,14 @@ Section Public
     };
     (slot = NULL).if {
       slot := ITM_SLOT.create position name (result.intern_name)
-      feature (SECTION_.get_name (ALIAS_STR.section_private));
+      feature (SECTION_.standard_private);
       slot.set_style '-';
       slot.set_result_type type;
-      larg := ALIAS_ARRAY(ITM_ARGUMENT).new;
-      arg := ITM_ARG.create position name (ALIAS_STR.variable_self)
-      type (ITM_TYPE_SIMPLE.type_self);
+      larg := ALIAS_ARRAY ITM_ARGUMENT .new;
+      arg := ITM_ARG.create position name "Self" type (ITM_TYPE_SIMPLE.type_self);
       larg.add_last arg;
-      larg := ALIAS_ARRAY(ITM_ARGUMENT).copy larg;
-      slot.set_argument_list larg;
+      larg := ALIAS_ARRAY ITM_ARGUMENT .copy larg;
+      slot.set_argument_list larg with_list FALSE;
       proto.add_slot slot;
     } else {
       result.set_intern_name (slot.name);
@@ -111,7 +106,7 @@ Section Public
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     buffer.append name;
     buffer.add_last ':';

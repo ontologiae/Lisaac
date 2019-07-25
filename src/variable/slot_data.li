@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := SLOT_DATA;
+  + name    := SLOT_DATA;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Slot with data style";
+  - comment := "Slot with data style";
 
 Section Inherit
 
@@ -15,7 +11,7 @@ Section Inherit
   + parent_slot:SLOT := SLOT;
 
 Section Public
-
+  
   // BUG COMPILO 0.11
 
   - id_section:SECTION_ <-
@@ -24,7 +20,7 @@ Section Public
     (parent_slot != NULL).if {
       result := parent_slot.id_section;
     } else {
-      result := SECTION_.get_name (ALIAS_STR.section_private);
+      result := SECTION_.standard_private;
     };
     result
   );
@@ -269,16 +265,15 @@ Section Public
     create (b.position) name (b.name) style (b.style) base b type t
   );
 
-  - create pos:POSITION name n:STRING_CONSTANT
+  - create pos:POSITION name n:STRING_ALIAS
   style s:CHARACTER base b:SLOT type t:TYPE_FULL :SELF <-
-  // BSBS: N'est plus utilise' !!!
   ( + result:SELF;
     result := clone;
     result.make pos name n style s base b type t;
     result
   );
   
-  - make pos:POSITION name n:STRING_CONSTANT style s:CHARACTER base b:SLOT type t:TYPE_FULL <-
+  - make pos:POSITION name n:STRING_ALIAS style s:CHARACTER base b:SLOT type t:TYPE_FULL <-
   ( + tmp:TYPES_TMP;
         
     parent_slot := b;
@@ -286,8 +281,8 @@ Section Public
     position    := pos;
     name        := n;
     style       := s;
-    intern_name := ALIAS_STR.get_intern name;
-    //
+    intern_name := get_intern name;
+    //    
     type := t;
     (is_static).if {
       tmp := TYPES_TMP.new;
@@ -296,8 +291,8 @@ Section Public
     } else {
       type_set := TYPES_TMP.types_empty;
     };
-    ((type.raw.is_block) && {name != ALIAS_STR.slot_id} && {name != ALIAS_STR.slot_self}).if {
-      list_variable_block.add_last Self;
+    ((type.raw.is_block) && {name != "__id"} && {name != "self"}).if {            
+      list_variable_block.add_last Self;      
     };
     ? {type != NULL};
   );
@@ -305,68 +300,71 @@ Section Public
   //
   // Context
   //
-
+  
+  - init_list:LIST := LIST.create POSITION;
+  
   + value_init:LIST;
 
   - init <-
-  ( + val,rec:EXPR;
+  ( + val,rec,rec_call:EXPR;
     + wrt:WRITE;
     + old_list:LIST;
     + rd:ITM_READ_ARG1;
     + old_profil_current:PROFIL;
     + old_profil_slot:PROFIL_SLOT;
-   /*
+    /*
     string_tmp.copy "init : ";
     string_tmp.append name;
     warning_error (position,string_tmp);
-     */
-    ((value_init = NULL) && {(affect != '<') || {Self = slot_id}}).if {
-      // Context.
-      old_list := list_current;
-      old_profil_current := profil_current;
-      old_profil_slot    := profil_slot;
-      profil_current := profil_slot := NULL;
-      value_init := list_current := LIST.create position;
-
-      (Self = slot_id).if {
-	val := PROTOTYPE_CST.create position type type;
+    */
+    ((value_init = NULL) && {(affect != '<') || {Self = slot_id}}).if {      
+      (Self = slot_id).if {     
+        val := PROTOTYPE_CST.create position type type;        
+        (style = '+').if {
+          rec := PROTOTYPE_CST.create position type (receiver_type.default);
+        };        
+        wrt := write position with rec value val;        
+        init_list.add_first wrt;                
+        value_init := LIST; // BSBS: Pas utile (Faire en sorte de faire un init unique!)
+        ? {init_list.index = -1};
       } else {
-        // Code.
-        (value != NULL).if {
+        // Init with complex code.
+        old_list := list_current;
+        old_profil_current := profil_current;
+        old_profil_slot    := profil_slot;
+        profil_current := profil_slot := NULL;
+        value_init := list_current := LIST.create position;
+        (value = NULL).if {
+          val := type.default_value position;
+        } else {
           rd ?= value;
           ((rd != NULL) && {rd.arg = NULL}).if {
-            rec := PROTOTYPE_CST.create position type (receiver_type.default);
-            val := rd.to_run_with_self (rec,FALSE,FALSE) args NULL;
+            rec_call := PROTOTYPE_CST.create position type (receiver_type.default);
+            val := rd.to_run_with_self (rec_call,FALSE,FALSE) args NULL;
           } else {
             val := value.to_run_expr;
+            (type.raw.is_block).if {
+              list_current.debug_display;
+            };
           };
-        } else {
-          val := type.default_value position;
+        };        
+	val := val.check_type type with position;      
+        (style = '+').if {
+          rec := PROTOTYPE_CST.create position type (receiver_type.default);
         };
-	val := val.check_type type with position;
+        (debug_level_option != 0).if {
+          value_init.add_last (
+            PUSH.create position context context_main first FALSE
+          );
+        };
+        wrt := write position with rec value val;
+        (is_zero val).if { wrt.set_quiet_generation; };
+        value_init.add_last wrt;
+        
+        list_current   := old_list;
+        profil_current := old_profil_current;
+        profil_slot    := old_profil_slot;  
       };
-      (style = '+').if {
-	rec := PROTOTYPE_CST.create position type (receiver_type.default);
-      } else {
-        rec := NULL;
-      };
-
-      (debug_level_option != 0).if {
-        list_current.add_last (
-          PUSH.create position context context_main first FALSE
-        );
-      };
-
-      wrt := write position with rec value val;
-      (is_zero val).if {
-        wrt.set_quiet_generation;
-      };
-      list_current.add_last wrt;
-      list_current.add_last (PROTOTYPE_CST.create position type (TYPE_VOID.default)); // BSBS:Alias
-
-      list_current   := old_list;
-      profil_current := old_profil_current;
-      profil_slot    := old_profil_slot;
     };
   );
 
@@ -375,20 +373,20 @@ Section Public
   //
 
   - execute <-
-  ( + lst:FAST_ARRAY(SLOT);
+  ( + lst:ARRAY SLOT;
     + slot:SLOT_DATA;
     + s:SLOT;
     + val:LIST;
     + old_list_current:LIST;
-    //+ old_profil_current:PROFIL_SLOT;
-    + insert_index:INTEGER;
+    //- last_idx:INTEGER;
+    + old_profil_current:PROFIL;
+    + old_profil_slot:PROFIL_SLOT;
+    //+ insert_index:INTEGER;
 
-    (value_init != NULL).if {
+    ((value_init != NULL) && {value_init != LIST}).if {      
       val := value_init;
       value_init := NULL;
-      insert_index := list_main.index;
-      list_main.add val to insert_index;
-
+      // For a good order.
       (type.is_expanded).if {
         lst := type.slot_run;
         (lst != NULL).if {
@@ -398,26 +396,32 @@ Section Public
               slot := s.slot_data_intern;
               (slot != NULL).if {
                 slot.execute;
-              };
+              };              
+              
               slot := s.slot_id;
               (slot != NULL).if {
                 slot.execute;
               };
+              
             };
           };
         };
-      };
-
+      };  
+            
       old_list_current   := list_current;
-      //old_profil_current := profil_current;
+      old_profil_current := profil_current;
+      old_profil_slot    := profil_slot;
       list_current   := NULL;
-      //profil_current := NULL;
+      profil_current := NULL;
+      profil_slot    := NULL;
 
       val.execute;
-      list_main.inc_index;
-
-      list_current   := old_list_current;
-      //profil_current := old_profil_current;
+      
+      profil_slot    := old_profil_slot;
+      profil_current := old_profil_current;
+      list_current   := old_list_current;      
+      ? {init_list.index = -1};
+      init_list.add_last val;
     };
   );
 
@@ -425,7 +429,7 @@ Section Public
   // Genere
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     type.genere_declaration buffer;
     buffer.add_last ' ';
@@ -438,7 +442,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append intern_name;
     buffer.add_last ' ';

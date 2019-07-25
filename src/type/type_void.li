@@ -2,10 +2,6 @@ Section Header
 
   + name        := TYPE_VOID;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Special virtual Void type";
 
 Section Inherit
@@ -14,9 +10,9 @@ Section Inherit
 
 Section Public
 
-  - name:STRING_CONSTANT <- ALIAS_STR.variable_void;
+  - name:STRING_ALIAS <- "VOID";
 
-  - intern_name:STRING_CONSTANT <- name;
+  - intern_name:STRING_ALIAS <- name;
 
   //
   // Creation.

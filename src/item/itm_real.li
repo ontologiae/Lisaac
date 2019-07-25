@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_REAL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Real float constant";
 
 Section Inherit
@@ -18,19 +14,19 @@ Section Public
   // Data
   //
 
-  + value:STRING_CONSTANT;
+  + value:STRING_ALIAS;
 
   //
   // Constructor
   //
-  - create p:POSITION value n:STRING_CONSTANT :SELF <-
+  - create p:POSITION value n:STRING_ALIAS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p value n;
     result
   );
 
-  - make p:POSITION value n:STRING_CONSTANT <-
+  - make p:POSITION value n:STRING_ALIAS <-
   (
     position:=p;
     value:=n;
@@ -42,14 +38,14 @@ Section Public
 
   - to_run_expr:EXPR <-
   (
-    REAL_CST.create position value value type (type_real.default)
+    REAL_CST.create position value value type (type_real_64.default)
   );
 
   //
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     buffer.append value;
   );

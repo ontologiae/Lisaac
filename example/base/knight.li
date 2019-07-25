@@ -2,8 +2,6 @@ Section Header
 
   + name    := KNIGHT;
 
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
-
   - comment :=
   "The classic KNIGHT problem on a N times N square chessboard. \
   \The knight have to pass on all places of the chessboard once \
@@ -28,13 +26,13 @@ Section Private
 
   - chess_max:INTEGER := 24;
 
-  - chessboard:ARRAY2(INTEGER);
+  - chessboard:ELASTIC_ARRAY2(INTEGER);
 
   - nb_tries:INTEGER;
 
-  - tl:ARRAY(INTEGER) :=
-  ( + result:ARRAY(INTEGER);
-    result := ARRAY(INTEGER).create 1 to 8;
+  - tl:ELASTIC_ARRAY(INTEGER) :=
+  ( + result:ELASTIC_ARRAY(INTEGER);
+    result := ELASTIC_ARRAY(INTEGER).create 1 to 8;
     result.put (-2) to 1; result.put (-1) to 2;
     result.put   1  to 3; result.put   2  to 4;
     result.put   2  to 5; result.put   1  to 6;
@@ -42,9 +40,9 @@ Section Private
     result
   );
 
-  - tc:ARRAY(INTEGER) :=
-  ( + result:ARRAY(INTEGER);
-    result := ARRAY(INTEGER).create 1 to 8;
+  - tc:ELASTIC_ARRAY(INTEGER) :=
+  ( + result:ELASTIC_ARRAY(INTEGER);
+    result := ELASTIC_ARRAY(INTEGER).create 1 to 8;
     result.put   1  to 1; result.put   2  to 2;
     result.put   2  to 3; result.put   1  to 4;
     result.put (-1) to 5; result.put (-2) to 6;
@@ -54,12 +52,12 @@ Section Private
 
   - knight (size, line, column:INTEGER) <-
   ( ? {size >= 3};
-    ? {1 <= line};
-    ? {line <= size};
-    ? {1 <= column};
-    ? {column <= size};
+    ? {0 <= line};
+    ? {line < size};
+    ? {0 <= column};
+    ? {column < size};
 
-    chessboard := ARRAY2(INTEGER).create (1,1) to (size,size);
+    chessboard := ELASTIC_ARRAY2(INTEGER).create (1,1) to (size,size);
     chessboard.put 1 to (line,column);
     (solution (line,column)).if {
       print;
@@ -105,7 +103,7 @@ Section Private
     result
   );
 
-  - ask (s:ABSTRACT_STRING, min,max:INTEGER) :INTEGER <-
+  - ask (s:STRING, min,max:INTEGER) :INTEGER <-
   // Ask for question `s' until the answer is in range `min' `max'.
   ( + stop:BOOLEAN;
     + result:INTEGER;
@@ -129,9 +127,9 @@ Section Public
 
   - print <-
   // Display the cheesboard.
-  ( + separator:STRING;
+  ( + separator:STRING_BUFFER;
 
-    separator := STRING.create_filled (' ',(3 * chessboard.upper1 + 1));
+    separator := STRING_BUFFER.create_filled (' ',3 * chessboard.upper1 + 1);
     separator.fill_with '-';
     separator.extend '\n';
     separator.print;
@@ -162,7 +160,7 @@ Section Public
       line := COMMAND_LINE.item 2.to_integer;
     };
     (! line.in_range 1 to size).if {
-      line := ask ("Start line: ",1,size);
+      line := ask ("Start line: ",0,size-1);
     };
     ((COMMAND_LINE.upper >= 3) && {COMMAND_LINE.item 3.is_integer}).if {
       column := COMMAND_LINE.item 3.to_integer;

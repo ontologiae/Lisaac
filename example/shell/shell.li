@@ -2,8 +2,6 @@ Section Header
 
   + name    := SHELL;
 
-  - author  := "Benoit Sonntag";
-
   - comment := "Small Shell, example File System manager";
 
 Section Inherit
@@ -14,16 +12,16 @@ Section Inherit
 
 Section Private
 
-  - command:STRING;
+  - command:STRING_BUFFER;
 
-  - cmds:FAST_ARRAY(STRING);
+  - cmds:ARRAY(STRING_BUFFER);
 
   - dir:DIRECTORY;
 
-  - string_tmp:STRING := STRING.create 255;
+  - string_tmp:STRING_BUFFER := STRING_BUFFER.create 255;
 
   - execute <-
-  ( + cmd:STRING;
+  ( + cmd:STRING_BUFFER;
 
     cmd := cmds.first;
     //
@@ -89,7 +87,7 @@ Section Private
   ( + e:ENTRY;
     + f:FILE;
 
-    (dir.open).if_false {
+    (! dir.open).if {
       print_screen "`ls\': Permission denied.\n";
     } else {
       print_screen "----Access----  ----Update----  ---Size--   ----Name----\n";
@@ -123,7 +121,7 @@ Section Private
   );
 
   - mv <-
-  ( + src,dst:STRING;
+  ( + src,dst:STRING_BUFFER;
     (cmds.count < 3).if {
       print_screen "`mv\': Too few arguments.\n";
     }.elseif {cmds.count != 3} then {
@@ -140,7 +138,7 @@ Section Private
   );
 
   - rm <-
-  ( + param:STRING;
+  ( + param:STRING_BUFFER;
     (cmds.count = 1).if {
       print_screen "`rm\': Too few arguments.\n";
     }.elseif {cmds.count != 2} then {
@@ -161,7 +159,7 @@ Section Private
 
   - cd <-
   ( + e:ENTRY;
-    + param:STRING;
+    + param:STRING_BUFFER;
 
     (cmds.count > 2).if {
       print_screen "`cd\': Too many arguments.\n";
@@ -188,7 +186,7 @@ Section Private
 
   - mkdir <-
   ( + e:ENTRY;
-    + param:STRING;
+    + param:STRING_BUFFER;
 
     (cmds.count = 1).if {
       print_screen "`mkdir\': Too few arguments.\n";
@@ -211,7 +209,7 @@ Section Private
 
   - cat <-
   ( + e:ENTRY;
-    + param:STRING;
+    + param:STRING_BUFFER;
     + file:FILE;
 
     (cmds.count = 1).if {
@@ -245,7 +243,7 @@ Section Private
 
   - mkfile <-
   ( + f:FILE;
-    + param:STRING;
+    + param:STRING_BUFFER;
 
     (cmds.count = 1).if {
       print_screen "`mkfile\': Too few arguments.\n";
@@ -286,21 +284,21 @@ Section Public
   //
 
   - main <-
-  ( + command:STRING;
+  ( + cmd:STRING_BUFFER;
 
-    cmds := FAST_ARRAY(STRING).create_with_capacity 10;
-    command := STRING.create 100;
+    cmds := ARRAY(STRING_BUFFER).create_with_capacity 10;
+    cmd := STRING_BUFFER.create 100;
     dir := FILE_SYSTEM;
 
     {
       print_screen (dir.path);
       print_screen " > ";
-      command.clear;
-      IO.read_line_in command;
+      cmd.clear;
+      IO.read_line_in cmd;
 
-      (command.is_empty).if_false {
+      (cmd.is_empty).if_false {
         cmds.clear;
-        command.split_in cmds;
+        cmd.split_in cmds;
         execute;
       };
     }.endless_loop;
@@ -314,13 +312,13 @@ Section Public
 
   - is_isaac:BOOLEAN <- my_window != NULL;
 
-  - run s:ABSTRACT_STRING :G_WIN_OUT <-
+  - run s:STRING :G_WIN_OUT <-
   (
     video_line_tmp  := BMP_LINE(PIXEL_32).create (VIDEO.width);
     x_screen := y_screen := 0;
     load_font s;
-    command := STRING.create 100;
-    cmds := FAST_ARRAY(STRING).create_with_capacity 10;
+    command := STRING_BUFFER.create 100;
+    cmds := ARRAY(STRING_BUFFER).create_with_capacity 10;
 
     dir := FILE_SYSTEM;
 
@@ -352,9 +350,9 @@ Section Public
     mask_draw (x0,y0) to (x1,y1) color green;
   );
 
-  - print_screen st:ABSTRACT_STRING <-
+  - print_screen st:STRING <-
   ( + car:CHARACTER;
-    + line:FAST_ARRAY(UINTEGER_16);
+    + line:ARRAY(UINTEGER_16);
 
     (is_isaac).if {
       color green;
@@ -395,34 +393,34 @@ Section Public
 
 Section Private
 
-  - font:FAST_ARRAY(UINTEGER_8);
+  - font:ARRAY(UINTEGER_8);
 
   - x_screen:INTEGER;
   - y_screen:INTEGER;
 
   - print_char car:CHARACTER at (x,y:INTEGER) <-
   ( + ofs,px,py:INTEGER;
-    + mask:UINTEGER_8;
+    + msk:UINTEGER_8;
 
     py := y;
     ofs := car.to_uinteger_8.to_integer * 16;
     ofs.to (ofs+15) do { o:INTEGER;
       px := x;
-      mask := font.item o;
-      {mask != 0}.while_do {
-	((mask & 80h) != 0).if {
+      msk := font.item o;
+      {msk != 0}.while_do {
+	((msk & 80h) != 0).if {
 	  pixel_to (px,py);
 	};
-	mask := mask << 1;
+	msk := msk << 1;
 	px := px + 1;
       };
       py := py + 1;
     };
   );
 
-  - sav_line:FAST_ARRAY(FAST_ARRAY(UINTEGER_16)) := FAST_ARRAY(FAST_ARRAY(UINTEGER_16)).create 16;
+  - sav_line:ARRAY(ARRAY(UINTEGER_16)) := ARRAY(ARRAY(UINTEGER_16)).create 16;
 
-  - load_font s:ABSTRACT_STRING <-
+  - load_font s:STRING <-
   ( + cur_dir:DIRECTORY;
     + e:ENTRY;
     + f:FILE;
@@ -434,7 +432,7 @@ Section Private
     ((e != NULL) && {e.is_file}).if {
       f ?= e;
       f.open;
-      font := FAST_ARRAY(UINTEGER_8).create_with_capacity 4096;
+      font := ARRAY(UINTEGER_8).create_with_capacity 4096;
       f.read font size 4096;
       f.close;
     } else {
@@ -491,13 +489,13 @@ Section Private
   );
 
   - update_command is_actif:BOOLEAN <-
-  ( + y_max:INTEGER;
-    + line:FAST_ARRAY(UINTEGER_16);
+  ( + y_mx:INTEGER;
+    + line:ARRAY(UINTEGER_16);
 
     y_command.to (mask.upper) do { y:INTEGER;
       line := mask.item y;
       (! line.is_empty).if {
-	y_max := y;
+	y_mx := y;
 	line.clear;
       };
     };
@@ -510,7 +508,7 @@ Section Private
       string_tmp.insert '|' to cursor;
     };
     print_screen string_tmp;
-    redraw (x_window,y_window+y_command) to (x_window+width-1,y_window+y_max);
+    redraw (x_window,y_window+y_command) to (x_window+width-1,y_window+y_mx);
   );
 
   - cursor:INTEGER;

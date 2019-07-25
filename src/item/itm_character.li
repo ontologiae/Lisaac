@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_CHARACTER;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Character constant";
 
 Section Inherit
@@ -18,20 +14,20 @@ Section Public
   // Data
   //
 
-  + character:STRING_CONSTANT;
+  + character:STRING_ALIAS;
 
   //
   // Creation
   //
 
-  - create p:POSITION char n:STRING_CONSTANT :SELF <-
+  - create p:POSITION char n:STRING_ALIAS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p char n;
     result
   );
 
-  - make p:POSITION char n:STRING_CONSTANT <-
+  - make p:POSITION char n:STRING_ALIAS <-
   (
     position:=p;
     character:=n;
@@ -50,7 +46,7 @@ Section Public
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     buffer.add_last '\'';
     buffer.append character;

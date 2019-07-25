@@ -2,10 +2,6 @@ Section Header
 
   + name        := LOCAL_SEQ;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Local slot";
 
 Section Inherit
@@ -14,9 +10,9 @@ Section Inherit
 
 Section Private
 
-  - list_busy:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 512;
+  - list_busy:ARRAY LOCAL := ARRAY LOCAL .create_with_capacity 512;
 
-  - list_free:FAST_ARRAY(LOCAL_SEQ) := FAST_ARRAY(LOCAL_SEQ).create_with_capacity 512;
+  - list_free:ARRAY LOCAL_SEQ := ARRAY LOCAL_SEQ .create_with_capacity 512;
 
   - clean <-
   (

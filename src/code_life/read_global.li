@@ -2,10 +2,6 @@ Section Header
 
   + name    := READ_GLOBAL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Read for global";
 
 Section Inherit
@@ -68,7 +64,7 @@ Section Public
   // Genere
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.append (variable.intern_name);
   );

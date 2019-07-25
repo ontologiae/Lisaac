@@ -2,10 +2,6 @@ Section Header
 
   + name        := NAMED;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parent for all slot";
 
 Section Inherit
@@ -25,7 +21,7 @@ Section Public
 		      // 'T': Temporary
 		      // 'C': Cast
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   - set_style s:CHARACTER <-
   (

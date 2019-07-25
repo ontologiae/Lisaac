@@ -2,10 +2,6 @@ Section Header
 
   + name    := EXPR;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Parent for all expression";
 
 Section Inherit
@@ -15,7 +11,11 @@ Section Inherit
 Section Public
 
   - cardinality:INTEGER <- 1;
-
+  
+  - first:EXPR <- Self;
+  
+  - my_copy_with_first e:EXPR :EXPR <- e;
+  
   //
   // Comparison.
   //
@@ -51,10 +51,10 @@ Section Public
     + local:VARIABLE;
     + instr:INSTR;
     + rec:EXPR;
-    + slot_name:STRING_CONSTANT;
-    + slot_msg:SLOT;
+    + slot_name:STRING_ALIAS;
+    + slot_msg:ITM_SLOT;
     + node:NODE;
-    + args:FAST_ARRAY(EXPR);
+    + args:ARRAY EXPR;
     + ts:ITM_TYPE_SIMPLE;
 
     ? {static_type != NULL};
@@ -70,8 +70,8 @@ Section Public
 	instr := local.write position value Self;
 	list_current.add_last instr;
 	//
-	slot_name := ALIAS_STR.get (TYPE.last_cast_name);
-	slot_msg  := static_type.get_slot slot_name;
+	slot_name := TYPE.last_cast_name.to_string_alias;
+	slot_msg  := static_type.get_itm_slot slot_name;
 	(slot_msg = NULL).if {
 	  string_tmp.clear;
 	  static_type.append_name_in string_tmp;
@@ -89,13 +89,15 @@ Section Public
 	  //semantic_error p,string_tmp;
 	};
 	(slot_msg.argument_count != 1).if {
-	  semantic_error (slot_msg.position,"No argument for this slot.");
+	  semantic_error (slot_msg.position,
+          "No argument for this slot.");
 	};
         ts ?= slot_msg.result_type;
-	((ts = NULL) || {ts.to_run_for (t.raw) != t}).if {
+	((ts = NULL) || {! (ts.to_run_for (t.raw) == t)}).if {
           string_tmp.copy "Type result `";
           slot_msg.result_type.append_in string_tmp;
-	  string_tmp.append "' is incorrect (Used for auto-conversion to `";
+	  string_tmp.append 
+          "' is incorrect (Used for auto-conversion to `";
 	  t.append_name_in string_tmp;
 	  string_tmp.append "').";
 	  POSITION.put_error semantic text string_tmp;
@@ -116,8 +118,8 @@ Section Public
 	instr := local.write position value Self;
 	list_current.add_last instr;
 	//
-	slot_name := ALIAS_STR.get (TYPE.last_cast_name);
-	slot_msg  := t.get_slot slot_name;
+	slot_name := TYPE.last_cast_name.to_string_alias;
+	slot_msg  := t.get_itm_slot slot_name;
 	(slot_msg = NULL).if {
 	  string_tmp.clear;
 	  t.append_name_in string_tmp;
@@ -138,7 +140,7 @@ Section Public
 	  semantic_error (slot_msg.position,"Incorrect argument for this slot.");
 	};
         ts ?= slot_msg.result_type;
-	((ts = NULL) || {ts != ITM_TYPE_PARAMETER.type_self}).if {
+	((ts = NULL) || {! (ts == ITM_TYPE_PARAMETER.type_self)}).if {
 	  string_tmp.copy "Type result `";
           slot_msg.result_type.append_in string_tmp;
 	  string_tmp.append "' is incorrect (Used for auto-conversion to `";
@@ -150,7 +152,7 @@ Section Public
 	  POSITION.send_error;
 	};
 	//
-	args := FAST_ARRAY(EXPR).create_with_capacity 2;
+	args := ARRAY EXPR .create_with_capacity 2;
 	args.add_last (PROTOTYPE_CST.create position type t);
 	args.add_last (local.read position);
 	node := NODE.new_read position slot slot_msg
@@ -168,12 +170,23 @@ Section Public
 	POSITION.put_error semantic text string_tmp;
 	p.put_position;
         position.put_position;
-	POSITION.send_error;
+        POSITION.send_error;
       };
     };
     result
   );
-
+  
+  //
+  // Contract Slot in/out, Section in/out, Prototype in/out
+  //
+  
+  - to_run_contract msg:STRING_ALIAS <-
+  (
+    "EXPR 179: ".print; 
+    type_name.print;
+    list_current.add_last Self;    
+  );
+  
   //
   // Execute.
   //

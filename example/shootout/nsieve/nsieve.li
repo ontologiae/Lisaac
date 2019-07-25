@@ -8,7 +8,7 @@ Section Inherit
 
 Section Private  
   
-  - string_tmp:STRING := STRING.create 64;
+  - string_tmp:STRING_BUFFER := STRING_BUFFER.create 64;
   
   - flags:NATIVE_ARRAY(BOOLEAN);
 

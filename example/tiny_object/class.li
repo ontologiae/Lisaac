@@ -13,41 +13,41 @@ Section Inherit
 
 Section Private
 
-  - sources:HASHED_DICTIONARY(CLASS,STRING_CONSTANT) :=
-  HASHED_DICTIONARY(CLASS,STRING_CONSTANT).create;
+  - sources:HASHED_DICTIONARY(CLASS,STRING_ALIAS) :=
+  HASHED_DICTIONARY(CLASS,STRING_ALIAS).create;
 
 Section Public
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   + inherit_list:LINKED_LIST(CLASS);
 
-  + slot_list:HASHED_DICTIONARY(SLOT,STRING_CONSTANT);
+  + slot_list:HASHED_DICTIONARY(SLOT,STRING_ALIAS);
 
   // -- VFT --
-  + vft:FAST_ARRAY(SLOT);
+  + vft:ARRAY(SLOT);
   // -- VFT --
 
   //
   // Creation.
   //
 
-  - create p:INTEGER name n:STRING_CONSTANT :SELF <-
+  - create p:INTEGER name n:STRING_ALIAS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name n;
     result
   );
 
-  - make p:INTEGER name n:STRING_CONSTANT <-
+  - make p:INTEGER name n:STRING_ALIAS <-
   (
     position     := p;
     name         := n;
     inherit_list := LINKED_LIST(CLASS).create;
-    slot_list    := HASHED_DICTIONARY(SLOT,STRING_CONSTANT).create;
+    slot_list    := HASHED_DICTIONARY(SLOT,STRING_ALIAS).create;
     // -- VFT --
     (is_vft).if {
-      vft := FAST_ARRAY(SLOT).create_with_capacity 16;
+      vft := ARRAY(SLOT).create_with_capacity 16;
       sources.add Self to name;
     };
     // -- VFT --
@@ -66,7 +66,7 @@ Section Public
 
   - compute_vft_base base:INTEGER <-
   ( + new_base:INTEGER;
-    + vft_parent:FAST_ARRAY(SLOT);
+    + vft_parent:ARRAY(SLOT);
     + slot,slot_parent:SLOT;
     (vft.is_empty).if {
       // -- SIMPLE --
@@ -157,7 +157,7 @@ Section Public
     result
   );
 
-  - get_slot_in_parent msg:STRING_CONSTANT :SLOT <-
+  - get_slot_in_parent msg:STRING_ALIAS :SLOT <-
   ( + result:SLOT;
     + i:INTEGER;
 
@@ -169,7 +169,7 @@ Section Public
     result
   );
 
-  - get_slot msg:STRING_CONSTANT :SLOT <-
+  - get_slot msg:STRING_ALIAS :SLOT <-
   ( + result:SLOT;
 
     result := slot_list.fast_reference_at msg;

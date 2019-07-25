@@ -1,0 +1,49 @@
+Section Header
+
+  + name    := Expanded INTEGER_64;
+
+  - export  := INTEGER;
+
+  - comment := "Signed 64 bits integer.";
+
+  - type    := `signed long long `;
+  - default := (0.to_raw_integer_64);
+
+Section Insert
+
+  - parent_signed_integer:SIGNED_INTEGER := SIGNED_INTEGER;
+
+Section Public
+
+  - object_size:INTEGER := 8;
+
+  - '-' Self:SELF :SELF <- zero - Self;
+
+  //
+  // Range
+  //
+
+  - maximum:UINTEGER_64 <- 7FFF_FFFF_FFFF_FFFFh;
+
+  - minimum:INTEGER_64  <- `0x8000000000000000LLU`:INTEGER_64; // 8000_0000_0000_0000h;
+  
+  //
+  // Conversion with test.
+  //
+
+  - to_integer_64:INTEGER_64     <- Self;
+
+  - append_in buffer:STRING_BUFFER <-
+  // Append in the `buffer' the equivalent of `to_string'. No new STRING_BUFFER
+  // creation during the process.
+  [ -? {buffer!=NULL}; ]
+  ( 
+    (Self = minimum).if {
+      buffer.append "-9223372036854775808";
+    } else {
+      parent_signed_integer.append_in buffer;
+    };
+  );
+
+
+

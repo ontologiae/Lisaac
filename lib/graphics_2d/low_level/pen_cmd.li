@@ -1,0 +1,31 @@
+Section Header
+  
+  + name := PEN_CMD;
+  
+Section Inherit
+  
+  - parent_constant_pen:CONSTANT_PEN := CONSTANT_PEN;
+  
+Section Public
+  
+  - transform mtx:TRANSFORM <-
+  (    
+    // Nothing.
+  );
+  
+  - to_path pc:PATH_CACHE <-
+  (
+    deferred;
+  );
+  
+  - free <- deferred;
+  
+Section PEN_CMD
+  
+  - get_tranform (sx,sy:REAL_32) with mtx:TRANSFORM :(REAL_32,REAL_32) <-
+  ( + rx,ry:REAL_32;
+    rx := sx*mtx.t0 + sy*mtx.t2 + mtx.t4;
+    ry := sx*mtx.t1 + sy*mtx.t3 + mtx.t5;
+    rx,ry
+  );
+  

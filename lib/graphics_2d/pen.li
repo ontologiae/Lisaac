@@ -1,0 +1,1222 @@
+Section Header
+  
+  + name := PEN;
+    
+Section Inherit
+  
+  - parent_constant_pen:CONSTANT_PEN := CONSTANT_PEN;
+  
+Section Public // Private
+  
+  + win_width:INTEGER;
+  + win_height:INTEGER;
+  + mouse:ARRAY INTEGER;
+  
+  + commands:ARRAY PEN_CMD;
+  + command_x:REAL_32; 
+  + command_y:REAL_32;
+  + states:ARRAY STATE;
+  + cache:PATH_CACHE;
+  + fringe_width:REAL_32;
+  + device_px_ratio:REAL_32;
+  + fs:FONS_CONTEXT;
+  + font_images:ARRAY INTEGER;
+  + font_image_idx:INTEGER;
+  
+  - cross (dx0,dy0:REAL_32) with (dx1,dy1:REAL_32) :REAL_32 <-
+  ( dx1*dy0 - dx0*dy1 );
+  
+  - normalize_and_distance (x,y:REAL_32) :(REAL_32,REAL_32,REAL_32) <-
+  ( + d,rx,ry,id:REAL_32;
+    d := (x*x + y*y).sqrt;
+    (d > 0.000001).if { 
+      id := 1.0 / d;
+      (rx,ry) := (x*id,y*id);
+    } else {
+      (rx,ry) := (x,y);
+    };
+    rx,ry,d
+  );
+  
+  - normalize (x,y:REAL_32) :(REAL_32,REAL_32) <-
+  ( + rx,ry,d:REAL_32;
+    (rx,ry,d) := normalize_and_distance (x,y);
+    rx,ry
+  );
+
+  - set_device_pixel_ratio ratio:REAL_32 <-
+  (
+    tess_tol := 0.25 / ratio;
+    dist_tol := 0.01 / ratio;
+    fringe_width := 1.0 / ratio;
+    device_px_ratio := ratio;
+  );
+
+  - get_state:STATE <- states.last;
+  
+  - create:SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make;
+    result
+  );    
+  
+  - make <-
+  ( //+ font_params:FONS_PARAMS;
+    
+    mouse := ARRAY INTEGER.create (3*10);
+    
+    font_images := ARRAY INTEGER.create_with_capacity 4;
+    commands := ARRAY PEN_CMD.create_with_capacity 256;
+    states := ARRAY STATE.create_with_capacity 32;
+    cache := PATH_CACHE.create;
+    //save; 
+    states.add_last (STATE.create);
+    states.last.reset;
+    set_device_pixel_ratio 1.0;
+    PEN_GL.render_create;    
+    // Init font rendering
+    /*
+    memset(&fontParams, 0, sizeof(fontParams));
+    fontParams.width = 512;
+    fontParams.height = 512;
+    fontParams.flags = FONS_ZERO_TOPLEFT;
+    fontParams.renderCreate = NULL;
+    fontParams.renderUpdate = NULL;
+    fontParams.renderDraw = NULL;
+    fontParams.renderDelete = NULL;
+    fontParams.userPtr = NULL;
+    fs := fonsCreateInternal(&fontParams);
+    
+    // Create font texture
+    font_images.add_last (
+      params.render_create_texture (params.user_ptr, 
+      NVG_TEXTURE_ALPHA, font_params.width, font_params.height, 0, NULL)
+    );
+    */
+  );
+  
+  - set_size (w,h:INTEGER) <-
+  (
+    (win_width,win_height) := (w,h);
+  );
+  
+  - delete <-
+  ( 
+    (commands.lower).to (commands.upper) do { i:INTEGER;
+      commands.item i.free;
+    };
+    commands.clear;
+    cache.delete;
+    /*
+    fs.delete;    
+    {! font_images.is_empty}.while_do {       
+      font_images.last.delete;
+      font_images.remove_last;      
+    };
+    */
+    /*
+    (params.render_delete != NULL).if {
+      params.render_delete (params.user_ptr);
+    };
+    */
+  );
+  
+  - begin_frame (window_width,window_height:INTEGER) 
+  ratio device_pixel_ratio:REAL_32 <-
+  (
+    2.to (states.upper) do { i:INTEGER; 
+      states.item i.free;
+    };
+    states.remove_since 1; // Remove 2 to upper
+    //save; // Inutil.
+    //reset;
+    set_device_pixel_ratio device_pixel_ratio;
+    PEN_GL.render_viewport (window_width, window_height);
+  );
+
+  - cancel_frame <- params.render_cancel (params.user_ptr);
+
+  - end_frame <-
+  (    
+    PEN_GL.render_flush (states.last.composite_operation);    
+    (font_image_idx != 0).if {
+      + font_image:INTEGER;
+      + i,j,iw,ih:INTEGER;
+      font_image := font_images.item (font_image_idx);      
+      // delete images that smaller than current one
+      (iw,ih) := image_size font_image;
+      {i < font_image_idx}.while_do {        
+        + nw,nh:INTEGER;
+        (nw,nh) := image_size (font_images.item i);
+        ((nw < iw) || {nh < ih}).if {
+          delete_image (font_images.item i);
+        } else {
+          font_images.put (font_images.item i) to j;
+          j := j + 1;
+        };        
+        i := i + 1;
+      };
+      // make current font image to first
+      font_images.put (font_images.item 0) to j;
+      j := j + 1;
+      font_images.put font_image to 0;
+      font_image_idx := 0;
+      // clear all images after j
+      /*
+      i := j;
+      {i < NVG_MAX_FONTIMAGES}.while_do {
+        font_images.put 0 to i;
+        i := i + 1;
+      };      
+      */
+    };
+  );
+
+  // State handling
+  - save <-
+  ( + new:STATE;
+    (states.count > 0).if {
+      new := STATE.create;
+      new.copy (states.last);
+      states.add_last new;
+    };
+  );
+
+  - restore <- 
+  (
+    (states.count > 1).if {
+      states.last.free;
+      states.remove_last;
+    };
+    ? {states.count >= 1};
+  );
+
+  // State setting
+  - stroke_width width:REAL_32 <- states.last.set_stroke_width width;
+  - miter_limit  limit:REAL_32 <- states.last.set_miter_limit limit;
+  - line_cap cap:INTEGER       <- states.last.set_line_cap cap;
+  - line_join join:INTEGER     <- states.last.set_line_join join;
+  - global_alpha alpha:REAL_32 <- states.last.set_alpha alpha;
+
+  - transform (a,b,c,d,e,f:REAL_32) <-
+  ( 
+    TRANSFORM.set_all (a,b) and (c,d) and (e,f);
+    states.last.xform.premultiply TRANSFORM;
+  );
+
+  - reset_transform <- states.last.xform.transform_identity;
+
+  - translate (x,y:REAL_32) <-
+  ( 
+    TRANSFORM.translate (x,y);
+    states.last.xform.premultiply TRANSFORM; 
+  );
+
+  - rotate angle:REAL_32 <-
+  ( 
+    TRANSFORM.rotate angle;
+    states.last.xform.premultiply TRANSFORM;    
+  );
+
+  - skew_x angle:REAL_32 <-
+  ( 
+    TRANSFORM.skew_x angle;
+    states.last.xform.premultiply TRANSFORM;
+  );
+
+  - skew_y angle:REAL_32 <-
+  ( 
+    TRANSFORM.skew_y angle;
+    states.last.xform.premultiply TRANSFORM;
+  );
+
+  - scale (x,y:REAL_32) <-
+  (
+    TRANSFORM.scale (x,y);
+    states.last.xform.premultiply TRANSFORM;   
+  );
+
+  - current_transform xform:TRANSFORM <- xform.copy (states.last.xform);
+
+  - stroke_color color:COLOR <- 
+  (
+    states.last.stroke.set_color color;
+  );
+
+  - stroke_paint paint:PAINT <-
+  (
+    states.last.stroke.copy paint;
+    states.last.stroke.xform.multiply (states.last.xform);
+  );
+
+  - fill_color color:COLOR <-
+  (    
+    states.last.fill.set_color color;
+  );
+
+  - fill_paint paint:PAINT <-
+  (
+    states.last.fill.copy paint;
+    states.last.fill.xform.multiply (states.last.xform);
+  );
+
+  - create_image filename:STRING_ALIAS flags image_flags:INTEGER :INTEGER <-
+  ( + w, h, n, image:INTEGER;
+    + img:NATIVE_ARRAY UINTEGER_8;
+    stbi_set_unpremultiply_on_load 1;
+    stbi_convert_iphone_png_to_rgb 1;
+    (img,w,h,n) := stbi_load (filename, 4);
+    (img != NULL).if  {
+      image := create_image_rgba img size (w, h) flags image_flags;
+      stbi_image_free img;
+    };
+    image
+  );
+
+  - create_image_mem (image_flags:INTEGER, data:NATIVE_ARRAY UINTEGER_8) <-
+  ( + w, h, n, image:INTEGER;
+    + img:NATIVE_ARRAY UINTEGER_8;
+    (img,w,h,n) := stbi_load_from_memory (data, ndata, 4);
+    image := create_image_rgba img size (w, h) flags image_flags;
+    stbi_image_free img;
+    return image;
+  );
+
+  - create_image_rgba data:NATIVE_ARRAY UINTEGER_8 
+  size (w,h:INTEGER) flags image_flags:INTEGER :INTEGER <-
+  (
+    params.render_create_texture (
+      params.user_ptr, TEXTURE_RGBA, w, h, image_flags, data
+    )
+  );
+
+  - update_image data:NATIVE_ARRAY UINTEGER_8 id image:INTEGER <-
+  ( + w,h:INTEGER;
+    (w,h) := render_get_texture_size (params.user_ptr, image);
+    params.render_update_texture (params.user_ptr, image, 0,0, w,h, data);
+  );
+
+  - image_size image:INTEGER :(INTEGER,INTEGER) <-
+  PEN_GL.render_get_texture_size image;
+
+  - delete_image image:INTEGER <-
+  PEN_GL.render_delete_texture image;
+
+  // Global composite operation.
+  - global_composite_operation op:INTEGER <-
+  (
+    states.last.set_composite_operation (composite_operation_state op);
+  );
+
+  - global_composite_blend_func (sfactor,dfactor:INTEGER) <-
+  (
+    global_composite_blend_func_separate (sfactor, dfactor, sfactor, dfactor);
+  );
+
+  - global_composite_blend_func_separate (src_rgb,dst_rgb,src_alpha,dst_alpha:INTEGER) <-
+  ( + op:COMPOSITE_OPERATION_STATE;
+    op := COMPOSITE_OPERATION_STATE.create (src_rgb,dst_rgb) 
+    alpha (src_alpha,dst_alpha);
+    states.last.set_composite_operation op;
+  );
+
+  - dist_seg (x,y:REAL_32) with (px,py:REAL_32) and (qx,qy:REAL_32) :REAL_32 <-
+  ( + pqx, pqy, dx, dy, d, t:REAL_32;
+    pqx := qx - px;
+    pqy := qy - py;
+    dx := x - px;
+    dy := y - py;
+    d := pqx*pqx + pqy*pqy;
+    t := pqx*dx  + pqy*dy;
+    (d > 0).if { t := t/d; };
+    (t < 0).if   { t := 0; }.elseif 
+    {t > 1} then { t := 1; };
+    dx := px + t*pqx - x;
+    dy := py + t*pqy - y;
+    dx*dx + dy*dy
+  );
+
+  - add_cmd cmd:PEN_CMD <-
+  ( + move:PEN_MOVE;    
+                
+    (move ?= cmd; move != NULL).if {
+      command_x := move.x;
+      command_y := move.y;
+    };
+    // transform commands
+    cmd.transform (states.last.xform);    
+    commands.add_last cmd;
+  );
+
+Section Private
+
+  - clear_path_cache <-
+  (
+    //cache.points.clear;
+    0.to (cache.paths.upper) do { i:INTEGER;
+      cache.paths.item i.free;
+    };
+    cache.paths.clear;
+  );
+
+  - last_path:PATH <- cache.paths.last;
+
+  - last_point:POINT <- cache.points.last;
+
+  - curve_divs (r,arc,tol:REAL_32) :INTEGER <-
+  ( + da:REAL_32;
+    da := (r / (r + tol)).acos * 2.0;
+    (arc / da).ceil.to_integer.max 2
+  );
+
+  - choose_bevel (pbevel:BOOLEAN, p0,p1:POINT) with w:REAL_32 
+  :(REAL_32,REAL_32,REAL_32,REAL_32) <-
+  ( + x0,y0,x1,y1:REAL_32;
+    (pbevel).if {
+      x0 := p1.x + p0.dy * w;
+      y0 := p1.y - p0.dx * w;
+      x1 := p1.x + p1.dy * w;
+      y1 := p1.y - p1.dx * w;
+    } else {
+      x0 := p1.x + p1.dmx * w;
+      y0 := p1.y + p1.dmy * w;
+      x1 := p1.x + p1.dmx * w;
+      y1 := p1.y + p1.dmy * w;
+    };
+    x0,y0, x1,y1
+  );
+
+  - vset vtx:ARRAY VERTEX with (x,y,u,v:REAL_32) <-
+  (
+    vtx.add_last (VERTEX.make (x,y) axes (u,v));
+  );
+
+  - round_join vtx:ARRAY VERTEX points (p0,p1:POINT) 
+  with (lw,rw,lu,ru:REAL_32, ncap:INTEGER, fringe:REAL_32) <-
+  ( + n:INTEGER;
+    + dlx0,dly0,dlx1,dly1:REAL_32;
+    dlx0 :=  p0.dy;
+    dly0 := -p0.dx;
+    dlx1 :=  p1.dy;
+    dly1 := -p1.dx;
+    //"round_join\n".print;
+    ((p1.flags & pt_left) != 0).if {
+      + lx0,ly0,lx1,ly1,a0,a1:REAL_32;
+      (lx0,ly0,lx1,ly1) := choose_bevel ((p1.flags & pr_innerbevel)!=0, p0, p1) with lw;
+      a0 := (-dly0).atan2 (-dlx0);
+      a1 := (-dly1).atan2 (-dlx1);
+      (a1 > a0).if { a1 := a1 - REAL.two_pi; };
+      vset vtx with (lx0, ly0, lu,1); 
+      vset vtx with (p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); 
+      n := (((a0 - a1) / REAL.pi) * ncap).ceiling.clamp 2 to ncap - 1;
+      0.to n do { i:INTEGER;
+        + u,a,rx,ry:REAL_32;
+        u := i.to_real_32/n;
+        a := a0 + u*(a1-a0);
+        rx := p1.x + a.cos * rw;
+        ry := p1.y + a.sin * rw;
+        vset vtx with (p1.x, p1.y, 0.5,1); 
+        vset vtx with (rx, ry, ru,1); 
+      };
+      vset vtx with (lx1, ly1, lu,1); 
+      vset vtx with (p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); 
+    } else {
+      + rx0,ry0,rx1,ry1,a0,a1:REAL_32;
+      (rx0,ry0,rx1,ry1) := choose_bevel ((p1.flags & pr_innerbevel)!=0, p0, p1) with (-rw);
+      a0 := dly0.atan2 dlx0;
+      a1 := dly1.atan2 dlx1;
+      (a1 < a0).if { a1 := a1 + REAL.two_pi; };
+      vset vtx with (p1.x + dlx0*rw, p1.y + dly0*rw, lu,1); 
+      vset vtx with (rx0, ry0, ru,1); 
+      n := (((a1 - a0) / REAL_32.pi) * ncap).ceiling.clamp 2 to ncap - 1;
+      0.to n do { i:INTEGER;
+        + u,a,lx,ly:REAL_32;
+        u := i.to_real_32/n;
+        a := a0 + u*(a1-a0);
+        lx := p1.x + a.cos * lw;
+        ly := p1.y + a.sin * lw;
+        vset vtx with (lx, ly, lu,1); 
+        vset vtx with (p1.x, p1.y, 0.5,1); 
+      };
+      vset vtx with (p1.x + dlx1*rw, p1.y + dly1*rw, lu,1); 
+      vset vtx with (rx1, ry1, ru,1); 
+    };
+  );
+
+  - bevel_join vtx:ARRAY VERTEX points (p0,p1:POINT) 
+  with (lw,rw,lu,ru,fringe:REAL_32) <-
+  ( + rx0,ry0,rx1,ry1:REAL_32;
+    + lx0,ly0,lx1,ly1:REAL_32;
+    + dlx0,dly0,dlx1,dly1:REAL_32;
+    //"bevel_join\n".print;
+    dlx0 :=  p0.dy;
+    dly0 := -p0.dx;
+    dlx1 :=  p1.dy;
+    dly1 := -p1.dx;
+    ((p1.flags & pt_left) != 0).if {
+      (lx0,ly0,lx1,ly1) := choose_bevel ((p1.flags & pr_innerbevel) != 0, p0, p1) with lw;
+      vset vtx with (lx0, ly0, lu,1); 
+      vset vtx with (p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); 
+      ((p1.flags & pt_bevel) != 0).if {
+        vset vtx with (lx0, ly0, lu,1); 
+        vset vtx with (p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); 
+        vset vtx with (lx1, ly1, lu,1); 
+        vset vtx with (p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); 
+      } else {
+        rx0 := p1.x - p1.dmx * rw;
+        ry0 := p1.y - p1.dmy * rw;
+        vset vtx with (p1.x, p1.y, 0.5,1); 
+        vset vtx with (p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); 
+        vset vtx with (rx0, ry0, ru,1); 
+	vset vtx with (rx0, ry0, ru,1); 
+        vset vtx with (p1.x, p1.y, 0.5,1); 
+        vset vtx with (p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); 
+      };
+      vset vtx with (lx1, ly1, lu,1); 
+      vset vtx with (p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); 
+    } else {
+      (rx0,ry0,rx1,ry1) := choose_bevel((p1.flags & pr_innerbevel) != 0, p0, p1) with (-rw);
+      vset vtx with (p1.x + dlx0*lw, p1.y + dly0*lw, lu,1); 
+      vset vtx with (rx0, ry0, ru,1); 
+      ((p1.flags & pt_bevel) != 0).if {
+        vset vtx with (p1.x + dlx0*lw, p1.y + dly0*lw, lu,1); 
+        vset vtx with (rx0, ry0, ru,1); 
+        vset vtx with (p1.x + dlx1*lw, p1.y + dly1*lw, lu,1); 
+        vset vtx with (rx1, ry1, ru,1); 
+      } else {
+        lx0 := p1.x + p1.dmx * lw;
+        ly0 := p1.y + p1.dmy * lw;
+        vset vtx with (p1.x + dlx0*lw, p1.y + dly0*lw, lu,1); 
+        vset vtx with (p1.x, p1.y, 0.5,1); 
+        vset vtx with (lx0, ly0, lu,1); 
+        vset vtx with (lx0, ly0, lu,1); 
+        vset vtx with (p1.x + dlx1*lw, p1.y + dly1*lw, lu,1); 
+        vset vtx with (p1.x, p1.y, 0.5,1); 
+      };
+      vset vtx with (p1.x + dlx1*lw, p1.y + dly1*lw, lu,1); 
+      vset vtx with (rx1, ry1, ru,1); 
+    };
+  );
+
+  - butt_cap_start vtx:ARRAY VERTEX point p:POINT 
+  with (dx,dy,w,d,aa:REAL_32) <-
+  ( + px,py,dlx,dly:REAL_32;
+    //"butt_cap_start\n".print;
+    (px,py)   := (p.x - dx*d,p.y - dy*d);
+    (dlx,dly) := (dy,-dx);
+    vset vtx with (px + dlx*w - dx*aa, py + dly*w - dy*aa, 0,0); 
+    vset vtx with (px - dlx*w - dx*aa, py - dly*w - dy*aa, 1,0); 
+    vset vtx with (px + dlx*w, py + dly*w, 0,1); 
+    vset vtx with (px - dlx*w, py - dly*w, 1,1); 
+  );
+
+  - butt_cap_end vtx:ARRAY VERTEX point p:POINT 
+  with (dx,dy,w,d,aa:REAL_32) <-
+  ( + px,py,dlx,dly:REAL_32;
+    //"butt_cap_end\n".print;
+    (px,py)   := (p.x + dx*d,p.y + dy*d);
+    (dlx,dly) := (dy,-dx);        
+    vset vtx with (px + dlx*w, py + dly*w, 0,1); 
+    vset vtx with (px - dlx*w, py - dly*w, 1,1); 
+    vset vtx with (px + dlx*w + dx*aa, py + dly*w + dy*aa, 0,0); 
+    vset vtx with (px - dlx*w + dx*aa, py - dly*w + dy*aa, 1,0); 
+  );
+
+  - round_cap_start vtx:ARRAY VERTEX point p:POINT 
+  with (dx,dy,w:REAL_32,ncap:INTEGER,aa:REAL_32) <-
+  ( + px,py,dlx,dly:REAL_32;
+    + n:INTEGER;
+    //"round_cap_start\n".print;
+    (px,py)   := (p.x,p.y);
+    (dlx,dly) := (dy,-dx);
+    n := ncap-1;
+    0.to n do { i:INTEGER;
+      + a,ax,ay:REAL_32;
+      a := i.to_real_32/n*REAL.pi;
+      (ax,ay) := (a.cos * w, a.sin * w);
+      vset vtx with (px - dlx*ax - dx*ay, py - dly*ax - dy*ay, 0,1); 
+      vset vtx with (px, py, 0.5,1); 
+    };
+    vset vtx with (px + dlx*w, py + dly*w, 0,1);
+    vset vtx with (px - dlx*w, py - dly*w, 1,1); 
+  );
+
+  - round_cap_end vtx:ARRAY VERTEX point p:POINT 
+  with (dx,dy,w:REAL_32,ncap:INTEGER,aa:REAL_32) <-
+  ( + n:INTEGER;
+    + px,py,dlx,dly:REAL_32;
+    //"round_cap_end\n".print;
+    (px,py)   := (p.x,p.y);
+    (dlx,dly) := (dy,-dx);
+    vset vtx with (px + dlx*w, py + dly*w, 0,1);
+    vset vtx with (px - dlx*w, py - dly*w, 1,1);
+    n := ncap - 1;
+    0.to n do { i:INTEGER;
+      + a,ax,ay:REAL_32;
+      a := i.to_real_32/n*REAL.pi;
+      (ax,ay) := (a.cos * w, a.sin * w);
+      vset vtx with (px, py, 0.5,1);
+      vset vtx with (px - dlx*ax + dx*ay, py - dly*ax + dy*ay, 0,1); 
+    };
+  );
+
+  - calculate_joins (w:REAL_32, lin_join:INTEGER, miter_limi:REAL_32) <-
+  ( + iw:REAL_32;
+    //"calculate_joins\n".print;
+    (w > 0).if { iw := 1.0 / w; };
+    // Calculate which joins needs extra vertices to append, 
+    // and gather vertex count.
+    0.to (cache.paths.upper) do { i:INTEGER;
+      + path:PATH;
+      + p0,p1:POINT;
+      + pts:ARRAY POINT;      
+      + nleft:INTEGER;
+      
+      path := cache.paths.item i;
+      pts := path.points;      
+      path.set_nbevel 0;      
+      p0 := pts.last;      
+      0.to (path.points.upper) do { j:INTEGER;
+        + dlx0, dly0, dlx1, dly1, dmr2, cross, limit:REAL_32;
+        p1 := pts.item j;
+        (dlx0,dly0) := (p0.dy,-p0.dx);
+        (dlx1,dly1) := (p1.dy,-p1.dx);
+        // Calculate extrusions
+        p1.set_dmxy ((dlx0 + dlx1) * 0.5,(dly0 + dly1) * 0.5);
+        dmr2 := p1.dmx*p1.dmx + p1.dmy*p1.dmy;
+        (dmr2 > 0.000001).if {
+          + scal:REAL_32;
+          scal := 1.0 / dmr2;
+          (scal > 600.0).if {
+            scal := 600.0;
+          };
+          p1.set_dmxy (p1.dmx * scal, p1.dmy * scal);
+        };
+        // Clear flags, but keep the corner.
+        ((p1.flags & pt_corner) != 0).if {
+          p1.set_flags pt_corner;
+        } else {
+          p1.set_flags 0;
+        };
+        // Keep track of left turns.
+        cross := p1.dx * p0.dy - p0.dx * p1.dy;
+        /*
+        "cross:".print; cross.print; 
+        " p0:".print; p0.dx.print; ','.print; p0.dy.print;
+        " p1:".print; p1.dx.print; ','.print; p1.dy.print;
+        " - ".print; p1.x.print; ','.print; p1.y.print;
+        '\n'.print;
+        */
+        //"cross:".print; cross.print; '\n'.print;
+        (cross > 0.0).if {
+          nleft := nleft + 1;
+          p1.set_flags (p1.flags | pt_left);
+        };        
+        // Calculate if we should use bevel or miter for inner join.
+        limit := (p0.len.min (p1.len) * iw).max 1.01;
+        ((dmr2 * limit*limit) < 1.0).if { 
+          p1.set_flags (p1.flags | pr_innerbevel); 
+        };
+        // Check to see if the corner needs to be beveled.
+        ((p1.flags & pt_corner) != 0).if {
+          (
+            ((dmr2 * miter_limi*miter_limi) < 1.0) || 
+            {lin_join = bevel} || {lin_join = round}
+          ).if {
+            p1.set_flags (p1.flags | pt_bevel);
+          };
+        };
+        ((p1.flags & (pt_bevel | pr_innerbevel)) != 0).if {
+          path.inc_nbevel;
+        };
+        p0 := p1;        
+      };
+      //"--FO--\n".print;
+      path.set_convex (nleft = path.points.count);
+    };
+  );
+
+  - expand_stroke (w:REAL_32,lin_cap,lin_join:INTEGER,miter_limi:REAL_32) <-
+  ( + dst:ARRAY VERTEX;
+    + ncap:INTEGER;
+    + aa:REAL_32;
+    //"expand_stroke\n".print;
+    aa := fringe_width;
+    // Calculate divisions per half circle.
+    ncap := curve_divs(w, REAL.pi, tess_tol);	
+    calculate_joins(w, lin_join, miter_limi);
+        
+    0.to (cache.paths.upper) do { i:INTEGER;
+      + path:PATH;
+      + pts:ARRAY POINT;
+      + p0,p1:POINT;
+      + loop:BOOLEAN;
+      + s, e:INTEGER;
+      + dx, dy:REAL_32;      
+      path := cache.paths.item i;
+      pts := path.points;
+      path.fill.clear;
+      dst := path.stroke;
+
+      // Calculate fringe or stroke
+      loop := path.closed;
+      (loop).if {
+        // Looping        
+        p1 := pts.last;
+        s  := 0;
+        e  := pts.upper;
+      } else {
+        // Add cap        
+        p0 := pts.first;
+        p1 := pts.second;
+        (dx,dy) := normalize(p1.x - p0.x, p1.y - p0.y);
+        (lin_cap = butt).if {
+          butt_cap_start dst point p0 with (dx, dy, w, -aa*0.5, aa);
+        }.elseif {(lin_cap = butt) || {lin_cap = square}} then {
+          butt_cap_start dst point p0 with (dx, dy, w, w-aa, aa);
+        }.elseif {lin_cap = round} then {
+          round_cap_start dst point p0 with (dx, dy, w, ncap, aa);
+        };
+        p1 := pts.first;
+        s  := 1;
+        e  := pts.upper-1;        
+      };
+      s.to e do { j:INTEGER;         
+        p0 := p1;
+        p1 := pts.item j;
+        ((p1.flags & (pt_bevel | pr_innerbevel)) != 0).if {
+          (lin_join = round).if {
+            round_join dst points (p0,p1) with (w,w,0,1,ncap,aa);
+          } else {
+            bevel_join dst points (p0,p1) with (w,w,0,1,aa);
+          };
+        } else {
+          vset dst with (p1.x + (p1.dmx * w), p1.y + (p1.dmy * w), 0,1); 
+          vset dst with (p1.x - (p1.dmx * w), p1.y - (p1.dmy * w), 1,1); 
+        };
+      };
+
+      (loop).if {
+        // Loop it
+        + v:VERTEX;
+        v := dst.first; 
+        vset dst with (v.x,v.y, 0,1);
+        v := dst.second;
+        vset dst with (v.x,v.y, 1,1); 
+      } else {
+        // Add cap
+        p0 := p1;
+        p1 := pts.item (e+1);
+        (dx,dy) := normalize (p1.x - p0.x, p1.y - p0.y);        
+        (lin_cap = butt).if {
+          butt_cap_end dst point p1 with (dx,dy,w,-aa*0.5,aa);
+        }.elseif {(lin_cap = butt) || {lin_cap = square}} then {
+          butt_cap_end dst point p1 with (dx,dy,w,w-aa,aa);
+        }.elseif {lin_cap = round} then {
+          round_cap_end dst point p1 with (dx,dy,w,ncap,aa);
+        };
+      };
+    };            
+  );
+
+  - expand_fill (w:REAL_32,lin_join:INTEGER,miter_lim:REAL_32) <-
+  ( + dst:ARRAY VERTEX;
+    + aa:REAL_32;
+    + fringe,convex:BOOLEAN;
+//    "expand_fill\n".print;
+    aa := fringe_width;
+    fringe := w > 0.0;    
+    calculate_joins (w, lin_join, miter_lim);
+//    "calculate_joins FIN\n".print;
+//    cache.paths.count.print; ' '.print; cache.paths.first.convex.print; '\n'.print;
+    convex := (cache.paths.count = 1) && {cache.paths.first.convex};
+    0.to (cache.paths.upper) do { i:INTEGER;
+      + path:PATH;
+      + pts:ARRAY POINT;
+      + p0,p1:POINT;
+      + rw,lw,woff,ru,lu:REAL_32;
+      path := cache.paths.item i;
+      pts := path.points;
+      
+      path.fill.clear;
+      path.stroke.clear;
+      
+      // Calculate shape vertices.
+      woff := aa*0.5;
+      dst := path.fill;      
+      
+      (fringe).if {
+        // Looping
+        p0 := pts.last;
+        
+        0.to (path.points.upper) do { j:INTEGER;
+          p1 := pts.item j;
+          ((p1.flags & pt_bevel) != 0).if {            
+            + dlx0,dly0,dlx1,dly1:REAL_32;
+            (dlx0,dly0) := (p0.dy,-p0.dx);
+            (dlx1,dly1) := (p1.dy,-p1.dx);
+            ((p1.flags & pt_left) != 0).if {
+              + lx,ly:REAL_32;
+              (lx,ly) := (p1.x+p1.dmx*woff, p1.y+p1.dmy*woff);
+              //p1.dmx.print; ','.print; p1.dmy.print; '\n'.print; // DEBUG
+              vset dst with (lx,ly,0.5,1);
+            } else {
+              + lx0,ly0,lx1,ly1:REAL_32;
+              (lx0,ly0) := (p1.x + dlx0 * woff, p1.y + dly0 * woff);
+              (lx1,ly1) := (p1.x + dlx1 * woff, p1.y + dly1 * woff);
+              vset dst with (lx0, ly0, 0.5,1);
+              vset dst with (lx1, ly1, 0.5,1);
+            };
+          } else {
+            vset dst with (p1.x+(p1.dmx*woff), p1.y+(p1.dmy*woff), 0.5,1);
+          };
+          p0 := p1;          
+        };
+      } else {
+        0.to (path.points.upper) do { j:INTEGER;
+          vset dst with (pts.item j.x,pts.item j.y,0.5,1);          
+        };
+      };
+      // Calculate fringe
+      
+      (fringe).if {
+        lw := w + woff;
+        rw := w - woff;
+        lu := 0;
+        ru := 1;
+        dst := path.stroke;
+        // Create only half a fringe for convex shapes so that
+        // the shape can be rendered without stenciling.
+        (convex).if {
+          //"CONVEX\n".print;
+          lw := woff;	// This should generate the same vertex as fill inset above.
+          lu := 0.5;	// Set outline fade at middle.
+        } else { 
+          // "NON CONVEX\n".print;
+        };
+        // Looping
+        p0 := pts.item (path.points.upper);
+        
+        0.to (path.points.upper) do { j:INTEGER;
+          p1 := pts.item j;
+          ((p1.flags & (pt_bevel | pr_innerbevel)) != 0).if {
+            bevel_join dst points (p0,p1) with (lw,rw,lu,ru,fringe_width);
+            //"bevel_join FIN\n".print;
+          } else {
+            vset dst with (p1.x+(p1.dmx*lw), p1.y+(p1.dmy*lw), lu,1);
+            vset dst with (p1.x-(p1.dmx*rw), p1.y-(p1.dmy*rw), ru,1);
+          };
+          p0 := p1;          
+        };
+        // Loop it
+        vset dst with (dst.item 0.x, dst.item 0.y, lu,1);
+        vset dst with (dst.item 1.x, dst.item 1.y, ru,1); 
+      };
+      
+    };
+  );
+
+Section Public
+  
+  // Draw
+  - begin_path <-
+  ( 
+    (commands.lower).to (commands.upper) do { i:INTEGER;
+      commands.item i.free;
+    };
+    commands.clear; 
+    clear_path_cache; 
+  );
+
+  - move_to (x,y:REAL_32) <- 
+  ( add_cmd (PEN_MOVE.create (x,y)); );
+
+  - line_to (x,y:REAL_32) <- 
+  ( add_cmd (PEN_LINE.create (x,y)); );
+
+  - bezier_w1 (c1x,c1y:REAL_32) w2 (c2x,c2y:REAL_32) to (x,y:REAL_32) <-
+  ( add_cmd (PEN_BEZIER.create_w1 (c1x,c1y) w2 (c2x,c2y) to (x,y)); );
+
+  - quad_w (cx,cy:REAL_32) to (x,y:REAL_32) <-
+  ( + x0,y0:REAL_32;
+    x0 := command_x;
+    y0 := command_y;
+    add_cmd (
+      PEN_BEZIER.create_w1 
+      (x0+ 2.0/3.0*(cx - x0), y0 + 2.0/3.0*(cy - y0)) w2 
+      (x + 2.0/3.0*(cx -  x), y  + 2.0/3.0*(cy -  y)) to 
+      (x,y)
+    );
+  );
+
+  - arc_to (x1,y1:REAL_32) toto (x2,y2:REAL_32) radius rad:REAL_32 <-
+  ( + x0,y0:REAL_32;
+    + dx0,dy0, dx1,dy1, a, d, cx,cy, a0,a1:REAL_32;
+    + dir:INTEGER;
+    x0 := command_x;
+    y0 := command_y;	
+    (commands.count != 0).if { 
+      // Handle degenerate cases.
+      (
+        (eq (x0,y0) and (x1,y1)) || {eq (x1,y1) and (x2,y2)} ||
+        {dist_seg (x1,y1) with (x0,y0) and (x2,y2) < dist_tol*dist_tol} ||
+        {rad < dist_tol}
+      ).if {
+        line_to (x1,y1);        
+      } else {
+	// Calculate tangential circle to 
+        // lines (x0,y0)-(x1,y1) and (x1,y1)-(x2,y2).
+	dx0 := x0-x1;
+	dy0 := y0-y1;
+	dx1 := x2-x1;
+	dy1 := y2-y1;
+	(dx0,dy0) := normalize (dx0,dy0);
+	(dx1,dy1) := normalize (dx1,dy1);
+	a := (dx0*dx1 + dy0*dy1).acos;
+	d := rad / (a/2.0).tan;
+	(d > 10000.0).if {
+          line_to (x1,y1);          
+	} else {          
+          (cross (dx0,dy0) with (dx1,dy1) > 0.0).if {
+            cx := x1 + dx0*d + dy0*rad;
+            cy := y1 + dy0*d + -dx0*rad;
+            a0 := dx0.atan2 (-dy0);
+            a1 := (-dx1).atan2 dy1;
+            dir := cst_cw;
+          } else {
+            cx := x1 + dx0*d + -dy0*rad;
+            cy := y1 + dy0*d + dx0*rad;
+            a0 := (-dx0).atan2 dy0;
+            a1 := dx1.atan2 (-dy1);
+            dir := cst_ccw;
+          }
+          arc (cx, cy) radius rad angle (a0,a1) direction dir;
+        };
+      };
+    };
+  );
+
+  - close_path <-
+  ( add_cmd PEN_CLOSE; );
+
+  - path_winding dir:INTEGER <-
+  ( add_cmd (PEN_WINDING.create dir); );
+
+  - arc (cx,cy:REAL_32) radius r:REAL_32 
+  angle (a0,a1:REAL_32) direction dir:INTEGER <-
+  ( + a,da,hda,kappa:REAL_32;
+    + dx,dy,x,y,tanx,tany:REAL_32;
+    + px,py,ptanx,ptany:REAL_32;    
+    + ndivs,nvals:INTEGER;
+    + move:PEN_MOVE;
+
+    (commands.count > 0).if {
+      move := PEN_LINE;
+    } else { 
+      move := PEN_MOVE;
+    };
+
+    // Clamp angles
+    da := a1 - a0;
+    (dir = cst_cw).if {
+      (da.abs >= REAL_32.two_pi).if {
+        da := REAL_32.two_pi;
+      } else {
+        {da < 0.0}.while_do {
+          da := da + REAL_32.two_pi;
+        };
+      };
+    } else {
+      (da.abs >= REAL_32.two_pi).if {
+        da := -REAL_32.two_pi;
+      } else {
+        {da > 0.0}.while_do {
+          da := da - REAL_32.two_pi;
+        };
+      };
+    };
+    // Split arc into max 90 degree segments.
+    ndivs := (((da.abs / (REAL_32.pi*0.5) + 0.5).min 5.0).max 1.0).to_integer;
+    hda   := (da / ndivs) / 2.0;
+    kappa := (4.0 / 3.0 * (1.0 - hda.cos) / hda.sin).abs;
+
+    (dir = cst_ccw).if {
+      kappa := -kappa;
+    };
+    nvals := 0;
+    0.to ndivs do { i:INTEGER;
+      a  := a0 + da * (i/ndivs);
+      dx := a.cos;
+      dy := a.sin;
+      x  := cx + dx*r;
+      y  := cy + dy*r;
+      tanx := -dy*r*kappa;
+      tany := dx*r*kappa;
+
+      (i = 0).if {
+        add_cmd (move.create (x,y));
+      } else {
+        add_cmd (PEN_BEZIER.create_w1 
+          (px+ptanx,py+ptany) w2
+          (x-tanx,y-tany) to
+          (x,y)
+        );
+      };
+      px := x;
+      py := y;
+      ptanx := tanx;
+      ptany := tany;
+    };    
+  );
+
+  - rect (x,y:REAL_32) size (w,h:REAL_32) <-
+  (
+    add_cmd (PEN_MOVE.create (x  ,y  ));
+    add_cmd (PEN_LINE.create (x  ,y+h));
+    add_cmd (PEN_LINE.create (x+w,y+h));
+    add_cmd (PEN_LINE.create (x+w,y  ));
+    add_cmd PEN_CLOSE;        
+  );
+
+  - rounded_rect (x,y:REAL_32) size (w,h:REAL_32) radius r:REAL_32 <-
+  ( rounded_rect_varying (x,y) size (w,h) radius (r,r,r,r); );
+
+  - rounded_rect_varying (x,y:REAL_32) size (w,h:REAL_32) 
+  radius (top_left,top_right,bottom_right,bottom_left:REAL_32) <-
+  (
+    ((top_left < 0.1) && {top_right < 0.1} && {bottom_right < 0.1} && {bottom_left < 0.1}).if {
+      rect (x,y) size (w,h);      
+    } else {
+      + halfw,halfh:REAL_32;
+      + rx_bl,ry_bl:REAL_32;
+      + rx_br,ry_br:REAL_32;
+      + rx_tr,ry_tr:REAL_32;
+      + rx_tl,ry_tl:REAL_32;
+      + sh,sw:REAL_32;
+      
+      (w >= 0.0).if { sw := 1.0; } else { sw := -1.0; }; // BSBS A OPTIMISER !!! abs, ...
+      (h >= 0.0).if { sh := 1.0; } else { sh := -1.0; };
+      (halfw,halfh) := (w.abs*0.5,h.abs*0.5);
+      (rx_bl,ry_bl) := (bottom_left .min halfw * sw, bottom_left .min halfh * sh);
+      (rx_br,ry_br) := (bottom_right.min halfw * sw, bottom_right.min halfh * sh);
+      (rx_tr,ry_tr) := (top_right.min halfw * sw, top_right.min halfh * sh);
+      (rx_tl,ry_tl) := (top_left .min halfw * sw, top_left .min halfh * sh);
+      add_cmd (PEN_MOVE.create (x, y + ry_tl));
+      add_cmd (PEN_LINE.create (x, y + h - ry_bl));
+      add_cmd (PEN_BEZIER.create_w1
+        (x, y + h - ry_bl*(1.0 - cst_kappa90)) w2
+        (x + rx_bl*(1.0 - cst_kappa90), y + h) to
+        (x + rx_bl, y + h)
+      );
+      add_cmd (PEN_LINE.create (x + w - rx_br, y + h));
+      add_cmd (PEN_BEZIER.create_w1
+        (x + w - rx_br*(1.0 - cst_kappa90), y + h) w2
+        (x + w, y + h - ry_br*(1.0 - cst_kappa90)) to
+        (x + w, y + h - ry_br)
+      );
+      add_cmd (PEN_LINE.create (x + w, y + ry_tr));
+      add_cmd (PEN_BEZIER.create_w1
+        (x + w, y + ry_tr*(1.0 - cst_kappa90)) w2
+        (x + w - rx_tr*(1.0 - cst_kappa90), y) to
+        (x + w - rx_tr, y)
+      );
+      add_cmd (PEN_LINE.create (x + rx_tl, y));
+      add_cmd (PEN_BEZIER.create_w1
+        (x + rx_tl*(1.0 - cst_kappa90), y) w2
+        (x, y + ry_tl*(1.0 - cst_kappa90)) to
+        (x, y + ry_tl)
+      );
+      add_cmd PEN_CLOSE;
+    };
+  );
+
+  - ellipse (cx,cy:REAL_32) radius (rx,ry:REAL_32) <-
+  (
+    add_cmd (PEN_MOVE.create (cx-rx,cy));
+    add_cmd (PEN_BEZIER.create_w1
+      (cx-rx, cy+ry*cst_kappa90) w2
+      (cx-rx*cst_kappa90, cy+ry) to
+      (cx, cy+ry)
+    );
+    add_cmd (PEN_BEZIER.create_w1
+      (cx+rx*cst_kappa90, cy+ry) w2
+      (cx+rx, cy+ry*cst_kappa90) to
+      (cx+rx, cy)
+    );
+    add_cmd (PEN_BEZIER.create_w1
+      (cx+rx, cy-ry*cst_kappa90) w2
+      (cx+rx*cst_kappa90, cy-ry) to
+      (cx, cy-ry)
+    );
+    add_cmd (PEN_BEZIER.create_w1
+      (cx-rx*cst_kappa90, cy-ry) w2
+      (cx-rx, cy-ry*cst_kappa90) to
+      (cx-rx, cy)
+    );
+    add_cmd PEN_CLOSE;
+  );
+
+  - circle (cx,cy:REAL_32) radius r:REAL_32 <-
+  ( ellipse (cx,cy) radius (r,r); );
+  
+  - fill <-
+  ( + paint:PAINT;
+    
+    paint := PAINT.create;
+    paint.copy (states.last.fill);
+    cache.flatten_paths commands;
+    ((PEN_GL.flags & PEN_GL.antialias) != 0).if {
+      expand_fill (fringe_width, miter, 2.4);
+    } else {
+      expand_fill (0.0, miter, 2.4);
+    };
+    // Apply global alpha
+    paint.inner_color.mul_a (states.last.alpha);
+    paint.outer_color.mul_a (states.last.alpha);
+
+    render_fill paint;
+    paint.free;
+  );
+  
+  - render_fill paint:PAINT <-
+  ( + call_type:INTEGER;
+    + path:PATH;        
+    + call:PEN_CALL;
+    + c:PATH_CACHE;
+    + fofs,fcnt,sofs,scnt,tofs,tcnt,pofs,pcnt:INTEGER;
+    //"Render_fill\n".print;
+    c := cache;
+    //"PEN: ---> ".print; c.paths.count.print; ' '.print; c.paths.first.convex.print; '\n'.print;
+    ((c.paths.count = 1) && {c.paths.first.convex}).if {
+      call_type := cst_convexfill;
+    } else {
+      call_type := cst_fill;
+    };
+    pofs := PEN_GL.paths.count;
+    0.to (c.paths.upper) do { i:INTEGER;      
+      path := c.paths.item i;      
+      (path.fill.count > 0).if {
+        fofs := PEN_GL.verts.count;
+        PEN_GL.verts.append_collection (path.fill);
+        fcnt := PEN_GL.verts.count - fofs;
+      };
+      (path.stroke.count > 0).if {
+        sofs := PEN_GL.verts.count;
+        PEN_GL.verts.append_collection (path.stroke);
+        scnt := PEN_GL.verts.count - sofs;
+      };
+      PEN_GL.paths.add_last (
+        PATH_LOW.make /*create*/ (fofs,fcnt) stroke (sofs,scnt)
+      );
+    };    
+    pcnt := PEN_GL.paths.count - pofs;
+        
+    //"Render_fill suite\n".print;
+    tofs := PEN_GL.verts.count;
+    PEN_GL.verts.add_last (VERTEX.make (c.x_min,c.y_max) axes (0.5,1.0));
+    PEN_GL.verts.add_last (VERTEX.make (c.x_max,c.y_max) axes (0.5,1.0));
+    PEN_GL.verts.add_last (VERTEX.make (c.x_max,c.y_min) axes (0.5,1.0));
+    PEN_GL.verts.add_last (VERTEX.make (c.x_min,c.y_max) axes (0.5,1.0));
+    PEN_GL.verts.add_last (VERTEX.make (c.x_max,c.y_min) axes (0.5,1.0));
+    PEN_GL.verts.add_last (VERTEX.make (c.x_min,c.y_min) axes (0.5,1.0));    
+    tcnt := PEN_GL.verts.count - tofs;
+    
+    call := PEN_CALL.create call_type image (paint.image)
+    path (pofs,pcnt) triangle (tofs,tcnt)
+    uniform (PEN_GL.uniforms.count*PEN_GL.frag_size);
+    PEN_GL.calls.add_last call;
+    
+    (call_type = cst_fill).if {            
+      PEN_GL.uniforms.add_last
+      (FRAG.make shader_simple stroke_thr (-1));
+    };
+    PEN_GL.uniforms.add_last (
+      FRAG.convert_paint(paint,states.last.scissor, 
+      fringe_width, fringe_width, -1.0)
+    );
+  );    
+  
+  - stroke <-
+  ( + scal,strok_width,alpha:REAL_32;
+    + strok_paint:PAINT;
+    + state:STATE;
+    
+    state := states.last;
+    scal := state.xform.average_scale;
+    strok_width := (state.stroke_width * scal).clamp 0 to 200;
+    strok_paint := state.stroke;
+
+    (strok_width < fringe_width).if {
+      // If the stroke width is less than pixel size, 
+      // use alpha to emulate coverage.
+      // Since coverage is area, scale by alpha*alpha.
+      alpha := (strok_width / fringe_width).clamp 0 to 1;
+      strok_paint.inner_color.mul_a (alpha*alpha);
+      strok_paint.outer_color.mul_a (alpha*alpha);
+      strok_width := fringe_width;
+    };
+    // Apply global alpha
+    strok_paint.inner_color.mul_a (state.alpha);
+    strok_paint.outer_color.mul_a (state.alpha);
+
+    cache.flatten_paths commands;
+
+    ((PEN_GL.flags & PEN_GL.antialias) != 0).if {
+      expand_stroke(strok_width*0.5 + fringe_width*0.5, 
+      state.line_cap, state.line_join, state.miter_limit);
+    } else {
+      expand_stroke(strok_width*0.5, 
+      state.line_cap, state.line_join, state.miter_limit);
+    };
+
+    render_stroke (strok_paint,state.scissor, 
+      fringe_width, strok_width, cache.paths
+    );
+  );
+  
+  - render_stroke (paint:PAINT,scissor:SCISSOR,fringe,stroke_width:REAL_32,paths:ARRAY PATH) <-
+  // BSBS: A mettre dans PEN_GL, non ???
+  ( + call:PEN_CALL;    
+    + path:PATH;  
+    + pofs,pcnt,sofs,scnt:INTEGER;
+    
+    //"*** ".print;
+    //PEN_GL.verts.count.print; ' '.print;
+    pofs := PEN_GL.paths.count;
+    0.to (paths.upper) do { i:INTEGER;      
+      path := paths.item i;
+      (path.stroke.count > 0).if {        
+        sofs := PEN_GL.verts.count;
+        PEN_GL.verts.append_collection (path.stroke);
+        scnt := PEN_GL.verts.count - sofs;
+        PEN_GL.paths.add_last (
+          PATH_LOW.make /*create*/ (0,0) stroke (sofs,scnt)
+        );
+      };
+    };
+    pcnt := PEN_GL.paths.count - pofs;
+    //PEN_GL.verts.upper.print; '\n'.print;
+    
+    call := PEN_CALL.create cst_stroke image (paint.image)    
+    path (pofs,pcnt) triangle (0,0)
+    uniform (PEN_GL.uniforms.count*PEN_GL.frag_size);
+    PEN_GL.calls.add_last call;
+    
+    ((PEN_GL.flags & stencil_strokes) != 0).if {      
+      PEN_GL.uniforms.add_last (
+        FRAG.convert_paint(paint, scissor, stroke_width, 
+        fringe, -1.0)
+      );
+      PEN_GL.uniforms.add_last (
+        FRAG.convert_paint(paint, scissor, stroke_width, 
+        fringe, 1.0 - 0.5/255.0)
+      );
+    } else {
+      PEN_GL.uniforms.add_last (
+        FRAG.convert_paint(paint, scissor, stroke_width, 
+        fringe, -1.0)
+      );
+    };
+  );
+    

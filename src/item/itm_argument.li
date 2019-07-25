@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_ARGUMENT;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parent argument";
 
 Section Inherit
@@ -19,18 +15,24 @@ Section Public
   - upper:INTEGER <- ( deferred; 0);
 
   - count:INTEGER <- upper + 1;
-
+  
+  - hash_code:INTEGER <-
+  (
+    deferred;
+    0
+  );
+  
   //
   // Running.
   //
 
-  - item idx:INTEGER :ITM_TYPE_MONO <-
+  - item idx:INTEGER :ITM_TYPE <-
   (
     deferred;
     NULL
   );
 
-  - to_run_in arg_lst:FAST_ARRAY(LOCAL) for p:PARAMETER_TO_TYPE <-
+  - to_run_in arg_lst:ARRAY LOCAL for p:PARAMETER_TO_TYPE <-
   (
     deferred;
   );
@@ -40,7 +42,7 @@ Section Public
     deferred;
   );
 
-  - check larg:FAST_ARRAY(EXPR) index idx:INTEGER for p:PARAMETER_TO_TYPE :INTEGER <-
+  - check arg:EXPR for p:PARAMETER_TO_TYPE :EXPR <-
   (
     deferred;
     0
@@ -51,9 +53,9 @@ Section Public
   //
 
   - is_equal other:ITM_ARGUMENT <-
-    ( + o:SELF;
-    + err:STRING_CONSTANT;
-    //MHMH : ?? Sûr ? plante sur gros...
+  ( + o:SELF;
+    + err:STRING_ALIAS;
+    
     ? {other != Self};
 
     o ?= other;
@@ -65,7 +67,7 @@ Section Public
       err := "Invariance type argument invalid.";
     };
     (err != NULL).if {
-      POSITION.put_error warning text err;
+      POSITION.put_error semantic text err;
       position.put_position;
       (other.position).put_position;
       POSITION.send_error;
@@ -76,12 +78,12 @@ Section Public
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     deferred;
   );
 
-  - shorter_in buf:STRING <-
+  - shorter_in buf:STRING_BUFFER <-
   (
     deferred;
   );

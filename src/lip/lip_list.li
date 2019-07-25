@@ -2,9 +2,6 @@ Section Header
 
   + name      := LIP_LIST;
 
-  - copyright := "2003-2008 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -13,20 +10,20 @@ Section Inherit
 
 Section Public
 
-  + list:FAST_ARRAY(LIP_CODE);
+  + list:ARRAY LIP_CODE;
 
   //
   // Creation.
   //
 
-  - create p:POSITION with v:FAST_ARRAY(LIP_CODE) :SELF <-
+  - create p:POSITION with v:ARRAY LIP_CODE :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p with v;
     result
   );
 
-  - make p:POSITION with v:FAST_ARRAY(LIP_CODE) <-
+  - make p:POSITION with v:ARRAY LIP_CODE <-
   (
     position := p;
     list := v;

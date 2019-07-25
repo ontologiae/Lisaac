@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := PROFIL;
+  + name    := PROFIL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Method with costumization";
+  - comment := "Method with costumization";
 
 Section Inherit
 
@@ -24,13 +20,16 @@ Section PROFIL_LIST
   );
 
 Section Public
-
-  - arg_type_tmp:FAST_ARRAY(EXPR);
+  
+  - profil_add_alias:PROFIL_SLOT;  
+  - profil_hash_code_alias:PROFIL_SLOT;
+  
+  - arg_type_tmp:ARRAY EXPR;
   - parameter_to_type p:ITM_TYPE_PARAMETER :TYPE_FULL <-
   ( + idx:INTEGER;
     + result:TYPE_FULL;
 
-    (p.name = ALIAS_STR.prototype_self).if {
+    (p.name = "SELF").if {
       // For Self.
       result := type_self;
     } else {
@@ -96,7 +95,7 @@ Section Public
     external_present := b;
   );
 
-  - genere_graph out:STRING <-
+  - genere_graph out:STRING_BUFFER <-
   ( + key:PROFIL;
     + cnt:INTEGER;
     + is_force:BOOLEAN;
@@ -144,9 +143,9 @@ Section Public
 
   + type_self:TYPE_FULL;
 
-  + argument_list:FAST_ARRAY(LOCAL);
+  + argument_list:ARRAY LOCAL;
 
-  + result_list:SLIM_ARRAY(LOCAL);
+  + result_list:SLIM_ARRAY LOCAL;
 
   + code:LIST;
   + context:LOCAL;
@@ -156,7 +155,7 @@ Section Public
   + link_count:INTEGER;
   + cop_link_count:INTEGER;
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   - is_context_sensitive:BOOLEAN <- deferred;
 
@@ -218,27 +217,49 @@ Section Public
     };
   );
 
-  - write_argument args:FAST_ARRAY(EXPR) :FAST_ARRAY(WRITE) <-
-  ( + loc:LOCAL;
-    + val:EXPR;
+  - write_argument args:ARRAY EXPR :ARRAY WRITE <-
+  ( + result:ARRAY WRITE;
     + wrt:WRITE;
-    + result:FAST_ARRAY(WRITE);
+    + add:{(LOCAL,EXPR); };
+    + j,k:INTEGER;
+    + em:EXPR_MULTIPLE;
+    + e:EXPR;
+    + l:LOCAL;
 
     (args.count != argument_list.count).if {
-      semantic_error (args.last.position,"Incorrect vector size.");
+      string_tmp.copy "Incorrect vector size. (Call #";
+      args.count.append_in string_tmp;
+      string_tmp.append " / Def. #";
+      argument_list.count.append_in string_tmp;
+      string_tmp.add_last ')';
+      semantic_error (args.last.position,string_tmp);
     };
-
-    result := FAST_ARRAY(WRITE).create_with_capacity (argument_list.count);
-    (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
-      loc := argument_list.item j;
-      val := args.item j;
-      (loc != NULL).if {
-	wrt := loc.write (val.position) value val;
-	result.add_last wrt;
-      } else {
-	result.add_last NULL;
-	val.remove;
+    
+    add := { (loc:LOCAL,val:EXPR); 
+      (loc != NULL).if { wrt := loc.write (val.position) value val; } 
+      else { wrt := NULL; val.remove; };
+      result.add_last wrt;
+    };
+    
+    result := ARRAY WRITE .create_with_capacity (argument_list.count);
+    ">>>>>>>>>>====".print; argument_list.count.print; '\n'.print;
+    j := argument_list.lower;
+    k := args.lower;
+    {j <= argument_list.upper}.while_do {      
+      e := args.item k;
+      em ?= e;
+      (em != NULL).if {
+        (em.lower).to (em.upper) do { i:INTEGER;
+          l := argument_list.item j;  
+          j := j + 1;
+          add.value (l,em.item i);                  
+        };
+      } else {        
+        l := argument_list.item j;  
+        j := j + 1;        
+        add.value (l,e);        
       };
+      k := k + 1;
     };
     result
   );
@@ -279,16 +300,16 @@ Section Public
     };
   );
 
-  - lookup n:STRING_CONSTANT :LOCAL <-
+  - lookup n:STRING_ALIAS :LOCAL <-
   ( + j:INTEGER;
     + result:LOCAL;
-
+        
     j := argument_list.lower;
     {(j > argument_list.upper) || {argument_list.item j.name = n}}.until_do {
       j := j + 1;
     };
     (j <= argument_list.upper).if {
-      result := argument_list.item j;
+      result := argument_list.item j;      
     }.elseif {result_list != NULL} then {
       j := result_list.lower;
       {(j > result_list.upper) || {result_list.item j.name = n}}.until_do {
@@ -418,7 +439,8 @@ Section Public
           {is_context_sensitive || {(seq_inline - old_seq_inline) < inline_lev}}
         ) || {link_count = 1}
       ) &&
-      {! is_interrupt} && {! is_external} // &&
+      {! is_interrupt} && {! is_external} &&
+      {Self != profil_add_alias} && {Self != profil_hash_code_alias}
       //{(cop_argument = NULL) || {! result_list.is_empty}}
     ).if {
       stat := stat | inlining_bit;
@@ -429,7 +451,7 @@ Section Public
       {argument_list.first.ensure_count = 0}
     ).if {
       argument_list.put NULL to 0;
-    };    
+    };
   );
 
   //
@@ -438,7 +460,7 @@ Section Public
 
   - is_static:BOOLEAN <- deferred;
 
-  - genere_handler buffer:STRING <-
+  - genere_handler buffer:STRING_BUFFER <-
   (
     (link_count != 0).if {
       genere_handler_intern buffer;
@@ -450,7 +472,7 @@ Section Public
     };
   );
 
-  - genere_handler_intern buffer:STRING <-
+  - genere_handler_intern buffer:STRING_BUFFER <-
   ( + ts:TYPE_FULL;
     + v:LOCAL;
     + i_result:INTEGER;
@@ -507,14 +529,14 @@ Section Public
     buffer.add_last ')';
   );
 
-  - genere_handler_cop buffer:STRING <-
+  - genere_handler_cop buffer:STRING_BUFFER <-
   (
     buffer.append "lith_object *COP_";
     buffer.append name;
     buffer.append "(lith_object *obj,pthread_mutex_t *mutex)";
   );
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   ( 
     + ts:TYPE_FULL;
     + v:LOCAL;
@@ -529,9 +551,9 @@ Section Public
       PUSH_SPEED.start_c_function name;
     };
     //
-    profil_current := Self;
+    profil_current := Self;    
     ((link_count != 0) || {result_list.count != 0}).if {
-      ((cop_link_count != 0) && {result_list.count = 0}).if {
+      ((is_cop) && {cop_link_count != 0} && {result_list.count = 0}).if {
         // COP link.
         not_yet_implemented;
         buffer.add_last '\n';
@@ -562,55 +584,59 @@ Section Public
       buffer.append indent;
       buffer.append "}\n";
     } else {
-      // COP direct.
-      buffer.add_last '\n';
-      genere_handler_cop buffer;
-      buffer.add_last '\n';
-      add_comment buffer;
-      //
-      buffer.append "{\n";
-      indent.append "  ";
-      (argument_list.count > 0).if {
-        buffer.append indent;
-        v := argument_list.first;
-        ((v != NULL) && {v.name = ALIAS_STR.variable_self}).if {
-          genere v result FALSE in buffer;
-          buffer.add_last '=';
-          put_cast_self buffer;
-          buffer.append "obj;\n";
-          low := 1;
-        };
-      };
-      (argument_list.count-low > 0).if {
-        (low).to (argument_list.upper) do { j:INTEGER;
-          v := argument_list.item j;
-          (v != NULL).if {
-            buffer.append indent;
+      (is_cop).if {
+        // COP direct.
+        buffer.add_last '\n';
+        genere_handler_cop buffer;
+        buffer.add_last '\n';
+        add_comment buffer;
+        //
+        buffer.append "{\n";
+        indent.append "  ";
+        (argument_list.count > 0).if {
+          buffer.append indent;
+          v := argument_list.first;
+          ((v != NULL) && {v.name = "Self"}).if {
             genere v result FALSE in buffer;
-            buffer.append "=(";
-            ts := v.type;
-            ts.genere_declaration buffer;
-            buffer.add_last ' ';
-            ts.genere_star_declaration buffer;
-            buffer.append ")((";
+            buffer.add_last '=';
             put_cast_self buffer;
-            buffer.append "obj)->param_";
-            np.append_in buffer;
-            buffer.append ");\n";
-            np := np + 1;
+            buffer.append "obj;\n";
+            low := 1;
           };
         };
-        type_self.raw.set_param np;
+        (argument_list.count-low > 0).if {
+          (low).to (argument_list.upper) do { j:INTEGER;
+            v := argument_list.item j;
+            (v != NULL).if {
+              buffer.append indent;
+              genere v result FALSE in buffer;
+              buffer.append "=(";
+              ts := v.type;
+              ts.genere_declaration buffer;
+              buffer.add_last ' ';
+              ts.genere_star_declaration buffer;
+              buffer.append ")((";
+              put_cast_self buffer;
+              buffer.append "obj)->param_";
+              np.append_in buffer;
+              buffer.append ");\n";
+              np := np + 1;
+            };
+          };
+          type_self.raw.set_param np;
+        };
+        buffer.append "  pthread_mutex_unlock(&obj->mutex);\n";
+        buffer.append "  pthread_mutex_lock(mutex);\n";
+        //        
+        slot.receiver_type.name.print;
+        '.'.print;
+        slot.name.print; '\n'.print;
+        
+        code.genere_extern buffer result NULL;
+        //
+        buffer.append "  return NULL;\n}\n";
+        indent.remove_last 2;
       };
-      buffer.append "  pthread_mutex_unlock(&obj->mutex);\n";
-      buffer.append "  pthread_mutex_lock(mutex);\n";
-      //
-      name.print; '\n'.print;
-
-      code.genere_extern buffer result NULL;
-      //
-      buffer.append "  return NULL;\n}\n";
-      indent.remove_last 2;
     };
   );
     
@@ -618,13 +644,13 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append (slot.name);
     append_type buffer;
   );
 
-  - display_all buffer:STRING <-
+  - display_all buffer:STRING_BUFFER <-
   (
     display buffer;
     code.display buffer;
@@ -635,14 +661,14 @@ Section Public
   // Statistic
   //
 
-  - nb_func_arg:FAST_ARRAY2(INTEGER)     := FAST_ARRAY2(INTEGER).create (8,8);
-  - nb_arg_size_type:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create 64;
+  - nb_func_arg:ARRAY2 INTEGER     := ARRAY2 INTEGER .create (8,8);
+  - nb_arg_size_type:ARRAY INTEGER := ARRAY INTEGER .create 64;
 
-//  - list_cpa:HASHED_SET(ABSTRACT_STRING) := HASHED_SET(ABSTRACT_STRING).create;
+//  - list_cpa:HASHED_SET(STRING) := HASHED_SET(STRING).create;
 
 Section Private
 
-  - put_cast_self buffer:STRING <-
+  - put_cast_self buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     type_self.genere_declaration buffer;
@@ -651,7 +677,7 @@ Section Private
     buffer.add_last ')';
   );
 
-  - add_comment buffer:STRING <-
+  - add_comment buffer:STRING_BUFFER <-
   (
     buffer.append "/* ";
     append_type buffer;
@@ -674,14 +700,14 @@ Section Private
   );
 
   /*
-  - recur_cpa buf:STRING arg n:INTEGER <-
+  - recur_cpa buf:STRING_BUFFER arg n:INTEGER <-
   ( + var:LOCAL;
-    + tmp:ABSTRACT_STRING;
+    + tmp:STRING;
 
     (n > argument_list.upper).if {
       tmp := list_cpa.reference_at buf;
       (tmp = NULL).if {
-        list_cpa.add (ALIAS_STR.get buf);
+        list_cpa.add (buf.to_string_alias);
       };
     } else {
       var := argument_list.item n;
@@ -699,7 +725,7 @@ Section Private
   );
   */
 
-  - append_type buffer:STRING <-
+  - append_type buffer:STRING_BUFFER <-
   ( + v:VARIABLE;
     + nb_arg,nb_arg_poly,tmp:INTEGER;
     //+ s:SLOT;
@@ -764,7 +790,7 @@ Section Private
     };
   );
 
-  - genere v:LOCAL result is_res:BOOLEAN in buffer:STRING <-
+  - genere v:LOCAL result is_res:BOOLEAN in buffer:STRING_BUFFER <-
   ( + ts:TYPE_FULL;
 
     ts := v.type;

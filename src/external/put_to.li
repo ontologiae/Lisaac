@@ -2,11 +2,7 @@ Section Header
 
   + name        := PUT_TO;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Put for NATIVE_ARRAY(E) (see ITEM)";
+  - comment     := "Put for NATIVE_ARRAY E (see ITEM)";
 
 Section Inherit
 
@@ -94,7 +90,7 @@ Section Public
   // Genere.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   ( + type_generic:TYPE_GENERIC;
     + first_type:TYPE_FULL;
 
@@ -126,7 +122,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     receiver.display buffer;
     buffer.add_last '[';

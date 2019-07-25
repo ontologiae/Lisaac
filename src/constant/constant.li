@@ -2,10 +2,6 @@ Section Header
 
   + name    := CONSTANT;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Parent for all constants";
 
 Section Inherit

@@ -1,0 +1,51 @@
+  // `grep "//++" parser.li' : Current grammar.
+  //++ PROGRAM      -> { "Section" SECTION [CONTRACT] { SLOT } [CONTRACT] }
+  //++ SECTION      -> ('Header' | 'Inherit' | 'Insert' | 'Interrupt' | 'External' | 'Mapping') [ ',' ACCESS ] 
+  //++               | ACCESS  
+  //++ ACCESS       -> 'Directory' | 'Public' | 'Private' | PROTOTYPE { ',' PROTOTYPE }
+  //++ SLOT         -> style TYPE_SLOT [':' TYPE_RESULT][ affect DEF_SLOT ]';'
+  //++ TYPE_SLOT    -> [ LOC_ARG '.' ] identifier [ LOC_ARG { identifier LOC_ARG } ]
+  //++               | [ LOC_ARG ] '\'' operator '\'' [("Left"|"Right") [integer]] [LOC_ARG]
+  //++ DEF_SLOT     -> [CONTRACT] EXPR [CONTRACT]
+  //++ TYPE_RESULT  -> TYPE
+  //++               | '(' TYPE_LIST ')'
+  //++ TYPE_LIST    -> TYPE [ ',' ( TYPE { ',' TYPE } } | '...' ) ]  
+  //++ LOC_ARG      -> identifier ':' TYPE
+  //++               | '(' ARG ')'
+  //++ ARG          -> identifier { [':' TYPE] ',' identifier } ':' TYPE [ ',' '...' ]
+  //++ LOCAL        -> identifier { ',' identifier } ':' TYPE [ ',' '...' ] 
+  //++ TYPE         -> PROTOTYPE
+  //++               | TYPE_VECTOR
+  //++ TYPE_SHORT   -> TYPE_BEGIN
+  //++               | TYPE_VECTOR
+  //++ TYPE_VECTOR  -> '(' TYPE { ',' TYPE } ')'
+  //++               | '{' [ TYPE_RESULT ';' ] [ TYPE_LIST ] '}'
+  //++ TYPE_BEGIN   -> ("Strict" | "Expanded") cap_identifier{('.'|'...')cap_identifier}  
+  //++ PROTOTYPE    -> TYPE_BEGIN [ TYPE_SHORT { cap_identifier TYPE_SHORT } ]
+  //++ EXPR         -> { ASSIGN !!AMBIGU!! affect } EXPR_OPERATOR
+  //++ ASSIGN       -> '(' IDF_ASSIGN { ',' IDF_ASSIGN } ')'
+  //++               | IDF_ASSIGN
+  //++ IDF_ASSIGN   -> identifier { identifier }
+  //++ EXPR_OPERATOR-> { operator } EXPR_MESSAGE { operator {operator} EXPR_MESSAGE } {operator}
+  //++ EXPR_MESSAGE -> EXPR_BASE { '.' SEND_MSG }
+  //++ EXPR_BASE    -> "Old" EXPR
+  //++               | '...'
+  //++               | EXPR_PRIMARY
+  //++               | SEND_MSG
+  //++ EXPR_PRIMARY -> "Self"
+  //++               | result
+  //++               | PROTOTYPE
+  //++               | CONSTANT
+  //++               | '(' GROUP ')'
+  //++               | '{' [ LOC_ARG ';' !! AMBIGU!! ] GROUP '}'
+  //++               | external [ ':' ['('] TYPE ['{' TYPE_LIST '}'] [')'] ]
+  //++ CONSTANT     -> integer
+  //++               | real
+  //++               | characters
+  //++               | string
+  //++ GROUP        -> DEF_LOCAL {EXPR ';'} [ EXPR {',' {EXPR ';'} EXPR } ]
+  //++ CONTRACT     -> '[' GROUP ']'
+  //++ DEF_LOCAL    -> { style LOCAL ';' } !! AMBIGU !!
+  //++ SEND_MSG     -> identifier [ ARGUMENT { identifier ARGUMENT } ]
+  //++ ARGUMENT     -> EXPR_PRIMARY
+  //++               | identifier

@@ -2,22 +2,17 @@ Section Header
 
   + name    := TYPES_TMP;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Aliser TYPE collection.";
 
 Section Inherit
 
-  + parent_types:Expanded TYPES;
+  + parent_types_set:Expanded TYPES_SET;
 
 Section Private
 
-  //- bucket:HASHED_SET(TYPES) := HASHED_SET(TYPES).create;
-  - bucket:FAST_ARRAY(TYPES) := FAST_ARRAY(TYPES).create_with_capacity 8;
+  - bucket:ARRAY (Strict TYPES_SET) := ARRAY (Strict TYPES_SET).create_with_capacity 3000; // BSBS: A mettre dans TYPES_SET
 
-  - free_list:FAST_ARRAY(TYPES_TMP) := FAST_ARRAY(TYPES_TMP).create_with_capacity 5;
+  - free_list:ARRAY TYPES_TMP := ARRAY TYPES_TMP.create_with_capacity 200;
 
   + capacity:INTEGER;
 
@@ -28,48 +23,38 @@ Section Private
     result.make_types_tmp;
     result
   );
-
+  
   - make_types_tmp <-
   (
-    capacity := 256;
-    storage  := NATIVE_ARRAY(TYPE).calloc_intern capacity;
+    count := 0;
+    capacity := 128;
+    storage  := NATIVE_ARRAY TYPE .calloc_intern capacity;
   )
   [ +? {is_empty}; ];
 
 Section Public
 
-  - print_types <-
+  - print_all <-
   ( + t:TYPES;
-    + pb:PROFIL_BLOCK;
     
     (bucket.lower).to (bucket.upper) do { j:INTEGER;      
       t := bucket.item j;      
-      (bucket.fast_has t).if_false {
-        
-        t.print; '\n'.print;
-        "cap:".print; bucket.capacity.print; '\n'.print;
-        "idx:".print; (t.hash_code % bucket.capacity).print; '\n'.print;
-        "j:".print; j.print; '\n'.print;
-                
-        "------------------------------------------\n".print;
-        (j > 4).if {
-          crash_with_message "LA<<-";
-        };
-      };
+      t.types_print; 
+      '\n'.print;
     };
   );
 
 Section Public
 
-  - types_empty:TYPES := TYPES;
+  - types_empty:TYPES := TYPES_SET;
 
   //
   // Creation.
   //
-
+  
   - new:TYPES_TMP <-
   ( + result:TYPES_TMP;
-
+    
     (free_list.is_empty).if {
       result := create_types_tmp;
     } else {
@@ -96,45 +81,68 @@ Section Public
 
   - to_types:TYPES <-
   ( + result:TYPES;
+    + nw,t:Strict TYPES_SET;
+    + j,i:INTEGER;
 
     (is_empty).if {
       result := types_empty;
     } else {
-
-      result := bucket.reference_at Self with { (e1,e2:TYPES); e1 ~= e2};
-      (result = NULL).if {
-	result := TYPES.create Self;
-	//bucket.fast_add result;
-	bucket.add_last result;
+        
+      (count = 1).if {
+        result := first;
+      }/*.elseif {(count = 2) && {first = TYPE_NULL}} then {
+        result := item 1.types_with_null;
+        (result = NULL).if {
+          t := TYPES_SET.create Self;
+          item 1.set_types_with_null t;
+          result := t;
+        };
+      }*/ else {
+        j := bucket.lower;
+        {(j < bucket.count) && {result = NULL}}.while_do { 
+          t := bucket.item j;
+          ((count = t.count) && {item 1 = t.item 1} && {first = t.first}).if {
+            i := 2;
+            {(i < count) && {item i = t.item i}}.while_do { i := i + 1; };
+            (i = count).if {
+              result := t;
+            };
+          };
+          j := j + 1;
+        };
+        (result = NULL).if {
+          nw := TYPES_SET.create Self;
+          ? {nw != NULL};
+          bucket.add_last nw;
+          result := nw;
+        };
       };
     };
-    20 ? {result ~= Self};
-
     free;
     result
   );
 
   - clear <-
   (
-    upper := -1;
+    count := 0;
   );
 
   - free <-
   (
-    clear;
+    clear;    
     free_list.add_last Self;
   );
 
   //
   // Update list.
   //
-
-  - remove_first <-
-  (
-    (lower + 1).to upper do { i:INTEGER;
-      storage.put (item i) to (i - 1);
+  
+  - remove i:INTEGER <-
+  ( 
+    (i+1).to (count-1) do { j:INTEGER;
+      storage.put (item j) to (j - 1);
     };
-    upper := upper - 1;
+    count := count - 1;
   );
 
   - add t:TYPE <-
@@ -144,69 +152,63 @@ Section Public
       add_last t;
     } else {
       idx := search t from 0 to count;
-      (idx > upper).if {
+      (idx = count).if {
 	add_last t;
       }.elseif {item idx != t} then {
 	add t to idx;
       };
     };
     (order_test).if_false { "MERDE!\n".print; };
-  )
-  [
-    20 ? {order_test};
-  ];
-
+  );
+    
   - union other:TYPES <-
   ( + idx1,idx2,t2idx:INTEGER;
     + t2:TYPE;
-
-    {idx2 > other.upper}.until_do {
+    
+    {idx2 = other.count}.until_do {
       t2    := other.item idx2;
       t2idx := t2.index;
-      {(idx1 <= upper) && {item idx1.index < t2idx}}.while_do {
+      {(idx1 < count) && {item idx1.index < t2idx}}.while_do {
 	idx1 := idx1 + 1;
       };
-      {(idx1 <= upper) && {item idx1.index = t2idx} && {item idx1 != t2}}.while_do {
+      {(idx1 < count) && {item idx1.index = t2idx} && {item idx1 != t2}}.while_do {
         idx1 := idx1 + 1;
       };
-      ((idx1 > upper) || {item idx1 != t2}).if {
+      ((idx1 = count) || {item idx1 != t2}).if {
 	add t2 to idx1;
       };
       idx1 := idx1 + 1;
       idx2 := idx2 + 1;
     };
     (order_test).if_false { "MERDE UNION!\n".print; };
-  )
-  [
-    20 ? {order_test};
-  ];
+  );
 
 Section Private
-
+  
   - add_last t:TYPE <-
   ( + new_capacity:INTEGER;
 
-    (upper + 1 > capacity - 1 ).if {
+    (count + 1 > capacity).if {
       new_capacity := capacity * 2;
       storage := storage.realloc capacity with new_capacity;
       capacity := new_capacity;
     };
-    upper := upper + 1;
-    storage.put t to upper;
+    count := count + 1;
+    storage.put t to (count - 1);
   );
 
   - add t:TYPE to index:INTEGER <-
   ( + new_capacity:INTEGER;
-    (index = upper + 1).if {
+    (index = count).if {
       add_last t;
     } else {
-      (upper + 1 > capacity - 1 ).if {
-	new_capacity := capacity * 2;
+      (count > capacity - 1 ).if {
+        new_capacity := capacity * 2;
 	storage := storage.realloc capacity with new_capacity;
 	capacity := new_capacity;
       };
-      upper := upper + 1;
-      (upper - 1).downto index do { i:INTEGER;
+      count := count + 1;
+      (count - 2).downto index do { i:INTEGER;
 	storage.put (item i) to (i + 1);
       };
       storage.put t to index;
@@ -245,17 +247,11 @@ Section Private
   - order_test:BOOLEAN <-
   ( + j:INTEGER;
 
-    {(j < upper) && {item j.index <= item (j+1).index}}.while_do {
+    {(j < count-1) && {item j.index <= item (j+1).index}}.while_do {
       j := j + 1;
     };
-    j >= upper
+    j >= count - 1
   );
 
 
-
-
-
-
-
-
-
+  

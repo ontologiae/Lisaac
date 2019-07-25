@@ -1,0 +1,54 @@
+Section Header
+  
+  + name := PEN_CALL;
+  
+Section Inherit
+  
+  - parent_constant_pen:CONSTANT_PEN := CONSTANT_PEN;
+  
+Section Private
+  
+  - stack:ARRAY PEN_CALL := ARRAY PEN_CALL.create_with_capacity 16;
+
+Section Public
+  
+  + type:INTEGER;
+  + image:INTEGER;
+  
+  // BSBS: Polymorphisme possible entre fill/stroke/triangle
+  + path_offset:INTEGER; // in PEN_GL.vertexes
+  + path_count:INTEGER;
+
+  + triangle_offset:INTEGER; // in PEN_GL.vertexes
+  + triangle_count:INTEGER;
+  
+  + uniform_offset:INTEGER;
+  
+  - create typ:INTEGER image img:INTEGER path (pofs,pcnt:INTEGER) 
+  triangle (tofs,tcnt:INTEGER) uniform uofs:INTEGER :PEN_CALL <-
+  ( + result:PEN_CALL;
+    (stack.is_empty).if {
+      result := clone;        
+    } else {
+      result := stack.last;
+      stack.remove_last;
+    };
+    result.make typ image img path (pofs,pcnt)
+    triangle (tofs,tcnt) uniform uofs;
+    result    
+  );
+  
+  - free <-
+  ( 
+    stack.add_last Self;
+  );
+  
+  - make typ:INTEGER image img:INTEGER path (pofs,pcnt:INTEGER) 
+  triangle (tofs,tcnt:INTEGER) uniform uofs:INTEGER <-
+  (
+    type := typ;
+    image := img;
+    (path_offset,path_count) := (pofs,pcnt);
+    (triangle_offset,triangle_count) := (tofs,tcnt);
+    uniform_offset := uofs;
+  );

@@ -1,8 +1,7 @@
 Section Header
   
   + name         := SOLN;
-  
-  - author       := "Benoit Sonntag";
+
   - comment      := "Language shootout - Meteor contest (based on the C++ version)"; 
   
 Section Inherit
@@ -15,10 +14,10 @@ Section Private
   
 Section Public
   
-  + m_pieces:FAST_ARRAY[S_PIECE];
+  + m_pieces:ARRAY[S_PIECE];
   + m_n_piece:UINTEGER_32;
   
-  + m_cells:FAST_ARRAY2[INTEGER_8];
+  + m_cells:ARRAY2[INTEGER_8];
   + m_synched:BOOLEAN;
   
   - create fill_val:INTEGER :SELF <-
@@ -31,16 +30,16 @@ Section Public
   
   - make fill_val:INTEGER <-
   (
-    m_pieces := FAST_ARRAY[S_PIECE].create n_piece_type;
-    m_cells  := FAST_ARRAY2[INTEGER_8].create (n_row,n_col);
+    m_pieces := ARRAY[S_PIECE].create n_piece_type;
+    m_cells  := ARRAY2[INTEGER_8].create (n_row,n_col);
     fill fill_val;
   );
 
-  - to_string:STRING <-
-  ( + result:STRING;
+  - to_string:STRING_BUFFER <-
+  ( + result:STRING_BUFFER;
     + val:INTEGER;
     
-    result := STRING.create (n_cell * 2);
+    result := STRING_BUFFER.create (n_cell * 2);
     
     0.to (n_row - 1) do { y:INTEGER;
       0.to (n_col - 1) do { x:INTEGER;

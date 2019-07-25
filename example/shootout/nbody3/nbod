@@ -1,7 +1,0 @@
-lisaac nbody -q -O
-gcc nbody_c.c -o nbody_c -O3 -fomit-frame-pointer -lm
-echo Lisaac: 
-time ./nbody 2000000 > out_li.txt
-echo C:
-time ./nbody_c 2000000 > out_c.txt
-diff out_li.txt out_c.txt

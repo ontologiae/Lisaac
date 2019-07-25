@@ -1,0 +1,62 @@
+Section Header
+  
+  + name := NANO_TEST;
+  
+Section Inherit
+  
+  - parent_constant_pen:CONSTANT_PEN := CONSTANT_PEN;  
+  - parent_paper:PAPER := PAPER;
+  
+Section Private
+  
+  - draw_mouse p:PEN <-
+  ( + stat,x,y:INTEGER;
+    p.begin_path;
+    0.to 9 do { i:INTEGER;
+      stat := p.mouse.item (i*3);
+      (stat != 0).if {                
+        x := p.mouse.item (i*3 + 1);
+        y := p.mouse.item (i*3 + 2);              
+        p.circle (x,y) radius 100;
+        p.stroke_color (COLOR.rgb (255,255,255));
+        p.stroke;
+      };
+    };
+  );
+  
+Section Public  
+  
+  - draw p:PEN <-
+  ( + t:REAL_32;
+    + c:PAINT;
+    + x,y,w,h:INTEGER;
+    
+    t := CLOCK.seconds;
+    
+    (x,y) := (p.win_width/2-32,p.win_height/2-32);
+    (w,h) := (64,64);
+    
+    c := PAINT.create_radial (x+w/2,y+h/2) radius (3,(t*5).sin*32)
+    color (COLOR.rgba(255,0,0,255)) 
+    to (COLOR.rgba(72, 116, 80,0));    
+    /*
+    c := PAINT.create_linear (x,y) to (x+w,y+h)
+    color (COLOR.rgba(255,  0,  0,255)) 
+    to    (COLOR.rgba(  0,255,  0,255));    
+    */
+    p.begin_path;
+    p.rect (x,y) size (w,h);    
+    p.fill_paint c;
+    p.stroke_color (COLOR.rgba (0,0,0,0));
+    p.fill;
+    c.free;
+    
+    draw_mouse p;            
+  );
+  
+  - main <-
+  ( 
+    PAPER.make (480,800) title "Nano Test";        
+    PAPER.run Self;
+  );
+  

@@ -18,7 +18,7 @@ Section Public
   ( + button:G_BUTTON;
     + action1:{G_BUTTON;};
 
-    VIDEO.make_size (150,80);
+    VIDEO.make_size (170,80);
 
     action1 := { b:G_BUTTON;
       die_with_code exit_success_code;

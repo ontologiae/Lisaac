@@ -9,9 +9,9 @@ Section Public
   - main <-
   ( + first,last:THREAD;
     
-    first := last := THREAD.clone.make threads with NULL;
+    first := last := THREAD.create threads with NULL;
     (threads-1).downto 1 do { i:INTEGER;      
-      first := THREAD.clone.make i with first;      
+      first := THREAD.create i with first;      
     };
     last.set_next first;
  

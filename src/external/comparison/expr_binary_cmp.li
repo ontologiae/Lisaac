@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := EXPR_BINARY_CMP;
+  + name    := EXPR_BINARY_CMP;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Binary comparison expression.";
+  - comment := "Binary comparison expression.";
 
 Section Inherit
 
@@ -26,7 +22,7 @@ Section Public
     right := r;
   );
 
-  - symbol:STRING_CONSTANT <-
+  - symbol:STRING_ALIAS <-
   (
     deferred;
     NULL
@@ -172,12 +168,12 @@ Section Public
   // Genere.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     (
       (left.static_type.raw = type_pointer) &&
-      {ALIAS_STR.is_integer (right.static_type.raw.name)}
+      {is_integer (right.static_type.raw.name)}
     ).if {
       buffer.append "(unsigned long)";
     }.elseif {! left.static_type.is_expanded} then {
@@ -199,7 +195,7 @@ Section Public
     buffer.add_last ' ';
 
     (
-      (ALIAS_STR.is_integer (left.static_type.raw.name)) &&
+      (is_integer (left.static_type.raw.name)) &&
       {right.static_type.raw = type_pointer}
     ).if {
       buffer.append "(unsigned long)";
@@ -221,7 +217,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     left.static_type.append_name_in buffer;

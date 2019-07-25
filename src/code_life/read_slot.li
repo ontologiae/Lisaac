@@ -2,10 +2,6 @@ Section Header
 
   + name    := READ_SLOT;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Read for slot";
 
 Section Inherit
@@ -93,13 +89,13 @@ Section Public
   // Genere
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   ( + tf,tf2:TYPE_FULL;
     + t:TYPE;
     + add_end:BOOLEAN;
     + ptr,ptr2:BOOLEAN;
 
-    (slot.intern_name = ALIAS_STR.slot_self).if {
+    (slot.intern_name = "self").if {
       buffer.append "((";
       tf := slot.type;
       tf.genere_declaration buffer;
@@ -126,7 +122,7 @@ Section Public
       };
       (
         (tf.is_strict) || {tf.is_expanded_ref} || {tf.is_expanded}
-      ).if {
+      ).if {        
         receiver.genere buffer;
       } else {
         buffer.append "((";
@@ -154,7 +150,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     receiver.display buffer;
     buffer.append "->";

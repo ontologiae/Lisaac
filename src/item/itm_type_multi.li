@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_TYPE_MULTI;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "List of type";
 
 Section Inherit
@@ -14,9 +10,9 @@ Section Inherit
 
 Section Private
 
-  - dico:FAST_ARRAY(ITM_TYPE_MULTI) := FAST_ARRAY(ITM_TYPE_MULTI).create_with_capacity 32;
+  - dico:ARRAY ITM_TYPE_MULTI := ARRAY ITM_TYPE_MULTI .create_with_capacity 32;
 
-  - create lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
+  - create lt:ARRAY ITM_TYPE :SELF <-
   ( + result:SELF;
 
     result := clone;
@@ -24,14 +20,19 @@ Section Private
     result
   );
 
-  - make lt:FAST_ARRAY(ITM_TYPE_MONO) <-
+  - make lt:ARRAY ITM_TYPE <-
   (
     list_type := lt;
+    (list_type.lower).to (list_type.upper) do { i:INTEGER;
+      hash_code := hash_code + list_type.item i.hash_code; 
+    };
   );
 
 Section Public
-
-  + list_type:FAST_ARRAY(ITM_TYPE_MONO);
+  
+  + hash_code:INTEGER;
+  
+  + list_type:ARRAY ITM_TYPE;
 
   - count:INTEGER <- list_type.count;
 
@@ -39,22 +40,22 @@ Section Public
 
   - upper:INTEGER <- list_type.upper;
 
-  - item i:INTEGER :ITM_TYPE_MONO <-
+  - item i:INTEGER :ITM_TYPE <-
   (
     list_type.item i
   );
 
-  - last:ITM_TYPE_MONO <-
+  - last:ITM_TYPE <-
   (
     list_type.last
   );
 
-  - first:ITM_TYPE_MONO <-
+  - first:ITM_TYPE <-
   (
     list_type.first
   );
 
-  - get lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
+  - get lt:ARRAY ITM_TYPE :SELF <-
   ( + result:SELF;
     + idx:INTEGER;
 
@@ -76,10 +77,10 @@ Section Public
   //
 
   - get_expr_for p:PARAMETER_TO_TYPE :EXPR <-
-  ( + lst:FAST_ARRAY(EXPR);
+  ( + lst:ARRAY EXPR;
     + t:TYPE_FULL;
 
-    lst := FAST_ARRAY(EXPR).create_with_capacity count;
+    lst := ARRAY EXPR .create_with_capacity count;
     lower.to upper do { i:INTEGER;
       t := item i.to_run_for p;
       lst.add_last (t.get_temporary_expr (p.position));
@@ -87,7 +88,7 @@ Section Public
     EXPR_MULTIPLE.create lst
   );
 
-  - to_run_in lst:FAST_ARRAY(TYPE_FULL) for p:PARAMETER_TO_TYPE <-
+  - to_run_in lst:ARRAY TYPE_FULL for p:PARAMETER_TO_TYPE <-
   ( + t:TYPE_FULL;
 
     lower.to upper do { i:INTEGER;
@@ -95,39 +96,53 @@ Section Public
       lst.add_last t;
     };
   );
-
+  
+  - to_run_for p:PARAMETER_TO_TYPE :TYPE_FULL <-
+  (
+    crash_with_message "ITM_TYPE_MULTI.to_run_for";
+    NULL
+  );
+  
   //
   // Display.
   //
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     display_raw buffer;
     buffer.add_last ')';
   );
 
-  - shorter_in buf:STRING <-
+  - shorter_in buf:STRING_BUFFER <-
   (
     buf.add_last '(';
     shorter_raw_in buf;
     buf.add_last ')';
   );
 
-  - display_raw buffer:STRING <-
+  - display_raw buffer:STRING_BUFFER <-
   (
     (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
       list_type.item j.append_in buffer;
       buffer.add_last ',';
     };
-    list_type.last.append_in buffer;
+    (list_type.last = NULL).if {
+      buffer.append "...";
+    } else {
+      list_type.last.append_in buffer;
+    };
   );
 
-  - shorter_raw_in buf:STRING <-
+  - shorter_raw_in buf:STRING_BUFFER <-
   (
     (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
       list_type.item j.shorter_in buf;
       buf.add_last ',';
     };
-    list_type.last.shorter_in buf;
+    (list_type.last = NULL).if {
+      buf.append "...";
+    } else {
+      list_type.last.shorter_in buf;
+    };
   );

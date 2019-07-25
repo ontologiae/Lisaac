@@ -2,10 +2,6 @@ Section Header
 
   + name        := EXPR_NOT;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Not unary arithmetic expression.";
 
 Section Inherit

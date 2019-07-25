@@ -1,0 +1,209 @@
+Section Header
+
+  + name    := ENTRY;
+
+  - comment := "Abstract Entry.";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  //
+  // Path.
+  //
+
+  + path:STRING_ALIAS;
+
+  + name:STRING_ALIAS;
+
+  - dirname:STRING_BUFFER <-
+  ( + result:STRING_BUFFER;
+
+    result := STRING_BUFFER.create (path.count);
+    get_parent_path path in result;
+    result
+  );
+
+  //
+  // Date / Time.
+  //
+
+  - access:UINTEGER_16 <- ( deferred; 0);
+
+  - access_time:TIME <- ( deferred; TIME);
+  - access_date:DATE <- ( deferred; DATE);
+
+  - update_time:TIME <- ( deferred; TIME);
+  - update_date:DATE <- ( deferred; DATE);
+
+  - create_time:TIME <- ( deferred; TIME);
+  - create_date:DATE <- ( deferred; DATE);
+
+  //
+  // type.
+  //
+
+  - is_directory:BOOLEAN <-
+  ( + dir:DIRECTORY;
+    + e:ENTRY;
+
+    e := Self; // Bug Compilo
+    dir ?= e;
+    dir != NULL
+  );
+
+  - is_file:BOOLEAN <- ! is_directory;
+
+  //
+  // Open / Close
+  //
+
+  - open:BOOLEAN <-
+  // Return FILE or DIRECTORY, NULL:error.
+  (
+    deferred;
+  );
+
+  - is_open:BOOLEAN <-
+  (
+    deferred;
+    FALSE
+  );
+
+Section ENTRY
+
+  - string_tmp:STRING_BUFFER  := STRING_BUFFER.create 255;
+
+  - string_tmp2:STRING_BUFFER  := STRING_BUFFER.create 255;
+
+  - set_path n:STRING <-
+  ( + idx:INTEGER;
+    path := n.to_string_alias;
+    idx := path.last_index_of '/';
+    string_tmp.copy path;
+    string_tmp.remove_first (idx+1);    
+    name := string_tmp.to_string_alias;
+  );
+
+  - reduce_path st:STRING_BUFFER <-
+  ( + i:INTEGER;
+    + stat:INTEGER;
+    + car:CHARACTER;
+
+    st.replace_all '\\' with '/';
+    i := st.lower;
+
+    {i > st.upper}.until_do {
+      car := st.item i;            
+      (car = '/').if {
+        // Separator character.
+        stat.when 0 then {
+          // foo/bar => foo/bar
+          //    ^          ^
+          stat := 1;
+        }.when 1 then {
+          // foo//bar => /bar
+          //     ^       ^
+          st.remove_first i;
+          i := st.lower;
+        }.when 2 then {
+          // foo/./bar => foo/bar
+          //      ^          ^
+          st.remove_between (i-1) to i;
+          i := i - 2;
+          stat := 1;
+        }.when 3 then {
+          // toto/foo/../bar => toto/bar
+          //            ^           ^
+          + idx:INTEGER;
+          idx := st.last_index_of '/' since (i-4);
+          // st.last_index_of '/' since (i-4);
+          (idx = -1).if {
+            st.remove_first i;
+            i := st.lower;
+          } else {
+            st.remove_between idx to (i-1);
+            i := idx;
+          };
+          stat := 1;
+        };
+      }.elseif {car = '.'} then {
+        // Point character.
+        (stat)
+        .when 0 then {
+          // foo.bar => foo.bar
+        }.when 1 then {
+          // foo/.bar => foo/.bar
+          stat := 2;
+        }.when 2 then {
+          // foo/..bar => foo/..bar
+          stat := 3;
+        }.when 3 then {
+          // foo/...bar => foo/...bar
+          stat := 0;
+        };
+      }.elseif {(car = ':') && {i > 1} &&
+        {st.item (i-1).is_letter} && {st.item (i-2) = '/'}
+      } then {
+        st.remove_first (i-1);
+        i := st.lower;
+      } else {
+        // Other character.
+        stat := 0;
+      };
+      i := i + 1;
+    };
+
+    stat.when 0 then {
+      // foo/bar  => foo/bar
+      //        ^           ^
+    }.when 1 then {
+      // foo/  => foo
+      //     ^       ^
+      st.remove_last 1;
+    }.when 2 then {
+      // foo/.  => foo
+      //      ^       ^
+      st.remove_last 2;
+    }.when 3 then {
+      // toto/foo/..  => toto
+      //            ^        ^
+      + idx:INTEGER;
+      idx := st.last_index_of '/' since (i-4);
+      (idx = -1).if {
+        st.clear;
+      } else {
+        st.remove_between idx to (i-1);
+      };
+    };
+
+    (st.is_empty).if {
+      st.add_last '/';
+    };
+  );
+
+  //
+  // Alias Entry.
+  //
+
+  - get_parent_path p:STRING in tmp:STRING_BUFFER <-
+  [
+    -? {p.last != '/'};
+  ]
+  ( + i:INTEGER;
+
+    (tmp != p).if {
+      tmp.copy p;
+    };
+    i := tmp.last_index_of '/';
+    (i = -1).if {
+      tmp.copy "../";
+    } else {
+      tmp.keep_head (i-1);
+      (tmp.is_empty).if {
+        tmp.add_last '/';
+      };
+    };
+  );

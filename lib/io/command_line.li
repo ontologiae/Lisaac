@@ -1,0 +1,304 @@
+Section Header
+
+  + name    := COMMAND_LINE;
+
+  - comment := "Interface Command line (Unix).";
+
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+
+Section Private
+
+  - c_item idx:INTEGER :NATIVE_ARRAY(CHARACTER) <- `arg_vector[@idx]`:NATIVE_ARRAY(CHARACTER);
+
+  - c_count:INTEGER <- `arg_count`:INTEGER;
+
+  - args:ARRAY(STRING_BUFFER) :=
+  ( + result:ARRAY(STRING_BUFFER);
+    + arg:NATIVE_ARRAY(CHARACTER);
+    + str:STRING_BUFFER;
+
+    result := ARRAY(STRING_BUFFER).create_with_capacity c_count;
+    0.to (c_count - 1) do { j:INTEGER;
+      arg := c_item j;
+      str := STRING_BUFFER.create (arg.fast_first_index_of '\0' until 1024);      
+      str.from_external_copy arg;
+      result.add_last str;
+    };
+    result
+  );
+
+Section Public
+
+  //
+  // Access :
+  //
+
+  - count:INTEGER <- args.count;
+
+  - lower:INTEGER := 0;
+
+  - upper:INTEGER <- args.upper;
+
+  - item i:INTEGER :STRING_BUFFER <- args.item i;
+
+  - executable_name:STRING_BUFFER <- args.first;
+
+  //
+  // Parser informations :
+  //
+
+  - sswitch:CHARACTER := '-';
+  // The short option character switch. Default is '-'.
+
+  - lswitch:STRING := "--";
+  // The long option string switch. Default is "--".
+
+  - unparsed:ARRAY(STRING_BUFFER) := ARRAY(STRING_BUFFER).create_with_capacity 2;
+  // Array created after calling the parse slot. Contains unparsed items.
+  // Also return by the parse slot.
+
+  - end_option:BOOLEAN;
+  // End of option found while parsing.
+
+  - end_index:INTEGER;
+  // If end_option is true, give the index of the first element after in unparsed.
+  // Bound validity must be checked as the end of option item can be the last item of the command line.
+
+  //
+  // Parser configuration :
+  //
+
+  - set_sswitch char:CHARACTER <- (sswitch := char;);
+  // Set a new short option switch.
+
+  - set_lswitch str:STRING <- (lswitch := str;);
+  // Set a new long option switch.
+
+  - set_unknown unknown_code_:{STRING_BUFFER;} <- (unknown_code := unknown_code_;);
+  // Code to execute when a unknown option is read.
+  // The faulty string is passed in parameter.
+
+  - set_bad_position bad_position_code_:{(CHARACTER,STRING_BUFFER,STRING);} <- (bad_position_code := bad_position_code_;);
+  // Code to execute when a bad position for a short argument is read.
+  // The short argument and the string containing it are passed as parameters
+  // with the description.
+
+  - set_bad_number bad_number_code_:{(INTEGER, INTEGER, STRING);} <- (bad_number_code := bad_number_code_;);
+  // Code to execute when not enough argument are supplied.
+  // The received number, expected number and description of the option are passed.
+
+  - on_option short:CHARACTER long long:STRING do code:{} <-
+  // Add an option to parse and code to execute when encoutered.
+  (
+    + tmp:COMMAND_LINE_ITEM;
+    tmp := COMMAND_LINE_OPTION.create(short, long, code);
+    sdico.put tmp to short;
+    ldico.put tmp to long;
+  );
+
+  - on_arg short:CHARACTER long long:STRING with nb:INTEGER do code:{ARRAY(STRING_BUFFER);} is description:STRING <-
+  // Add an argument to parse, with arguments number,
+  // code to execute when encoutered and description printed on failure.
+  (
+    + tmp:COMMAND_LINE_ITEM;
+    tmp := COMMAND_LINE_ARGUMENT.create(short, long, nb, code, description);
+    sdico.put tmp to short;
+    ldico.put tmp to (STRING_BUFFER.create_from_string long);
+  );
+
+  //
+  // Parsing :
+  //
+
+  - parse:ARRAY(STRING_BUFFER) <-
+  // Return unparsed string
+  (
+    // Variable locale :
+    + tmp_str:STRING_BUFFER;
+
+    // Initialisations :
+    index := args.lower;  // Premier élément : nom du programme (jamais traité).
+    unparsed.clear;
+
+    // Parsing : parcours des éléments :
+    {next_string != NULL}.while_do
+    {
+      // Tester fin des options :
+      end_option.if
+      { unparsed.add_last current_string; } // Oui : ajout dans le tableau de résultats.
+      else
+      { // Sinon, test option :
+        tmp_str := get_long_format current_string;
+        (tmp_str != NULL).if
+        { // Option longue ?
+          (tmp_str.is_empty).if // Fin des options ?
+          { end_option := TRUE; end_index := unparsed.count;}
+          else
+          {
+            // Parser option longue :
+            (ldico.has tmp_str).if
+            {
+              // Cohérence avec option courte : dernier caractère.
+              position := current_string.upper;
+              (ldico.at tmp_str).parse;
+            }
+            else // Option inconnue :
+            { unknown_error(current_string); };
+          };
+        }
+        else // Option courte ?
+        {
+          tmp_str := get_short_format current_string;
+          (tmp_str != NULL).if
+          {
+            // Oui : parser option courte :
+            position := 1; // dépasser le caractère sswitch.
+            next_character;
+            {current_character != '\0'}.while_do
+            {
+              (sdico.has current_character).if
+              { (sdico.at current_character).parse; }
+              else // Options inconnue :
+              { unknown_error(current_character.to_string); };
+            };
+          }
+          else
+          { unparsed.add_last current_string; }; // Non : ajout dans le tableau de résultats.
+        };
+      };// Fin test option
+    };// Fin while
+    unparsed
+  );
+
+
+Section Private
+
+  //
+  // States :
+  //
+
+  - index:INTEGER;
+  // Command line item index (Array : first = 0).
+
+  - position:INTEGER;
+  // Item character position (String : first = 1).
+
+  //
+  // Data :
+  //
+
+  - sdico:HASHED_DICTIONARY(COMMAND_LINE_ITEM, CHARACTER) := HASHED_DICTIONARY(COMMAND_LINE_ITEM, CHARACTER).create;
+  // Dictionary for short options
+
+  - ldico:HASHED_DICTIONARY(COMMAND_LINE_ITEM, STRING_BUFFER) := HASHED_DICTIONARY(COMMAND_LINE_ITEM, STRING_BUFFER).create;
+  // Dictionary for long options
+
+  - unknown_code:{STRING_BUFFER;} := {str:STRING_BUFFER; str.print; ": unknown option.\n".print;};
+  // Code to execute on error option. The faulty string is passed as a parameter.
+
+  - bad_position_code:{(CHARACTER,STRING_BUFFER,STRING);} :=
+  // Code to exectue on bad position argument, with option character and string containing it.
+  {
+    (c:CHARACTER, str:STRING_BUFFER, desc:STRING);
+    "Bad position: ".print;
+    c.print; " should be at the end of ".print; str.print; "\n".print;
+    desc.print; "\n".print;
+  };
+
+  - bad_number_code:{(INTEGER, INTEGER, STRING);} :=
+  // Code to exectue on bad argument number : number read, number expected and description.
+  {
+    (r:INTEGER, e:INTEGER, desc:STRING);
+    "Not enough arguments: received ".print;
+    r.print; ", ".print; e.print; " expected.\n".print;
+    desc.print; "\n".print;
+  };
+
+  //
+  // Tools :
+  //
+
+  - get_long_format str:STRING_BUFFER:STRING_BUFFER <-
+  // Checked if str correspond to a long format string.
+  // Return substring without lswitch ; NULL if not a long format.
+  // An empty (but ont NULL) string is lswitch alone (end of option)
+  (
+    + tmp:STRING_BUFFER;
+    (str.first_substring_index lswitch = 1).if
+    {
+      (str == lswitch).if
+      { tmp := STRING_BUFFER.create 0; }
+      else
+      { tmp := str.substring(lswitch.count+1) to (str.upper); };
+    };
+    tmp
+  );
+
+  - get_short_format str:STRING_BUFFER:STRING_BUFFER <-
+  // Checked if str correspond to a short format string.
+  // Return substring without sswitch ; NULL if not a short format.
+  (
+    + tmp:STRING_BUFFER;
+    ( (str.item 1 = sswitch)      // Begin with the sswitch character
+      && {str.upper > str.lower}  // Is more than one character long
+      && {str.first_substring_index lswitch != 1} // Does not begin with the lswitch string
+    ).if
+    { tmp := str.substring (str.lower+1) to (str.upper); };
+    tmp
+  );
+
+Section Public
+
+  //
+  // Data access :
+  //
+
+  - current_character:CHARACTER;
+  // Current character in current item.
+
+  - current_string:STRING_BUFFER;
+  // Current string.
+
+  - is_last:BOOLEAN <- (position = current_string.upper);
+  // Return TRUE if current_character is the last character of current_string;
+
+  - next_character:CHARACTER <-
+  // Access to the next character in the current item. Changes current_character.
+  // Return 0 if end of current_string or current_string is NULL.
+  (
+    position := position+1;
+    ((current_string != NULL) && {position <= current_string.upper}).if
+    { current_character := current_string.item position; }
+    else
+    { current_character := '\0';};
+    current_character
+  );
+
+  - next_string:STRING_BUFFER <-
+  // Acces to the next string. Changes current_string.
+  // Return NULL if end of strings in args.
+  (
+    index := index + 1;
+    (index <= args.upper).if
+    { current_string := args.item index; }
+    else
+    { current_string := NULL; };
+    current_string
+  );
+
+  //
+  // Errors :
+  //
+
+  - unknown_error str:STRING_BUFFER <- (unknown_code.value(str); error; );
+  // Code d'erreur sur une option inconnue.
+
+  - bad_position_error (c:CHARACTER, desc:STRING) <- (bad_position_code.value(c, current_string, desc); error; );
+  // Code d'erreur sur une mauvaise position d'arguments.
+
+  - bad_number_error (r:INTEGER, e:INTEGER, desc:STRING) <- (bad_number_code.value(r, e, desc); error; );
+  // Code d'erreur sur un mauvais nombre d'arguments.
+
+  - error <- ( die_with_code 1;);

@@ -10,7 +10,7 @@ Section Header
    \ Its goal is to try to fill a pyramid by making a substraction   \
    \ between two succesive columns and to take its absolute value.   \
    \ The result is put on the next line.                             \
-   \ Example:                                                        \
+   \ Example with 5:                                                        \
    \  6   14   15   3   13                                           \
    \    8    1   12  10                                              \
    \       7   11   2                                                \
@@ -59,14 +59,14 @@ Section Private
         (line > col).if {
           stop := TRUE;
         } else {
-          val := val - elem.item (indice ((line-1),(col-line+1)));
+          val := val - elem.item (indice (line-1,col-line+1));
           val := val.abs;
           (belongs_to val).if {
             clear_column col;
             stop := TRUE;
             result := FALSE;
           } else {
-            elem.put val to (indice (line,(col-line+1)));
+            elem.put val to (indice (line,col-line+1));
           };
         };
       };
@@ -85,26 +85,26 @@ Section Private
       {stop}.until_do {
         (belongs_to nb).if {
           nb := nb - 1;
-          stop := (nb = 0);
+          stop := nb = 0;
         }.elseif {propagate (col,nb)} then {
           (fill_up (col + 1)).if {
             stop := TRUE;
           } else {
             clear_column col;
             nb := nb - 1;
-            stop := (nb = 0);
+            stop := nb = 0;
           };
         } else {
           nb := nb - 1;
-          stop := (nb = 0);
+          stop := nb = 0;
         };
       };
-      result := (nb > 0);
+      result := nb > 0;
     };
     result
   );
 
-  + elem:ARRAY(INTEGER);
+  + elem:ELASTIC_ARRAY(INTEGER);
 
   + case_empty:INTEGER;  // = 0 by default
 
@@ -125,7 +125,7 @@ Section Private
   (
     ? {col.in_range 1 to size};
     1.to col do { line:INTEGER;
-      elem.put case_empty to (indice (line,(col-line+1)));
+      elem.put case_empty to (indice (line,col-line+1));
     };
   ); // clear_column
 
@@ -142,8 +142,8 @@ Section Public
       elem.item (indice (line,col)).print;
       ' '.print;
       (col = size - line + 1).if {
-        col := 1 ;
-        line := line + 1 ;
+        col := 1;
+        line := line + 1;
       } else {
         col := col + 1;
       };
@@ -167,7 +167,7 @@ Section Public
     }.elseif {size > biggest_one} then {
       "Value too big for this method.\n".print;
     } else {
-      elem := ARRAY(INTEGER).create 1 to max;
+      elem := ELASTIC_ARRAY(INTEGER).create 1 to max;
       (fill_up 1).if {
         "Full pyramid:\n".print;
         print;

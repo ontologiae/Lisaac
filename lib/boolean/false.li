@@ -1,0 +1,102 @@
+Section Header
+
+  + name    := Expanded FALSE;
+
+  - comment := "FALSE object";
+
+  - type    := `char`;
+  - default := FALSE;
+
+Section Inherit
+
+  - inherit_boolean:BOOLEAN := BOOLEAN;
+
+Section Public
+
+  //
+  // Conditional :
+  //
+
+  - if_true block:{} :BOOLEAN <- FALSE;
+
+  - if_false block:{} :BOOLEAN <-
+  ( //? {block!=NULL};
+    block.value;
+    FALSE
+  );
+
+  - if true_block:{} else false_block:{} <-
+  (
+    false_block.value;
+  );
+
+  - if_true true_block:{} else false_block:{} <-
+  (
+    false_block.value;
+  );
+
+  - if true_block:{} :BOOLEAN <- FALSE;
+
+  - elseif cond:{BOOLEAN} then block:{} :BOOLEAN <-
+  ( + result:BOOLEAN;
+
+    result := cond.value;
+    result.if {
+      block.value;
+    };
+    result
+  );
+
+  - elseif cond:{BOOLEAN} then block:{} else block_else:{} <-
+  (
+    (cond.value).if {
+      block.value;
+    } else {
+      block_else.value;
+    };
+  );
+  
+  - ok true_value:E or false_value:E :E <- false_value;
+  
+  //
+  // Binary operator :
+  //
+
+  - Self:SELF '||'  Left 10  other:{BOOLEAN}   :BOOLEAN <- other.value;
+
+  - Self:SELF '&&'  Left 20  other:{BOOLEAN}   :BOOLEAN <- FALSE;
+
+  - Self:SELF '|'   Left 10  other:BOOLEAN :BOOLEAN <- other;
+
+  - Self:SELF '&'   Left 20  other:BOOLEAN :BOOLEAN <- FALSE;
+
+  - Self:SELF '^'  Left 10  other:BOOLEAN :BOOLEAN <- other;
+
+  - Self:SELF '->'  Right 25 other:BOOLEAN :BOOLEAN <- TRUE;
+
+  - Self:SELF '->>' Right 25 other:{BOOLEAN}  :BOOLEAN <- TRUE;
+
+  - Self:SELF '=>' s:STRING :STRING <- s;
+  
+  - (Self:SELF,true_value:{E}) '!!' false_value:{E} :E <- false_value.value;
+
+  - (Self:SELF,true_value:E) '!>' false_value:E :E <- false_value;
+  
+  //
+  // Prefix operator
+  //
+
+  - '!' Self:SELF :BOOLEAN <- TRUE;
+
+  //
+  // Convertion
+  //
+
+  - to_string_buffer:STRING_BUFFER       <- "0".to_string_buffer;
+
+  - to_string:STRING <- "FALSE";
+
+  - to_integer:INTEGER     <- 0;
+
+  - to_character:CHARACTER <- '0';
+

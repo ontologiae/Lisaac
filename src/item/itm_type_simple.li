@@ -1,12 +1,8 @@
 Section Header
 
-  + name      := ITM_TYPE_SIMPLE;
+  + name    := ITM_TYPE_SIMPLE;
 
-  - copyright := "2003-2007 Benoit Sonntag";
-
-
-  - author    := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment   := "Simple type";
+  - comment := "Simple type";
 
 Section Inherit
 
@@ -14,12 +10,12 @@ Section Inherit
 
 Section ITM_TYPE_SIMPLE, ITM_TYPE_SELF
 
-  - dico:HASHED_DICTIONARY(ITM_TYPE_SIMPLE,STRING_CONSTANT) :=
-  HASHED_DICTIONARY(ITM_TYPE_SIMPLE,STRING_CONSTANT).create;
+  - dico:HASHED_DICTIONARY(ITM_TYPE_SIMPLE,STRING_ALIAS) :=
+  HASHED_DICTIONARY(ITM_TYPE_SIMPLE,STRING_ALIAS).create;
 
 Section ITM_TYPE_SIMPLE
 
-  - create n:STRING_CONSTANT :SELF <-
+  - create n:STRING_ALIAS :SELF <-
   ( + result:SELF;
 
     result := clone;
@@ -27,7 +23,7 @@ Section ITM_TYPE_SIMPLE
     result
   );
 
-  - make n:STRING_CONSTANT <-
+  - make n:STRING_ALIAS <-
   (
     name := n;
     dico.fast_put Self to n;
@@ -35,17 +31,28 @@ Section ITM_TYPE_SIMPLE
 
 Section Public
 
-  - type_null:ITM_TYPE_SIMPLE := ITM_TYPE_SIMPLE.get (ALIAS_STR.variable_null);
-  - type_void:ITM_TYPE_SIMPLE := ITM_TYPE_SIMPLE.get (ALIAS_STR.variable_void);
-  - type_self:ITM_TYPE_SIMPLE := ITM_TYPE_PARAMETER.create (ALIAS_STR.prototype_self);
+  - type_null:ITM_TYPE_SIMPLE := ITM_TYPE_SIMPLE.get "NULL";
+  - type_void:ITM_TYPE_SIMPLE := ITM_TYPE_SIMPLE.get "VOID";
+  - type_self:ITM_TYPE_SIMPLE := ITM_TYPE_PARAMETER.create "SELF";
+  - type_self_with_escape:ITM_TYPE_SIMPLE := type_self; // BSBS A revoir...
 
   - hash_code:INTEGER <- name.hash_code;
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
-  - style:STRING_CONSTANT; // NULL
+  - style:UINTEGER_8 <- 0; 
 
-  - get n:STRING_CONSTANT :ITM_TYPE_SIMPLE <-
+  - is_expanded:BOOLEAN <- (style & TYPE_FULL.expanded_bit) != 0;
+  
+  - is_strict:BOOLEAN   <- (style & TYPE_FULL.strict_bit) != 0;
+  
+  - is_escape:BOOLEAN   <- (style & TYPE_FULL.escape_bit) != 0;
+  
+  - is_list:BOOLEAN     <- (style & TYPE_FULL.list_bit) != 0;
+  
+  - set_list:ITM_TYPE <- ITM_TYPE_STYLE.get name style (TYPE_FULL.list_bit);
+  
+  - get n:STRING_ALIAS :ITM_TYPE_SIMPLE <-
   [
     -? {n != NULL};
   ]
@@ -60,7 +67,7 @@ Section Public
 
   - to_run_for p:PARAMETER_TO_TYPE :TYPE_FULL <-
   ( + result:TYPE_FULL;
-    + path:STRING_CONSTANT;
+    + path:STRING_ALIAS;
 
     (Self = type_null).if {
       result := TYPE_NULL.default;
@@ -76,30 +83,50 @@ Section Public
     };
     result
   );
-
-  - append_in buffer:STRING <-
+  
+  - Self:SELF '==' Right 60 other:E :BOOLEAN <-
+  ( + o:SELF;
+    
+    o ?= other;
+    (o != NULL) && {Self = o}
+  );
+  
+  - append_in buffer:STRING_BUFFER <-
   (
-    (style != NULL).if {
-      buffer.append style;
-      buffer.add_last ' ';
-    };
+    append_style_in buffer;
     buffer.append name;
+    (is_list).if {
+      buffer.append ",...";
+    };
+  );
+  
+  - append_style_in buffer:STRING_BUFFER <-
+  (
+    (is_expanded).if {
+      buffer.append "Expanded ";
+    };
+    (is_strict).if {
+      buffer.append "Strict ";
+    };
+    (is_escape).if {
+      buffer.add_last '\\';
+    };    
   );
 
-  - shorter_in buf:STRING <-
+  - shorter_in buf:STRING_BUFFER <-
   (
     (style != NULL).if {
-      put style to buf like (ALIAS_STR.short_keyword);
+      put style to buf like "keyword";
       buf.add_last ' ';
     };
-    put name to buf like (ALIAS_STR.short_prototype);
+    put name to buf like "prototype";
   );
 
   //
   // Cast.
   //
 
-  - append_cast_name_in buf:STRING <-
+  - append_cast_name_in buf:STRING_BUFFER <-
   (
     (name.lower).to (name.upper) do { j:INTEGER;
       buf.add_last (name.item j.to_lower);

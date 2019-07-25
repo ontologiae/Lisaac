@@ -2,10 +2,6 @@ Section Header
 
   + name        := PROFIL_LIST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Profil list manager.";
 
 Section Inherit
@@ -14,7 +10,7 @@ Section Inherit
 
 Section LISAAC
 
-  - profil_list:FAST_ARRAY(PROFIL) := FAST_ARRAY(PROFIL).create_with_capacity 65536;
+  - profil_list:ARRAY PROFIL := ARRAY PROFIL .create_with_capacity 65536;
 
   - life_limit:INTEGER;
 
@@ -63,7 +59,12 @@ Section Public
     -? { profil_list.item (p.life_index) = p };
   ]
   ( + idx:INTEGER;
-
+    
+    ((p.life_index > profil_list.upper) || {profil_list.item (p.life_index) != p}).if {
+      warning_error (p.position,"PROFIL_LIST.set_life");
+      p.life_index.print; '\n'.print;
+    };
+    
     idx := p.life_index;
     (idx = life_limit).if {
       life_limit := life_limit + 1;
@@ -125,8 +126,19 @@ Section Public
     profil_current := profil_slot := NULL;
     list_current   := NULL;
     POSITION.clean_context;
-    list_main.execute;    
+    list_main.execute;  
+    //
+    current := profil_list.lower;
+    {current < life_limit}.while_do {
+      profil_current := profil_list.item current;
+      (profil_current.is_external).if {        
+        profil_current.execute inline_level_current;
+      };
+      current := current + 1;
+    };    
+    //
     PROFIL.set_mode_recursive FALSE;
+    //current := 0;
     clean;
     reduce_profil := TRUE;
   );
@@ -162,14 +174,14 @@ Section Public
   // Genere.
   //
 
-  - genere_handler buffer:STRING <-
+  - genere_handler buffer:STRING_BUFFER <-
   (
     (profil_list.lower).to (profil_list.upper) do { j:INTEGER;
       profil_list.item j.genere_handler buffer;
     };
   );
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     (profil_list.lower).to (profil_list.upper) do { j:INTEGER;
       profil_list.item j.genere buffer;

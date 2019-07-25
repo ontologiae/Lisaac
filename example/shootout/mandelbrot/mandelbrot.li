@@ -15,26 +15,18 @@ Section Public
     + four:REAL_64;
     + delta0,delta1:REAL_64;
     + mod_w,wm1,h2,y,ofs:INTEGER;
-    + cmd:STRING;
+    + cmd:STRING_BUFFER;
     + civ:REAL_64; 
-    + scr:FAST_ARRAY(INTEGER_8);
+    + scr:ARRAY(INTEGER_8);
     
-    iter := 50;
+    iter := 100;
     four := 4.0;
-
-    cmd := COMMAND_LINE.item 1;
             
-    h := w := cmd.to_integer;    
+    h := w := 100;    
     
     h2 := h / 2;
-    scr := FAST_ARRAY(INTEGER_8).create_with_capacity (h2*w);
-    
-    "P4\n".print;
-    cmd.print;
-    ' '.print;
-    cmd.print;
-    '\n'.print;
-
+    scr := ARRAY(INTEGER_8).create_with_capacity (h2*w);
+        
     mod_w := 8 - (w & 7);
     wm1   := w - 1;
     wbyte := (w + 7) / 8;

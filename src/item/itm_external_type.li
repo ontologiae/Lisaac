@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_EXTERNAL_TYPE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "External C with type result";
 
 Section Inherit
@@ -18,9 +14,9 @@ Section Public
   // Data
   //
 
-  + type:ITM_TYPE_MONO;
+  + type:ITM_TYPE;
 
-  + type_list:FAST_ARRAY(ITM_TYPE_MONO);
+  + type_list:ITM_TYPE;
 
   + is_persistant:BOOLEAN;
 
@@ -28,14 +24,14 @@ Section Public
   // Constructor
   //
 
-  - create p:POSITION text n:STRING_CONSTANT persistant per:BOOLEAN :SELF <-
+  - create p:POSITION text n:STRING_ALIAS persistant per:BOOLEAN :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p text n persistant per;
     result
   );
 
-  - make p:POSITION text n:STRING_CONSTANT persistant per:BOOLEAN <-
+  - make p:POSITION text n:STRING_ALIAS persistant per:BOOLEAN <-
   (
     position      := p;
     extern        := n;
@@ -46,12 +42,12 @@ Section Public
   // Added
   //
 
-  - set_type t:ITM_TYPE_MONO <-
+  - set_type t:ITM_TYPE <-
   (
     type := t;
   );
 
-  - set_type_list t:FAST_ARRAY(ITM_TYPE_MONO) <-
+  - set_type_list t:ITM_TYPE <-
   (
     type_list := t;
   );
@@ -63,9 +59,11 @@ Section Public
   - to_run_expr:EXPR <-
   ( + e:EXTERNAL_C;
     + lt:TYPES_TMP;
-    + lst_acc:FAST_ARRAY(EXPR);
+    + lst_acc:ARRAY EXPR;
     + typ:TYPE;
     + tmp:VARIABLE;
+    + typ_mul:ITM_TYPE_MULTI;
+    + typ_mon:ITM_TYPE_MONO;
 
     lst_acc := get_access;
     last_position := position;
@@ -74,9 +72,16 @@ Section Public
 
     (type_list != NULL).if {
       lt := TYPES_TMP.new;
-      (type_list.lower).to (type_list.upper) do { j:INTEGER;
-	typ := type_list.item j.to_run_for profil_slot.raw;
-	lt.add typ;
+      typ_mul ?= type_list;
+      (typ_mul != NULL).if {
+        (typ_mul.lower).to (typ_mul.upper) do { j:INTEGER;
+          typ := typ_mul.item j.to_run_for profil_slot.raw;
+          lt.add typ;
+        };
+      } else {
+        typ_mon ?= type_list;
+        typ := typ_mon.to_run_for profil_slot.raw;
+        lt.add typ;
       };
       e.set_living_type (lt.to_types);
     };

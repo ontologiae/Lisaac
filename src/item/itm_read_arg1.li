@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_READ_ARG1;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     :=
   "For send message with one argument\
   \ (receiver) or unary message";
@@ -26,14 +22,14 @@ Section Public
   // Constructor
   //
 
-  - create p:POSITION name n:STRING_CONSTANT arg a:ITM_CODE :SELF <-
+  - create p:POSITION name n:STRING_ALIAS arg a:ITM_CODE :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name n arg a;
     result
   );
 
-  - make p:POSITION name n:STRING_CONSTANT arg a:ITM_CODE <-
+  - make p:POSITION name n:STRING_ALIAS arg a:ITM_CODE <-
   (
     position := p;
     name     := n;

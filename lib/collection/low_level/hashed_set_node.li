@@ -1,0 +1,46 @@
+Section Header
+
+  + name    := HASHED_SET_NODE(V);
+
+  - comment := "Auxilliary class to implement SET(V).";
+
+Section Inherit
+
+  - parent_any_hashed_set_node:ANY_HASHED_SET_NODE := ANY_HASHED_SET_NODE;
+
+Section Public
+
+  + item:V;
+
+  + next:HASHED_SET_NODE(V);
+  // The `next' one when some clash occurs.
+
+  - set_next n:HASHED_SET_NODE(V) <-
+  (
+    next := n;
+  )
+  [
+    +? {next = n};
+  ];
+
+Section Public
+
+  - create i:V next n:HASHED_SET_NODE(V) :SELF <-
+  ( + result:SELF;
+
+    result := clone;
+    result.make i next n;
+    result
+  );
+
+  - make i:V next n:HASHED_SET_NODE(V) <-
+  (
+    item := i;
+    next := n;
+  )
+  [
+    +? {item = i};
+    +? {next = n};
+  ];
+
+

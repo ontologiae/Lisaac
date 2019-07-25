@@ -2,9 +2,6 @@ Section Header
 
   + name      := ALIASER_LOCAL;
 
-  - copyright := "2003-2009 Sonntag Benoit";
-
-  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment   := "The main prototype";
 
 Section Inherit
@@ -13,16 +10,16 @@ Section Inherit
 
 Section ALIASER_LOCAL,LIST
 
-  - free_context:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 64;
+  - free_context:ARRAY LOCAL := ARRAY LOCAL.create_with_capacity 64;
 
   - top_context:INTEGER;
 
-  - var_size:FAST_ARRAY(FAST_ARRAY(LOCAL)) :=
-  ( + result:FAST_ARRAY(FAST_ARRAY(LOCAL));
+  - var_size:ARRAY (ARRAY LOCAL) :=
+  ( + result:ARRAY (ARRAY LOCAL);
 
-    result := FAST_ARRAY(FAST_ARRAY(LOCAL)).create_with_capacity 4;
+    result := ARRAY (ARRAY LOCAL).create_with_capacity 4;
     0.to 3 do { j:INTEGER;
-      result.add_last (FAST_ARRAY(LOCAL).create_with_capacity 32);
+      result.add_last (ARRAY LOCAL.create_with_capacity 32);
     };
     result
   );
@@ -41,9 +38,9 @@ Section Public
     current_list_level := 0;
   );
 
-  - write wr:WRITE_LOCAL :STRING_CONSTANT <-
+  - write wr:WRITE_LOCAL :STRING_ALIAS <-
   ( + loc,loc2:LOCAL;
-    + result:STRING_CONSTANT;
+    + result:STRING_ALIAS;
 
     loc  := wr.local;
     ((is_on) && {loc.style = '+'}).if {
@@ -71,9 +68,9 @@ Section Public
     result
   );
 
-  - read rd:READ_LOCAL :STRING_CONSTANT <-
+  - read rd:READ_LOCAL :STRING_ALIAS <-
   ( + loc,loc2:LOCAL;
-    + result:STRING_CONSTANT;
+    + result:STRING_ALIAS;
 
     loc := rd.local;
     loc2 := loc.my_alias;
@@ -87,9 +84,9 @@ Section Public
     result
   );
 
-  - push p:PUSH :STRING_CONSTANT <-
+  - push p:PUSH :STRING_ALIAS <-
   ( + loc,loc2:LOCAL;
-    + result:STRING_CONSTANT;
+    + result:STRING_ALIAS;
 
     loc  := p.context;
     (is_on).if {
@@ -107,7 +104,15 @@ Section Public
       } else {
         top_context := loc.list_level;
       };
-      result := loc.my_alias.intern_name;
+      /*
+      (loc.my_alias = NULL).if {
+        (p.is_first).if {
+          add_var_size loc;
+        };
+        result := loc.intern_name;
+      } else {*/
+        result := loc.my_alias.intern_name;
+      //};
     } else {
       (p.is_first).if {
         add_var_size loc;
@@ -118,11 +123,11 @@ Section Public
   );
 
   - add_var_size v:LOCAL <-
-  ( + tab:FAST_ARRAY(LOCAL);
+  ( + tab:ARRAY LOCAL;
     + j:INTEGER;
     + t:TYPE_FULL;
 
-    ? {(v.style = '+') || {v.style = 'R'}};
+    //? {(v.style = '+') || {v.style = 'R'}};
 
     ((v.style != '+') && {v.style != 'R'}).if {
       v.intern_name.print; " style [".print; v.style.print; "] ".print;
@@ -151,7 +156,7 @@ Section Public
 Section Private
 
   - search_alias v:LOCAL :LOCAL <-
-  ( + tab:FAST_ARRAY(LOCAL);
+  ( + tab:ARRAY LOCAL;
     + j:INTEGER;
     + t:TYPE_FULL;
     + result:LOCAL;

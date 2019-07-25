@@ -2,10 +2,6 @@ Section Header
 
   + name    := LOOP;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Loop (call tail recursive).";
 
 Section Inherit
@@ -18,7 +14,7 @@ Section Public
 
   + body:LIST;
 
-  + name:STRING_CONSTANT;
+  + name:STRING_ALIAS;
 
   - set_link <-
   (
@@ -35,14 +31,14 @@ Section Public
   // Creation.
   //
 
-  - create p:POSITION name lab:STRING_CONSTANT body lst:LIST :SELF <-
+  - create p:POSITION name lab:STRING_ALIAS body lst:LIST :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name lab body lst;
     result
   );
 
-  - make p:POSITION name lab:STRING_CONSTANT body lst:LIST <-
+  - make p:POSITION name lab:STRING_ALIAS body lst:LIST <-
   (
     position := p;
     name := lab;
@@ -57,8 +53,7 @@ Section Public
     + loop_end:LOOP_END;
 
     new_body := body.my_copy;
-    //result :=   LOOP.create position name (ALIAS_STR.get_intern name) body new_body;
-    result :=  Strict LOOP.create position name (ALIAS_STR.get_intern name) body new_body;
+    result :=  Strict LOOP.create position name (get_intern name) body new_body;
     //
     switch ?= new_body.last;
     (switch.list.lower).to (switch.list.upper) do { k:INTEGER;
@@ -142,7 +137,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append name;
     display_ref buffer;
@@ -155,7 +150,7 @@ Section Public
   // Generation.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     (! genere_while buffer).if {
 
@@ -168,7 +163,7 @@ Section Public
     };
   );
   
-  - genere_while buffer:STRING :BOOLEAN <-
+  - genere_while buffer:STRING_BUFFER :BOOLEAN <-
   ( + switch:SWITCH;
     + lst_true,lst_false,lst:LIST;
     + inverse:BOOLEAN;

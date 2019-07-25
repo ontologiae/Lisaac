@@ -2,10 +2,6 @@ Section Header
 
   + name        := CHARACTER_CST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Character constant";
 
 Section Inherit
@@ -18,20 +14,20 @@ Section Public
   // Value.
   //
 
-  + text:STRING_CONSTANT;
+  + text:STRING_ALIAS;
 
   //
   // Creation.
   //
 
-  - create p:POSITION char car:STRING_CONSTANT :SELF<-
+  - create p:POSITION char car:STRING_ALIAS :SELF<-
   ( + result:SELF;
     result := clone;
     result.make p char car;
     result
   );
 
-  - make p:POSITION char car:STRING_CONSTANT <-
+  - make p:POSITION char car:STRING_ALIAS <-
   (
     position := p;
     text := car;
@@ -54,7 +50,7 @@ Section Public
   // Generation.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.add_last '\'';
     buffer.append text;
@@ -65,7 +61,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.add_last '\'';
     buffer.append text;

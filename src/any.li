@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := ANY;
+  + name    := ANY;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Common parent for compiler";
+  - comment := "Common parent for compiler";
 
 Section Inherit
 
@@ -15,8 +11,8 @@ Section Inherit
 Section Public
 
 
-  - last_index_str (n:ABSTRACT_STRING,c:CHARACTER) :INTEGER <-
-  // BSBS: A Mettre dans STRING.
+  - last_index_str (n:STRING,c:CHARACTER) :INTEGER <-
+  // BSBS: A Mettre dans STRING_BUFFER.
   ( + result:INTEGER;
     result := n.upper;
     {(result < n.lower) || {n.item result = c}}.until_do {
@@ -155,7 +151,7 @@ Section Public
   - seq_or_and             :UINTEGER_32; // || or &&
   - seq_call_and_loop      :UINTEGER_32; // Call or loop (or function).
   - seq_call_local_and_loop:UINTEGER_32; // Call sensitive or loop.
-  - seq_list:FAST_ARRAY(LIST) := FAST_ARRAY(LIST).create_with_capacity 64;
+  - seq_list:ARRAY LIST := ARRAY LIST.create_with_capacity 64;
 
   - is_seq_list l:LIST :BOOLEAN <-
   ( + result:BOOLEAN;
@@ -179,7 +175,7 @@ Section Public
   - profil_main:PROFIL_SLOT := // BSBS: A REVOIR (a uniformiser ((graph)))
   ( + result:PROFIL_SLOT;
 
-    result := PROFIL_SLOT.clone;
+    result := PROFIL_SLOT.my_clone;
     result.alloc_profil_main;
     result
   );
@@ -188,7 +184,7 @@ Section Public
 
   - current_list_level:INTEGER;
 
-  - stack_local:FAST_ARRAY(LOCAL)  := FAST_ARRAY(LOCAL).create_with_capacity 64;
+  - stack_local:ARRAY LOCAL := ARRAY LOCAL.create_with_capacity 64;
 
   - profil_slot:PROFIL_SLOT; // Principal slot.
   - profil_current:PROFIL;   // Sub-profil or (profil = profil_slot)
@@ -207,11 +203,11 @@ Section Public
   // Output Buffer and service.
   //
 
-  - output_decl:STRING := STRING.create 60000;
-  - output_glob:STRING := STRING.create 10000;
-  - output_code:STRING := STRING.create 4_000_000;
+  - output_decl:STRING_BUFFER := STRING_BUFFER.create 60_000;
+  - output_glob:STRING_BUFFER := STRING_BUFFER.create 10_000;
+  - output_code:STRING_BUFFER := STRING_BUFFER.create 4_000_000;
 
-  - title txt:STRING_CONSTANT in buf:STRING <-
+  - title txt:STRING_ALIAS in buf:STRING_BUFFER <-
   (
     buf.append "\n/*";
     3.to 28 do { j:INTEGER;
@@ -230,9 +226,9 @@ Section Public
   );
 
 
-  - indent:STRING := STRING.create 128;
+  - indent:STRING_BUFFER := STRING_BUFFER.create 128;
 
-  - operator typ:ABSTRACT_STRING name op:ABSTRACT_STRING :STRING_CONSTANT <-
+  - operator typ:STRING name op:STRING :STRING_ALIAS <-
   ( + c:CHARACTER;
     string_tmp.copy typ;
     (op.lower).to (op.upper) do { j:INTEGER;
@@ -275,7 +271,31 @@ Section Public
 	string_tmp.append "_ask";
       };
     };
-    ALIAS_STR.get string_tmp
+    string_tmp.to_string_alias
+  );
+  
+  - get_intern str:STRING :STRING_ALIAS <-
+  ( + v,m:INTEGER;
+    - count_variable:INTEGER;
+    
+    (is_readable).if {
+      string_tmp2.copy str;
+      string_tmp2.append "__";
+    } else {
+      string_tmp2.copy "li__";
+    };
+    count_variable := count_variable + 1;
+    v := count_variable;    
+    {v = 0}.until_do {
+      m := v & 31;
+      (m < 26).if {
+        string_tmp2.add_last ('A' +# m);
+      } else {
+        string_tmp2.add_last ('0' +# (m-26));
+      };
+      v := v >> 5;
+    };    
+    ALIAS STRING_BUFFER TO STRING_ALIAS.force_register string_tmp2
   );
 
   //
@@ -287,14 +307,14 @@ Section Public
   - warning :INTEGER := 2;
   - message :INTEGER := 3;
 
-  - syntax_error (pos:POSITION,txt:ABSTRACT_STRING) <-
+  - syntax_error (pos:POSITION,txt:STRING) <-
   (
     pos.put_error syntax text txt;
     pos.put_position;
     POSITION.send_error;
   );
 
-  - syntax_error2 (p1:POSITION, p2:POSITION,txt:ABSTRACT_STRING) <-
+  - syntax_error2 (p1:POSITION, p2:POSITION,txt:STRING) <-
   (
     p1.put_error syntax text txt;
     p1.put_position;
@@ -302,14 +322,14 @@ Section Public
     POSITION.send_error;
   );
 
-  - semantic_error (pos:POSITION,txt:ABSTRACT_STRING) <-
+  - semantic_error (pos:POSITION,txt:STRING) <-
   (
     pos.put_error semantic text txt;
     pos.put_position;
     POSITION.send_error;
   );
 
-  - semantic_error2 (p1:POSITION, p2:POSITION,txt:ABSTRACT_STRING) <-
+  - semantic_error2 (p1:POSITION, p2:POSITION,txt:STRING) <-
   (
     p1.put_error semantic text txt;
     p1.put_position;
@@ -317,14 +337,14 @@ Section Public
     POSITION.send_error;
   );
 
-  - warning_error (pos:POSITION,txt:ABSTRACT_STRING) <-
+  - warning_error (pos:POSITION,txt:STRING) <-
   (
     pos.put_error warning text txt;
     pos.put_position;
     POSITION.send_error;
   );
 
-  - warning_error2 (p1:POSITION, p2:POSITION,txt:ABSTRACT_STRING) <-
+  - warning_error2 (p1:POSITION, p2:POSITION,txt:STRING) <-
   (
     p1.put_error warning text txt;
     p1.put_position;
@@ -332,7 +352,7 @@ Section Public
     POSITION.send_error;
   );
 
-  - message_error (pos:POSITION,txt:ABSTRACT_STRING) <-
+  - message_error (pos:POSITION,txt:STRING) <-
   (
     is_verbose.if {
       pos.put_error message text txt;
@@ -345,30 +365,30 @@ Section Public
   // String temporary.
   //
 
-  - string_tmp :STRING := STRING.create 256;
-  - string_tmp2:STRING := STRING.create 256;
-  - string_tmp3:STRING := STRING.create 256;
-  - string_tmp4:STRING := STRING.create 256;
+  - string_tmp :STRING_BUFFER := STRING_BUFFER.create 256;
+  - string_tmp2:STRING_BUFFER := STRING_BUFFER.create 256;
+  - string_tmp3:STRING_BUFFER := STRING_BUFFER.create 256;
+  - string_tmp4:STRING_BUFFER := STRING_BUFFER.create 256;
 
   //
   // Path directory and command front end.
   //
 
-  - input_path:STRING_CONSTANT;
+  - input_path:STRING_ALIAS;
 
-  - path_file:FAST_ARRAY(STRING_CONSTANT) :=
-  FAST_ARRAY(STRING_CONSTANT).create_with_capacity 3000;
-  - path_begin:INTEGER := 1;
+  - path_file:ARRAY STRING_ALIAS := ARRAY STRING_ALIAS.create_with_capacity 3000;
+  - path_begin:INTEGER := 0;
 
-  - path_lisaac:STRING_CONSTANT <- COMMON.path_lisaac;
+  - path_lisaac:STRING_ALIAS <- COMMON.path_lisaac;
 
   //
   // Alias type.
   //
-
+  
+  - type_object           :TYPE;
   - type_input            :TYPE;
   - type_integer          :TYPE;
-  - type_real             :TYPE;
+  - type_real_64          :TYPE;
   - type_character        :TYPE;
   - type_block            :TYPE;
   - type_true             :TYPE;
@@ -377,9 +397,10 @@ Section Public
   - type_integer_32       :TYPE;
   - type_uinteger_32      :TYPE;
   - type_pointer          :TYPE;
-  - type_string_constant  :TYPE;
+  - type_string_alias     :TYPE;
   - type_n_a_character    :TYPE;
   - type_n_a_n_a_character:TYPE;
+  //- type_alias            :TYPE;
 
   //
   // Usage Variable.
@@ -387,14 +408,14 @@ Section Public
 
   - last_position:POSITION;
 
-  - load_lip file_lip:ABSTRACT_STRING <-
+  - load_lip file_lip:STRING <-
     load_lip file_lip in NULL;
 
-  - load_lip file_lip:ABSTRACT_STRING in lip_dir:STRING_CONSTANT <-
-  ( + path_lip:STRING_CONSTANT;
+  - load_lip file_lip:STRING in lip_dir:STRING_ALIAS <-
+  ( + path_lip:STRING_ALIAS;
     + is_good:BOOLEAN;
     + count:INTEGER;
-
+        
     //
     // Search in lip_dir
     //
@@ -405,8 +426,8 @@ Section Public
         string_tmp.add_last '/';
       };
       string_tmp.append file_lip;
-      path_lip := ALIAS_STR.get string_tmp;
-      (is_good := PARSER.read_lip path_lip).if_false {
+      path_lip := string_tmp.to_string_alias;
+      (! (is_good := PARSER.read_lip path_lip)).if {
         LIP_CALL.load_directory lip_dir is_recursive FALSE;
         string_tmp.remove_last (file_lip.count);
       } else {
@@ -419,8 +440,8 @@ Section Public
     //
     {(count < 5) && {! is_good}}.while_do {
       string_tmp.append file_lip;
-      path_lip := ALIAS_STR.get string_tmp;
-      (is_good := PARSER.read_lip path_lip).if_false {
+      path_lip := string_tmp.to_string_alias;    
+      (! (is_good := PARSER.read_lip path_lip)).if {
         string_tmp.copy path_lip;
         string_tmp.remove_last (file_lip.count);
         string_tmp.append "../";
@@ -436,11 +457,11 @@ Section Public
     //
     // Load default make.lip in LISAAC_DIRECTORY
     //
-    (is_good).if_false {
+    (! is_good).if {
       string_tmp.copy path_lisaac;
       string_tmp.append "make.lip";
-      path_lip := ALIAS_STR.get string_tmp;
-      (is_good := PARSER.read_lip path_lip).if_false {
+      path_lip := string_tmp.to_string_alias;
+      (! (is_good := PARSER.read_lip path_lip)).if {
         "File `".print;
         path_lip.print;
         "' not found !\nIncorrect installation.\n".print;
@@ -457,9 +478,9 @@ Section Public
       (path_lip.is_empty).if {
         string_tmp.copy path_lisaac;
         string_tmp.append "make.lip";
-        path_lip := ALIAS_STR.get string_tmp;
+        path_lip := string_tmp.to_string_alias;
       };
-      (PARSER.read_lip path_lip).if_false {
+      (! PARSER.read_lip path_lip).if {
         "File `".print;
         path_lip.print;
         "' not found ! (see `*.lip')\n".print;
@@ -467,9 +488,34 @@ Section Public
       };
     };
     // Auto-load 'lisaac' variable.
-    LIP_CODE.put_string path_lisaac to (ALIAS_STR.variable_lisaac);
+    LIP_CODE.put_string path_lisaac to "lisaac";
   );
-
+  
+  - is_integer n:STRING_ALIAS :BOOLEAN <-
+  (
+    (n = "UINTEGER_64") ||
+    {n = "UINTEGER_32"} ||
+    {n = "UINTEGER_16"} ||
+    {n = "UINTEGER_8" } ||
+    {n = "INTEGER_64" } ||
+    {n = "INTEGER_32" } ||
+    {n = "INTEGER_16" } ||
+    {n = "INTEGER_8"  } ||
+    {n = "INTEGER"    }
+  );
+/*
+  - is_section n:STRING_ALIAS :BOOLEAN <-
+  (
+    (n = "Inherit"  ) ||
+    {n = "Insert"   } ||
+    {n = "Interrupt"} ||
+    {n = "Private"  } ||
+    {n = "Public"   } ||
+    {n = "Mapping"  } ||
+    {n = "Directory"} ||
+    {n = "External" }
+  );
+*/
   //
   // Activate debug
   //

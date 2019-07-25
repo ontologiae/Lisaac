@@ -2,10 +2,6 @@ Section Header
 
   + name        := ITM_BINARY;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Binary operator message";
 
 Section Inherit
@@ -18,26 +14,26 @@ Section Public
   // Data
   //
 
-  + position_list:FAST_ARRAY(POSITION);
+  + position_list:ARRAY POSITION;
 
-  + value_list   :FAST_ARRAY(ITM_CODE);
+  + value_list   :ARRAY ITM_CODE;
 
-  + operator_list:FAST_ARRAY(STRING_CONSTANT);
+  + operator_list:ARRAY STRING_ALIAS;
 
   //
   // Constructor
   //
 
-  - create p:FAST_ARRAY(POSITION) values v:FAST_ARRAY(ITM_CODE)
-  operators o:FAST_ARRAY(STRING_CONSTANT) :SELF <-
+  - create p:ARRAY POSITION values v:ARRAY ITM_CODE
+  operators o:ARRAY STRING_ALIAS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p values v operators o;
     result
   );
 
-  - make p:FAST_ARRAY(POSITION) values v:FAST_ARRAY(ITM_CODE)
-  operators o:FAST_ARRAY(STRING_CONSTANT) <-
+  - make p:ARRAY POSITION values v:ARRAY ITM_CODE
+  operators o:ARRAY STRING_ALIAS <-
   (
     ? { p.count=o.count };
     ? { p.count=(v.count-1) };
@@ -51,32 +47,28 @@ Section Public
   //
 
   - to_run_expr:EXPR <-
-  ( + max_pos,max_lev:INTEGER;
-    + max_pri  :STRING_CONSTANT;
-    + expr     :INSTR;
-    + val_list:FAST_ARRAY(EXPR);
-    + val:EXPR;
+  ( + ope_list:ARRAY STRING_ALIAS;    
+    + val_list,l_arg:ARRAY EXPR;
+    + slo_list:ARRAY ITM_SLOT;    
+    + pos_list:ARRAY POSITION;
+    + max_pri,nam:STRING_ALIAS;
+    + max_pos,max_lev:INTEGER;    
+    + val,extern,result:EXPR;
+    + slo,slo_ref:ITM_SLOT;
     + typ_list:TYPES_TMP;
-    + typ:TYPE;
-    + slo_list:FAST_ARRAY(SLOT);
-    + slo,slo_ref:SLOT;
-    + ope_list:FAST_ARRAY(STRING_CONSTANT);
-    + pos_list:FAST_ARRAY(POSITION);
-    + nam:STRING_CONSTANT;
-    + site:NODE;
-    + extern:EXPR;
     + loc:VARIABLE;
-    + l_arg:FAST_ARRAY(EXPR);
-    + result:EXPR;
-
+    + expr:INSTR;    
+    + site:NODE;
+    + typ:TYPE;    
+    
     // Array Temporary.
-    ope_list := ALIAS_ARRAY(STRING_CONSTANT).new;
+    ope_list := ALIAS_ARRAY STRING_ALIAS .new;
     ope_list.copy operator_list;
-    pos_list := ALIAS_ARRAY(POSITION).new;
+    pos_list := ALIAS_ARRAY POSITION .new;
     pos_list.copy position_list;
-    val_list := ALIAS_ARRAY(EXPR).new;
+    val_list := ALIAS_ARRAY EXPR .new;
     typ_list := TYPES_TMP.new;
-    slo_list := ALIAS_ARRAY(SLOT).new;
+    slo_list := ALIAS_ARRAY SLOT .new;
 
     // ITM_CODE -> EXPR
     (value_list.lower).to (value_list.upper) do { j:INTEGER;
@@ -89,20 +81,20 @@ Section Public
     // Error verification.
     (operator_list.lower).to (operator_list.upper) do { j:INTEGER;
       nam := operator_list.item j;
-      ((nam = ALIAS_STR.operator_equal) || {nam = ALIAS_STR.operator_not_equal}).if {
+      ((nam = "__infix_equal") || {nam = "__infix_not_equal"}).if {
 	// '=' or '!=':
 	slo_list.add_last NULL;
       } else {
 	// Other:
 	typ := typ_list.first;
-	slo_ref := typ.get_slot nam;
+	slo_ref := typ.get_itm_slot nam;
 	(slo_ref = NULL).if {
 	  error_slot (position_list.item j) name nam in typ list typ_list;
 	} else {
 	  slo_list.add_last slo_ref;
 	  (typ_list.lower+1).to (typ_list.upper) do { k:INTEGER;
 	    typ := typ_list.item k;
-	    slo := typ.get_slot nam;
+	    slo := typ.get_itm_slot nam;
 	    (slo = NULL).if {
 	      error_slot (position_list.item j) name nam in typ list typ_list;
 	    } else {
@@ -130,10 +122,10 @@ Section Public
 	  // '=' or '!='.
 	  (
 	    (50 > max_lev) ||
-	    {(50 = max_lev) && {max_pri = ALIAS_STR.keyword_right}}
+	    {(50 = max_lev) && {max_pri = "Right"}}
 	  ).if {
 	    max_lev := 50;
-	    max_pri := ALIAS_STR.keyword_right;
+	    max_pri := "Right";
 	    max_pos := j;
 	  };
 	} else {
@@ -143,7 +135,7 @@ Section Public
 	    {
 	      (slo.priority = max_lev) &&
 	      {slo.associativity = max_pri} &&
-	      {max_pri = ALIAS_STR.keyword_right}
+	      {max_pri = "Right"}
 	    }
 	  ).if {
 	    max_lev := slo.priority;
@@ -164,8 +156,9 @@ Section Public
       };
 
       (slo_list.item max_pos = NULL).if {
-	// '=' or '!='.
-	(ope_list.item max_pos = ALIAS_STR.operator_equal).if {
+        // '=' or '!='.
+        cmp_verify (pos_list.item max_pos) between (val_list.item max_pos.static_type) and (val_list.item (max_pos+1).static_type);        
+	(ope_list.item max_pos = "__infix_equal").if {
 	  extern := EXPR_EQUAL.create (pos_list.item max_pos) with
 	  (val_list.item max_pos) and (val_list.item (max_pos+1));
 	} else {
@@ -178,7 +171,7 @@ Section Public
 	val := loc.read (pos_list.item max_pos);
       } else {
 	// SW_READ.
-	l_arg := FAST_ARRAY(EXPR).create_with_capacity 2;
+	l_arg := ARRAY EXPR .create_with_capacity 2;
 	l_arg.add_last (val_list.item max_pos);
 	l_arg.add_last (val_list.item (max_pos + 1));
 
@@ -203,18 +196,18 @@ Section Public
     result := val_list.first;
 
     // Free Array Temporary.
-    ALIAS_ARRAY(STRING_CONSTANT).free ope_list;
-    ALIAS_ARRAY(POSITION).free pos_list;
-    ALIAS_ARRAY(EXPR).free val_list;
+    ALIAS_ARRAY STRING_ALIAS .free ope_list;
+    ALIAS_ARRAY POSITION .free pos_list;
+    ALIAS_ARRAY EXPR .free val_list;
     typ_list.free;
-    ALIAS_ARRAY(SLOT).free slo_list;
+    ALIAS_ARRAY SLOT .free slo_list;
 
     result
   );
 
 Section Private
 
-  - error_slot p:POSITION name s:STRING_CONSTANT in t:TYPE list st:TYPES_TMP <-
+  - error_slot p:POSITION name s:STRING_ALIAS in t:TYPE list st:TYPES_TMP <-
   (
     string_tmp.copy "Slot '";
     string_tmp.append s;

@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := NODE_STYLE;
+  + name    := NODE_STYLE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Switch node for style";
+  - comment := "Switch node for style";
 
 Section Inherit
 
@@ -59,10 +55,10 @@ Section NODE, DTA
     -? {self_type != NULL};
   ]
   ( + typ:TYPE;
-    + list:FAST_ARRAY(CASE);
+    + list:ARRAY CASE;
     + case:CASE;
     + e:EXPR;
-    + low,up,count:INTEGER;
+    + low,up,cnt:INTEGER;
 
     (slot.slot_id = NULL).if {
       (first_code = NULL).if {
@@ -72,7 +68,7 @@ Section NODE, DTA
     } else {
       low := slot.lower_style;
       up  := slot.upper_style;
-      count := up-low + 1;
+      cnt := up-low + 1;
       (switch = NULL).if {
 	(slot.style = '-').if {
 	  e := slot.slot_id.read position;
@@ -80,11 +76,11 @@ Section NODE, DTA
 	} else {
 	  e := slot.slot_id.read position with expr;
 	};
-	switch := SWITCH.create Self with e size count;
+	switch := SWITCH.create Self with e size cnt;
       };
       list := switch.list;
-      (list.count != count).if {
-	0.to (count-1) do { j:INTEGER;
+      (list.count != cnt).if {
+	0.to (cnt-1) do { j:INTEGER;
 	  typ := TYPE_ID.get_index (j+low);
 
 	  ((j > list.upper) || {typ != list.item j.id}).if {
@@ -110,24 +106,24 @@ Section Private
     + rd:READ;
     + wrt:WRITE;
     + result_var:VARIABLE;
-    + new_larg:FAST_ARRAY(EXPR);
+    + new_larg:ARRAY EXPR;
     + slot_dta:SLOT_DATA;
     + slot_cod:SLOT_CODE;
     + idx:INTEGER;
     + type:TYPE_FULL;
     + my_profil:PROFIL;
-    + wrt_lst:FAST_ARRAY(WRITE);
-    + ctext:LOCAL;
+    + wrt_lst:ARRAY WRITE;
     + new_type_self:TYPE_FULL;
     + data_rd:DTA_RD;
     + cop_arg:EXPR;
     + new_val:EXPR;
     + val:EXPR;
+    + la:ARRAY ITM_ARGUMENT;
 
     result := LIST.create position;
 
     data_rd ?= data;
-    ((type_self.prototype.style = '-') && {data_rd != NULL} && {! data_rd.is_intern}).if {
+    ((is_cop) && {type_self.prototype.style = '-'} && {data_rd != NULL} && {! data_rd.is_intern}).if {
       cop_arg := data.self_arg.my_copy;
     };
 
@@ -179,7 +175,7 @@ Section Private
           string_tmp.append (data.slot.name);
         };
         result.add_last (
-          EXTERNAL_C.create position text (ALIAS_STR.get string_tmp) access NULL persistant TRUE type (TYPE_NULL.default)
+          EXTERNAL_C.create position text (string_tmp.to_string_alias) access NULL persistant TRUE type (TYPE_NULL.default)
         );
          */
           /*
@@ -198,35 +194,25 @@ Section Private
         result.add_last (COP_UNLOCK.create position);
       };
     } else {
-      // Function.
-      slot_cod := slot.slot_code idx;
-      (slot_cod.id_section.is_inherit_or_insert).if {
-	new_larg := FAST_ARRAY(EXPR).create_with_capacity 1;
+      // Function.      
+      (slot.id_section.is_inherit_or_insert).if {
+	new_larg := ARRAY EXPR .create_with_capacity 1;
 	new_larg.add_last (data.self_arg.my_copy);
       } else {
-	new_larg := data.get_argument;
+        new_larg := data.get_argument;
       };
       type := new_larg.first.static_type;
       ? {type != NULL};
       //
-      (debug_level_option != 0).if {
+      (data.context != NULL).if {
         // BSBS: Poser le PUSH avant le NODE
-	//(data.context = NULL).if {
-	//  ctext := context_main;
-        //} else {
-        (data.context = NULL).if {
-          crash_with_message "NODE_STYLE : data.context = NULL!\n";
-        };
-
-        ctext := data.context;
-	//};
 	result.add_last (
-	  PUSH.create position context ctext first FALSE
+	  PUSH.create position context (data.context) first FALSE
         );
       };
       //
       rd ?= new_larg.first;
-      ((rd != NULL) && {rd.variable.name = ALIAS_STR.variable_self}).if {
+      ((rd != NULL) && {rd.variable.name = "Self"}).if {
         // Fix Self type for resend call (else it's fixed by NODE_TYPE)
         new_type_self := type;
       } else {
@@ -239,13 +225,11 @@ Section Private
       type_self.display string_tmp;
       result.add_last (
         EXTERNAL_C.create (data.position)
-        text (ALIAS_STR.get string_tmp) access NULL persistant TRUE type (TYPE_VOID.default)
+        text (string_tmp.to_string_alias) access NULL persistant TRUE type (TYPE_VOID.default)
       );
       */
       new_val := CAST.create new_type_self value (new_larg.first);
       new_larg.put new_val to 0;
-
-
       /*
       (new_larg.lower+1).to (new_larg.upper) do { j:INTEGER;
         ts ?= slot_cod.get_argument_type j;
@@ -268,6 +252,9 @@ Section Private
         };
       };
       */
+      
+      la := slot.get_argument_list_with argument_list;
+      slot_cod := type.get_slot_run slot arg la.slot_code idx;
       (my_profil, wrt_lst) := slot_cod.get_profil new_larg self new_type_self;
       //
       (result_expr.static_type.raw = TYPE_VOID).if {
@@ -316,13 +303,13 @@ Section Private
 
 Section Private
 
-  - new_write var:VARIABLE with (e:EXPR,slot:SLOT_DATA) :WRITE <-
+  - new_write var:VARIABLE with (e:EXPR,slo:SLOT_DATA) :WRITE <-
   ( + rd:READ;
 
-    (slot.style = '-').if {
-      rd  := slot.read position;
+    (slo.style = '-').if {
+      rd  := slo.read position;
     } else {
-      rd  := slot.read position with (e.my_copy);
+      rd  := slo.read position with (e.my_copy);
     };
     var.write position value rd
   );

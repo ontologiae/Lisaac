@@ -1,11 +1,8 @@
 Section Header
 
-  + name      := ITM_TYPE_GENERIC_ELT;
+  + name    := ITM_TYPE_GENERIC_ELT;
 
-  - copyright := "2003-2007 Benoit Sonntag";
-
-  - author    := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment   := "Virtual element for generic style type";
+  - comment := "Virtual element for generic style type";
 
 Section Inherit
 
@@ -13,11 +10,11 @@ Section Inherit
 
 Section Private
 
-  - list:FAST_ARRAY(ITM_TYPE_GENERIC_ELT) :=
+  - list:ARRAY ITM_TYPE_GENERIC_ELT :=
   // 'A' to 'Z'
-  ( + result:FAST_ARRAY(ITM_TYPE_GENERIC_ELT);
+  ( + result:ARRAY ITM_TYPE_GENERIC_ELT;
 
-    result := FAST_ARRAY(ITM_TYPE_GENERIC_ELT).create_with_capacity 26;
+    result := ARRAY ITM_TYPE_GENERIC_ELT .create_with_capacity 26;
     'A'.to 'Z' do { c:CHARACTER;
       result.add_last (create c);
     };
@@ -48,21 +45,21 @@ Section Public
     list.item (idf -! 'A')
   );
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.append "Generic[";
     buffer.add_last ('A' +# index);
     buffer.add_last ']';
   );
 
-  - shorter_in buf:STRING <-
+  - shorter_in buf:STRING_BUFFER <-
   (
     string_tmp.clear;
     string_tmp.add_last ('A' +# index);
-    put string_tmp to buf like (ALIAS_STR.short_keyprototype);
+    put string_tmp to buf like "keyprototype";
   );
 
-  - string_tmp:STRING := STRING.create 100;
+  - string_tmp:STRING_BUFFER := STRING_BUFFER.create 100;
 
   - to_run:TYPE_FULL <-
   ( + type_generic:TYPE_GENERIC;
@@ -87,7 +84,7 @@ Section Public
   // Cast.
   //
 
-  - append_cast_name_in buf:STRING <-
+  - append_cast_name_in buf:STRING_BUFFER <-
   (
     buf.add_last ('a' +# index);
   );

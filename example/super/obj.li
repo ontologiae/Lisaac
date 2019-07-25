@@ -11,7 +11,7 @@ Section Inherit
 
 Section Public
 
-  + name:STRING_CONSTANT := "OBJ";
+  + name:STRING_ALIAS := "OBJ";
 
   + method <-
   (

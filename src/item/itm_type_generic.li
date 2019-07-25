@@ -1,11 +1,8 @@
 Section Header
 
-  + name        := ITM_TYPE_GENERIC;
+  + name    := ITM_TYPE_GENERIC;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Generic style type";
+  - comment := "Generic style type";
 
 Section Inherit
 
@@ -13,9 +10,9 @@ Section Inherit
 
 Section Private
 
-  - dico_tg:FAST_ARRAY(ITM_TYPE_GENERIC) := FAST_ARRAY(ITM_TYPE_GENERIC).create_with_capacity 32;
+  - dico_tg:ARRAY ITM_TYPE_GENERIC := ARRAY ITM_TYPE_GENERIC .create_with_capacity 32;
 
-  - create n:STRING_CONSTANT style s:STRING_CONSTANT with lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
+  - create n:STRING_ALIAS style s:UINTEGER_8 with lt:ARRAY ITM_TYPE :SELF <-
   ( + result:SELF;
 
     result := clone;
@@ -23,21 +20,22 @@ Section Private
     result
   );
 
-  - make n:STRING_CONSTANT style s:STRING_CONSTANT with lt:FAST_ARRAY(ITM_TYPE_MONO) <-
+  - make n:STRING_ALIAS style s:UINTEGER_8 with lt:ARRAY ITM_TYPE <-
   (
     name      := n;
     style     := s;
-    list_type := lt;
+    list_type := lt;    
   );
 
 Section Public
 
   - hash_code:INTEGER <- name.hash_code;
 
-  + list_type:FAST_ARRAY(ITM_TYPE_MONO);
-
-  - get n:STRING_CONSTANT style s:STRING_CONSTANT
-  with lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
+  + list_type:ARRAY ITM_TYPE;
+  
+  - set_list:ITM_TYPE <- get name style (style | TYPE_FULL.list_bit) with list_type;
+  
+  - get n:STRING_ALIAS style s:UINTEGER_8 with lt:ARRAY ITM_TYPE :SELF <-
   ( + result:SELF;
     + idx:INTEGER;
 
@@ -45,7 +43,7 @@ Section Public
     {
       (idx <= dico_tg.upper) && {
 	(dico_tg.item idx.name      != n ) ||
-	{dico_tg.item idx.style     != s } ||
+        {dico_tg.item idx.style     != s } ||
 	{dico_tg.item idx.list_type != lt}
       }
     }.while_do {
@@ -61,23 +59,34 @@ Section Public
   );
 
   - to_run_for p:PARAMETER_TO_TYPE :TYPE_FULL <-
-  ( + lst:FAST_ARRAY(TYPE_FULL);
+  ( + lst:ARRAY TYPE_FULL;
     + t:TYPE_FULL;
     + j:INTEGER;
     + result:TYPE_FULL;
-    + path:STRING_CONSTANT;
+    + path:STRING_ALIAS;
+    + itm_t:ITM_TYPE;
+    + itm_tm:ITM_TYPE_MULTI;
 
-    lst := ALIAS_ARRAY(TYPE_FULL).new;
+    lst := ALIAS_ARRAY TYPE_FULL .new;
     j := list_type.lower;
     {
-      t := list_type.item j.to_run_for p;
-      lst.add_last t;
+      itm_t := list_type.item j;
+      itm_tm ?= itm_t;
+      (itm_tm = NULL).if {
+        t := itm_t.to_run_for p + TYPE_FULL.generic_bit;
+        lst.add_last t;
+      } else {
+        (itm_tm.lower).to (itm_tm.upper) do { i:INTEGER;
+          t := itm_tm.item i.to_run_for p + TYPE_FULL.generic_bit;
+          lst.add_last t;
+        };
+      };
       j := j + 1;
     }.do_while {(j <= list_type.upper) && {t != NULL}};
     (t = NULL).if {
-      ALIAS_ARRAY(TYPE_FULL).free lst;
+      ALIAS_ARRAY TYPE_FULL .free lst;
     } else {
-      lst := ALIAS_ARRAY(TYPE_FULL).alias lst;
+      lst := ALIAS_ARRAY TYPE_FULL .alias lst;
       (p != NULL).if {
         path := p.position.prototype.filename;
       } else {
@@ -88,12 +97,9 @@ Section Public
     result
   );
 
-  - append_in buffer:STRING <-
+  - append_in buffer:STRING_BUFFER <-
   (
-    (style != NULL).if {
-      buffer.append style;
-      buffer.add_last ' ';
-    };
+    append_style_in buffer;    
     buffer.append name;
     buffer.add_last '(';
     (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
@@ -103,14 +109,14 @@ Section Public
     list_type.last.append_in buffer;
     buffer.add_last ')';
   );
-
-  - shorter_in buf:STRING <-
+  
+  - shorter_in buf:STRING_BUFFER <-
   (
     (style != NULL).if {
-      put style to buf like (ALIAS_STR.short_keyword);
+      put style to buf like "keyword";
       buf.add_last ' ';
     };
-    put name to buf like (ALIAS_STR.short_prototype);
+    put name to buf like "prototype";
     buf.add_last '(';
     (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
       list_type.item j.shorter_in buf;
@@ -124,7 +130,7 @@ Section Public
   // Cast.
   //
 
-  - append_cast_name_in buf:STRING <-
+  - append_cast_name_in buf:STRING_BUFFER <-
   (
     parent_itm_type_style.append_cast_name_in buf;
     buf.append "_of_";

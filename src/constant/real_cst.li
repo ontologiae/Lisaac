@@ -2,10 +2,6 @@ Section Header
 
   + name        := REAL_CST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Real float constant";
 
 Section Inherit
@@ -18,20 +14,20 @@ Section Public
   // Value.
   //
 
-  + value:STRING_CONSTANT;
+  + value:STRING_ALIAS;
 
   //
   // Creation.
   //
 
-  - create p:POSITION value v:STRING_CONSTANT type t:TYPE_FULL :SELF<-
+  - create p:POSITION value v:STRING_ALIAS type t:TYPE_FULL :SELF<-
   ( + result:SELF;
     result := clone;
     result.make p value v type t;
     result
   );
 
-  - make p:POSITION value v:STRING_CONSTANT type t:TYPE_FULL <-
+  - make p:POSITION value v:STRING_ALIAS type t:TYPE_FULL <-
   (
     position := p;
     value    := v;
@@ -56,7 +52,6 @@ Section Public
 
   - cast_type p:TYPE_FULL <-
   (
-    ? { p != type_real };
     static_type := p;
   );
 
@@ -64,7 +59,7 @@ Section Public
   // Generation.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.append value;
   );
@@ -73,7 +68,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     static_type.append_name_in buffer;

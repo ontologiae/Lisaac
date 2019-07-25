@@ -4,9 +4,11 @@ Section Header
   
 Section Inherit
   
-  + parent_string:Expanded STRING;
+  + parent_string:Expanded STRING_BUFFER;
   
 Section Public
+  
+  - my_clone:SELF <- clone;
   
   + hash_code:INTEGER;
   

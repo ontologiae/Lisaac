@@ -1,0 +1,10 @@
+Section Header
+  
+  - name := TOTO A TO B;
+  
+Section Public
+  
+  - essai <-
+  (
+    "Hi\n".print;
+  );

@@ -18,7 +18,7 @@ Section Inherit
 
 Section Private  
 
-  - colour_name: FAST_ARRAY(STRING_CONSTANT) := FAST_ARRAY(STRING_CONSTANT).create_with_capacity 3;
+  - colour_name: ARRAY(STRING_ALIAS) := ARRAY(STRING_ALIAS).create_with_capacity 3;
 
   - init_colour_name <-
   (
@@ -72,14 +72,14 @@ Section Private
     print_colours yellow and yellow;
   );
 
-  - get_number (n:INTEGER, outbuf:STRING) :STRING <-
-  ( + numbers: FAST_ARRAY(STRING_CONSTANT);
-    + tmp: FAST_ARRAY(CHARACTER);
+  - get_number (n:INTEGER, outbuf:STRING_BUFFER) :STRING_BUFFER <-
+  ( + numbers: ARRAY(STRING_ALIAS);
+    + tmp: ARRAY(CHARACTER);
     + ichar :INTEGER;
     + ochar :INTEGER;
 
-    numbers := FAST_ARRAY(STRING_CONSTANT).create_with_capacity 10;
-    tmp := FAST_ARRAY(CHARACTER).create_with_capacity 64;
+    numbers := ARRAY(STRING_ALIAS).create_with_capacity 10;
+    tmp := ARRAY(CHARACTER).create_with_capacity 64;
 
     numbers.add_last "zero";
     numbers.add_last "one";

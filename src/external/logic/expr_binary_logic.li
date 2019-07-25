@@ -2,10 +2,6 @@ Section Header
 
   + name        := EXPR_BINARY_LOGIC;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Binary logical expression.";
 
 Section Inherit
@@ -20,7 +16,7 @@ Section Public
 
   + right:EXPR;
 
-  - symbol:STRING_CONSTANT <-
+  - symbol:STRING_ALIAS <-
   (
     deferred;
     NULL
@@ -167,7 +163,7 @@ Section Public
   // Genere.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     left.genere buffer;
@@ -182,7 +178,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     left.display buffer;

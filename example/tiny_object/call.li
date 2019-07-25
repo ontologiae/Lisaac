@@ -19,7 +19,7 @@ Section Public
 
   + receiver:LOCAL;
 
-  + message:STRING_CONSTANT; // -- Not used with VFT
+  + message:STRING_ALIAS; // -- Not used with VFT
 
   // -- VFT --
   + index:INTEGER;
@@ -29,14 +29,14 @@ Section Public
   // Creation.
   //
 
-  - create p:INTEGER receiver r:LOCAL message m:STRING_CONSTANT :SELF <-
+  - create p:INTEGER receiver r:LOCAL message m:STRING_ALIAS :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p receiver r message m;
     result
   );
 
-  - make p:INTEGER receiver r:LOCAL message m:STRING_CONSTANT <-
+  - make p:INTEGER receiver r:LOCAL message m:STRING_ALIAS <-
   (
     position := p;
     receiver := r;

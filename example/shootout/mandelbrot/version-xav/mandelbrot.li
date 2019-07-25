@@ -8,7 +8,7 @@ Section Inherit
   
 Section Public
 
-  - cmd:     STRING;
+  - cmd:     STRING_BUFFER;
   - size:    INTEGER;
   - shift:   INTEGER;
   - fac:     REAL_64;

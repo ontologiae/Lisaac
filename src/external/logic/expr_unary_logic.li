@@ -2,10 +2,6 @@ Section Header
 
   + name        := EXPR_UNARY_LOGIC;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Unary logical expression.";
 
 Section Inherit
@@ -125,7 +121,7 @@ Section Public
   // Genere.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     buffer.add_last symbol;
@@ -138,7 +134,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     buffer.add_last '(';
     buffer.add_last symbol;

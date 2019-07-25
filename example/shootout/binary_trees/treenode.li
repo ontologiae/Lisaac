@@ -16,6 +16,8 @@ Section Private
 
 Section Public
   
+  - create:SELF <- clone;
+  
   - item_check:INTEGER <-
   ( + item_tmp:INTEGER;
 

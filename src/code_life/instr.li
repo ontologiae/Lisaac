@@ -2,10 +2,6 @@ Section Header
 
   + name        := INSTR;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parent for all Instruction.";
 
 Section Inherit
@@ -24,7 +20,7 @@ Section Public
   //
   //
 
-  - hash_code:INTEGER <- INTEGER.force_conversion position;
+  - hash_code:INTEGER <- CONVERT(POSITION,INTEGER).on position;
   // Hash code of instruction for storage
 
   - my_copy:SELF <-
@@ -71,7 +67,7 @@ Section Public
     deferred;
   );
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   // Generate the C code in `buffer'
   // Deferred
   (
@@ -86,7 +82,7 @@ Section Public
   // Display.
   //
 
-  - display_ref buffer:STRING <-
+  - display_ref buffer:STRING_BUFFER <-
   // Display reference for debug purposes
   (
     is_verbose.if {
@@ -96,7 +92,7 @@ Section Public
     };
   );
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   // Display instruction for debug purposes
   // Deferred
   (
@@ -106,9 +102,9 @@ Section Public
 
   - debug_display <-
   // Print the result of the `display' slot
-  ( + voir:STRING;
+  ( + voir:STRING_BUFFER;
 
-    voir := STRING.create 250;
+    voir := STRING_BUFFER.create 250;
     display voir;
     voir.print;
     '\n'.print;
@@ -118,18 +114,19 @@ Section Public
   // TODO: Documentation
   // Not redefined anywhere, used in LIST, READ and WRITE
   ( + tmp_type:TYPES_TMP;
+    
 
-    ((! v.is_static) && {! v.type.is_strict}).if {
+    ((! v.is_static) && {! v.type.is_strict}).if {     
+      /*
+      ((v.type_set.count = 2) && {v.type_set.first = TYPE_NULL}).if {
+        v.set_type (v.type_set.item 1.default.to_strict);
+      */
       tmp_type := TYPES_TMP.new;
       v.get_type tmp_type;
-      (tmp_type.count != 0).if {
-        (tmp_type.first = TYPE_NULL).if {
-          tmp_type.remove_first;
-          (tmp_type.count = 1).if {
-            v.set_type (tmp_type.first.default.to_strict);
-          };
-        };
+      ((tmp_type.count = 2) && {tmp_type.first = TYPE_NULL}).if {        
+        v.set_type (tmp_type.item 1.default.to_strict);
       };
       tmp_type.free;
+      
     };
   );

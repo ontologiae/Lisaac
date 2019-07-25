@@ -2,10 +2,6 @@ Section Header
 
   + name        := LIST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Expression list, immediate evaluation";
 
 Section Inherit
@@ -14,7 +10,7 @@ Section Inherit
 
 Section Private
 
-  + expr_list:NATIVE_ARRAY(INSTR);
+  + expr_list:NATIVE_ARRAY INSTR;
 
   + capacity:INTEGER;
 
@@ -107,13 +103,13 @@ Section Public
     expr_list.put i to upper;
   );
 
-  - add element:INSTR to index:INTEGER <-
-  [ -? {index.in_range 0 to (upper+1)}; ]
+  - add element:INSTR to idx:INTEGER <-
+  [ -? {idx.in_range 0 to (upper+1)}; ]
   (
     add_last element;
-    (index != upper).if {
-      move index to (upper - 1);
-      expr_list.put element to index;
+    (idx != upper).if {
+      move idx to (upper - 1);
+      expr_list.put element to idx;
     };
   );
 
@@ -139,9 +135,13 @@ Section Public
   //
   // Iterator.
   //
-
+  
+//Section Private
+  
   + index:INTEGER := -1;
-
+    
+//Section Public
+  
   - inc_index <-
   (
     index := index + 1;
@@ -187,7 +187,8 @@ Section Public
     position  := p;
     upper     := -1;
     capacity  := 2;
-    expr_list := NATIVE_ARRAY(INSTR).calloc_intern capacity;
+    expr_list := NATIVE_ARRAY INSTR .calloc_intern capacity;
+    index := -1; // BSBS: PAs utile !
   );
 
   - my_copy:SELF <-
@@ -224,10 +225,14 @@ Section Public
   ( + result:INSTR;
     
     POSITION.push_context Self;
-    
+        
     execute_case;
-
-    (list_current != NULL).if {
+    //                         
+    (
+      (list_current != NULL) && 
+      {Self != SLOT_DATA.init_list} && // <-------Pas utile 
+      {Self != PROTOTYPE.external_list}
+    ).if {
       // Merge the child list in the parent list
       //
       // Optimization: don't copy the last instruction but instead return it
@@ -253,9 +258,6 @@ Section Public
   ( + new_expr:INSTR;
     + old_list_current:LIST;
 
-    + old_expr:INSTR;
-    + old_index:INTEGER;
-
     //
     seq_list.add_last Self;
     seq_inline := seq_inline + 1;
@@ -265,6 +267,21 @@ Section Public
     list_current := Self;
 
     // Execute expression list.
+    
+    (index != -1).if {
+      index.print; '\n'.print;
+      string_tmp.clear;
+      current_item.display string_tmp;
+      string_tmp.print; 
+      '\n'.print;
+      "---------------------------\n".print;
+      string_tmp.clear;
+      display string_tmp;
+      string_tmp.print; 
+      '\n'.print;
+      "===========================\n".print;
+      syntax_error (position,"BUG LISAAC ! (list l.262)");
+    };
     ? {index = -1};
 
     //"LIST BEG : ".print; print; '\n'.print;
@@ -272,9 +289,6 @@ Section Public
     index := lower;
     {index <= upper}.while_do {
       old_seq_or_and := seq_or_and;
-
-      old_expr := item index;
-      old_index := index;
 
       new_expr := item index.execute;
       (new_expr != NULL).if {
@@ -311,28 +325,29 @@ Section Public
   // Generation.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
-    buffer.append "{\n";
-    indent.append "  ";
-
-    current_list_level := current_list_level + 1;
-
-    genere_body buffer;
-
-    current_list_level := current_list_level - 1;
-
-    indent.remove_last 2;
-    buffer.append indent;
-    buffer.add_last '}';
+    (Self != PROTOTYPE.external_list).if {
+      buffer.append "{\n";
+      indent.append "  ";
+      
+      current_list_level := current_list_level + 1;
+      
+      genere_body buffer;
+      
+      current_list_level := current_list_level - 1;
+      
+      indent.remove_last 2;
+      buffer.append indent;
+      buffer.add_last '}';
+    };
   );
   
-
-  - genere_extern buffer:STRING result result_list:SLIM_ARRAY(LOCAL) <-
+  - genere_extern buffer:STRING_BUFFER result result_list:SLIM_ARRAY LOCAL <-
   ( + pos_local,i_result:INTEGER;    
     + t:TYPE_FULL;
     + loc:LOCAL;
-    + idf:ABSTRACT_STRING;
+    + idf:STRING;
 
     // Local.
     pos_local := buffer.count+1;
@@ -383,7 +398,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     // Begin List.
     buffer.add_last '(';
@@ -407,7 +422,7 @@ Section Public
 
 Section Private
 
-  - genere_body buffer:STRING <-
+  - genere_body buffer:STRING_BUFFER <-
   ( + old_count,j:INTEGER;
 
     j := lower;
@@ -424,12 +439,12 @@ Section Private
   
 Section Public
 /*
-  - stat_local:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create 128;
-  - stat_local_null:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create 128;
+  - stat_local:ARRAY INTEGER := ARRAY INTEGER .create 128;
+  - stat_local_null:ARRAY INTEGER := ARRAY INTEGER .create 128;
 */
 Section Private
 
-  - add_local tab:FAST_ARRAY(LOCAL) in buf:STRING <-
+  - add_local tab:ARRAY LOCAL in buf:STRING_BUFFER <-
   // Generate C code to add locals
   ( + loc:LOCAL;
     + t:TYPE_FULL;
@@ -502,7 +517,7 @@ Section Private
     };
   );
 /*  
-  - add_local_gros tab:FAST_ARRAY(LOCAL) in buf:STRING <-
+  - add_local_gros tab:ARRAY LOCAL in buf:STRING_BUFFER <-
   // Generate C code to add locals
   ( + loc:LOCAL;
     

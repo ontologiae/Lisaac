@@ -11,11 +11,11 @@ Section Inherit
 
 Section Public
   
-  + has_bad:FAST_ARRAY2[UINTEGER_32];
+  + has_bad:ARRAY2(UINTEGER_32);
   
-  + is_known:FAST_ARRAY2[UINTEGER_32];
+  + is_known:ARRAY2(UINTEGER_32);
   
-  + always_bad:FAST_ARRAY[UINTEGER_32];
+  + always_bad:ARRAY(UINTEGER_32);
     
   - create:SELF <-
   ( + result:SELF;
@@ -25,7 +25,7 @@ Section Public
   
   - make <-
   (  
-    has_bad := FAST_ARRAY2[UINTEGER_32].create (n_fixed,n_parity);
-    is_known := FAST_ARRAY2[UINTEGER_32].create (n_fixed,n_parity);
-    always_bad := FAST_ARRAY[UINTEGER_32].create n_parity;
+    has_bad := ARRAY2(UINTEGER_32).create (n_fixed,n_parity);
+    is_known := ARRAY2(UINTEGER_32).create (n_fixed,n_parity);
+    always_bad := ARRAY(UINTEGER_32).create n_parity;
   );

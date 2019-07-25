@@ -1,0 +1,132 @@
+Section Header
+
+  + name    := Expanded BOOLEAN;
+
+  - comment := "Boolean library (self is mapping on int C).";
+
+  - type    := `char`;
+  - default := FALSE;
+
+Section Insert
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Private
+
+  - deferred_boolean:BOOLEAN <-
+  ( + result:BOOLEAN;
+
+    deferred;
+    result
+  );
+
+Section Public
+
+  //
+  // Conditional :
+  //
+
+  - if_true block:{} :BOOLEAN <- deferred;
+
+  - if_false block:{} :BOOLEAN <- deferred;
+
+  - if true_block:{} else false_block:{} <- `ERROR`; //deferred;
+
+  - if_true true_block:{} else false_block:{} <- deferred;
+
+  - if true_block:{} :BOOLEAN <- deferred_boolean;
+
+  - elseif cond:{BOOLEAN} then block:{} :BOOLEAN <- deferred_boolean;
+
+  - elseif cond:{BOOLEAN} then block:{} else block_else:{} <- deferred;
+
+  - else_if cond:{BOOLEAN} then block:{} :BOOLEAN <-
+  // Alias.
+  elseif cond then block;
+
+  - else_if cond:{BOOLEAN} then block:{} else block_else:{} <-
+  // Alias.
+  elseif cond then block else block_else;
+  
+  - ok true_value:E or false_value:E :E <- ( deferred; E);
+  
+  //
+  // Binary operator :
+  //
+
+  - Self:SELF '=='  Right 60 other:SELF :BOOLEAN <- Self = other;
+
+  - Self:SELF '!==' Right 60 other:SELF :BOOLEAN <- Self != other;
+
+  - Self:SELF '||' Left 10  other:{BOOLEAN}   :BOOLEAN <- deferred_boolean;
+
+  - Self:SELF '&&' Left 20  other:{BOOLEAN}   :BOOLEAN <- deferred_boolean;
+  
+  - Self:SELF '|'  Left 10  other:BOOLEAN :BOOLEAN <- deferred_boolean;
+
+  - Self:SELF '&'  Left 20  other:BOOLEAN :BOOLEAN <- deferred_boolean;
+
+  - Self:SELF '^' Left 10  other:BOOLEAN :BOOLEAN  <- deferred_boolean;
+
+  - Self:SELF '->' Right 25 other:BOOLEAN :BOOLEAN <- deferred_boolean;
+
+  - Self:SELF '->>' Right 25 other:{BOOLEAN}  :BOOLEAN <- deferred_boolean;
+
+  - Self:SELF '=>' s:STRING :STRING <- deferred;
+  
+  - Self:SELF '??' true_value:{E} :(SELF,{E}) <- 
+  (
+    Self,true_value
+  );
+
+  - (Self:SELF,true_value:{E}) '!!' false_value:{E} :E <- 
+  (
+    deferred;
+    E
+  );
+
+  - Self:SELF '?>' true_value:E :(SELF,E) <- 
+  (
+    Self,true_value
+  );
+
+  - (Self:SELF,true_value:E) '!>' false_value:E :E <- 
+  (
+    deferred;
+    E
+  );
+  
+  //
+  // Prefix operator
+  //
+
+  - '!' Self:SELF :BOOLEAN <- deferred;
+
+  //
+  // Convertion
+  //
+
+  - to_string_buffer:STRING_BUFFER <-
+  ( + result:STRING_BUFFER;
+
+    deferred;
+    result
+  );
+
+  - to_string:STRING <- "BOOLEAN";
+
+  - to_integer:INTEGER <-
+  ( + result:INTEGER;
+
+    deferred;
+    result
+  );
+
+  - to_character:CHARACTER <-
+  ( + result:CHARACTER;
+
+    deferred;
+    result
+  );
+
+  - append_in str:STRING_BUFFER <- str.append to_string;

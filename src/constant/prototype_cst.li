@@ -2,10 +2,6 @@ Section Header
 
   + name        := PROTOTYPE_CST;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Prototype constant";
 
 Section Inherit
@@ -57,12 +53,17 @@ Section Public
   (
     Self
   );
-
+  
+  - to_run_contract msg:STRING_ALIAS <-
+  (
+    // Nothing.
+  );
+  
   //
   // Generation.
   //
 
-  - genere buffer:STRING <-
+  - genere buffer:STRING_BUFFER <-
   (
     static_type.genere_value buffer;
   );
@@ -71,7 +72,7 @@ Section Public
   // Display.
   //
 
-  - display buffer:STRING <-
+  - display buffer:STRING_BUFFER <-
   (
     static_type.display buffer;
     display_ref buffer;

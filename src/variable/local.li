@@ -1,12 +1,8 @@
 Section Header
 
-  + name        := LOCAL;
+  + name    := LOCAL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
-
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Local slot";
+  - comment := "Local slot";
 
 Section Inherit
 
@@ -43,7 +39,7 @@ Section Public
     is_alias := FALSE;
   );
 
-  - list_alias:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 64;
+  - list_alias:ARRAY LOCAL := ARRAY LOCAL .create_with_capacity 64;
 
   - get_alias:LOCAL <-
   (
@@ -169,33 +165,10 @@ Section Public
     + rd:READ;
     + l:LOCAL;
     + g:SLOT_DATA;
-    /*
-    + bug:BOOLEAN;
-
-    (intern_name == "__tmp__TC").if {
-      bug:=TRUE;
-      "0\n".print;
-      (last_seq = NULL).if {
-        "last seq NULL\n".print;
-        crash;
-      } else {
-        (last_seq.last_write = NULL).if {
-          "last_write null\n".print;
-        };
-      };
-    };
-     */
-
-
     (
       (! PROFIL.mode_recursive) && {loop_invariant = NULL} &&
       {last_seq != NULL} && {last_seq.last_write != NULL}
     ).if {
-      /*
-      (bug).if {
-        "1\n".print;
-      };
-      */
       (
 	(is_seq_list (last_seq.last_list_current)) &&
 	{
@@ -265,7 +238,7 @@ Section Public
   // Creation.
   //
 
-  - create p:POSITION name n:STRING_CONSTANT
+  - create p:POSITION name n:STRING_ALIAS
   style c:CHARACTER type t:TYPE_FULL result r:BOOLEAN :SELF<-
   ( + result:SELF;
     result := clone;
@@ -273,7 +246,7 @@ Section Public
     result
   );
 
-  - create p:POSITION name n:STRING_CONSTANT
+  - create p:POSITION name n:STRING_ALIAS
   style c:CHARACTER type t:TYPE_FULL :SELF<-
   ( + result:SELF;
     result := clone;
@@ -281,7 +254,7 @@ Section Public
     result
   );
 
-  - make p:POSITION name n:STRING_CONSTANT
+  - make p:POSITION name n:STRING_ALIAS
   style c:CHARACTER type t:TYPE_FULL result r:BOOLEAN <-
   ( + tmp:TYPES_TMP;
     ? {p.code != 0};
@@ -290,7 +263,9 @@ Section Public
     position    := p;
     name        := n;
     is_result   := r;
-    intern_name := ALIAS_STR.get_intern n;
+    intern_name := get_intern n;
+    
+    //(intern_name = "__tmp__1D").if { crash_with_message "LA"; };
 
     ((t.is_expanded) && {! t.is_expanded_c}).if {
       type := t + TYPE_FULL.expanded_ref_bit;
@@ -325,7 +300,7 @@ Section Public
     + int:INTEGER_CST;
 
     val := type.default_value position;
-    (ALIAS_STR.is_integer (type.raw.name)).if {
+    (is_integer (type.raw.name)).if {
       int ?= val;
       (int != NULL).if {
 	int.cast_type type;
@@ -337,7 +312,7 @@ Section Public
     list_current.add_last i;
   );
 
-  - set_intern_name n:STRING_CONSTANT <-
+  - set_intern_name n:STRING_ALIAS <-
   (
     intern_name := n;
   );

@@ -1,0 +1,53 @@
+Section Header
+  
+  + name := PEN_MOVE;
+  
+Section Inherit
+  
+  + parent_pen_cmd:Expanded PEN_CMD;
+  
+Section Private
+  
+  - stack_move:ARRAY PEN_MOVE := ARRAY PEN_MOVE.create_with_capacity 16;
+  - stack_line:ARRAY PEN_LINE := ARRAY PEN_LINE.create_with_capacity 16;
+
+Section Public
+  
+  + x:REAL_32;
+  
+  + y:REAL_32;
+  
+  - create (xx,yy:REAL_32) :PEN_MOVE <-
+  ( + result:PEN_MOVE;    
+    (stack_move.is_empty).if {
+      result := clone;        
+    } else {
+      result := stack_move.last;
+      stack_move.remove_last;
+    };
+    result.make (xx,yy);
+    result
+  );
+  
+  - free <-
+  ( 
+    stack_move.add_last Self;
+  );
+  
+  - make (xx,yy:REAL_32) :PEN_MOVE <-
+  (    
+    (x,y) := (xx,yy);
+    Self
+  );
+  
+  - to_path pc:PATH_CACHE <-
+  (    
+    pc.paths.add_last (PATH.create cst_ccw);    
+    pc.paths.last.add_point (x,y) flags pt_corner;
+  );
+  
+  - transform mtx:TRANSFORM <-
+  ( 
+    (x,y) := get_tranform (x,y) with mtx;
+  );
+  

@@ -1,0 +1,57 @@
+Section Header
+
+  + name     := SYSTEM_IO;
+
+  - comment  := "Lower level for Input / Output";
+
+  - external := `
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Hardware 'print_char' */
+void print_char(char);
+
+char output[256];
+int output_idx;
+
+/* Hardware 'exit' */
+//void die_with_code(int);
+`;
+
+Section Public
+    
+   - print_error_char byte:CHARACTER <-
+  // Low level buffered error output.
+  (
+    `output[output_idx++]=@byte`;
+    ((byte = '\n') || {`output_idx`:INTEGER=256}).if {
+      `LOGE("%s",output)`;
+      `output_idx = 0`;
+    };
+  );
+
+  - get_char :CHARACTER <- `fgetc(stdin)`:(CHARACTER);
+
+  - eof:CHARACTER <- `EOF`:CHARACTER;
+  
+Section External, Public  
+  
+  - print_char byte:CHARACTER <-
+  // Low level buffered output.
+  ( 
+    `stop = 1`;
+    `output[output_idx++]=@byte`;
+    ((byte = '\n') || {`output_idx`:INTEGER=256}).if {
+      `LOGE("%s",output)`;
+      `output_idx = 0`;
+    };
+  );
+  
+  - die_with_code code:INTEGER <-
+  ( 
+    //(SYSTEM_IO.g_win_in != NULL).if {      
+    //  `while(1)`;
+    //} else {
+    // `exit(@code)`;
+    //};
+  );

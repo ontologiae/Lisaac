@@ -4,33 +4,32 @@ Section Header
   
 Section Inherit
   
-  - parent_object:OBJECT := OBJECT;
+  - parent_any:ANY := ANY;
   
 Section Public
   
-  - string_tmp:STRING := STRING.create 256;
-  - line:STRING := STRING.create 256;
+  - line:STRING_BUFFER := STRING_BUFFER.create 256;
   
   - output_file:POINTER;  
   - input_file:POINTER;
   
-  - label_set:HASHED_SET(ABSTRACT_STRING) := 
-  ( + result:HASHED_SET(ABSTRACT_STRING);
-    result := HASHED_SET(ABSTRACT_STRING).create;
+  - label_set:HASHED_SET(STRING) := 
+  ( + result:HASHED_SET(STRING);
+    result := HASHED_SET(STRING).create;
     result.fast_add "-1";
     result.fast_add "-2";
     result
   );
 
-  - get str:ABSTRACT_STRING :STRING_CONSTANT <-
-  ( + result:STRING_CONSTANT;
-    + tmp:ABSTRACT_STRING;
+  - get str:STRING :STRING_ALIAS <-
+  ( + result:STRING_ALIAS;
+    + tmp:STRING;
     ? {str != NULL};
     ? {label_set != NULL};
 
     tmp := label_set.reference_at str;
     (tmp = NULL).if {
-      result := STRING_CONSTANT.create_copy str;
+      result := str.to_string_alias;
       label_set.fast_add result;
     } else {
       result ?= tmp;
@@ -39,18 +38,20 @@ Section Public
     result
   );
   
-  - convert_dico:HASHED_DICTIONARY(STRING_CONSTANT,STRING_CONSTANT) := HASHED_DICTIONARY(STRING_CONSTANT,STRING_CONSTANT).create; // One dictionary for One redondance
-  - first_copy:STRING_CONSTANT; // Key for a end redondance or NULL. (= label_back from first redondance)
+  - convert_dico:HASHED_DICTIONARY(STRING_ALIAS,STRING_ALIAS) := 
+  HASHED_DICTIONARY(STRING_ALIAS,STRING_ALIAS).create; // One dictionary for One redondance
   
-  - mountain:FAST_ARRAY(ABSTRACT_STRING) := FAST_ARRAY(ABSTRACT_STRING).create_with_capacity 16384;
+  - first_copy:STRING_ALIAS; // Key for a end redondance or NULL. (= label_back from first redondance)
+  
+  - mountain:ARRAY STRING := ARRAY STRING .create_with_capacity 16384;
   
   - parse_line <-
   ( + idx:INTEGER;    
-    + label,label_back,/*new_label,*/pos:STRING_CONSTANT;    
-    //+ is_inline:BOOLEAN;
-    //- fight_counter:INTEGER;
+    + label,label_back,new_label,pos:STRING_ALIAS;    
+    + is_inline:BOOLEAN;
+    - fight_counter:INTEGER;
     - nline:INTEGER;
-    - count_method:INTEGER;
+    - count_method,sub_count_method:INTEGER;
     - is_method:BOOLEAN;
     nline := nline + 1;
     idx := line.first_substring_index "	.size";
@@ -61,9 +62,14 @@ Section Public
       line.append string_tmp;
       //
       count_method := count_method + 1;
+      sub_count_method := 0;
       is_method := FALSE;
     };    
-    idx := line.first_substring_index "@LI ";
+    (line.first_index_of '\"' != 0).if {
+      idx := 0;
+    } else {
+      idx := line.first_substring_index "@LI ";
+    };
     (idx != 0).if {      
       (line.item (idx+4) != 'm').if {
         // Position
@@ -81,12 +87,12 @@ Section Public
           string_tmp.add_last (line.item idx);
           idx := idx + 1;
         };
-        //label ?= label_set.reference_at string_tmp;
-        //(label = NULL).if {        
-        label := get string_tmp;
-        //} else {
-        //  is_inline := TRUE;
-        //};        
+        label ?= label_set.reference_at string_tmp;
+        (label = NULL).if {        
+          label := get string_tmp;
+        } else {
+          is_inline := TRUE;
+        };        
         // label_back
         idx := idx + 1;
         string_tmp.clear;
@@ -95,10 +101,9 @@ Section Public
           idx := idx + 1;
         };
         label_back := get string_tmp;      
-        //      
-        /*
+        //              
         (is_inline).if {
-          "Inline #".print; nline.print; '\n'.print;
+          //"Inline #".print; nline.print; '\n'.print;
           // Begin inline:
           (convert_dico.is_empty).if {
             first_copy := label_back;
@@ -129,12 +134,14 @@ Section Public
             convert_dico.clear;
           };
         };      
-        */        
+                
         line.copy label;
         line.append ":\n";
       } else {
         string_tmp.copy "method_";
         count_method.append_in string_tmp;        
+        string_tmp.add_last '_';
+        sub_count_method.append_in string_tmp;        
         line.copy string_tmp;
         line.append ":\n";
         string_tmp.append "-1";
@@ -146,6 +153,7 @@ Section Public
         pos := get string_tmp;        
         label_back := "-3";
         is_method := TRUE;
+        sub_count_method := sub_count_method + 1;
       };
       //
       mountain.add_last label;
@@ -154,16 +162,16 @@ Section Public
     };
   ); 
   
-  - main <-
+  - on n:STRING <-
   ( + j:INTEGER;
-    "BUILD_LABEL\n".print;
+    "Build label...\n".print;
     // Open
-    input_file := FS_MIN.open_read (COMMAND_LINE.item 1);
+    input_file := FS_MIN.open_read n;
     (input_file = NULL).if {
       STD_ERROR.put_string "Error: File is not opened !\n";
       die_with_code exit_failure_code;
     };
-    string_tmp.copy (COMMAND_LINE.item 1);
+    string_tmp.copy n;
     string_tmp.remove_last 2;
     string_tmp.append "_label.s";
     (! FS_MIN.make_file string_tmp).if {
@@ -181,12 +189,10 @@ Section Public
     
     line.copy  
     "        .section .data\n\
-    \__li_mountain:\n";
-    line.append "# Header: <@fin,count table,-1>\n";
-    line.append "        .quad ";
-    line.append "_fini";
-    line.append ",\t";
-    line.append ((mountain.count+3).to_string);
+    \__li_mountain:\n\
+    \# Header: <@fin,count table,-1>\n\
+    \        .quad _fini,\t";
+    line.append ((mountain.count+3).to_string_buffer);
     line.append ",\t-1\n\
     \# Table mountain: <@current,code position,backlink index>\n";
     //
@@ -201,7 +207,7 @@ Section Public
       line.append ",\t";
       (mountain.item (i+2).first != '-').if {         
         j := 0;
-        {mountain.item j !== mountain.item (i+2)}.while_do { j := j+3; };
+        {(j <= mountain.upper) && {mountain.item j !== mountain.item (i+2)}}.while_do { j := j+3; };
         (j+3).append_in line;
       } else {
         line.append (mountain.item (i+2));      

@@ -56,7 +56,7 @@ Section Private
 
   - usage: STRING_CONSTANT :=
   "----------------------------------------------------------------\n\
-  \--            Lisaac IS An Advanced Compiler V.0.13 Beta      --\n\
+  \--            Lisaac IS An Advanced Compiler V.0.13.1         --\n\
   \--            LORIA - LSIIT - ULP - CNRS - FRANCE             --\n\
   \--         Benoit SONNTAG - sonntag@icps.u-strasbg.fr         --\n\
   \--                   http://www.IsaacOS.com                   --\n\

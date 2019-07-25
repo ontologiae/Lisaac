@@ -1,0 +1,37 @@
+.TH "SHORTER" "1" "January 2008" "Xavier Oswald" "SHORTER - lisaac documentation generation"
+.SH "NAME"
+shorter \- lisaac documentation generation
+.SH "SYNOPSIS"
+.B shorter <input_file[.li]> [Options]
+.SH "DESCRIPTION"
+This manual page documents briefly the
+.BR shorter
+program.
+
+.BR shorter
+is the lisaac documentation generator. It take as entry a lisaac file or a directory containing lisaac files and generate the appropriated html files as output. It looks like the javadoc as result.
+.SH "OPTIONS"
+.SS 
+.TP 
+.B  \-o <output_file>
+Output file or directory (default:`input_file.ext')
+.TP 
+.B  \-p 
+Include private section
+.TP 
+.B  \-c
+Include source code
+.TP 
+.B  \-r
+Recursive builder documentation
+.TP 
+.B  \-f <format_file>
+Formatting description file (see: /usr/lib/lisaac/shorter/)
+
+.SH "SEE ALSO"
+.BR lisaac (1)
+.SH "AUTHOR"
+Lisaac was developed by Benoit Sonntag <sonntag@icps.u\-strasbg.fr>.
+
+This manual page was written by Xavier Oswald <x.oswald@free.fr>.
+

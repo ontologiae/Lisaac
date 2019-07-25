@@ -1,5 +1,5 @@
 ;; 
-;;  Mode Emacs for LISAAC language 0.2 by Sonntag Benoit.
+;;  Mode Emacs for LISAAC language 0.2.2 by Sonntag Benoit.
 ;;
 
 ;;  LICENSE
@@ -56,10 +56,25 @@
 
 (defun li-message ()
   ""
-  (setq li-string (match-string 0))
+  (setq li-point2 (point))
+  (setq li-string (match-string 0))  
   (setq li-color font-lock-function-name-face)
   (setq li-test 0)
-  (beginning-of-line)
+  (beginning-of-line)  
+  (if (looking-at (concat "  \\(\\+\\|-\\)[ \t\n]" li-string ))
+      (progn  
+	(setq li-color font-lock-builtin-face)	  
+	(setq li-test 1) ;; Stop	  
+	)
+    )  
+;  (if (= li-test 0) 
+;      (if (looking-at (concat "  \\(\\+\\|-\\).* " li-string "[ \t\n]*[^:]"))
+;	  (progn  
+;	    (setq li-color font-lock-builtin-face)	  
+;	    (setq li-test 1) ;; Stop	  
+;	    )
+;	)  
+;    )
   (while (= li-test 0)
     ;; Detect Begin file.
     (beginning-of-line)
@@ -70,22 +85,21 @@
     (if (looking-at (concat ".....*[^a-z0-9_]" li-string "\\([ \t\n]*,[ \t\n]*[a-z0-9_]*\\)*[ \t\n]*:[ \t\n]*[A-Z_]+"))
 	(progn  
 	  (setq li-test 1) ;; Stop
-	  (setq li-color 0))
+	  (setq li-color 0)
+	  )
       )
     ;; Detect begin Slot definition.
-    (if (looking-at "  \\(\\+\\|-\\|\\*\\)")
-    ;(if (looking-at "  [\\+-\\*]")
-	;(progn
-        ;  (end-of-line)
-        ;  (insert "T")
+    (if (looking-at "  \\(\\+\\|-\\).*")
+	(progn
 	  (setq li-test 1)
-	;  )
+	  )
       ) ;; Stop
     ;; Ligne suivante.
     (if (= li-test 0)
 	(previous-line 1)
       )
     )
+  (goto-char li-point2)
   li-color
 )
 
@@ -99,41 +113,14 @@
   li-color
 )
 
-(defun li-number ()
-  ""
-  (setq li-color font-lock-keyword-face)
-  
-  li-color
-)
-
-(defun li-comment ()
-  ""
-  (setq li-color font-lock-variable-name-face)
-  ;; Detect local declaration.
-  (if (search-forward "*/" li-here t)
-      (goto-char li-here)
-    )
-  font-lock-comment-face
-)
-
 (defconst li-font-lock-keywords
   '(
-    
-    ;; Hidden comments
-    ("\\([^/]\\|^\\)/\\*[]!@[#$%^&<|=~/>?\\a-z_A-Z0-9\n\t \\*\\+:\\.;`',(){}-]*\\*/" 0 font-lock-reference-face nil)
-    ;;("/\\*\\(\\**\\|[^\\*/]+/*\\)*\\*/" 0 font-lock-reference-face nil)
-        
-    ;; Hidden comments
-    ("//.*" 0 font-lock-comment-face nil)
-
-    ;; quoted expr's in comments
-    ("`[^'\n]*'" 0 font-lock-builtin-face t)
-
-    ;; Quoted expression
-    ("'[^'\n]*'" 0 font-lock-constant-face nil)
+    ;; Quoted expression    
+    ("'.*'" 0 font-lock-constant-face nil)
    
     ;; External expression
-    ("`[^`\n]*`" 0 highlight nil)
+    ;("`[^`\n]*`" 0 highlight nil)
+    ("`.*`" 0 highlight nil)
 
     ;; Major keywords :
     ("^Section.*$" 0 font-lock-keyword-face nil)
@@ -147,19 +134,17 @@
     ("Result_[1-9]" 0 font-lock-keyword-face nil)
 
     ;; Number Hexa :
-    ; ("[0-9][0-9a-fA-F_]*[hobd]?" 0 (li-number) nil)
     ("[0-9_]+[A-F][0-9A-F_]*h" 0 font-lock-keyword-face nil)
     ("[0-9_]+\.[0-9]*E[+-]?[0-9]+" 0 font-lock-keyword-face nil)
 
     ;; Prototype :
     ("[A-Z][A-Z0-9_]*" 0 font-lock-type-face nil)
-
+    
     ;; Identifier :
-    ("\\.[ \t\n]*[A-Za-z][a-zA-Z0-9_]*" 0 font-lock-function-name-face nil)
-    ("[A-Za-z][a-zA-Z0-9_]*" 0 (li-message) nil)
+    ("\\.[ \t\n]*[a-z][a-z0-9_]*" 0 font-lock-function-name-face nil)
+    ("[a-z][a-z0-9_]*" 0 (li-message) nil)
 
-    ;; Number :
-    ; ("[0-9][0-9a-fA-F]*[hobd]?" 0 (li-number) nil)
+    ;; Number :   
     ("[0-9][0-9_]*" 0 font-lock-keyword-face nil)
 
     ;; Block :
@@ -169,18 +154,43 @@
     ("<-\\|:=\\|?=" 0 0 nil) 
 
     ;; Symbol declaration :
-    ("^  \\(\\+\\|-\\|\\*\\)" 0 font-lock-warning-face nil)
-    ("\\+\\|-\\|\\*" 0 (li-declaration) nil)
+    ("^  \\(\\+\\|-\\)" 0 font-lock-warning-face nil)
+    ("\\+\\|-" 0 (li-declaration) nil)
 
     ;; Operators :
-    ("[!@#$%^&<|=~/>?\\]+" 0 font-lock-variable-name-face nil)
+    ("[!@#$%^&<|=~/>?\\*\\]+" 0 font-lock-variable-name-face nil)
     )
   "Additional expressions to highlight in Lisaac mode.")
 
 ;;
 ;; Table de syntax.
 ;;
-(defvar li-mode-syntax-table nil
+(defvar li-mode-syntax-table 
+  (let ((st (make-syntax-table)))
+   ; (modify-syntax-entry ?\$ "." st)
+   ; (modify-syntax-entry ?\/ "." st)
+   ; (modify-syntax-entry ?\\ "." st)
+   ; (modify-syntax-entry ?+  "." st)
+   ; (modify-syntax-entry ?-  "." st)
+   ; (modify-syntax-entry ?=  "." st)
+   ; (modify-syntax-entry ?%  "." st)
+   ; (modify-syntax-entry ?<  "." st)
+   ; (modify-syntax-entry ?>  "." st)
+   ; (modify-syntax-entry ?\& "." st)
+   ; (modify-syntax-entry ?\| "." st)
+    ;; quote is part of words
+   ; (modify-syntax-entry ?\' "w" st)
+    ;; underline is part of symbols
+   ; (modify-syntax-entry ?_  "_" st)
+    ;; * is second character of comment start,
+    ;; and first character of comment end
+    (modify-syntax-entry ?\* ". 23" st)
+    ;; / is first character of comment start
+    (modify-syntax-entry ?/ ". 124b" st)    
+    (modify-syntax-entry ?\n "> b" st)    
+
+    ;(modify-syntax-entry ?` "\"" st)    
+    st)
   "Syntax table used while in Lisaac mode.")
 
 
@@ -189,10 +199,8 @@
 ;;
 (defvar li-mode-map (make-sparse-keymap)
   "Keymap used in Lisaac mode.")
-
 (global-set-key [home] 'beginning-of-line)
 (global-set-key [end] 'end-of-line)
-
 (define-key li-mode-map "\t" 'li-indent-command)
 (define-key li-mode-map "\r" 'li-newline-command)
 (define-key li-mode-map "\C-c\t" 'li-indent-all-command)
@@ -291,6 +299,7 @@
 
 (defvar li-count-line 0)
 (defvar li-point 0)
+(defvar li-point2 0)
 (defvar li-char ?b)
 
 (defvar li-indent 0)
@@ -300,20 +309,13 @@
 (defun li-indent-previous ()
   "Indent with previous line."
   ; Search a previous line.
-;(insert "lalo")
-;(insert "li")
   (setq li-count-line 1)
-;(insert "0")
   (previous-line 1)
-;(insert "1")
   (beginning-of-line)
-;(insert "2")
   (while (looking-at "[ \t\n]*$")
-;(insert "L")
     (setq li-count-line (+ li-count-line 1))
     (previous-line 1)
     (beginning-of-line))
-;(insert "ici")
   ; Set position on begin of text.
   (forward-to-indentation 0)
 
@@ -467,8 +469,6 @@
 
 (defun li-indent-command ()
   "indent line for Lisaac mode."
- ; (save-excursion
- ;   (progn
   (interactive)
   (beginning-of-line)
   (if (looking-at "[ \t]*Section.*$")
@@ -478,7 +478,6 @@
 	  (end-of-line))
      	;else
       (li-indent-previous))
- ; ))
 )
 
 ;;
@@ -499,44 +498,49 @@
 )
 
 ;;
-;; Autoload.
+;; autoload
 ;;
 (defun lisaac-mode ()
   "Major mode for editing typical Lisaac code."
   (interactive)
-  ;(autoload 'c-mode   "cc-mode" "C Editing Mode" t)
-
+  
   ;; compatibility MS-DOS
   (replace-string "" "")
-  (global-font-lock-mode t)
+ ; (global-font-lock-mode t)
   (global-set-key "\M-g" 'goto-line)
 
   (kill-all-local-variables)
   (setq mode-name "Lisaac")
   (setq major-mode 'lisaac-mode)
-  (setq local-abbrev-table li-mode-abbrev-table)
-  (make-local-variable 'font-lock-defaults)
-  (setq font-lock-defaults '(li-font-lock-keywords))
-  (make-local-variable 'li-mode-syntax-table)
-  (setq li-mode-syntax-table (make-syntax-table))
-  (set-syntax-table li-mode-syntax-table)
   (use-local-map li-mode-map)
+
+  (make-local-variable 'li-mode-syntax-table)
+  (set-syntax-table li-mode-syntax-table)
+
+ ; (set (make-local-variable 'comment-start) "(* ")
+ ; (set (make-local-variable 'comment-end) " *)")
+
+  ;(make-local-variable 'comment-start-skip)
+  ;(setq comment-start-skip "(\\*+ *")
+
+  (make-local-variable 'parse-sexp-ignore-comments)
+  (setq parse-sexp-ignore-comments nil)
+  
+  (make-local-variable 'font-lock-defaults)
+
+  (set-face-foreground 'font-lock-builtin-face "blue")
+  (set-face-bold-p 'font-lock-builtin-face t)
+
+  (setq font-lock-defaults '(li-font-lock-keywords))
+
+  ;; Ne pas remplacer les espaces par des tabulations
+  (setq-default indent-tabs-mode nil)
+
   ; Pour pouvoir utiliser la molette de la souris.
   (require 'mwheel)
   (mwheel-install)
 
-
-
-
-  (make-local-variable 'comment-start)
-  (setq comment-start "/* ")
-  (make-local-variable 'comment-end)
-  (setq comment-end " */")
-  (make-local-variable 'comment-start-skip)
-  (setq comment-start-skip "\\(^\\|\\s-\\);?#+ *")
-
   (run-hooks 'li--mode-hook))
-
 
 ;;
 ;; Fin du mode Lisaac.

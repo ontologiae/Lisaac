@@ -36,7 +36,6 @@
 #
 # TODO:
 # =====
-#  - maybe use /etc/ instead of /usr/lib/lisaac four the compilation options
 #  - do a /usr/share/menu/lisaac ?
 #  - do a /usr/share/doc-base/lisaac ?
 #
@@ -55,11 +54,12 @@
 #  bug tracker system: https://gna.org/bugs/?func=additem&group=isaac
 #  mail to: Xavier Oswald <x.oswald@free.fr>
 
+LIB=/usr/lib/lisaac
+EXAMPLE=/examples
+HTML=/html
+BIN=/usr/bin
 MAN=/usr/share/man/man1
 DOC=/usr/share/doc/lisaac
-LIB=/usr/lib/lisaac
-BIN=/usr/bin
-HTML=/html
 DESTDIR=
 CC=gcc
 CFLAGS=-O2
@@ -80,21 +80,21 @@ install:
 	mkdir -p $(DESTDIR)$(BIN)
 	mkdir -p $(DESTDIR)$(MAN)
 	mkdir -p $(DESTDIR)$(DOC)$(HTML)
+	mkdir -p $(DESTDIR)$(DOC)$(EXAMPLE)
 	cp bin/lisaac  $(DESTDIR)$(BIN) 
 	cp bin/shorter  $(DESTDIR)$(BIN)
 	cp path.li  $(DESTDIR)$(LIB)
 	cp -rf lib/  $(DESTDIR)$(LIB)
 	cp -rf lib_os/  $(DESTDIR)$(LIB)
+	cp -rf example/* $(DESTDIR)$(DOC)$(EXAMPLE)
 	cp -rf shorter/  $(DESTDIR)$(LIB)
 	cp -rf manpage/*.gz  $(DESTDIR)$(MAN)
-
-	# Temprary since shorter is broken
-	# $(DESTDIR)$(BIN)/shorter -r -f html lib -o $(DESTDIR)$(DOC)$(HTML) 
-	#
-	# previous html documentation:
-	cp lib_html/* $(DESTDIR)$(DOC)$(HTML)
+	#$(DESTDIR)$(BIN)/shorter -r -f html lib -o $(DESTDIR)$(DOC)$(HTML) 
 
 clean:
+	rm -rf bin/lisaac
+	rm -rf bin/shorter
+	rm -rf bin/path.h
 	rm -rf $(DESTDIR)$(BIN)/lisaac
 	rm -rf $(DESTDIR)$(BIN)/shorter
 	rm -rf $(DESTDIR)$(LIB)

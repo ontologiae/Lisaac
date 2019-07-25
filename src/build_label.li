@@ -1,0 +1,228 @@
+Section Header
+  
+  + name := BUILD_LABEL;
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Public
+  
+  - string_tmp:STRING := STRING.create 256;
+  - line:STRING := STRING.create 256;
+  
+  - output_file:POINTER;  
+  - input_file:POINTER;
+  
+  - label_set:HASHED_SET(ABSTRACT_STRING) := 
+  ( + result:HASHED_SET(ABSTRACT_STRING);
+    result := HASHED_SET(ABSTRACT_STRING).create;
+    result.fast_add "-1";
+    result.fast_add "-2";
+    result
+  );
+
+  - get str:ABSTRACT_STRING :STRING_CONSTANT <-
+  ( + result:STRING_CONSTANT;
+    + tmp:ABSTRACT_STRING;
+    ? {str != NULL};
+    ? {label_set != NULL};
+
+    tmp := label_set.reference_at str;
+    (tmp = NULL).if {
+      result := STRING_CONSTANT.create_copy str;
+      label_set.fast_add result;
+    } else {
+      result ?= tmp;
+    };
+    ? {result ~= str};
+    result
+  );
+  
+  - convert_dico:HASHED_DICTIONARY(STRING_CONSTANT,STRING_CONSTANT) := HASHED_DICTIONARY(STRING_CONSTANT,STRING_CONSTANT).create; // One dictionary for One redondance
+  - first_copy:STRING_CONSTANT; // Key for a end redondance or NULL. (= label_back from first redondance)
+  
+  - mountain:FAST_ARRAY(ABSTRACT_STRING) := FAST_ARRAY(ABSTRACT_STRING).create_with_capacity 16384;
+  
+  - parse_line <-
+  ( + idx:INTEGER;    
+    + label,label_back,/*new_label,*/pos:STRING_CONSTANT;    
+    //+ is_inline:BOOLEAN;
+    //- fight_counter:INTEGER;
+    - nline:INTEGER;
+    - count_method:INTEGER;
+    - is_method:BOOLEAN;
+    nline := nline + 1;
+    idx := line.first_substring_index "	.size";
+    ((idx != 0) && {is_method}).if {
+      string_tmp.copy "method_";
+      count_method.append_in string_tmp;
+      string_tmp.append "_end:\n";
+      line.append string_tmp;
+      //
+      count_method := count_method + 1;
+      is_method := FALSE;
+    };    
+    idx := line.first_substring_index "@LI ";
+    (idx != 0).if {      
+      (line.item (idx+4) != 'm').if {
+        // Position
+        idx := idx + 4;
+        string_tmp.clear;
+        {line.item idx != ','}.while_do {
+          string_tmp.add_last (line.item idx);
+          idx := idx + 1;
+        };
+        pos := get string_tmp;
+        // Label
+        idx := idx + 1;      
+        string_tmp.clear;
+        {line.item idx != ','}.while_do {
+          string_tmp.add_last (line.item idx);
+          idx := idx + 1;
+        };
+        //label ?= label_set.reference_at string_tmp;
+        //(label = NULL).if {        
+        label := get string_tmp;
+        //} else {
+        //  is_inline := TRUE;
+        //};        
+        // label_back
+        idx := idx + 1;
+        string_tmp.clear;
+        {line.item idx != '\n'}.while_do {
+          string_tmp.add_last (line.item idx);
+          idx := idx + 1;
+        };
+        label_back := get string_tmp;      
+        //      
+        /*
+        (is_inline).if {
+          "Inline #".print; nline.print; '\n'.print;
+          // Begin inline:
+          (convert_dico.is_empty).if {
+            first_copy := label_back;
+          };
+          // Current inline:
+          new_label := convert_dico.reference_at label;
+          (new_label = NULL).if {
+            string_tmp.copy label;
+            string_tmp.add_last '_';
+            fight_counter.append_in string_tmp;
+            fight_counter := fight_counter + 1;
+            new_label := get string_tmp;
+            convert_dico.add new_label to label;
+            label := new_label;
+          } else {
+            label := new_label;
+          };
+          new_label := convert_dico.reference_at label_back;
+          (new_label = NULL).if {
+            ((label_back.first != '-') && {label_back != first_copy}).if {
+              "error\n".print;
+            };
+          } else {
+            label_back := new_label;
+          };
+          // End inline:
+          ((first_copy = label_back) || {label_back.first = '-'}).if {
+            convert_dico.clear;
+          };
+        };      
+        */        
+        line.copy label;
+        line.append ":\n";
+      } else {
+        string_tmp.copy "method_";
+        count_method.append_in string_tmp;        
+        line.copy string_tmp;
+        line.append ":\n";
+        string_tmp.append "-1";
+        label := get string_tmp;
+        //
+        string_tmp.copy "method_";
+        count_method.append_in string_tmp;        
+        string_tmp.append "_end";
+        pos := get string_tmp;        
+        label_back := "-3";
+        is_method := TRUE;
+      };
+      //
+      mountain.add_last label;
+      mountain.add_last pos;
+      mountain.add_last label_back;
+    };
+  ); 
+  
+  - main <-
+  ( + j:INTEGER;
+    "BUILD_LABEL\n".print;
+    // Open
+    input_file := FS_MIN.open_read (COMMAND_LINE.item 1);
+    (input_file = NULL).if {
+      STD_ERROR.put_string "Error: File is not opened !\n";
+      die_with_code exit_failure_code;
+    };
+    string_tmp.copy (COMMAND_LINE.item 1);
+    string_tmp.remove_last 2;
+    string_tmp.append "_label.s";
+    (! FS_MIN.make_file string_tmp).if {
+      STD_ERROR.put_string "Error: File is not created !\n";
+      die_with_code exit_failure_code;
+    };
+    output_file := FS_MIN.open_write string_tmp;
+    
+    // Read / Write
+    {FS_MIN.read_line input_file in line}.while_do {
+      parse_line;
+      FS_MIN.write output_file with line size (line.count);
+    };    
+    //
+    
+    line.copy  
+    "        .section .data\n\
+    \__li_mountain:\n";
+    line.append "# Header: <@fin,count table,-1>\n";
+    line.append "        .quad ";
+    line.append "_fini";
+    line.append ",\t";
+    line.append ((mountain.count+3).to_string);
+    line.append ",\t-1\n\
+    \# Table mountain: <@current,code position,backlink index>\n";
+    //
+    (mountain.lower).to (mountain.upper) by 3 do { i:INTEGER;
+      ((mountain.item (i+2).first = '-') && {mountain.item (i+2).last = '3'}).if {
+        line.add_last '\n';
+      };
+      line.append "        .quad ";
+      line.append (mountain.item i);
+      line.append ",\t";
+      line.append (mountain.item (i+1));
+      line.append ",\t";
+      (mountain.item (i+2).first != '-').if {         
+        j := 0;
+        {mountain.item j !== mountain.item (i+2)}.while_do { j := j+3; };
+        (j+3).append_in line;
+      } else {
+        line.append (mountain.item (i+2));      
+      };      
+      
+      line.append "\t /* index:";
+      ((i+3)/3).to_integer.append_in line;
+      (mountain.item (i+2).first != '-').if {
+        line.append " back:";
+        line.append (mountain.item (i+2));
+        line.append " ";
+        ((j+3) / 3).append_in line;
+      };
+      line.append " */";      
+      
+      line.add_last '\n';
+    };
+        
+    FS_MIN.write output_file with line size (line.count);
+           
+    // Close
+    FS_MIN.close input_file;    
+    FS_MIN.close output_file;
+  );

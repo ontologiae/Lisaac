@@ -1,66 +1,46 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := LINKED2_LIST(V);
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
-  
+
   - comment := "Two way linked list with internal automatic memorization \
                \of the last access .";
-	       
+
 Section Inherit
-  
+
   + parent_linked_collection:Expanded LINKED_COLLECTION(V);
-  
+
 Section LINKED2_LIST
-  
+
   + first_link:LINK2(V);
   // NULL when empty or gives access to the first element.
-    
+
   + last_link:LINK2(V);
   // NULL when empty or gives access to the last element.
-  
-  + mem_idx:INTEGER; 
-  
+
+  + mem_idx:INTEGER;
+
   + mem_lnk:LINK2(V);
   // To speed up accessing, `mem_idx' and `mem_lnk' is the
   // memory of the last access done. For example, after
   // item(1), `mem_idx' is 1 and `mem_lnk' is `first_link'.
   // When list is empty, `first_link' is NULL as well as
   // `mem_lnk' and `mem_idx' is 0;
-  
+
 Section Public
-  
+
   - create:SELF <-
   // Make an empty list;
-  (     
+  (
     SELF.clone
   );
-  
+
   - is_empty:BOOLEAN <- first_link = NULL;
-  
+
   - add_first element:V <-
-  ( 
+  (
     (first_link = NULL).if {
       first_link := LINK2(V).create element previous NULL next NULL;
       last_link := first_link;
@@ -77,9 +57,9 @@ Section Public
   [ ...
     +? { upper = 1 + Old upper };
   ];
-    
+
   - add_last element:V <-
-  ( 
+  (
     (first_link = NULL).if {
       first_link := LINK2(V).create element previous NULL next NULL;
       last_link := first_link;
@@ -92,10 +72,10 @@ Section Public
       upper := upper + 1;
     };
   );
-    
+
   - add element:V to index:INTEGER <-
   ( + link:LINK2(V);
-    
+
     (index = 1).if {
       add_first element;
     }.elseif {index = upper + 1} then {
@@ -108,18 +88,18 @@ Section Public
       link.next.set_previous link;
       mem_lnk.set_next link;
       upper := upper + 1;
-    };    
+    };
   );
-    
+
   - remove_first <-
-  ( 
+  (
     (upper = 1).if {
-      first_link := NULL;			
+      first_link := NULL;
       last_link  := NULL;
       mem_lnk    := NULL;
       mem_idx := 0;
       upper   := 0;
-    } else {      
+    } else {
       first_link := first_link.next;
       first_link.set_previous NULL;
       upper := upper - 1;
@@ -128,13 +108,13 @@ Section Public
       } else {
 	mem_lnk := first_link;
 	mem_idx := 1;
-      };      
+      };
     };
   );
-    
+
   - remove index:INTEGER <-
   ( + link:LINK2(V);
-    
+
     (index = 1).if {
       remove_first;
     }.elseif { index = upper} then {
@@ -149,11 +129,11 @@ Section Public
       upper := upper - 1;
     };
   );
-    
+
   - first:V <- first_link.item;
-  
+
   - last:V <- last_link.item;
-  
+
   - item index:INTEGER :V <-
   (
     (index != mem_idx).if {
@@ -161,33 +141,33 @@ Section Public
     };
     mem_lnk.item
   );
-    
+
   - put element:V to index:INTEGER <-
-  ( 
+  (
     (index != mem_idx).if {
       go_item index;
     };
-    mem_lnk.set_item element;    
+    mem_lnk.set_item element;
   );
-    
+
   - count:INTEGER <- upper;
-  
+
   - set_all_with v:V <-
-  ( 
+  (
     (first_link != NULL).if {
       first_link.set_all_with v;
-    };    
+    };
   );
-    
+
   - copy other:SELF <-
   (
     from_collection other;
   );
-    
+
   - Self:SELF '==' Right 60 other:SELF :BOOLEAN <-
   ( + result:BOOLEAN;
     + lnk1, lnk2:LINK2(V);
-    
+
     (Self = other).if {
       result := TRUE;
     }.elseif {upper = other.upper} then {
@@ -199,15 +179,15 @@ Section Public
 	lnk1 := lnk1.next;
 	lnk2 := lnk2.next;
       };
-    };    
+    };
     result
   );
-    
+
   - is_equal_map other:SELF :BOOLEAN <-
   ( + result:BOOLEAN;
     + lnk1, lnk2:LINK2(V);
     + safe_equal:SAFE_EQUAL(V);
-    
+
     ( Self = other ).if {
       result := TRUE;
     }.elseif {upper = other.upper} then {
@@ -219,27 +199,27 @@ Section Public
 	lnk1 := lnk1.next;
 	lnk2 := lnk2.next;
       };
-    };    
+    };
     result
   );
-    
+
   - index_of x:V start start_index:INTEGER :INTEGER <-
   ( + result:INTEGER;
     + safe_equal:SAFE_EQUAL(V);
-    
+
     result := start_index;
     {(result > upper) || {safe_equal.test x with (item result)}}.until_do {
       result := result + 1;
-    };    
+    };
     result
   );
-  
+
   - reverse_index_of element:V start start_index:INTEGER :INTEGER <-
-  ( + safe_equal:SAFE_EQUAL(V); 
+  ( + safe_equal:SAFE_EQUAL(V);
     + temporary_idx:INTEGER;
     + temporary_lnk:LINK2(V);
     + result:INTEGER;
-    
+
     (start_index != mem_idx).if {
       go_item start_index;
     };
@@ -260,25 +240,25 @@ Section Public
   - fast_index_of x:V start start_index:INTEGER :INTEGER <-
   ( + result:INTEGER;
     + u:INTEGER;
-    
+
     result := lower;
     u := upper;
     {(result > u) || {x = item result}}.until_do {
       result := result + 1;
     };
     result
-  );	
+  );
 
   - fast_reverse_index_of element:V start start_index:INTEGER :INTEGER <-
   ( + temporary_idx:INTEGER;
     + temporary_lnk:LINK2(V);
     + result:INTEGER;
-		
+
     (start_index != mem_idx).if {
       go_item start_index;
     };
     temporary_idx := mem_idx;
-    temporary_lnk := mem_lnk;			
+    temporary_lnk := mem_lnk;
     {(temporary_idx < lower) || {element = temporary_lnk.item}}.until_do {
       temporary_idx := temporary_idx - 1;
       temporary_lnk := temporary_lnk.previous;
@@ -289,7 +269,7 @@ Section Public
       mem_lnk := temporary_lnk;
     };
   );
-    
+
   - clear <-
   (
     (first_link != NULL).if {
@@ -303,10 +283,10 @@ Section Public
   [ ...
     +? {upper = 0};
   ];
-    
+
   - from_collection model:COLLECTION(V) <-
   ( + lnk:LINK2(V);
-    
+
     (first_link = NULL).if {
       (model.lower).to (model.upper) do { i:INTEGER;
 	add_last (model.item i);
@@ -335,14 +315,14 @@ Section Public
 	upper := i;
 	last_link := mem_lnk;
       };
-    };   
+    };
   );
-    
+
   - slice low:INTEGER to up:INTEGER :SELF <-
   ( + lnk:LINK2(V);
     + result:SELF;
 
-    result := SELF.create;    
+    result := SELF.create;
     (mem_idx != low).if {
       go_item low;
     };
@@ -353,26 +333,26 @@ Section Public
     };
     result
   );
-    
+
   - occurrences element:V :INTEGER <-
   ( + lnk:LINK2(V);
     + safe_equal:SAFE_EQUAL(V);
     + result:INTEGER;
-    
+
     lnk := first_link;
     {lnk = NULL}.until_do {
       (safe_equal.test element with (lnk.item)).if {
 	result := result + 1;
       };
       lnk := lnk.next;
-    };    
+    };
     result
   );
-    
+
   - fast_occurrences element:V :INTEGER <-
   ( + lnk:LINK2(V);
     + result:INTEGER;
-    
+
     lnk := first_link;
     {lnk = NULL}.until_do {
       (element = lnk.item).if {
@@ -382,21 +362,21 @@ Section Public
     };
     result
   );
-    
+
   - force element:V to index:INTEGER <-
   ( + v:V;
-    
+
     {index <= upper}.until_do {
       add_last v;
     };
     put element to index;
   );
-    
+
   - all_default:BOOLEAN <-
   ( + l:LINK2(V);
     + d:V;
     + result:BOOLEAN;
-    
+
     result := TRUE;
     l := first_link;
     {(! result) || {l = NULL}}.until_do {
@@ -405,12 +385,12 @@ Section Public
 	result := d.is_default;
       };
       l := l.next;
-    };    
+    };
     result
   );
-    
+
   - remove_last <-
-  ( 
+  (
     (upper = 1).if {
       first_link := NULL;
       last_link  := NULL;
@@ -426,37 +406,37 @@ Section Public
 	mem_lnk := first_link;
       };
       upper := upper - 1;
-    };    
+    };
   );
-    
+
   - replace_all old_value:V with new_value:V <-
   ( + safe_equal:SAFE_EQUAL(V);
-    
+
     lower.to upper do { i:INTEGER;
       (safe_equal.test (item i) with old_value).if {
 	put new_value to i;
       };
-    };   
+    };
   );
-    
+
   - fast_replace_all old_value:V with new_value:V <-
-  ( 
+  (
     lower.to upper do { i:INTEGER;
       (item i = old_value).if {
 	put new_value to i;
       };
-    };    
+    };
   );
-  
+
   - reverse <-
-  ( + temp:V; 
-    + low:LINK2(V); 
+  ( + temp:V;
+    + low:LINK2(V);
     + high:LINK2(V);
     + i:INTEGER;
-    
+
     low  := first_link;
     high := last_link;
-    
+
     i := count / 2;
     ? {(i > 0) -> ((low != NULL) & (high != NULL))};
     ? {(i > 0) -> ((low != high) & (low.previous != high))};
@@ -467,11 +447,11 @@ Section Public
       low  := low.next;
       high := high.previous;
       i    := i - 1;
-    };	
+    };
   );
-			
+
 Section Private
-  
+
   - go_item index:INTEGER <-
   [ ...
     -? { valid_index index };
@@ -512,15 +492,15 @@ Section Private
     +? { mem_idx = index };
     +? { mem_lnk != NULL };
   ];
-  
+
   //
   // Invariant.
   //
-  
+
 //  [ ...
 //    "Empty status." -? {(first_link = NULL) ->
 //    ((last_link = NULL) & (upper = 0) & (mem_idx = 0) & (mem_lnk = NULL))};
-    
+
 //    "Not empty status." -? {(first_link != NULL) ->
 //    ((last_link != NULL) & (upper > 0) & (mem_idx > 0) & (mem_lnk != NULL))};
 //  ];

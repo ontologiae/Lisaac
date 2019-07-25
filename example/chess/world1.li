@@ -1,0 +1,332 @@
+Section Header
+  
+  + name     := WORLD1;
+  
+  - comment   := "world theme for game";
+  
+  - author    := "Damien Bouvarel (dams.bouvarel@wanadoo.fr)";
+  
+Section Inherit
+  
+  - parent_world:SCENE := SCENE;
+  
+Section Public
+  
+  - noise:NOISE;
+  
+  - counter:REAL_32;
+  
+  //
+  // non shaded water effect 
+  //
+  
+  - water_resolution:INTEGER := 64;
+  - water_texture:TEXTURE;
+  - water_surface:FAST_ARRAY(REAL_32);
+  
+  //
+  // shaded water effect 
+  //
+  - water_shader:SHADER;
+  
+  - loc_color_map:INTEGER; // variable locations in shader
+  - loc_noise_map:INTEGER;
+  - loc_time:INTEGER;
+  
+  - noise_map:TEXTURE; 
+  
+  
+  - skybox:SKYBOX;
+  - fog:FOG;
+  
+  
+  - initialize:BOOLEAN <- 
+  (  
+    + pos,dim:VECTOR3(REAL_32);
+    + sky:FAST_ARRAY(TEXTURE);
+    + tex:TEXTURE;
+    + infolog:STRING;
+    
+    //
+    //  Water
+    //
+    
+    OPENGL.use_shaders.if_false {
+      FRAMEWORK.log.append "Cannot support GLSL Shaders with ARB extensions";
+    } else {
+      water_shader := renderer.shader.create ("shaders/water.vert","shaders/water.frag");
+      water_shader.enable;
+      
+      water_shader.has_compiled.if_false {
+        // print shader compilation errors - shader is disabled
+        infolog := STRING.create 32;
+        water_shader.get_infolog infolog;
+        
+        FRAMEWORK.log.append "Compilation error(s) in water shader: ";
+        FRAMEWORK.log.append infolog;
+      };
+      
+      // get glsl uniform variables of shader
+      loc_color_map := water_shader.get_uniform_location "colorMap";
+      loc_noise_map := water_shader.get_uniform_location "noiseMap";
+      loc_time := water_shader.get_uniform_location "timer";
+      
+      water_shader.disable;
+      
+      renderer.texture2d.set_filter (renderer.texture2d.filter_linear);
+      // load noise texture
+      noise_map := renderer.texture2d.create_from (IMAGE.create "textures/perlin_noise.bmp");
+      //
+      renderer.texture2d.set_filter (renderer.texture2d.filter_mipmap);
+      
+      // stencilling is used for reflections
+      renderer.stencil_buffer.set_clear_value 0.0;
+    };
+    
+    //
+    // non-shaded water effect
+    //
+    
+    noise := NOISE.create;
+    water_texture := renderer.texture2d.create_from (IMAGE.create "textures/water.bmp");
+    water_surface := FAST_ARRAY(REAL_32).create (water_resolution*water_resolution);
+    
+    // create noisy surface
+    0.to (water_resolution-1) do { j:INTEGER;      
+      0.to (water_resolution-1) do { i:INTEGER; 
+        water_surface.put ((4.0*noise.get (i,j,0)).to_real) to (j*water_resolution+i);
+      };
+    };
+    
+    //
+    // Sky
+    //
+    
+    pos := VECTOR3(REAL_32).create (0,0,0);
+    dim := VECTOR3(REAL_32).create (1000,500,1000);
+    
+    sky := FAST_ARRAY(TEXTURE).create_with_capacity 5;
+    
+    // clamp sky textures to make invisible edges
+    // not supported on every GL implementation...
+    renderer.texture2d.set_wrapping_mode (renderer.texture2d.clamp_to_edge);
+    //renderer.texture2d.set_wrapping_mode (renderer.texture2d.clamp);
+  
+    1.to 5 do { i:INTEGER;
+      tex := renderer.texture2d.create_from (IMAGE.create ("textures/sky"+i.to_string+".bmp"));
+      sky.add_last tex;
+    };
+    
+    skybox := SKYBOX.create (pos,dim,sky);
+    
+    /*  make the scene too dark..
+      fog := renderer.fog.create (RGB.create (0.8, 0.8, 0.8), 0.02, 800.0, 1500.0);
+    renderer.set_fog fog;
+    fog.enable;
+    */
+    TRUE
+  );
+  
+
+  - render t:REAL_32 <-
+  ( 
+    + val,sz:REAL_32;
+    + unit:INTEGER;
+
+    //
+    // draw water surface
+    //
+    
+    (water_shader != NULL).if {
+      
+      // first pass: draw & blend the skybox upside down
+      render_reflection;
+      
+      // now graphic pipeline ends with the shader
+      water_shader.enable;
+      
+      // bind samplers (water texture & noise texture)
+      water_shader.bind_sampler noise_map unit 1 location loc_noise_map; 
+      water_shader.bind_sampler water_texture unit 0 location loc_color_map; 
+      
+      // increase the 'timer' variable in shader
+      counter := counter+ 1.0/FRAMEWORK.frame_per_second_max;
+      water_shader.set_uniform1f loc_time to (counter);
+      
+      
+      // draw a single textured polygon
+      sz := 1000;
+      water_texture.bind;      
+    
+      renderer.transform.new_matrix {      
+        renderer.transform.translatef(0, -30, 0);
+  
+        renderer.vb.new_quads {
+          renderer.vb.add_normal3f (0.0, 1.0, 0.0);
+          
+          renderer.vb.add_texel2f (0.0, 1.0);
+          renderer.vb.add_vertex3f (-sz, 0.0, sz);
+          
+          renderer.vb.add_texel2f (0.0, 0.0);
+          renderer.vb.add_vertex3f (-sz, 0.0, -sz);
+          
+          renderer.vb.add_texel2f (1.0, 0.0);
+          renderer.vb.add_vertex3f (sz, 0.0, -sz);
+          
+          renderer.vb.add_texel2f (1.0, 1.0);
+          renderer.vb.add_vertex3f (sz, 0.0, sz);          
+        };
+      };
+      
+      // disable the water shader
+      renderer.blending.disable;
+      water_shader.disable;
+      
+    } else {
+      
+      //
+      // animate non-shaded water surface
+      //
+      
+      counter := counter + t * 10;
+      (counter > 1000h).if {
+        counter := 0;
+      };
+      
+      0.to (water_resolution-2) do { j:INTEGER;      
+        0.to (water_resolution-1) do { i:INTEGER; 
+          
+          val := water_surface.item (j*water_resolution+i);
+          water_surface.put (val+1.5*(counter + 0.2*i).sin) to (j*water_resolution+i);
+        };
+      };
+      
+      //
+      // draw waves 
+      //
+      render_reflection;
+      
+      unit := 30;
+      water_texture.bind;
+      
+      renderer.transform.new_matrix {    
+        
+        renderer.transform.translatef(-15*water_resolution, -30, -15*water_resolution);
+        0.to (water_resolution-2) do { j:INTEGER;
+          renderer.vb.new_triangle_strip {
+            
+            0.to (water_resolution-1) do { i:INTEGER;   
+              
+              // first point (i, j+1)
+              renderer.vb.add_vertex3f (i*unit,water_surface.item ((j+1)*water_resolution+i), (j+1)*unit);
+              renderer.vb.add_texel2f ((i.to_real*256.0)/256.0,((j+1).to_real*256.0)/256.0);
+              
+              // second point (i, j)
+              renderer.vb.add_vertex3f (i*unit,water_surface.item (j*water_resolution+i), j*unit);
+              renderer.vb.add_texel2f ((i.to_real*256.0)/256.0,(j.to_real*256.0)/256.0);
+            };
+          };
+        };      
+      };
+    };
+    renderer.blending.disable;
+    
+    //
+    // draw sky
+    //
+    
+    renderer.transform.new_matrix {  
+      renderer.transform.translatef(0, 400, 0); 
+      skybox.render;
+    };   
+  );
+  
+  - render_reflection <-
+  (
+    //
+    // First pass: draw an invisible mask of the floor in the stencil buffer
+    //
+    
+    // disable drawing in color buffer
+    renderer.color_buffer.disable;
+    
+    renderer.stencil_buffer.enable;
+    
+    // stencil test always pass and set stencil value to 1 
+    renderer.stencil_buffer.set_function (renderer.stencil_buffer.always) value 1 mask 1;
+    
+    // if test successful replace stencil value else keep the old value
+    renderer.stencil_buffer.when_pass (renderer.stencil_buffer.replace) when_fail (renderer.stencil_buffer.keep) when_zfail (renderer.stencil_buffer.keep);
+    
+    renderer.depth_buffer.disable;
+    
+    draw_water_surface;
+    
+    // back to color mode
+    renderer.depth_buffer.enable;
+    renderer.color_buffer.enable;
+    
+    //
+    // Second pass: draw reflections in the masked floor (stencil test enabled)
+    //
+    
+    // only draw pixels masked with 1 in stencil buffer
+    renderer.stencil_buffer.set_function (renderer.stencil_buffer.equal) value 1 mask 1;
+    renderer.stencil_buffer.lock; // read-only
+    
+    renderer.blending.set_alpha_value 0.5;
+    renderer.blending.apply (renderer.blending.dst_alpha,renderer.blending.one_minus_dst_alpha); 
+    renderer.blending.enable;
+    
+    renderer.depth_buffer.disable; 
+    
+    renderer.transform.new_matrix {
+      
+      // mirror y axis
+      renderer.transform.scalef (1.0, -1.0, 1.0);
+      
+      // draw reflection
+      renderer.transform.translatef(0, 400, 0);
+      skybox.render;
+    };
+    
+    // back to normal mode
+    renderer.stencil_buffer.disable;
+    renderer.depth_buffer.enable;
+  );
+  
+  - draw_water_surface <-
+  ( + sz:INTEGER;
+    
+    sz := 1000;
+    renderer.texture2d.disable;
+    
+    renderer.transform.new_matrix {    
+      
+      renderer.transform.translatef(0, -30, 0);
+      
+      renderer.vb.new_quads {
+        renderer.vb.add_normal3f (0.0, 1.0, 0.0);
+        
+        renderer.vb.add_texel2f (0.0, 1.0);
+        renderer.vb.add_vertex3f (-sz, 0.0, sz);
+        
+        renderer.vb.add_texel2f (0.0, 0.0);
+        renderer.vb.add_vertex3f (-sz, 0.0, -sz);
+        
+        renderer.vb.add_texel2f (1.0, 0.0);
+        renderer.vb.add_vertex3f (sz, 0.0, -sz);
+        
+        renderer.vb.add_texel2f (1.0, 1.0);
+        renderer.vb.add_vertex3f (sz, 0.0, sz);          
+      };
+    };
+    renderer.texture2d.enable;
+  );
+  
+  - release <-
+  (
+    (water_shader != NULL).if {
+      water_shader.delete;
+    };
+  );

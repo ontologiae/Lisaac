@@ -1,0 +1,8 @@
+Section Header
+
+  + name    := Expanded UNICODE; // Deprecated : Convert UTF8
+
+Section Insert
+
+  - parent_char_unicode:Expanded CHAR_UNICODE;
+

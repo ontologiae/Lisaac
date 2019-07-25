@@ -1,0 +1,65 @@
+Section Header
+
+  + name      := EXAMPLE;
+
+  - copyright := "2003-2010 Sonntag Benoit; P-A";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - food_count:INTEGER := 400;
+  - ant_count :INTEGER := 18;
+
+  - main <-
+  ( + free,busy,life:STATE;
+    + ant:ANT;
+    + t:INTEGER;
+    + col:UINTEGER_32;
+
+    //
+    // Comportement.
+    //
+
+    free := STATE.create "Free";
+    busy := STATE.create "Busy";
+
+    free.to busy if { x:ANT; x.get_food };
+    busy.to free if { x:ANT; x.put_food };
+
+    life := STATE.create "Life" action { x:ANT;
+      x.move;
+    };
+    life.has free;
+    //
+    VIDEO.make_size (900,900);
+    EARTH.make_earth 100;
+    food_count.times {
+      t := (t + 1) % 3;
+      (t)
+      .when 0 then { col := EARTH.red;   }
+      .when 1 then { col := EARTH.green; }
+      .when 2 then { col := EARTH.blue;  };
+      EARTH.put_food (EARTH.random_position) type col;
+    };
+    ant_count.times {
+      ant := ANT.create (EARTH.random_position) with life;
+    };
+    EARTH.run;
+    //
+
+    TIMER.set_delay 10; //00;
+
+
+    DESK.make VIDEO with (
+      G_OUT.create "Ant" justify (G_OUT.center) /
+      G_RAW.create (EARTH.fix_height.fix_width)
+    );
+  );
+
+

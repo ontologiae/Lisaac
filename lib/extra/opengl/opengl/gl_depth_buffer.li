@@ -1,0 +1,68 @@
+Section Header
+
+  + name     := GL_DEPTH_BUFFER;
+
+  - comment  := "Opengl Depth Buffer";
+
+Section Inherit
+
+  - parent_buffer:DEPTH_BUFFER := DEPTH_BUFFER;
+
+Section Public
+
+  // pixel test functions
+  - always:INTEGER <- `GL_ALWAYS`:INTEGER;
+  - never:INTEGER <- `GL_NEVER`:INTEGER;
+  - less:INTEGER <-  `GL_LESS`:INTEGER;
+  - lequal:INTEGER <- `GL_LEQUAL`:INTEGER;
+  - equal:INTEGER <- `GL_EQUAL`:INTEGER;
+  - gequal:INTEGER <- `GL_GEQUAL`:INTEGER;
+  - greater:INTEGER <- `GL_GREATER`:INTEGER;
+  - notequal:INTEGER <- `GL_NOTEQUAL`:INTEGER;
+
+  - enable <-
+  (
+    parent_state.enable;
+    `glEnable (GL_DEPTH_TEST)`;
+  );
+
+  - disable <-
+  (
+    parent_state.disable;
+    `glDisable (GL_DEPTH_TEST)`;
+  );
+
+  - push_attrib <-
+  (
+    `glPushAttrib(GL_ENABLE_BIT)`;
+  );
+
+  - pop_attrib <-
+  (
+    `glPopAttrib()`;
+  );
+
+  - set_clear_value val:REAL_32 <-
+  (
+    `glClearDepth(@val)`;
+  );
+
+  - clear <-
+  (
+    `glClear(GL_DEPTH_BUFFER_BIT)`;
+  );
+
+  - set_function f:INTEGER <-
+  (
+    `glDepthFunc(@f)`;
+  );
+
+  - lock <-
+  (
+    `glDepthMask(GL_TRUE)`;
+  );
+
+  - unlock <-
+  (
+    `glDepthMask(GL_FALSE)`;
+  );

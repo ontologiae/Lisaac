@@ -1,55 +1,35 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := STRING_CST;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "String constant";
-  
+
 Section Inherit
-  
+
   + parent_constant:Expanded CONSTANT;
-  
+
 Section Public
-   
-  - output:STRING := 
+
+  - output:STRING :=
   ( + result:STRING;
-    
+
     result := STRING.create 256;
     title "STRING CONSTANT" in result;
     result
   );
-  
+
   - output_count:INTEGER;
-  
+
   //
   // Value.
   //
 
   + string:STRING_CONSTANT;
-  
+
   //
   // Creation.
   //
@@ -60,7 +40,7 @@ Section Public
     result.make p text n length len;
     result
   );
-  
+
   - make p:POSITION text n:STRING_CONSTANT length len:INTEGER <-
   (
     position := p;
@@ -74,8 +54,8 @@ Section Public
   //
   // Comparaison.
   //
-  
-  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-  
+
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-
   ( + p:STRING_CST;
     p ?= other;
     (p != NULL) && {string = p.string}
@@ -86,42 +66,35 @@ Section Public
   //
 
   - genere buffer:STRING <-
-  ( + idx,count,cur:INTEGER;    
+  ( + idx,count,cur:INTEGER;
     - is_init:BOOLEAN;
     - is_storage:BOOLEAN;
     - is_count:BOOLEAN;
-    
+
     (is_init).if_false {
       is_storage := type_string_constant.get_local_slot (ALIAS_STR.slot_storage)
       .slot_data_intern.ensure_count != 0;
       is_count   := type_string_constant.get_local_slot (ALIAS_STR.slot_count)
-      .slot_data_intern.ensure_count != 0;      
+      .slot_data_intern.ensure_count != 0;
       is_init := TRUE;
     };
-    
+
     count := dico_string.fast_at string;
     (count >= 0).if {
       output_count := output_count + 1;
       idx := output_count;
-      
+
       cur := output.count - 1;
-      (is_java).if {
-        output.append "private static ";
-      };
       output.append "__";
       output.append (type_string_constant.intern_name);
       output.append " __string_";
       idx.append_in output;
       output.add_last '=';
-      (is_java).if {
-        output.append "new __STRING_CONSTANT(";
-      } else {
-        output.add_last '{';
-        (static_type.is_late_binding).if {
-          output.append "__";
-          output.append (static_type.raw.intern_name);
-          output.append "__,";	
-        };
+      output.add_last '{';
+      (static_type.is_late_binding).if {
+        output.append "__";
+        output.append (static_type.raw.intern_name);
+        output.append "__,";
       };
       (is_count).if {
         count.append_in output;
@@ -133,31 +106,22 @@ Section Public
 	{(output.count - cur) > 78}.while_do {
 	  output.insert_string "\\\n" to (cur+78);
 	  cur := cur + 78;
-	};            
+	};
 	output.add_last '\"';
       } else {
         output.remove_last 1;
       };
-      (is_java).if {
-        output.append ");\n";
-      } else {
-        output.append "};\n";
-      };
+      output.append "};\n";
       dico_string.fast_put (-idx) to string;
     } else {
       idx := -count;
     };
     //
-    (is_java).if {
-      buffer.append "__string_";
-      idx.append_in buffer;      
-    } else {
-      buffer.append "(&__string_";
-      idx.append_in buffer;
-      buffer.add_last ')';
-    };
+    buffer.append "(&__string_";
+    idx.append_in buffer;
+    buffer.add_last ')';
   );
-  
+
   //
   // Display.
   //
@@ -169,10 +133,10 @@ Section Public
     buffer.add_last '\"';
     display_ref buffer;
   );
-  
-Section Private  
-  
-  - dico_string:HASHED_DICTIONARY(INTEGER,STRING_CONSTANT) := 
+
+Section Private
+
+  - dico_string:HASHED_DICTIONARY(INTEGER,STRING_CONSTANT) :=
   HASHED_DICTIONARY(INTEGER,STRING_CONSTANT).create;
 
 

@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := BALL;
 
   - copyright := "2003-2009 Sonntag Benoit";
@@ -31,15 +11,15 @@ Section Inherit
   - parent_object:OBJECT := OBJECT;
 
 Section Public
-  
+
   + position_x:REAL_32;
   + position_y:REAL_32;
 
   + radius:REAL_32;
-  
+
   + v_x:REAL_32;
   + v_y:REAL_32;
-  
+
   //
   // Creation.
   //
@@ -52,20 +32,20 @@ Section Public
   );
 
   - make (x,y:INTEGER) radius r:INTEGER <-
-  ( 
+  (
     position_x := x;
     position_y := y;
     radius := r;
     v_x := (100.random_upper - 50).to_real_32 / 100;
-    v_y := (100.random_upper - 50).to_real_32 / 100;    
+    v_y := (100.random_upper - 50).to_real_32 / 100;
   );
-  
+
   //
   // Conflit detect.
   //
-  
+
   - new_position <-
-  ( 
+  (
     position_x := position_x + v_x;
     position_y := position_y + v_y;
     ((position_x < 0) || {position_x > GRAVITY.width_min}).if {
@@ -73,15 +53,15 @@ Section Public
     };
     ((position_y < 0) || {position_y > GRAVITY.height_min}).if {
       v_y := - v_y;
-    };    
+    };
   );
-  
+
   //
   // Display.
   //
-  
+
   - display bmp:ABSTRACT_BITMAP <-
   (
-    bmp.circle_fill (position_x.to_integer,position_y.to_integer) 
+    bmp.circle_fill (position_x.to_integer,position_y.to_integer)
     rayon (radius.to_integer) color (bmp.white);
   );

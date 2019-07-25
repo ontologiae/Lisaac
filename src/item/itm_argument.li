@@ -1,80 +1,61 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_ARGUMENT;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parent argument";
-  
+
 Section Inherit
-  
+
   + parent_itm_code:Expanded ITM_OBJECT;
-  
+
 Section Public
-  
+
   - lower:INTEGER <- 0;
-  
+
   - upper:INTEGER <- ( deferred; 0);
-  
+
   - count:INTEGER <- upper + 1;
 
   //
   // Running.
   //
-  
-  - item idx:INTEGER :ITM_TYPE_MONO <- 
+
+  - item idx:INTEGER :ITM_TYPE_MONO <-
   (
     deferred;
     NULL
   );
-  
+
   - to_run_in arg_lst:FAST_ARRAY(LOCAL) for p:PARAMETER_TO_TYPE <-
   (
     deferred;
   );
-  
+
   - get_index_type p:ITM_TYPE_PARAMETER :INTEGER <-
   (
     deferred;
   );
-  
+
   - check larg:FAST_ARRAY(EXPR) index idx:INTEGER for p:PARAMETER_TO_TYPE :INTEGER <-
   (
     deferred;
     0
   );
-  
+
   //
   // Comparaison.
   //
-  
-  - is_equal other:ITM_ARGUMENT <- 
+
+  - is_equal other:ITM_ARGUMENT <-
     ( + o:SELF;
     + err:STRING_CONSTANT;
+    //MHMH : ?? Sûr ? plante sur gros...
     ? {other != Self};
-    
+
     o ?= other;
     (o = NULL).if {
       err := "Invariance number vector argument invalid.";
@@ -84,25 +65,25 @@ Section Public
       err := "Invariance type argument invalid.";
     };
     (err != NULL).if {
-      POSITION.put_error semantic text err;
+      POSITION.put_error warning text err;
       position.put_position;
       (other.position).put_position;
       POSITION.send_error;
     };
   );
-  
+
   //
   // Display.
   //
-  
+
   - append_in buffer:STRING <-
   (
     deferred;
   );
-  
+
   - shorter_in buf:STRING <-
   (
     deferred;
   );
-  
-  
+
+

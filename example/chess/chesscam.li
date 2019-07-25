@@ -1,0 +1,75 @@
+Section Header
+  
+  + name     := CHESSCAM;
+  
+  - comment   := "camera";
+  
+  - author    := "Damien Bouvarel (dams.bouvarel@wanadoo.fr)";
+  
+Section Inherit
+  
+  + parent_camera:Expanded CAMERA;
+  
+Section Public
+  
+  - waypoints:LINKED_LIST(VECTOR3(REAL_32)) := LINKED_LIST(VECTOR3(REAL_32)).create;
+  - lerp:REAL_32;
+  
+  
+  - is_traveling:BOOLEAN <- (waypoints.count > 0);
+  
+  
+  - add_waypoint p:VECTOR3(REAL_32) <-
+  (
+    waypoints.add_last p;
+  );
+  
+  - add_waypoint3f (x,y,z:REAL_32) <-
+  (
+    waypoints.add_last (VECTOR3(REAL_32).create (x, y, z));
+  );
+  
+  - animate t:REAL_32 <-
+  (
+    + u,v:VECTOR3(REAL_32);
+    
+    waypoints.is_empty.if {
+      update_with_mouse;
+      update_with_keys t;
+      
+    }.elseif {waypoints.count < 4} then {
+      waypoints.clear;
+      FRAMEWORK.event.warp_mouse (screen_width>>1,screen_height>>1);
+      
+      // 'repair' camera after travelling
+      right := (view.cross std_up).normalized;
+      (view.z > 0).if {
+        up.make (view.x, view.z, -view.y); // 90 deg rotation
+      } else {
+        up.make (view.x, -view.z, view.y); // 90 deg rotation
+      };
+      
+    } else {
+      u := waypoints.first;
+      v := waypoints.item (waypoints.lower+2);
+      
+      // linear interpolation
+      position := u + ((v - u) * lerp);
+      
+      u := waypoints.item (waypoints.lower+1);
+      v := waypoints.item (waypoints.lower+3);
+      
+      // linear interpolation
+      view := ((u + ((v - u) * lerp)) - position).normalized;
+      
+      lerp := lerp + t*0.5;
+      (lerp >= 1.0).if {
+        lerp := 0.0;
+        waypoints.remove_first;
+        waypoints.remove_first;
+      };
+    };
+  );
+  
+  - std_up:VECTOR3(REAL_32) := VECTOR3(REAL_32).create (0,1,0);
+  

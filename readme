@@ -8,34 +8,7 @@ The first compiler for Object Prototype Language !
 Install.
 ========
 
-  make ;-)
-
-Note for Windows/Dos: read our wiki at http://wiki.lisaac.org
-
-Directory description.
-======================
-
-doc				: Documentation (library, man pages, manual, ...)
-src      			: Source compiler
-bin                             : Compiler's executable files (and C source)
-editor                          : Lisaac mode for editors (Emacs, Kate, Vim, ...)
-shorter                         : Mode for shorter program
-example                         : Lisaac's source code examples
-lib                             : Library description
-|-- internal			: Used only by The Guru
-`-- standard			: Standard library
-    |-- boolean			
-    |-- collection
-    |-- file_system
-    |-- io
-    |-- kernel
-    |-- number
-    |   |-- fixed_real
-    |   |-- integer
-    |   `-- real
-    |-- property
-    |-- string
-    `-- time
+  make 
 
 Good luck,
 Best regards,

@@ -1,0 +1,41 @@
+Section Header
+  
+  + name := TREENODE;
+  
+Section Inherit
+  
+  - parent_any:OBJECT := OBJECT;
+
+Section Private
+
+  + left  :TREENODE;
+
+  + right :TREENODE;
+
+  + item  :INTEGER;
+
+Section Public
+  
+  - item_check:INTEGER <-
+  ( + item_tmp:INTEGER;
+
+    (left = NULL).if {
+      item_tmp := item;
+    } else {
+      item_tmp := item + left.item_check - right.item_check;
+    };
+    item_tmp
+  );
+
+  - bottom_up_tree (itm, depth:INTEGER) :TREENODE <-
+  (     
+    item := itm;
+    (depth > 0).if {      
+      left  := TREENODE.clone;
+      right := TREENODE.clone;
+      left.bottom_up_tree  (2*itm-1, depth-1);
+      right.bottom_up_tree (2*itm  , depth-1);
+    };
+    Self
+  );
+

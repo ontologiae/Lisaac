@@ -1,0 +1,332 @@
+Section Header
+
+  + name      := CUBE;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "DemoMaker (La nostalgie d'un temps passé 07/08/1994-2008)";
+
+Section Inherit
+
+  + parent_area:Expanded AREA;
+
+  + parent_g_expr:Expanded G_EXPR;
+
+Section Public
+
+  - filename:ABSTRACT_STRING := "cobaye.bmp";
+
+  - bitmap:ABSTRACT_BITMAP;
+  - background:ABSTRACT_BITMAP;
+  - z_buffer:NATIVE_ARRAY(UINTEGER_32);
+  - z_buffer_size:INTEGER;
+
+  - angle_x:UINTEGER_8;
+  - angle_y:UINTEGER_8;
+  - angle_z:UINTEGER_8;
+
+  - tab_sin:FAST_ARRAY(INTEGER_32) :=
+  ( + result:FAST_ARRAY(INTEGER_32);
+    + r:REAL;
+    result := FAST_ARRAY(INTEGER_32).create_with_capacity 256;
+    0.to 255 do { i:INTEGER;
+      r := (REAL.pi/128*i).sin * 256;
+      result.add_last (r.to_integer);
+    };
+    result
+  );
+  
+  //
+  // Width / Height
+  //
+
+  - width_min:INTEGER  := 640;
+
+  - height_min:INTEGER := 480;
+
+  //
+  // Creation.
+  //
+  - string_tmp:STRING := STRING.create 40;
+
+  - init p:ABSTRACT_STRING :G_EXPR <-
+  ( + entry:ENTRY;
+    + fmt:FORMAT_IMG;
+    + f:FILE;
+    + w,h:INTEGER;
+    
+    // Initialization bitmap.
+    string_tmp.copy p;
+    string_tmp.append filename;    
+    entry := FILE_SYSTEM.get_entry string_tmp;
+    ((entry = NULL) || {! entry.is_file}).if {
+      VIDEO.message ("ERROR: File '" + filename + "' not found.\n");
+      die_with_code exit_failure_code;
+    };
+    entry.open;
+    f ?= entry;
+    fmt := FORMAT_BMP.create_with_file f;
+    (fmt = NULL).if {
+      VIDEO.message "Error: BMP format invalid.\n";
+      die_with_code exit_failure_code;
+    };
+    w := fmt.width;
+    h := fmt.height;
+    bitmap := BITMAP(PIXEL_24).create_size (w,h);
+    fmt.put_image_in bitmap;
+    f.close;
+    
+    // Z-buffer & ... :
+    points_2dz := FAST_ARRAY(INTEGER).create (8*3);
+    background := BITMAP(PIXEL_24).create_size (width_min,height_min);    
+    z_buffer_size := width_min*height_min;
+    z_buffer := NATIVE_ARRAY(UINTEGER_32).create z_buffer_size;
+    
+    // Points en 3D:
+    points := FAST_ARRAY(INTEGER).create_with_capacity 24;
+    points.add_last (-128);
+    points.add_last 128;
+    points.add_last 128;
+    //
+    points.add_last 128;
+    points.add_last 128;
+    points.add_last 128;
+    //
+    points.add_last 128;
+    points.add_last (-128);
+    points.add_last 128;
+    //
+    points.add_last (-128);
+    points.add_last (-128);
+    points.add_last 128;
+    //
+    0.to 3 do { i:INTEGER;
+      points.add_last (points.item (i*3));
+      points.add_last (points.item (i*3+1));
+      points.add_last (-128);
+    };
+    
+    // Faces:
+    faces := FAST_ARRAY(INTEGER).create_with_capacity (4*4);
+    faces.add_last 0;
+    faces.add_last 3;
+    faces.add_last 6;
+    faces.add_last 9;
+    //    
+    faces.add_last 12;
+    faces.add_last 15;
+    faces.add_last 18;
+    faces.add_last 21;
+    //
+    faces.add_last 0;
+    faces.add_last 12;
+    faces.add_last 21;
+    faces.add_last 9;
+    //
+    faces.add_last 3;
+    faces.add_last 15;
+    faces.add_last 18;
+    faces.add_last 6;
+    // 
+    
+    faces.add_last 9;
+    faces.add_last 21;
+    faces.add_last 18;
+    faces.add_last 6;
+    //
+    faces.add_last 0;
+    faces.add_last 12;
+    faces.add_last 15;
+    faces.add_last 3;
+
+    //
+    map_points := FAST_ARRAY(INTEGER).create_with_capacity (4*2);
+    map_points.add_last 0;    
+    map_points.add_last 0;
+    //
+    map_points.add_last (bitmap.x_max);
+    map_points.add_last 0;
+    //
+    map_points.add_last (bitmap.x_max);
+    map_points.add_last (bitmap.y_max);
+    //
+    map_points.add_last 0;
+    map_points.add_last (bitmap.y_max);    
+    //
+    TIMER.add_client Self;
+    G_RAW.create (Self.fix_height.fix_width)
+  );
+
+  - run p:ABSTRACT_STRING :G_WIN_OUT <-
+  (
+    G_WIN_OUT.create "Cube" with (init p)
+  );
+
+  - main <-
+  (
+    // Init window.
+    VIDEO.make_size (width_min+64,height_min+64);
+    DESK.make VIDEO with (
+      G_OUT.create "Cube" justify (G_OUT.center) / init "./"
+    );
+  );
+
+  //
+  // Update position.
+  //
+
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  (
+    update rac from (x,y) size (w,h);
+  );
+
+  //
+  // Display.
+  //
+  
+  - points:FAST_ARRAY(INTEGER);    
+  
+  - faces:FAST_ARRAY(INTEGER);
+  
+  - points_2dz:FAST_ARRAY(INTEGER);
+  
+  - map_points:FAST_ARRAY(INTEGER);
+  
+  - focal:INTEGER := 512;
+  - focal_shift:INTEGER := 9;
+  
+  - convert_3d_to_2dz (x,y,z:INTEGER) :(INTEGER,INTEGER,INTEGER) <-
+  ( 
+    (x*((z+focal)>>(focal_shift-8)))>>8 + (width_min>>1), 
+    (y*((z+focal)>>(focal_shift-8)))>>8 + (height_min>>1),
+    //x + (width_min>>1),y + (height_min>>1),
+    z + 512
+  );
+  
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
+  ( 
+    clipping (x0,y0) to (x1,y1);    
+    put_bitmap background to (0,0);
+  );
+  
+  - is_line:BOOLEAN; // := TRUE;
+
+  //
+  // Events.
+  //
+
+  - receive msg:EVENT <-
+  ( + evt_time:EVENT_TIMER;
+    + evt_mouse:EVENT_MOUSE;
+    + win:AREA;
+    + xn,yn,zn,x,y,z,j:INTEGER;
+    + cos_x,sin_x,cos_y,sin_y,cos_z,sin_z:INTEGER;
+    + m_1_1,m_1_2,m_1_3:INTEGER;
+    + m_2_1,m_2_2,m_2_3:INTEGER;
+    + m_3_1,m_3_2,m_3_3:INTEGER;
+    + tmp_1,tmp_2,tmp_3,tmp_4:INTEGER;
+
+    evt_mouse ?= msg;
+    (evt_mouse != NULL).if {
+      win := DESK.get_object (evt_mouse.x_current,evt_mouse.y_current);
+      (win != Self).if {
+        DESK.receive msg;
+      };
+    };
+
+    evt_time ?= msg;
+    ((evt_time != NULL) && {evt_time.destination = NULL}).if {
+      angle_x := angle_x + 1;
+      angle_y := angle_y + 2;
+      angle_z := angle_z + 1;
+      //      
+      cos_x := tab_sin.item (angle_x+64);
+      sin_x := tab_sin.item angle_x;      
+      cos_y := tab_sin.item (angle_y+64);
+      sin_y := tab_sin.item angle_y;
+      cos_z := tab_sin.item (angle_z+64);
+      sin_z := tab_sin.item angle_z;      
+      // Réduction à 12 multiplications avant rotation des points
+      // A voir: avec une table en 2D de sin, on réduit à 4 mul...
+      m_1_1 := (cos_y *  cos_z) >> 8;
+      m_2_1 := (cos_y * -sin_z) >> 8;
+      m_3_1 := sin_y;
+      
+      tmp_1 := ( cos_x * sin_z) >> 8;
+      tmp_4 := (sin_x * cos_z) >> 8;
+      m_1_2 := tmp_1 + (tmp_4 * sin_y) >> 8;
+      tmp_2 := ( cos_x * cos_z) >> 8;
+      tmp_3 := (sin_x * sin_z) >> 8;
+      m_2_2 := tmp_2 - (tmp_3 * sin_y) >> 8; 
+      m_3_2 := (-sin_x * cos_y) >> 8;
+      
+      m_1_3 := tmp_3 - (tmp_2 * sin_y) >> 8;
+      m_2_3 := tmp_4 + (tmp_1 * sin_y) >> 8; 
+      m_3_3 := (cos_x * cos_y) >> 8; 
+      //
+      j := 0;
+      points.lower.to (points.upper) by 3 do { i:INTEGER;        
+        x := points.item i;
+        y := points.item (i+1);
+        z := points.item (i+2);               
+        // Réduction à 9 multiplications par point:
+        xn := (x * m_1_1 + y * m_1_2 + z * m_1_3) >> 8;
+        yn := (x * m_2_1 + y * m_2_2 + z * m_2_3) >> 8;
+        zn := (x * m_3_1 + y * m_3_2 + z * m_3_3) >> 8;
+        //
+        (x,y,z) := convert_3d_to_2dz (xn,yn,zn);
+        points_2dz.put x to j;
+        points_2dz.put y to (j+1);
+        points_2dz.put z to (j+2);
+        j := j + 3;
+      };
+      
+      background.rectangle_fill (0,0) to (background.x_max,background.y_max) color 083aad3h;
+      //      z_buffer.clear_all (z_buffer_size-1);
+      //z_buffer.set_all_with ((400+tab_sin.item (angle_x)).to_uinteger_32 * 1) until (z_buffer_size-1);
+      z_buffer.set_all_with 0 until (z_buffer_size-1);
+      
+      faces.lower.to (faces.upper) by 4 do { j:INTEGER; 
+        + px,py,pz,idx,pox,poy,mp:INTEGER;
+        idx := faces.item j;
+        px := points_2dz.item idx;
+        py := points_2dz.item (idx+1);
+        pz := points_2dz.item (idx+2);
+        (is_line).if {
+          background.move_to (px,py);
+          pox := px;
+          poy := py;
+        } else {          
+          background.map_move_to (px,py) with_z pz on (map_points.first,map_points.second);        
+          mp := 2;
+        };
+        //                
+        (j+1).to (j+3) do { i:INTEGER;
+          idx := faces.item i;
+          px := points_2dz.item idx;
+          py := points_2dz.item (idx+1);
+          pz := points_2dz.item (idx+2);
+          (is_line).if {
+            background.line_to (px,py) color 0FFFFFFh;
+          } else {
+            background.map_line_to (px,py) with_z pz on (map_points.item mp,map_points.item (mp+1));        
+            mp := mp + 2;
+          };
+        };
+        //
+        (is_line).if {
+          background.line_to (pox,poy) color 0FFFFFFh;
+        } else {
+          background.map_trace_with bitmap and_for_z z_buffer pixel_color 
+          { (x,y,z,xb,yb:INTEGER,col:UINTEGER_32); 
+            col
+          };
+        };      
+      };
+      //
+      refresh;
+    };
+
+  );
+

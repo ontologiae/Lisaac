@@ -1,52 +1,32 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
 
   + name    := G_ELEVATOR;
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
-      
+
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Output text for GUI.";
 
-Section Inherit  
+Section Inherit
 
   + parent_area:Expanded AREA;
-  
+
   + parent_g_expr:Expanded G_EXPR;
-          
+
 Section Public
-  
+
   + win_in:G_WIN_IN_INTERN;
-  
+
   + position:INTEGER;
-  
+
   + stat:INTEGER_8;
-  
-Section G_ELEVATOR  
-  
+
+Section G_ELEVATOR
+
   - win_size:INTEGER <-
   ( + result:INTEGER;
-    
+
     (is_horizontal).if {
       result := win_in.width_min.max (width - 2);
     } else {
@@ -54,52 +34,52 @@ Section G_ELEVATOR
     };
     result
   );
-    
+
   - elevator_size:INTEGER <-
   ( + result:INTEGER;
-    
+
     (is_horizontal).if {
-      result := width - 2;      
+      result := width - 2;
     } else {
       result := height - 2;
     };
     result
   );
-  
-  - cursor_begin:INTEGER <-  
+
+  - cursor_begin:INTEGER <-
   ( + result:INTEGER;
     + len_ele,len_win,pos:INTEGER;
-    
+
     len_ele := elevator_size;
     len_win := win_size;
     pos := - position;
     result := `(int)(((float)@len_ele / @len_win) * @pos)`:INTEGER + 1;
     result
   );
-  
+
   - cursor_size:INTEGER <-
   ( + result:INTEGER;
     + len_ele,len_win:INTEGER;
-    
+
     len_ele := elevator_size;
     len_win := win_size;
     result := (`(int)(((float)@len_ele / @len_win) * @len_ele)`:INTEGER).min len_ele;
     result
   );
-  
+
 Section Public
-  
+
   //
   // Width / Height
   //
-  
+
   - width_min:INTEGER  := 16;
-    
+
   - height_min:INTEGER := 16;
-    
+
   - width_max:INTEGER <-
   ( + result:INTEGER;
-    
+
     (is_vertical).if {
       result := 8;
     } else {
@@ -107,10 +87,10 @@ Section Public
     };
     result
   );
-  
+
   - height_max:INTEGER <-
   ( + result:INTEGER;
-    
+
     (is_horizontal).if {
       result := 8;
     } else {
@@ -118,48 +98,48 @@ Section Public
     };
     result
   );
-  
+
   //
   // Creation.
   //
-  
+
   - create_horizontal w:G_WIN_IN_INTERN :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make w attribute horizontal_bit;
     result
   );
-  
+
   - create_vertical w:G_WIN_IN_INTERN :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make w attribute vertical_bit;
     result
   );
-    
+
   - make w:G_WIN_IN_INTERN attribute a:UINTEGER_8 <-
   (
     win_in := w;
     set_attribute_bit a;
-  ); 
+  );
 
   //
   // Update position.
   //
-  
+
   - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
-  ( 
+  (
     update rac from (x,y) size (w,h);
   );
-  
+
   //
   // Action.
-  // 
-  
+  //
+
   - set_min <-
-  ( 
+  (
     ((parent != NULL) && {position != 0}).if {
       position := 0;
       win_in.update_intern;
@@ -169,7 +149,7 @@ Section Public
 
   - set_max <-
   ( + mx:INTEGER;
-    
+
     mx := elevator_size - win_size;
     ((parent != NULL) && {position != mx}).if {
       position := mx;
@@ -177,7 +157,7 @@ Section Public
       refresh;
     };
   );
-  
+
   - receive msg:EVENT <-
   // 0000 : Nothing.
   // 0001 : In.
@@ -185,7 +165,7 @@ Section Public
   // 0100 : Down pages.
   // 1000 : Cursor move.
   ( + mouse:EVENT_MOUSE;
-    + win:AREA;    
+    + win:AREA;
     + new_stat:INTEGER;
     + is_action:BOOLEAN;
     + py1,py2,old_cursor,new_cursor:INTEGER;
@@ -193,7 +173,7 @@ Section Public
     + is_refresh:BOOLEAN;
     //
     + ele_siz,win_siz:INTEGER;
-    
+
     mouse ?= msg;
     (mouse != NULL).if {
       win := DESK.get_object ((mouse.x_current),(mouse.y_current));
@@ -207,22 +187,22 @@ Section Public
       ((stat & 1110b) = 0).if {
 	// No press.
 	(win != Self).if {
-	  new_stat := 0;	  	  
-	  DESK.receive msg;	  
-	} else {	  
-	  (mouse.left).if {	     
+	  new_stat := 0;
+	  DESK.receive msg;
+	} else {
+	  (mouse.left).if {
 	    py1 := cursor_begin;
 	    py2 := py1 + cursor_size;
 	    new_stat := (
 	      ((mouse_p < py1).to_integer.to_integer << 1) |
 	      ((mouse_p > py2).to_integer.to_integer << 2)
-	    );	    
+	    );
 	    (new_stat = 0).if {
 	      // Moving.
 	      new_stat := 1000b;
 	    } else {
 	      is_action := TRUE;
-	    };	  
+	    };
 	  };
 	  new_stat := new_stat | 0001b;
 	};
@@ -243,11 +223,11 @@ Section Public
 	is_refresh := TRUE;
       };
       (is_action).if {
-	new_cursor := old_cursor := position;	
+	new_cursor := old_cursor := position;
 	ele_siz := elevator_size;
 	win_siz := win_size;
 	/*
-	(((stat & 0010b) != 0) && {old_cursor != 0}).if {	  
+	(((stat & 0010b) != 0) && {old_cursor != 0}).if {
 	  // Page Up
 	  new_cursor := (old_cursor - length_mini).max 0;
 	};
@@ -256,12 +236,12 @@ Section Public
 	  new_cursor := (old_cursor + length_mini).min (length - length_mini);
 	};
 	*/
-	(((stat & 1000b) != 0) && {mouse_d != 0}).if {	  
+	(((stat & 1000b) != 0) && {mouse_d != 0}).if {
 	  // Move.
 	  new_cursor := old_cursor - `(int)(((float)@win_siz / @ele_siz) * @mouse_d)`:INTEGER;
 	  new_cursor := new_cursor.min 0.max (ele_siz - win_siz);
 	};
-	(new_cursor != old_cursor).if {	  
+	(new_cursor != old_cursor).if {
 	  position := new_cursor;
 	  win_in.update_intern;
 	  is_refresh := TRUE;
@@ -269,24 +249,24 @@ Section Public
       };
       (is_refresh).if {
 	refresh;
-      };      
+      };
     };
   );
-  
+
   //
   // Display.
   //
-  
+
   - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
   ( + pos_beg,pos_end:INTEGER;
-        
-    clipping (x0,y0) to (x1,y1);    
-    //    
+
+    clipping (x0,y0) to (x1,y1);
+    //
     draw_border_in (x_min,y_min) to (x_max,y_max);
     pos_beg := cursor_begin;
-    pos_end := pos_beg + cursor_size;            
+    pos_end := pos_beg + cursor_size;
     (is_vertical).if {
-      // Vertical.      
+      // Vertical.
       draw_border_out (1,pos_beg) to (x_max-1,pos_end);
       rectangle_fill (2,pos_beg+1) to (x_max-2,pos_end-1) color color_back_light;
       (pos_beg > 1).if {
@@ -304,18 +284,17 @@ Section Public
       };
       (pos_end < x_max-1).if {
 	rectangle_fill (pos_end+1,1) to (x_max-1,y_max-1) color color_back;
-      };      
+      };
     };
   );
-  
+
   //
   // Area.
   //
-  
+
   - delete <-
   (
     (parent != NULL).if {
       parent_area.delete;
     };
   );
-  

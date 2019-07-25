@@ -1,0 +1,31 @@
+Section Header
+  
+  + name     := TEST_SCENE;
+  
+Section Inherit
+  
+  - parent_scene:SCENE := SCENE;
+  
+Section Public  
+  
+  - render t:REAL_32 <-
+  ( 
+    GL.gl_translatef (0.0, -1.0, -3.0);
+    
+    GL.gl_begin (GL.cst_gl_triangles);
+    
+    GL.gl_vertex3f (0.0, 2.0, 0.0);
+    GL.gl_color3f (1, 0, 0);
+     
+    GL.gl_vertex3f (-1.0, 0.0, 0.0);
+    GL.gl_color3f (0, 1, 0);	
+    
+    GL.gl_vertex3f (1.0, 0.0, 0.0);
+    GL.gl_color3f (0, 0, 1);
+    
+    GL.gl_end;	 
+  );
+  
+  - release <-
+  (
+  );

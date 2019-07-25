@@ -1,0 +1,191 @@
+Section Header
+
+  + name      := GLASS;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "DemoMaker (La nostalgie d'un temps passé 07/08/1994-2008)";
+
+Section Inherit
+
+  + parent_area:Expanded AREA;
+
+  + parent_g_expr:Expanded G_EXPR;
+
+Section Public
+
+  - filename:ABSTRACT_STRING := "cobaye.bmp";
+
+  - bitmap:ABSTRACT_BITMAP;
+
+  - background:ABSTRACT_BITMAP;
+
+  - size:INTEGER := 300;
+
+  - mask:FAST_ARRAY2(XY);
+
+  - x_ori:INTEGER;
+  - y_ori:INTEGER;
+
+  - x_inc:INTEGER := 2;
+  - y_inc:INTEGER := 2;
+
+  - compute_mask <-
+  ( + di:REAL;
+    + a,npx,npy,px,py:REAL;
+
+    mask := FAST_ARRAY2(XY).create (size,size);
+    0.to (size-1) do { y:INTEGER;
+      0.to (size-1) do { x:INTEGER;
+        mask.put (XY.create (x,y)) to (x,y);
+      };
+    };
+    {
+      0.to (size/2-4) do { i:INTEGER;
+        px := a.cos * i;
+        py := a.sin * i;
+        di := ((REAL.pi/size * i).sqrt) * i;
+        npx := a.cos * di;
+        npy := a.sin * di;
+        mask.item (px.to_integer+size/2,py.to_integer+size/2).make (npx.to_integer+size/2,npy.to_integer+size/2);
+      };
+      a := a + 0.001;
+    }.do_while {a < REAL.pi*2};
+  );
+
+  - bmp_line:ABSTRACT_BMP_LINE := BMP_LINE(PIXEL_32).create 2048;
+
+  //
+  // Width / Height
+  //
+
+  - width_min:INTEGER  := 640;
+
+  - height_min:INTEGER := 480;
+
+  //
+  // Creation.
+  //
+  - string_tmp:STRING := STRING.create 40;
+
+  - init p:ABSTRACT_STRING :G_EXPR <-
+  ( + entry:ENTRY;
+    + fmt:FORMAT_IMG;
+    + f:FILE;
+    + w,h:INTEGER;
+
+    // Initialization bitmap.
+    string_tmp.copy p;
+    string_tmp.append filename;
+    entry := FILE_SYSTEM.get_entry string_tmp;
+    ((entry = NULL) || {! entry.is_file}).if {
+      VIDEO.message ("ERROR: File '" + filename + "' not found.\n");
+      die_with_code exit_failure_code;
+    };
+    entry.open;
+    f ?= entry;
+    fmt := FORMAT_BMP.create_with_file f;
+    (fmt = NULL).if {
+      VIDEO.message "Error: BMP format invalid.\n";
+      die_with_code exit_failure_code;
+    };
+    w := fmt.width;
+    h := fmt.height;
+    bitmap := BITMAP(PIXEL_32).create_size (w,h);
+    background := BITMAP(PIXEL_32).create_size (width_min,height_min);
+    fmt.put_image_in bitmap;
+    compute_mask;
+    f.close;
+    TIMER.add_client Self;
+    // Init Sin.
+    G_RAW.create (Self.fix_height.fix_width)
+  );
+
+  - run p:ABSTRACT_STRING :G_WIN_OUT <-
+  (
+    G_WIN_OUT.create "Glass" with (init p)
+  );
+
+  - main <-
+  (
+    // Init window.
+    VIDEO.make_size (width_min+64,height_min+64);
+    DESK.make VIDEO with (
+      G_OUT.create "Glass" justify (G_OUT.center) / init "./"
+    );
+  );
+
+  //
+  // Update position.
+  //
+
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  (
+    update rac from (x,y) size (w,h);
+  );
+
+  //
+  // Display.
+  //
+
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
+  ( + col:UINTEGER_32;
+    + px,py:INTEGER_32;
+
+    clipping (x0,y0) to (x1,y1);
+
+    (is_new).if {
+      0.to height by (bitmap.height) do { y:INTEGER;
+        0.to width by (bitmap.width) do { x:INTEGER;
+          background.put_bitmap bitmap to (x,y);
+        };
+      };
+
+      0.to (size-1) do { y:INTEGER;
+        0.to (size-1) do { x:INTEGER;
+          px := (x_ori + mask.item (x,y).x) & 0FFh;
+          py := (y_ori + mask.item (x,y).y) & 0FFh;
+          col := bitmap.get_color_hard (px,py);
+          bmp_line.put col to x;
+        };
+        background.line_h_hard (x_ori,y_ori+y) until (x_ori+size-1) image bmp_line offset 0;
+      };
+    };
+    put_bitmap background to (0,0);
+  );
+
+  //
+  // Events.
+  //
+
+  - receive msg:EVENT <-
+  ( + evt_time:EVENT_TIMER;
+    + evt_mouse:EVENT_MOUSE;
+    + win:AREA;
+
+    evt_mouse ?= msg;
+    (evt_mouse != NULL).if {
+      win := DESK.get_object (evt_mouse.x_current,evt_mouse.y_current);
+      (win != Self).if {
+        DESK.receive msg;
+      };
+    };
+
+    evt_time ?= msg;
+    ((evt_time != NULL) && {evt_time.destination = NULL}).if {
+      x_ori := x_ori + x_inc;
+      y_ori := y_ori + y_inc;
+      ((x_ori <= 0) || {x_ori >= width - size}).if {
+        x_inc := -x_inc;
+      };
+      ((y_ori <= 0) || {y_ori >= height - size}).if {
+        y_inc := -y_inc;
+      };
+      is_new := TRUE;
+      refresh;
+      is_new := FALSE;
+    };
+  );
+
+  - is_new:BOOLEAN;

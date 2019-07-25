@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := SLIM_ARRAY(E); // BSBS: A mettre en Expanded.
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -30,15 +10,167 @@ Section Header
 Section Insert
 
   - parent_object:OBJECT := OBJECT;
-  
+
 Section Private
-  
-  + list:FAST_ARRAY(E);
-  
+
+  // Champs internes :
+  // Capacité et compteur d'éléments présents
+  + capacity:INTEGER;
+  + counter:INTEGER;
+
+  // Utilisé comme first et tableau
+  + array:NATIVE_ARRAY(E);
+
+  // MHMH :
+  // Une capacité à 0 signifie que l'on utilise array comme stockage.
+
 Section Public
+
+  //
+  // Informations :
+  //
+
+  // Borne inférieure :
+  // MHMH : Version originale... en fonction ?? - lower:INTEGER <- 0;
+  - lower:INTEGER := 0;
+
+  // Borne supérieure :
+  - upper:INTEGER <- (counter - 1);
+
+  // Nombre d'éléments :
+  - count:INTEGER <- (counter);
+
+  // Test de vacuité :
+  - is_empty:BOOLEAN <- ( counter = 0 );
+
+
+  //
+  // Création/Initialisation :
+  //
   
-  + first:E;
+  - create_with_capacity n:INTEGER :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make_with_capacity n;
+    result
+  );
   
+  - make_with_capacity n:INTEGER <-
+  (
+    // Réinitialisation :
+    capacity := 0;
+    counter := 0;
+    array := NULL;
+
+    // Allocation si nécessaire :
+    (n > 1).if
+    {
+      array := NATIVE_ARRAY(E).create n;
+      capacity := n;
+    };
+  );
+
+  //
+  // Accès en lecture :
+  //
+
+  - first:E <-
+  (
+    + return:E;
+
+    (capacity = 0).if
+    { return := CONVERT(NATIVE_ARRAY(E), E).on array; }
+    else
+    { return := array.item 0; };
+
+    return
+  );
+
+  - last:E <-
+  (
+    + return:E;
+
+    (capacity = 0).if
+    { return := CONVERT(NATIVE_ARRAY(E), E).on array; }
+    else
+    { return := array.item upper; };
+
+    return
+  );
+
+  - item i:INTEGER:E <-
+  (
+    + return:E;
+
+    (capacity = 0).if
+    { return := CONVERT(NATIVE_ARRAY(E), E).on array; }
+    else
+    { return := array.item i;};
+
+    return
+  );
+
+  //
+  // Accès en lecture :
+  //
+
+  - put e:E to i:INTEGER <-
+  (
+    (capacity = 0).if
+    { array := CONVERT(E, NATIVE_ARRAY(E)).on e; }
+    else
+    { array.put e to i;};
+  );
+
+  - add_last e:E <-
+  (
+    (capacity = 0).if
+    {
+      (counter = 0).if
+      {
+        array := CONVERT(E, NATIVE_ARRAY(E)).on e;
+        counter := counter + 1;
+      }
+      else
+      {
+        + tmp:E;
+        // Sauvegarde élément courant :
+        tmp := CONVERT(NATIVE_ARRAY(E), E).on array;
+        // Création tableau :
+        array := NATIVE_ARRAY(E).create 4;
+        capacity := 4;
+        counter := 2;
+        // Restauration éléments :
+        put tmp to 0;
+        put e to 1;
+      };
+    }
+    else
+    {
+      // Allocation de place supplémentaire si besoin :
+      (counter = capacity).if
+      {
+        + new_cap:INTEGER;
+        new_cap := capacity*2;
+        array := array.realloc capacity with new_cap;
+        capacity := new_cap;
+      };
+      counter := counter+1;
+      put e to upper;
+    };
+  );
+
+
+
+
+
+
+
+
+  // MHMH : remplacé par utilisation de list
+  // + first:E;
+
+  /*
   - last:E <-
   ( + result:E;
     (list != NULL).if {
@@ -48,10 +180,11 @@ Section Public
     };
     result
   );
-  
-  - lower:INTEGER <- 0;
-  
-  - upper:INTEGER <- 
+  */
+
+
+  /*
+  - upper:INTEGER <-
   ( + result:INTEGER;
     (first = NULL).if {
       result := -1;
@@ -60,14 +193,20 @@ Section Public
     };
     result
   );
-  
+  */
+
+  /*
   - count:INTEGER <- upper + 1;
-  
+  */
+
+  /*
   - is_empty:BOOLEAN <- first = NULL;
-  
+  */
+
+  /*
   - item i:INTEGER :E <-
   ( + result:E;
-    
+
     (i = 0).if {
       result := first;
     } else {
@@ -75,7 +214,9 @@ Section Public
     };
     result
   );
-      
+  */
+
+  /*
   - put e:E to i:INTEGER <-
   (
     (i = 0).if {
@@ -83,8 +224,10 @@ Section Public
     } else {
       list.put e to (i-1);
     };
-  );  
-      
+  );
+  */
+
+  /*
   - add_last e:E <-
   (
     (first = NULL).if {
@@ -96,12 +239,4 @@ Section Public
       list.add_last e;
     };
   );
-    
-  - make_with_capacity n:INTEGER <-
-  (
-    first := NULL;
-    (n > 1).if {
-      list := FAST_ARRAY(E).create_with_capacity (n-1);
-    };
-  );
-  
+*/

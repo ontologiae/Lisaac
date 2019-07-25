@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := GROUP;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -31,9 +11,9 @@ Section Inherit
   + parent_graph:Expanded GRAPH;
 
 Section Public
-  
+
   + list:LINKED_LIST(GRAPH);
-    
+
   //
   // Creation.
   //
@@ -46,28 +26,28 @@ Section Public
   );
 
   - make <-
-  ( 
+  (
     list := LINKED_LIST(GRAPH).create;
   );
-  
+
   //
   // File.
   //
-  
+
   - create_with buf:FAST_ARRAY(UINTEGER_8) at ps:INTEGER :(SELF,INTEGER) <-
   ( + r:SELF;
-    
+
     r := clone;
     r, r.make_with buf at ps
   );
-  
+
   - make_with buf:FAST_ARRAY(UINTEGER_8) at ps:INTEGER :INTEGER <-
   ( + result:INTEGER;
-    
+
     (list,result) := FORMAT_BCT.load_draw_with buf at ps parent Self;
     result
   );
-      
+
   //
   // Transformation.
   //
@@ -81,29 +61,29 @@ Section Public
       list.item j.compute_select;
       (xmin,ymin,xmax,ymax) := list.item j.select.frame;
       x0 := x0.min xmin;
-      y0 := y0.min ymin; 
-      x1 := x1.max xmax; 
-      y1 := y1.max ymax; 
+      y0 := y0.min ymin;
+      x1 := x1.max xmax;
+      y1 := y1.max ymax;
     };
     select.set_rectangle (x0,y0) to (x1,y1);
   );
-  
+
   - move (dx,dy:INTEGER_32) <-
-  ( 
+  (
     parent_graph.move (dx,dy);
     (list.lower).to (list.upper) do { j:INTEGER;
       list.item j.move (dx,dy);
     };
   );
-  
+
   //
   // Display
   //
-  
+
 Section GRAPH
-  
+
   - direct_draw_in bmp:ABSTRACT_BITMAP <-
-  ( 
+  (
     (list.lower).to (list.upper) do { i:INTEGER;
       list.item i.draw_in bmp;
     };

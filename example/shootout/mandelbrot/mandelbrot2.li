@@ -1,0 +1,79 @@
+Section Header
+
+  + name := MANDELBROT2;
+  
+  - comment := "Mandelbrot set generation shootout benchmarck, based on the C version";
+  
+  - author := "Anthony Pajot <anthony.pajot@etu.enseeiht.fr>, Xavier Oswald <x.oswald@free.fr>";
+    
+Section Inherit
+  
+  - parent_object : OBJECT := OBJECT;
+  
+Section Public
+   
+  - main <-
+  ( + size, i, iter: INTEGER;
+    + zr, zi, cr, ci, pr, pi, limit: REAL_64;
+    + stop, gone: BOOLEAN;
+    + bit, bit_accu: UINTEGER_8;
+    + cmd:STRING;          
+      
+    cmd := COMMAND_LINE.item 1;
+    size := cmd.to_integer;    
+      
+    "P4\n".print;
+    cmd.print;
+    ' '.print;
+    cmd.print;
+    "\n".print;
+        
+    // compute mandelbrot's bitmap
+    limit := 4.0;
+    iter  := 50;
+    bit   := 080h;
+    0.to (size-1) do { y:INTEGER;    
+      ci := (y * 2).to_real_64 / size - 1.0;
+
+      0.to (size-1) do { x:INTEGER;
+        cr := (x * 2).to_real_64 / size - 1.5;
+
+        zr:=zi:=pr:=pi:=0;
+        i := 0;
+        stop := FALSE;
+        {stop}.until_do {
+          zi := zr * zi * 2 + ci;
+          zr := pr - pi + cr;
+          pi := zi * zi;
+          pr := zr * zr;
+          (pi+pr > limit).if {
+            stop := TRUE;
+            gone := TRUE;
+          } else {
+            i := i+1;
+            stop := (i = iter);
+          };
+        };
+
+        (gone).if {
+          gone := FALSE;
+        } else {
+          bit_accu := bit_accu | bit;
+        };
+
+        (bit = 1).if {
+          bit_accu.to_character.print;
+          bit_accu := 0;
+          bit := 80h;
+        } else {
+          bit := bit >> 1;
+        };
+      };
+
+      (bit != 80h).if {
+        bit_accu.to_character.print;
+        bit_accu := 0;
+        bit := 80h;
+      };
+    };   
+  );

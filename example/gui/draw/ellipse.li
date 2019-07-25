@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := ELLIPSE;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -31,13 +11,13 @@ Section Inherit
   + parent_form:Expanded FORM;
 
 Section Public
-    
+
   //
   // Creation.
   //
 
-  - create (x0,y0:INTEGER_32) to (x1,y1:INTEGER_32) 
-  color_border c_border:UINTEGER_32 
+  - create (x0,y0:INTEGER_32) to (x1,y1:INTEGER_32)
+  color_border c_border:UINTEGER_32
   color_fill c_fill:UINTEGER_32 :SELF <-
   ( + result:SELF;
     result := clone;
@@ -45,13 +25,13 @@ Section Public
     result
   );
 
-  - make (x0,y0:INTEGER_32) to (x1,y1:INTEGER_32) 
-  color_border c_border:UINTEGER_32 
+  - make (x0,y0:INTEGER_32) to (x1,y1:INTEGER_32)
+  color_border c_border:UINTEGER_32
   color_fill c_fill:UINTEGER_32 <-
   ( + px,py,p0x,p0y,p1x,p1y:INTEGER_32;
     color_border := c_border;
     color_fill := c_fill;
-    points := LINKED_LIST(POINT).create;        
+    points := LINKED_LIST(POINT).create;
     //
     px  := (x0+x1)/2;
     py  := y0;
@@ -80,15 +60,15 @@ Section Public
     px  := x0;
     py  := (y0+y1)/2;
     points.add_last (BEZIER.create (p0x,p0y) and (p1x,p1y) end (px,py));
-    //    
+    //
     p0x := x0;
     p0y := ((3.5*y0+y1)/4.5).to_integer_32;
     p1x := ((x1+3.5*x0)/4.5).to_integer_32;
     p1y := y0;
     px  := (x0+x1)/2;
     py  := y0;
-    points.add_last (BEZIER.create (p0x,p0y) and (p1x,p1y) end (px,py));    
+    points.add_last (BEZIER.create (p0x,p0y) and (p1x,p1y) end (px,py));
   );
 
 
-  
+

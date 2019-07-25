@@ -1,37 +1,17 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name := PARSER;
-  
+
 Section Inherit
-  
+
   - parent_any:ANY := ANY;
-  
+
 Section Private
-  
+
   - position:INTEGER;
-  
+
   - current_class:CLASS;
-  
+
   //
   // Syntax parser.
   //
@@ -47,38 +27,38 @@ Section Private
   );
 
   - last_string:STRING_CONSTANT;
-  
+
   - read_space:BOOLEAN <-
-  ( + posold,pos,pos2:INTEGER;    
+  ( + posold,pos,pos2:INTEGER;
     + level_comment:INTEGER;
-    
+
     pos := position;
-    posold := -1;    
+    posold := -1;
     {posold = position}.until_do {
-      posold := position;      
-      // Skip spaces :            
-      {(last_character = 0.to_character) || {last_character > ' '}}.until_do {	
-	position := position + 1;	
+      posold := position;
+      // Skip spaces :
+      {(last_character = 0.to_character) || {last_character > ' '}}.until_do {
+	position := position + 1;
       };
-      
+
       (position < source.upper).if {
 	// Skip C++ comment style :
-	((last_character = '/') & (source.item (position + 1) = '/')).if {	  
+	((last_character = '/') & (source.item (position + 1) = '/')).if {
 	  position := position + 2;
-	  pos2 := position;	  
-	  { 
-	    (last_character = 0.to_character) || 
+	  pos2 := position;
+	  {
+	    (last_character = 0.to_character) ||
 	    {last_character = '\n'}
 	  }.until_do {
 	    position := position + 1;
-	  };	  
+	  };
 	};
       };
       (position < source.upper).if {
 	// Skip C comment style :
 	pos2 := position;
 	((last_character = '/') && {source.item (position+1) = '*'}).if {
-	  position := position + 2; 	  
+	  position := position + 2;
 	  level_comment := 1;
 	  {
 	    (last_character = 0.to_character) || {level_comment = 0}
@@ -98,18 +78,18 @@ Section Private
 	  (level_comment != 0).if {
 	    position := pos2;
 	    syntax_error position message "End of comment not found !";
-	  };	  
+	  };
 	};
       };
-    };    
+    };
     ((position != pos) | (last_character != 0.to_character))
   );
-  
+
   - read_keyword st:ABSTRACT_STRING :BOOLEAN <-
   ( + posold,j:INTEGER;
-    + result:BOOLEAN;    
-    (read_space).if {     
-      posold := position;    
+    + result:BOOLEAN;
+    (read_space).if {
+      posold := position;
       j := st.lower;
       {(last_character = 0.to_character) ||
       {(j > st.upper) || {last_character != st.item j}}}.until_do {
@@ -127,86 +107,86 @@ Section Private
   );
 
   - read_character ch:CHARACTER :BOOLEAN <-
-  ( 
+  (
     ((read_space) && {last_character = ch}).if {
       position := position + 1;
     }
   );
-    
+
   //-- identifier    -> 'a'-'z' {'a'-'z' | '0'-'9' | '_'}
   - read_identifier:BOOLEAN <-
-  (     
-    ((read_space) && {last_character.is_lower}).if {     
-      string_tmp.clear;
-      {
-	(last_character = 0.to_character) || 
-	{
-	  (! last_character.is_lower) &&
-	  {! last_character.is_digit} && 
-	  {last_character != '_'}
-	}
-      }.until_do {
-	string_tmp.add_last last_character;
-	position := position+1;          
-      };      
-      last_string := get_alias string_tmp;      
-    }
-  );
-            
-  //-- cap_identifier -> 'A'-'Z' {'A'-'Z' | '0'-'9' | '_'}
-  - read_cap_identifier:BOOLEAN <-
-  (     
-    ((read_space) && {last_character.is_upper}).if {            
+  (
+    ((read_space) && {last_character.is_lower}).if {
       string_tmp.clear;
       {
 	(last_character = 0.to_character) ||
 	{
-	  (! last_character.is_upper) && 
+	  (! last_character.is_lower) &&
 	  {! last_character.is_digit} &&
 	  {last_character != '_'}
 	}
       }.until_do {
 	string_tmp.add_last last_character;
-	position := position+1;          
-      };      
-      last_string := get_alias string_tmp;      
+	position := position+1;
+      };
+      last_string := get_alias string_tmp;
     }
   );
-        
+
+  //-- cap_identifier -> 'A'-'Z' {'A'-'Z' | '0'-'9' | '_'}
+  - read_cap_identifier:BOOLEAN <-
+  (
+    ((read_space) && {last_character.is_upper}).if {
+      string_tmp.clear;
+      {
+	(last_character = 0.to_character) ||
+	{
+	  (! last_character.is_upper) &&
+	  {! last_character.is_digit} &&
+	  {last_character != '_'}
+	}
+      }.until_do {
+	string_tmp.add_last last_character;
+	position := position+1;
+      };
+      last_string := get_alias string_tmp;
+    }
+  );
+
   //-- string -> '\"' ascii_string '\"'
   - read_string_cst:BOOLEAN <-
   ( + old_pos:INTEGER;
-    
-    ((read_space) && {last_character='"'}).if { 
+
+    ((read_space) && {last_character='"'}).if {
       old_pos := position;
       position := position + 1;
       string_tmp.clear;
       {
-        (last_character = 0.to_character) ||       
+        (last_character = 0.to_character) ||
         {last_character='"'}
-      }.until_do { 
+      }.until_do {
         string_tmp.add_last last_character;
-        position := position + 1;	  
+        position := position + 1;
       };
-      (last_character='\"').if { 
+      (last_character='\"').if {
 	position := position + 1;
-	last_string := get_alias string_tmp;	
+	last_string := get_alias string_tmp;
       } else {
 	position := old_pos;
 	syntax_error position message "Unterminated string constant.";
       };
     }
   );
-  
+
   //
   // Grammar
   //
 
   - read_program:BOOLEAN <-
-  //++ program    : { CAP_IDENTIFIER [ inherit ] '(' slot_list ')' } 
-  ( 
+  //++ program    : { CAP_IDENTIFIER [ inherit ] '(' slot_list ')' }
+  (
     {read_cap_identifier}.while_do {
-      current_class := CLASS.create position name last_string;      
+      current_class := CLASS.create position name last_string;
       (program.fast_has last_string).if {
         semantic_error position message "Doucle définition class.";
       };
@@ -226,7 +206,7 @@ Section Private
   );
 
   - read_inherit:BOOLEAN <-
-  //++ inherit    : 'Inherit' CAP_IDENTIFIER { ',' CAP_IDENTIFIER } 
+  //++ inherit    : 'Inherit' CAP_IDENTIFIER { ',' CAP_IDENTIFIER }
   ( + result:BOOLEAN;
     + t:CLASS;
     (read_keyword keyword_inherit).if {
@@ -237,8 +217,8 @@ Section Private
       t := program.fast_reference_at last_string;
       (t = NULL).if {
         semantic_error position message "Declaration class is needed.";
-      };      
-      current_class.add_parent t;      
+      };
+      current_class.add_parent t;
       {read_character ','}.while_do {
         (read_cap_identifier).if_false {
           syntax_error position message "Parent is absent.";
@@ -254,7 +234,7 @@ Section Private
   );
 
   - read_slot_list:BOOLEAN <-
-  //++ slot_list  : { IDENTIFIER '=' body } 
+  //++ slot_list  : { IDENTIFIER '=' body }
   ( + result:BOOLEAN;
     + slot:SLOT;
     {read_identifier}.while_do {
@@ -267,7 +247,7 @@ Section Private
       };
       (read_character '=').if_false {
         warning_error position message "Added `='.";
-      };      
+      };
       (read_body slot).if_false {
         syntax_error position message "Body slot is absent.";
       };
@@ -278,7 +258,7 @@ Section Private
   );
 
   - read_body slot:SLOT :BOOLEAN <-
-  //++ body       : '(' [ local_list ] '|' { code ';' } ')' 
+  //++ body       : '(' [ local_list ] '|' { code ';' } ')'
   ( + result:BOOLEAN;
     + lst:HASHED_DICTIONARY(LOCAL,STRING_CONSTANT);
     + code:EXPR;
@@ -286,7 +266,7 @@ Section Private
     (read_character '(').if {
       result := TRUE;
       this := LOCAL.create position name keyword_this type current_class;
-      lst := read_local_list;            
+      lst := read_local_list;
       lst.add this to (this.name);
       slot.set_local_list lst;
       (read_character '|').if_false {
@@ -306,13 +286,13 @@ Section Private
   );
 
   - read_local_list:HASHED_DICTIONARY(LOCAL,STRING_CONSTANT) <-
-  //++ local_list : local { ',' local } 
+  //++ local_list : local { ',' local }
   ( + result:HASHED_DICTIONARY(LOCAL,STRING_CONSTANT);
     + loc:LOCAL;
-    
-    result := HASHED_DICTIONARY(LOCAL,STRING_CONSTANT).create;    
+
+    result := HASHED_DICTIONARY(LOCAL,STRING_CONSTANT).create;
     loc := read_local;
-    (loc != NULL).if {      
+    (loc != NULL).if {
       result.add loc to (loc.name);
       {read_character ','}.while_do {
         loc := read_local;
@@ -326,7 +306,7 @@ Section Private
   );
 
   - read_local:LOCAL <-
-  //++ local      : IDENTIFIER ':' CAP_IDENTIFIER 
+  //++ local      : IDENTIFIER ':' CAP_IDENTIFIER
   ( + result:LOCAL;
     + n:STRING_CONSTANT;
     + t:CLASS;
@@ -348,12 +328,12 @@ Section Private
   );
 
   - read_code slot:SLOT :EXPR <-
-  //++ code       : IDENTIFIER [ expr ] 
-  //++            | STRING '.' 'print' 
-  ( + result:EXPR;    
+  //++ code       : IDENTIFIER [ expr ]
+  //++            | STRING '.' 'print'
+  ( + result:EXPR;
     + loc:LOCAL;
-    
-    (read_identifier).if {      
+
+    (read_identifier).if {
       loc := slot.get_local last_string;
       (loc = NULL).if {
         loc := slot.get_local keyword_this;
@@ -381,13 +361,13 @@ Section Private
   //++            | '.' IDENTIFIER
   ( + result:EXPR;
     + t:CLASS;
-    (read_character '=').if {      
+    (read_character '=').if {
       (read_keyword keyword_new).if_false {
-        warning_error position message "Added `new'.";        
+        warning_error position message "Added `new'.";
       };
       (read_cap_identifier).if_false {
         syntax_error position message "TYPE is absent.";
-      };      
+      };
       t := program.fast_reference_at last_string;
       (t = NULL).if {
         semantic_error position message "Declaration class is needed.";
@@ -403,9 +383,9 @@ Section Private
   );
 
 Section Public
-  
+
   - parse <-
-  (         
+  (
     position := source.lower;
     //
     (read_program).if_false {

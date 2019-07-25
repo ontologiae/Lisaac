@@ -1,0 +1,106 @@
+Section Header
+
+  + name     := CAPABILITIES;
+
+  - comment  := "Renderer settings";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - nicest_quality:INTEGER <- 1;
+  - fastest_quality:INTEGER <- 2;
+  - default_quality:INTEGER <- 3;
+
+
+  - quality:INTEGER              := nicest_quality;
+
+  - width:INTEGER;
+  - height:INTEGER;
+
+  - fov:REAL_32                  := 45.0;
+
+  - is_fullscreen:BOOLEAN;
+
+
+  - has_doublebuffer:BOOLEAN     := TRUE;
+  - buffer_size:INTEGER          := 32;
+
+  - has_depth_buffer:BOOLEAN     := TRUE;
+  - depth_size:INTEGER           := 16;
+
+  - has_stencil_buffer:BOOLEAN;
+  - stencil_size:INTEGER         := 1;
+
+  - has_accum_buffer:BOOLEAN;
+  - accum_red_size:INTEGER       := 8;
+  - accum_green_size:INTEGER     := 8;
+  - accum_blue_size:INTEGER      := 8;
+  - accum_alpha_size:INTEGER     := 8;
+
+  - has_alpha:BOOLEAN            := TRUE;
+
+  - red_size:INTEGER             := 8;
+  - green_size:INTEGER           := 8;
+  - blue_size:INTEGER            := 8;
+  - alpha_size:INTEGER           := 8;
+
+
+  - set_dimensions (w,h:INTEGER) <-
+  (
+    width := w;
+    heigth := h;
+  );
+
+  - set_fov val:REAL_32 <-
+  (
+    fov := val;
+  );
+
+  - use_fullscreen <-
+  (
+    has_fullscreen := TRUE;
+  );
+
+  - use_doublebuffer <-
+  (
+    has_doublebuffer := TRUE;
+  );
+
+  - use_alpha_channel <-
+  (
+    has_alpha := TRUE;
+  );
+
+  - use_depth_buffer <-
+  (
+    has_depth_buffer := TRUE;
+  );
+
+  - use_stencil_buffer <-
+  (
+    has_stencil_buffer := TRUE;
+  );
+
+  - use_accum_buffer <-
+  (
+    has_accum_buffer := TRUE;
+  );
+
+  - use_default <-
+  (
+    quality := nicest_quality;
+
+    use_doublebuffer;
+    use_depth_buffer;
+    use_alpha_channel;
+    set_fov 45;
+
+    buffer_size := 32;
+    depth_size := 16;
+    stencil_size := 1;
+    red_size := blue_size := green_size := alpha_size := 8;
+    accum_red_size := accum_blue_size := accum_green_size := accum_alpha_size := 8;
+  );

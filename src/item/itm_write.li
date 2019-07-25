@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_WRITE;
 
   - copyright   := "2003-2007 Benoit Sonntag";
@@ -27,11 +7,11 @@ Section Header
 
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parent for all write";
-  
+
 Section Inherit
-  
+
   + parent_itm_code:Expanded ITM_CODE;
-  
+
 Section Public
 
   //
@@ -41,24 +21,25 @@ Section Public
   + assign:ITM_CODE;
 
   + value:ITM_CODE;
-  
+
   - type:STRING_CONSTANT <-
   (
     deferred;
     NULL
   );
-  
+
   //
   // Constructor
   //
-  
+
   - create p:POSITION assign n:ITM_CODE with v:ITM_CODE :SELF <-
+  [ -? {p != 0}; ]
   ( + result:SELF;
     result := clone;
     result.make p assign n with v;
     result
   );
-  
+
   - make p:POSITION assign n:ITM_CODE with v:ITM_CODE <-
   (
     position := p;
@@ -69,11 +50,11 @@ Section Public
   //
   // Access.
   //
-  
+
   - get_simple_name:STRING_CONSTANT <-
   ( + result:STRING_CONSTANT;
     + without_arg:ITM_READ;
-    
+
     without_arg ?= assign;
     (without_arg != NULL).if {
       result := without_arg.name;
@@ -82,24 +63,24 @@ Section Public
     };
     result
   );
-  
+
   //
   // Display.
   //
-  
+
   - append_in buffer:STRING <-
   (
     assign.append_in buffer;
     buffer.append type;
     value.append_in buffer;
   );
-  
+
 Section Private
-  
+
   - affect name:STRING_CONSTANT with v:EXPR :EXPR <-
-  ( + loc:LOCAL;    
-    + result:EXPR;    
-    
+  ( + loc:LOCAL;
+    + result:EXPR;
+
     loc := lookup name;
     (loc != NULL).if {
       result := affect_local loc with v;
@@ -110,10 +91,10 @@ Section Private
   );
 
   - affect_local loc:LOCAL with v:EXPR :EXPR <-
-  ( + e:INSTR;    
-    + result:EXPR;    
+  ( + e:INSTR;
+    + result:EXPR;
     + val:EXPR;
-            
+
     (loc.style = '-').if {
       result := affect_slot (loc.intern_name) with v;
     } else {
@@ -121,11 +102,11 @@ Section Private
 	POSITION.put_error semantic text "Argument assignment is not possible.";
 	loc.position.put_position;
 	position.put_position;
-	POSITION.send_error;  
+	POSITION.send_error;
       };
       val := v.check_type (loc.type) with position;
-      e := loc.write position value val; 
-      list_current.add_last e;	
+      e := loc.write position value val;
+      list_current.add_last e;
       result := loc.read position;
     };
     result
@@ -142,12 +123,12 @@ Section Private
     + em:EXPR_MULTIPLE;
     + new_val:EXPR;
     + lst:FAST_ARRAY(EXPR);
-    
+
     loc := lookup (ALIAS_STR.variable_self);
     rec := loc.read position;
     //
-    type := rec.static_type.raw;    
-    slot := type.get_slot name; 
+    type := rec.static_type.raw;
+    slot := type.get_slot name;
     (slot = NULL).if {
       string_tmp.copy "Slot `";
       string_tmp.append name;
@@ -162,14 +143,14 @@ Section Private
     (em != NULL).if {
       lst := em.expr_list;
       (lst.lower).to (lst.upper - 1) do { j:INTEGER;
-	new_val := check (lst.item j) with (slot.slot_data_list.item j.type) and (slot.position);
+	new_val := (lst.item j).check_type (slot.slot_data_list.item j.type) with (slot.position);
 	lst.put new_val to j;
       };
-      new_val := check (lst.last) with (slot_dta.type) and (slot.position);
+      new_val := (lst.last).check_type (slot_dta.type) with (slot.position);
       lst.put new_val to (lst.upper);
       new_val := em;
     } else {
-      new_val := check v with (slot_dta.type) and (slot.position);
+      new_val := v.check_type (slot_dta.type) with (slot.position);
     };
     //
     node := NODE.new_write position slot slot receiver rec value new_val;
@@ -177,21 +158,4 @@ Section Private
     result := node.result_expr;
     result
   );
-  
-  - check v:EXPR with t:TYPE_FULL and p:POSITION :EXPR <-
-  ( + block:PROFIL_BLOCK;
-    
-    block ?= v.static_type.raw;
-    ((block != NULL) && {block.is_context_sensitive}).if {
-      string_tmp.copy "This block is extern context sensitive (with `";
-      string_tmp.append (block.context_extern.name);
-      string_tmp.append "' local variable).";
-      POSITION.put_error semantic text string_tmp;
-      block.code.position.put_position;
-      p.put_position;
-      block.context_extern.position.put_position;
-      POSITION.send_error;
-    };
-    v.check_type t with p
-  );
-  
+

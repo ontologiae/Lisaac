@@ -1,0 +1,51 @@
+Section Header
+
+  + name     := GL_MATERIAL;
+
+  - comment  := "Material: lighting properties of an object";
+
+Section Inherit
+
+  + parent_material:Expanded MATERIAL;
+
+Section Public
+
+  - apply mode:INTEGER  <-
+  (
+    + m:INTEGER;
+    + p:POINTER;
+    + val:REAL_32;
+
+    (mode = mode_front).if {
+      m := `GL_FRONT`:INTEGER;
+    }.elseif {mode = mode_back} then {
+      m := `GL_BACK`:INTEGER;
+    } else {
+      m := `GL_FRONT_AND_BACK`:INTEGER;
+    };
+
+    p := ambient.get_array.to_external;
+    `glMaterialfv(@m, GL_AMBIENT, @p)`;
+
+    p := diffuse.get_array.to_external;
+    `glMaterialfv(@m, GL_DIFFUSE, @p)`;
+
+    p := specular.get_array.to_external;
+    `glMaterialfv(@m, GL_SPECULAR, @p)`;
+
+    val := shininess;
+    `glMaterialf(@m, GL_SHININESS, @val)`;
+
+    p := emission.get_array.to_external;
+    `glMaterialfv(@m, GL_EMISSION, @p)`;
+  );
+
+  - enable_color <-
+  (
+    `glEnable(GL_COLOR_MATERIAL)`;
+  );
+
+  - disable_color <-
+  (
+    `glDisable(GL_COLOR_MATERIAL)`;
+  );

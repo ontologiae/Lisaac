@@ -1,28 +1,8 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
 
   + name        := UINTEGER_BIG; // Aucun Auto-Cast pour l'instant...(peut etre
                               // INTEGER_BIG ...)
-                               
+
   - comment     := "Integer without bits limit! (Just for fun!)";
 
 Section Inherit
@@ -30,11 +10,11 @@ Section Inherit
   - parent_object:OBJECT := OBJECT;
 
 Section UINTEGER_BIG
-  
+
   + storage:FAST_ARRAY(UINTEGER_32);
-  
+
   - last_modulo:UINTEGER_32;
-  
+
   - count:INTEGER <- storage.count;
 
   - lower:INTEGER <- storage.lower;
@@ -46,40 +26,40 @@ Section UINTEGER_BIG
   - copy other:UINTEGER_BIG <- storage.copy (other.storage);
 
   - force elt:UINTEGER_32 to idx:INTEGER <- storage.force elt to idx;
-  
+
   - put elt:UINTEGER_32 to idx:INTEGER <- storage.put elt to idx;
-  
+
   - add_last elt:UINTEGER_32 <- storage.add_last elt;
-  
+
   - resize new_size:INTEGER <-
   (
-    ? { new_size > 0};    
+    ? { new_size > 0};
     storage.resize new_size;
   );
-  
+
   - last:UINTEGER_32 <- storage.last;
-  
+
   - normalize <-
   (
     {(storage.count != 1) && {storage.last == 0}}.while_do {
       storage.remove_last;
-    };	
+    };
   );
 
-Section Public 
+Section Public
 
-  - create init:UINTEGER_32 :UINTEGER_BIG <- 
+  - create init:UINTEGER_32 :UINTEGER_BIG <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make init;
     result
   );
-        
+
   - make init:UINTEGER_32 :SELF <-
-  (     
+  (
     (storage = NULL).if {
-      storage := FAST_ARRAY(UINTEGER_32).create_with_capacity 4; 
+      storage := FAST_ARRAY(UINTEGER_32).create_with_capacity 4;
     } else {
       storage.clear;
     };
@@ -89,72 +69,72 @@ Section Public
   //
   // Conversion format with test.
   //
-  
-  - to_uinteger_64:UINTEGER_64   <- 
+
+  - to_uinteger_64:UINTEGER_64   <-
   [ -? {count <= 2}; ] // Bound limit control.
   ( + result:UINTEGER_64;
-    
+
     result := storage.first;
     (count > 1).if {
       result := result | (storage.item 1.to_uinteger_64 << 32);
     };
     result
   );
-  
-  - to_uinteger_32:UINTEGER_32   <- 
+
+  - to_uinteger_32:UINTEGER_32   <-
   [ -? {count = 1}; ]
-  ( 
+  (
     storage.first
   );
-  
-  - to_uinteger_16:UINTEGER_16 <- 
+
+  - to_uinteger_16:UINTEGER_16 <-
   [ -? {count = 1}; ]
-  ( 
+  (
     storage.first.to_uinteger_16
   );
-  
-  - to_uinteger_8:UINTEGER_8 <- 
+
+  - to_uinteger_8:UINTEGER_8 <-
   [ -? {count = 1}; ]
-  ( 
+  (
     storage.first.to_uinteger_8
   );
-  
-  - to_integer_64:INTEGER_64     <- 
+
+  - to_integer_64:INTEGER_64     <-
   [ -? {(to_uinteger_64 >> 63) = 0}; ]
-  ( 
+  (
     to_uinteger_64.to_integer_64
   );
-  
-  - to_integer:INTEGER     <- 
+
+  - to_integer:INTEGER     <-
   [ -? {(to_uinteger_64 >> 31) = 0}; ]
-  ( 
+  (
     storage.first.to_integer
   );
-  
-  - to_integer_16:INTEGER_16   <- 
+
+  - to_integer_16:INTEGER_16   <-
   [ -? {(to_uinteger_16 >> 15) = 0}; ]
-  ( 
+  (
     storage.first.to_uinteger_16
   );
-  
-  - to_integer_8:INTEGER_8   <- 
+
+  - to_integer_8:INTEGER_8   <-
   [ -? {(to_uinteger_8 >> 7) = 0}; ]
-  ( 
+  (
     storage.first.to_integer_8
   );
-    
+
   //
   // binary operator :
   //
-  
-  - substract other:SELF :SELF <- 
+
+  - substract other:SELF :SELF <-
   [ ? {Self >= other}; ]
   ( + over,substr,part1,part2:UINTEGER_64;
     + idx:INTEGER;
 
     (Self == other).if {
       set_with_zero;
-    } else {                  
+    } else {
       idx := lower;
       {idx > other.upper}.until_do {
 	part1 := item idx;
@@ -170,11 +150,11 @@ Section Public
         over := substr >> 32;
 	put ((substr & 0FFFF_FFFFh).to_uinteger_32) to idx;
 	idx := idx + 1;
-      };      
+      };
       normalize;
-    };    
+    };
   );
-    
+
   - substract_integer other:INTEGER :SELF <-
   [ ? {Self >=# other}; ]
   ( + part1,over,substr:UINTEGER_64;
@@ -182,7 +162,7 @@ Section Public
 
     (Self ==# other).if {
       set_with_zero;
-    } else {      
+    } else {
       part1 := item 0;
       substr := part1 - other;
       over := substr >> 32;
@@ -194,16 +174,16 @@ Section Public
         over := substr >> 32;
 	put ((substr & 0FFFF_FFFFh).to_uinteger_32) to idx;
 	idx := idx + 1;
-      };      
+      };
       normalize;
-    };    
+    };
   );
-    
-  - addition other:SELF :SELF <- 
+
+  - addition other:SELF :SELF <-
   [ -? {Self >= other}; ]
   ( + part1,part2,sum,over:UINTEGER_64;
     + idx:INTEGER;
-    
+
     idx := lower;
     {idx > other.upper}.until_do {
       part1 := item idx;
@@ -221,13 +201,13 @@ Section Public
     };
     (over != 0).if {
       add_last (over.to_uinteger_32);
-    };    
-  );  
-    
+    };
+  );
+
   - addition_integer other:INTEGER :SELF <-
   ( + part1,sum,over:UINTEGER_64;
     + idx:INTEGER;
-   
+
     part1 := item 0;
     sum := part1 + other;
     put ((sum & 0FFFF_FFFFh).to_uinteger_32) to 0;
@@ -237,28 +217,28 @@ Section Public
       part1 := item idx;
       sum := part1 + over;
       put ((sum & 0FFFF_FFFFh).to_uinteger_32) to idx;
-      idx  := idx + 1; 
+      idx  := idx + 1;
       over := sum >> 32;
-    };    
+    };
     (over != 0).if {
       add_last (over.to_uinteger_32);
-    };    
+    };
   );
-    
-  - multiply other:SELF :SELF <- 
+
+  - multiply other:SELF :SELF <-
   ( + part1,part2,product:UINTEGER_64;
     + index_result:INTEGER;
-            
+
     lower.to upper do { idx:INTEGER;
       + result_current:UINTEGER_BIG;
-      
+
       result_current := 0;
       result_current.resize count;
       part1 := item idx;
       index_result := idx;
       (other.lower).to (other.upper) do { idx_other:INTEGER;
 	part2 := other.item idx_other;
-	product := part1 * part2;	
+	product := part1 * part2;
 	(product < (UINTEGER_32.maximum.to_uinteger_64)).if {
 	  result_current.put (product.to_uinteger_32) to index_result;
 	} else {
@@ -268,24 +248,24 @@ Section Public
 	  index_result := index_result + 1;
 	};
       };
-      
+
       result := result + result_current;
-      
+
     };
     result.clean;
     result
   );
-  
+
   - Self:SELF '*#' Left 100 other:INTEGER :SELF <-
   (
     + result:UINTEGER_BIG;
     + part1,product,over:UINTEGER_64;
-    
+
     result := 0;
     result.resize count;
-    lower.to upper do { idx:INTEGER;      
-      part1 := item idx;      
-      product :=  part1 * other + over;      
+    lower.to upper do { idx:INTEGER;
+      part1 := item idx;
+      product :=  part1 * other + over;
       (product < (UINTEGER_32.maximum.to_uinteger_64)).if {
 	result.put (product.to_uinteger_32) to idx;
 	over := 0;
@@ -294,30 +274,30 @@ Section Public
 	over := product >> 32;
       };
     };
-    
+
     (over!==0).if {
       result.add_last (over.to_uinteger_32);
-    };    
-    
+    };
+
     result.clean;
     result
   );
-  
-  - Self:SELF '/'  Left 100 other:SELF :SELF <- 
+
+  - Self:SELF '/'  Left 100 other:SELF :SELF <-
   ( + result:UINTEGER_BIG;
-    
-    
+
+
   );
-  
-  
+
+
   - Self:SELF '/#' Left 100 other:INTEGER :SELF <-
   ( + result:SELF;
     + last_mod,div:UINTEGER_64;
     + idx:INTEGER;
-    
+
     result.resize count;
     idx := upper;
-    last_mod := item idx;    
+    last_mod := item idx;
     {idx < lower}.until_do {
       div := 0;
       (last_mod < other).if {
@@ -329,8 +309,8 @@ Section Public
 	};
       } else {
 	div := last_mod / (other.to_uinteger_64);
-	last_mod := last_mod % (other.to_uinteger_64); 
-      };      
+	last_mod := last_mod % (other.to_uinteger_64);
+      };
       (div !== 0).if {
 	result.put ((div & (UINTEGER_32.maximum.to_uinteger_64)).to_uinteger_32) to idx;
       };
@@ -339,9 +319,9 @@ Section Public
     result.clean;
     result
   );
-    
+
   - and_binary other:SELF :SELF <-
-  (     
+  (
     (other.upper < upper).if {
       storage.remove_tail (upper - other.upper);
     };
@@ -350,22 +330,22 @@ Section Public
     };
     normalize;
   );
-  
+
   - or_binary other:SELF :SELF <-
-  (         
+  (
     lower.to (upper.min (other.upper)) do { i:INTEGER;
       put (item i | other.item i) to i;
     };
     upper.to (other.upper) do { i:INTEGER;
       add_last (other.item i);
-    };    
+    };
   );
 
   //
   // Test binary operator :
   //
-    
-  - Self:SELF '>'   Right 60 other:SELF :BOOLEAN <- 
+
+  - Self:SELF '>'   Right 60 other:SELF :BOOLEAN <-
   (
     + result:BOOLEAN;
     (count > (other.count)).if {
@@ -386,14 +366,14 @@ Section Public
 	  find := TRUE;
 	};
 
-	i := i + 1; 
+	i := i + 1;
       };
     };
-    
+
     result
   );
-  
-  
+
+
   - Self:SELF '>#' Right 60 other:INTEGER :BOOLEAN <-
   (
     + result:BOOLEAN;
@@ -404,7 +384,7 @@ Section Public
     };
     result
   );
-  
+
   - Self:SELF '=='  Right 60 other:SELF :BOOLEAN <-
   (
     + result:BOOLEAN;
@@ -418,61 +398,61 @@ Section Public
 	result := TRUE;
       };
     };
-    
+
     result
   );
-  
+
   //
   // Function.
   //
 
   - factorial_integer n:INTEGER <-
   [ -? {n >= 0}; ]
-  (         
+  (
     (n = 0).if {
       set_with_zero;
       put 1 to 0;
     } else {
       2.to n do { i:INTEGER;
-        multiply_integer i; 
+        multiply_integer i;
       };
     };
   );
-  
+
   //
   // conversion
   //
-  
-  - append_in buffer:STRING <- 
+
+  - append_in buffer:STRING <-
   // Append in the `buffer' the equivalent of `to_string'. No new STRING
   // creation during the process.
-  ( + value:UINTEGER_BIG; 
+  ( + value:UINTEGER_BIG;
     + mod:UINTEGER_32;
     + counter:INTEGER;
     + old_upper,new_upper:INTEGER;
-    
+
     old_upper:=buffer.upper + 1;
-    
-    (upper = 0).if { 
+
+    (upper = 0).if {
       item 0.append_in buffer;
     } else {
       value:=Self;
       {
 	value:=value /# 1000000000;
-	mod:=last_modulo;	
+	mod:=last_modulo;
 	{counter==0}.until_do {
 	  buffer.extend '0';
 	  counter:=counter-1;
 	};
 	counter := 9;
-	{	
+	{
 	  buffer.extend ((mod % 10).digit);
 	  mod := mod / 10;
 	  counter := counter-1;
 	}.do_while {mod!==0};
       }.do_while {value!==0};
-      
-      new_upper := buffer.upper;      
+
+      new_upper := buffer.upper;
 
       // Swap.
       {old_upper >= new_upper}.until_do {
@@ -482,30 +462,30 @@ Section Public
       };
     };
   );
-    
+
   - print_positif <-
   (
     string_tmp.clear;
     append_in string_tmp;
     string_tmp.print;
   );
-/*  
+/*
   - append_in buffer:STRING <-
   ( + val:SELF;
-    + i,j:INTEGER;     
+    + i,j:INTEGER;
     ? {buffer!=NULL};
-    
+
     (self == 0).if {
       buffer.extend '0';
-    } else {      
-      i := buffer.upper + 1;      
+    } else {
+      i := buffer.upper + 1;
       val.copy Self;
       {val == 0}.until_do {
 	buffer.extend ((val %# 10).digit);
 	val := val /# 10;
       };
       j := buffer.upper;
-            
+
       {i >= j}.until_do {
 	buffer.swap i with j;
 	j := j - 1;
@@ -515,15 +495,15 @@ Section Public
   );
   */
 Section Public
-  
+
   - set_with_zero <-
   (
     storage.clear;
     storage.add_last 0;
   );
-  
+
   - is_zero:BOOLEAN <- ((storage.count = 1) && {storage.first = 0});
-  
+
   - compare other:SELF :INTEGER <-
   // -1 if Self < other
   //  0 if Self = other
@@ -531,7 +511,7 @@ Section Public
   ( + result,up_s,up_o:INTEGER;
     + v_s,v_o:INTEGER_32;
     + i:INTEGER;
-    
+
     up_s := upper;
     up_o := other.upper;
     (up_s = up_o).if {
@@ -551,13 +531,13 @@ Section Public
     } else {
       (up_s < up_o).if {
         result := -1;
-      } else {        
+      } else {
         result := 1;
       };
     };
     result
   );
-  
+
   - divide_one_word divisor:UINTEGER_32 :UINTEGER_32 <-
   // This method is used by `divide'. The one word divisor is
   // specified by `divisor' is saw as unsigned.
@@ -568,7 +548,7 @@ Section Public
   ( + i, remainder_word1, remainder_word0:INTEGER;
     + result:UINTEGER_32;
     + x:UINTEGER_64;
-    
+
     (count = 1).if {
       result := first;
       (result < divisor).if {
@@ -584,7 +564,7 @@ Section Public
         remainder_word0 := item i;
         x := (remainder_word1.to_uinteger_64 << 32) | remainder_word0;
         remainder_word1 := x % divisor;
-        put (x / divisor) to i;       
+        put (x / divisor) to i;
         i := i - 1;
       };
       (item upper = 0).if {
@@ -592,17 +572,17 @@ Section Public
         ? {item upper != 0};
       };
       result := remainder_word1;
-    };		
+    };
     result
   );
-  
+
   - normalize_shift:INTEGER_8 <-
   // Shift left until the most significant bit is on.
   // Result give the number of left shift.
   [ -? {! is_zero}; ]
   ( + head:UINTEGER_32;
     + result:INTEGER_8;
-	
+
     head := item upper;
     {(head & 8000_0000h) != 0}.until_do {
       head := head << 1;
@@ -614,7 +594,7 @@ Section Public
     result
   )
   [ +? {item upper < 0}; ];
-  
+
   - shift_left n:INTEGER <-
   // Shift bits of magnitude by `n' position left. (Note that no bit can
   // be lost because the `storage' area is automatically extended when
@@ -623,11 +603,11 @@ Section Public
   ( + left,right: INTEGER_8;
     + word_shift:INTEGER;
     + new_value:UINTEGER_32;
-     
+
     (last != 0).if {
       word_shift := n >> 5;
-      left  := (n & 1Fh).to_integer_8; // Optimistic prediction      
-      right := 32 - left;      
+      left  := (n & 1Fh).to_integer_8; // Optimistic prediction
+      right := 32 - left;
       ((last >> right) = 0).if {
         storage.add 0 first (word_shift+1);
         word_shift.to (upper-1) do { i:INTEGER;
@@ -644,20 +624,20 @@ Section Public
         new_value := item word_shift << left;
         storage.put new_value to word_shift;
       };
-    };        
+    };
   );
-  
+
   - shift_right n:INTEGER <-
-  // Shift bits of magnitude by `n' position right. 
+  // Shift bits of magnitude by `n' position right.
   [ -? {n > 0}; ]
   ( + left,right: INTEGER_8;
     + word_right:INTEGER;
     + new_value:UINTEGER_32;
-     
+
     (last != 0).if {
       word_right := n >> 5;
-      right := (n & 1Fh).to_integer_8; // Optimistic prediction      
-      left  := 32 - right;      
+      right := (n & 1Fh).to_integer_8; // Optimistic prediction
+      left  := 32 - right;
       word_shift.to (upper-1) do { i:INTEGER;
         new_value := (item (i+1) << left) | (item i >> right);
         storage.put new_value to (i - word_shift);
@@ -668,28 +648,28 @@ Section Public
       } else {
         storage.put new_value to (upper - word_shift);
         storage.remove_tail word_shift;
-      };      
-    };        
+      };
+    };
   );
-  
-  - multiply_and_subtract (u1, qhat: INTEGER, d_storage: FAST_ARRAY(UINTEGER_32), 
+
+  - multiply_and_subtract (u1, qhat: INTEGER, d_storage: FAST_ARRAY(UINTEGER_32),
   d_offset:INTEGER, r_storage:FAST_ARRAY(UINTEGER_32),r_offset, length: INTEGER):BOOLEAN <-
   // Only used by `divide'.
   [ -? {qhat != 0}; ]
-  ( + i, j, jmax, m1, m2: INTEGER; 
+  ( + i, j, jmax, m1, m2: INTEGER;
     + dec,result:BOOLEAN;
-		
+
     (qhat = 1).if {
       i := d_offset;
       j := r_offset;
-      jmax := r_offset + length;				
+      jmax := r_offset + length;
       {j = jmax}.until_do {
         (dec).if {
-          x_32 := r_storage.item j - d_storage.item i - 1;          
+          x_32 := r_storage.item j - d_storage.item i - 1;
           dec := x_32 >= r_storage.item j;
           r_storage.put x_32 to j;
         } else {
-          x_32 := r_storage.item j - d_storage.item i;          
+          x_32 := r_storage.item j - d_storage.item i;
           dec := x_32 > r_storage.item j;
           r_storage.put x_32 to j;
         };
@@ -700,11 +680,11 @@ Section Public
         (u1 = 0).if {
           result := TRUE;
         } else {
-          x_32 := r_storage.item j - 1;          
+          x_32 := r_storage.item j - 1;
           result := r_storage.item j = 0;
           r_storage.put x_32 to j;
-          ? {! result};			
-        };		
+          ? {! result};
+        };
       };
     } else {
       i := d_offset;
@@ -715,11 +695,11 @@ Section Public
         m2 := (x & 0FFFF_FFFFh).to_uinteger_32;
         m1 := (x >> 32).to_uinteger_32;
         (dec).if {
-          x_32 := r_storage.item j - m2 - 1;          
+          x_32 := r_storage.item j - m2 - 1;
           dec := x_32 >= r_storage.item j;
           r_storage.put x_32 to j;
         } else {
-          x_32 := r_storage.item j - m2;          
+          x_32 := r_storage.item j - m2;
           dec := x_32 > r_storage.item j;
           r_storage.put x_32 to j;
         };
@@ -730,7 +710,7 @@ Section Public
         (u1 = 0).if {
           result := TRUE;
         } else {
-          x_32 := r_storage.item j - m1 - 1;          
+          x_32 := r_storage.item j - m1 - 1;
           result := x_32 >= r_storage.item j;
           r_storage.put x_32 to j;
         };
@@ -739,7 +719,7 @@ Section Public
       }.elseif {u1 = 0} then {
         result := TRUE;
       } else {
-        x_32 := r_storage.item j - m1;        
+        x_32 := r_storage.item j - m1;
         result := x_32 > r_storage.item j;
         r_storage.put x_32 to j;
       };
@@ -751,15 +731,15 @@ Section Public
     r_storage:FAST_ARRAY(UINTEGER_32),r_offset, length:INTEGER):BOOLEAN <-
   // Only used by `divide'.
   // `old_u1' is the value of `u1' before `multiply_and_subtract'.
-  ( + i, j, jmax:INTEGER; 
+  ( + i, j, jmax:INTEGER;
     + inc,result:BOOLEAN;
-		
+
     i := d_offset;
     j := r_offset;
     jmax := r_offset + length;
-    {j = jmax}.until_do {			
+    {j = jmax}.until_do {
       (inc).if {
-        x_32 := r_storage.item j + d_storage.item i + 1;        
+        x_32 := r_storage.item j + d_storage.item i + 1;
         inc := x_32 <= r_storage.item j;
         r_storage.put x_32 to j;
       } else {
@@ -786,19 +766,19 @@ Section Public
     -? {other     != NULL};
     -? {quotient  != NULL};
     -? {remainder != NULL};
-  ]	
-  ( + v:SELF;		
+  ]
+  ( + v:SELF;
     v := other.twin;
     v.multiply quotient;
     v.add remainder;
     Self == v
   );
-  
+
   - divide_to (other, quotient, remainder:SELF) <-
   // Euclidian division.
   // Calculates the `quotient' and `remainder' of `Current'
   // divided by `other'. (The contents of `Current' and `other' are
-  // not changed.)			
+  // not changed.)
   // Note: Uses Algorithm D in Knuth
   [ -? {! other.is_zero};
     -? {quotient  != NULL};
@@ -809,43 +789,43 @@ Section Public
     -? {remainder != Self};
   ]
   ( + cmp, shift, nlen, dlen, qlen, j, k, v1, v2, u1, u2, rem: INTEGER;
-    + qhat, rhat, v2qhat_1, v2qhat_2, d_offset: INTEGER; 
+    + qhat, rhat, v2qhat_1, v2qhat_2, d_offset: INTEGER;
     + q_storage, r_storage, d_storage:FAST_ARRAY(UINTEGER_32);
     + q_capacity, r_capacity:INTEGER;
     + borrow:BOOLEAN;
-    
+
     (is_zero).if {
       // Dividend is zero:
       quotient.set_with_zero;
       remainder.set_with_zero;
     } else {
       cmp := compare other;
-      (cmp < 0).if { 
+      (cmp < 0).if {
         // Dividend less than divisor:
         quotient.set_with_zero;
-        remainder.copy Self;        
+        remainder.copy Self;
       }.elseif {cmp = 0} then {
-        // Dividend equal to divisor:        
+        // Dividend equal to divisor:
         quotient.from_integer 1;
         remainder.set_with_zero;
       }.elseif {other.count = 1} then {
         // Special case one word divisor:
-        quotient.copy Self;        
+        quotient.copy Self;
         remainder.storage.clear;
-        rem := quotient.divide_one_word (other.first);        
-        remainder.add_last rem;          
+        rem := quotient.divide_one_word (other.first);
+        remainder.add_last rem;
       } else {
         // Copy divisor storage to protect divisor:
         register1.copy other;
         remainder.copy Self;
         // D1 normalize the divisor:
-        shift := register1.normalize_shift;        
+        shift := register1.normalize_shift;
         (shift != 0).if {
           remainder.shift_left shift;
         };
-        // D2 Initialize j:        
+        // D2 Initialize j:
         r_storage := remainder.storage;
-        r_capacity := remainder.capacity;        
+        r_capacity := remainder.capacity;
         nlen := remainder.count;  // To avoid invariant class violation
         remainder.set_with_zero;
         d_storage := register1.storage;
@@ -877,11 +857,11 @@ Section Public
         };
         // To avoid invariant violation on quotient
         quotient.set_with_zero;
-        {k < 0}.until_do {				
+        {k < 0}.until_do {
           j := j - 1; // D3 Calculate qhat - estimate qhat
           (u1 = v1).if {
             qhat := ~0;
-          } else {            
+          } else {
             x := (u1.to_uinteger_64 << 32) | u2;
             rhat := (x % v1).to_uinteger_32;
             qhat := (x / v1).to_uinteger_32; // Correct qhat
@@ -928,10 +908,10 @@ Section Public
             (borrow).if {
               // D6 Add back
               borrow := add_back(u1, d_storage, d_offset, r_storage, j - dlen + 2, dlen);
-              ? {borrow};                
+              ? {borrow};
               q_storage.put (qhat - 1) to k;
             } else {
-              q_storage.put qhat to k;                
+              q_storage.put qhat to k;
             };
           };
           // D7 loop on j
@@ -946,24 +926,24 @@ Section Public
         };
         quotient.set_all(q_storage, q_capacity, qlen, 0, FALSE);
         // Remove leading zero of remainder
-        j := dlen - 1;          
+        j := dlen - 1;
         {(j < 0) || {r_storage.item j != 0}}.until_do {
           j := j - 1;
         };
         j := j + 1;
         ? {j >= 0};
         (j = 0).if {
-          ? {remainder.is_zero};            
+          ? {remainder.is_zero};
         } else {
           remainder.set_all(r_storage, r_capacity, j, 0, FALSE);
         };
         // D8 Unnormalize:
         (shift > 0).if {
           remainder.shift_right shift;
-        };        
+        };
       };
     };
   )
-  [ 
-    ? {is_a_good_divide(other, quotient, remainder)};    
+  [
+    ? {is_a_good_divide(other, quotient, remainder)};
   ];

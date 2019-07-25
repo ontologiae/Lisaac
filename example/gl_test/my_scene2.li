@@ -1,0 +1,71 @@
+Section Header
+  
+  + name     := MY_SCENE2;
+  
+  - comment   := "first program";
+  
+Section Inherit
+  
+  + parent_scene:Expanded SCENE;
+  
+  - parent_test_any:TEST_ANY := TEST_ANY;
+  
+Section Public  
+  
+  - main <-
+  (
+    start_test Self using CAPABILITIES;
+  );
+  
+Section Public
+  
+  //
+  //  test camera
+  //
+  
+  + camera:CAMERA := CAMERA.create_position (VECTOR3(REAL_32).create (0,1.5,6));
+  
+  + sphere:SPHERE := SPHERE.create (VECTOR3(REAL_32).create (0,0,0),2,10,10);
+  
+  + vb:VERTEX_BUFFER;
+  
+  + green:COLOR := RGB.create (0.0, 1.0, 0.0);
+  
+  - initialize:BOOLEAN <-
+  (
+    vb := renderer.vertex_buffer;
+    TRUE
+  );
+
+  - render t:REAL_32 <-
+  (      
+    camera.animate t;
+    camera.look;
+    
+    //
+    // dessine une sphere a l'origine
+    //
+    
+    sphere.render;
+    
+    //
+    //  dessine une grille
+    //
+    
+    renderer.color_buffer.set_color green;  // en vert
+    
+    (-50).to 50 do { i:INTEGER;
+      vb.begin_lines;
+      
+      // horizontal lines
+      vb.add_vertex3f (-50, 0, i.to_real);
+      vb.add_vertex3f (50, 0, i.to_real);
+       
+      // vertical lines
+      vb.add_vertex3f (i.to_real, 0, -50);
+      vb.add_vertex3f (i.to_real, 0, 50);
+      
+      vb.end;
+    };
+  );
+  

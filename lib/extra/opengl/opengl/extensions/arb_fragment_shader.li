@@ -1,0 +1,22 @@
+Section Header
+
+  + name     := ARB_FRAGMENT_SHADER;
+
+  - comment  := "GL_ARB_fragment_shader extension";
+
+  - external := `
+
+  #define GL_FRAGMENT_SHADER_ARB            0x8B30
+  `;
+
+Section Inherit
+
+  - parent_gl_extension:GL_EXTENSION := GL_EXTENSION;
+
+Section Public
+
+  - name:STRING_CONSTANT := "GL_ARB_fragment_shader";
+
+  - make <-
+  (
+  );

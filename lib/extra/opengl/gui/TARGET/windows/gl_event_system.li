@@ -1,0 +1,45 @@
+Section Header
+
+  + name        := GL_EVENT_SYSTEM;
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  - comment     := "OpenGL-win32 - Event System";
+
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+
+Section Inherit
+
+  - parent_event_system:EVENT_SYSTEM := EVENT_SYSTEM;
+
+Section Public
+
+  - get_event <-
+  ( + go:BOOLEAN;
+
+    go := TRUE;
+    {go && {`PeekMessage (&msg_glob, NULL, 0, 0, PM_REMOVE)` != 0}}.while_do {
+      (`msg_glob.message`:INTEGER = `WM_QUIT`:INTEGER).if {
+        //
+        //// ????
+        //
+	go := FALSE;
+      } else {
+	`TranslateMessage (&msg_glob)`;
+	`DispatchMessage (&msg_glob)`;
+      };
+    };
+  );
+
+
+
+
+
+
+
+
+
+
+
+

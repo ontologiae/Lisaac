@@ -1,46 +1,26 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := EXPR_NOT_LOGIC;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Unary not logical expression.";
-  
+
 Section Inherit
-  
+
   + parent_expr_unary_logic:Expanded EXPR_UNARY_LOGIC;
-  
-Section Public  
-  
+
+Section Public
+
   - symbol:CHARACTER <- '!';
-    
+
   //
   // Execute.
   //
-    
-  - exec_conservator:EXPR <- 
+
+  - exec_conservator:EXPR <-
   //-- ! (E1 == E2) -> E1 != E2   (see INTEGER)
   //-- ! (E1 >= E2) -> E1 <  E2   (see INTEGER)
   //-- ! (E1 >  E2) -> E1 <= E2   (see INTEGER)
@@ -49,12 +29,12 @@ Section Public
     + sup_eq:EXPR_SUP_EQ;
     + sup:EXPR_SUP;
     + not:EXPR_NOT_LOGIC;
-    + result:EXPR;    
+    + result:EXPR;
 
     not ?= right;
     (not != NULL).if {
       result := not.right;
-    }.elseif {    
+    }.elseif {
       eq ?= right;
       eq != NULL
     } then {
@@ -62,7 +42,7 @@ Section Public
     }.elseif {
       sup_eq ?= right;
       sup_eq != NULL
-    } then {      
+    } then {
       result := EXPR_INF.create position with (sup_eq.left) and (sup_eq.right);
     }.elseif {
       sup ?= right;
@@ -72,21 +52,21 @@ Section Public
     };
     result
   );
-  
-  - exec_right right_cst:TYPE :EXPR <- 
+
+  - exec_right right_cst:TYPE :EXPR <-
   // ! TRUE  -> FALSE
   // ! FALSE -> TRUE
   ( + pro:PROTOTYPE_CST;
-    
+
     pro ?= right;
-    (right_cst = type_true).if {      
+    (right_cst = type_true).if {
       pro.make (pro.position) type (type_false.default);
     } else {
       pro.make (pro.position) type (type_true.default);
     };
     right
   );
-  
+
 
 
 

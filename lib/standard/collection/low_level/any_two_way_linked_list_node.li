@@ -1,0 +1,10 @@
+Section Header
+
+  + name := ANY_TWO_WAY_LINKED_LIST_NODE;
+
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+Section Insert
+
+  - parent_object:OBJECT := OBJECT;

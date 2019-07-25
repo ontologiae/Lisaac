@@ -1,42 +1,22 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := ITM_TYPE_PARAMETER;
 
   - copyright := "2003-2007 Benoit Sonntag";
-  
+
   - author    := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment   := "Parameter type for argument define.";
- 
+
 Section Inherit
-  
+
   + parent_itm_type_simple:Expanded ITM_TYPE_SIMPLE;
-  
+
 Section Public
-  
+
   - to_run_for p:PARAMETER_TO_TYPE :TYPE_FULL <-
   ( + result:TYPE_FULL;
-        
-    result := p.parameter_to_type Self;        
+
+    result := p.parameter_to_type Self;
     (result = NULL).if {
       string_tmp.copy "Cannot resolve type for type parameter ";
       append_in string_tmp;
@@ -44,16 +24,16 @@ Section Public
     };
     result
   );
-  
-  //  
+
+  //
   // Display.
   //
-  
+
   - shorter_in buf:STRING <-
   (
     (style != NULL).if {
       put style to buf like (ALIAS_STR.short_keyword);
       buf.add_last ' ';
-    };    
+    };
     put name to buf like (ALIAS_STR.short_keyprototype);
   );

@@ -1,80 +1,60 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := CALL_NULL;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-    
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Call on NULL";
-  
+
 Section Inherit
-  
-  + parent_instr:Expanded INSTR; 
-  
-Section Public 
-  
+
+  + parent_instr:Expanded INSTR;
+
+Section Public
+
   - my_copy:SELF <- Self;
-  
+
   - is_necessary:BOOLEAN;
-  
+
   //
   // Remove
   //
-  
+
   - remove; // Nothing.
-  
+
   //
   // Execute
   //
-  
+
   - execute:INSTR <- Self;
-    
+
   //
   // Genere.
   //
-  
+
   - genere buffer:STRING <-
   ( + code:STRING_CONSTANT;
     (debug_level_option != 0).if {
-      code := 
-      "lisaac_stack_print(top_context); \
+      code :=
+      "lisaac_stack_print(0); \
       \print_string(\"Call on NULL\\n\"); \
       \die_with_code(1)";
     } else {
-      code := 
+      code :=
       "print_string(\"Call on NULL\\n\
-      \(Use `-D' option)\\n\"); \ 
+      \(Do not use `-boost' option for print stack trace)\\n\"); \
       \die_with_code(1)";
     };
     buffer.append code;
     is_necessary := TRUE;
   );
-  
+
   //
   // Display.
   //
-  
+
   - display buffer:STRING <-
   (
     buffer.append "Call on NULL";

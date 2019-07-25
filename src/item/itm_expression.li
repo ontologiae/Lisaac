@@ -1,41 +1,21 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_EXPRESSION;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "operator list message";
-  
+
 Section Inherit
-  
+
   - parent_itm_code:ITM_CODE := ITM_CODE;
-  
+
 Section Public
-  
+
   - position:POSITION <- value_list.first.position;
-  
+
   //
   // Data
   //
@@ -44,7 +24,7 @@ Section Public
 
   //
   // Constructor
-  //  
+  //
 
   - create v:FAST_ARRAY(ITM_CODE) :SELF <-
   ( + result:SELF;
@@ -52,9 +32,9 @@ Section Public
     result.make v;
     result
   );
-  
+
   - make v:FAST_ARRAY(ITM_CODE) <-
-  (   
+  (
     value_list    := v;
   );
 
@@ -69,7 +49,7 @@ Section Public
     + left,right:EXPR;
     + instr:INSTR;
     + val_list:FAST_ARRAY(INSTR);
-    + val:EXPR;    
+    + val:EXPR;
     + typ:TYPE;
     + slo:SLOT;
     + nam,op_name:STRING_CONSTANT;
@@ -80,23 +60,26 @@ Section Public
     + l_arg:FAST_ARRAY(EXPR);
     + result:EXPR;
     + itm_op:ITM_OPERATOR;
-        
+
     val_list := ALIAS_ARRAY(INSTR).new;
     // Search unary message.
-    idx := -1;    
+    idx := -1;
     low := value_list.lower;
-    {      
+    {
       // Search first message.
       {
 	idx := idx + 1;
 	itm_op ?= value_list.item idx;
-      }.do_while {(itm_op != NULL) && {idx != value_list.upper}};	
+      }.do_while {(itm_op != NULL) && {idx != value_list.upper}};
       (itm_op != NULL).if {
         semantic_error (itm_op.position,"Operator postfix not found.");
       };
       val := value_list.item idx.to_run_expr;
-      typ := val.static_type.raw;      
-      // Post-fix.	
+      typ := val.static_type.raw;
+      (typ = TYPE_VOID).if {
+        semantic_error (val.position,"Expression type `Void'.");
+      };
+      // Post-fix.
       idx_post := idx + 1;
       continue := TRUE;
       {(idx_post <= value_list.upper) && {continue}}.while_do {
@@ -107,7 +90,7 @@ Section Public
         ((idx_post = value_list.upper) || {itm_op != NULL}).if {
           itm_op ?= value_list.item idx_post;
           slo := typ.get_slot (operator (ALIAS_STR.slot_postfix) name (itm_op.name));
-          (slo != NULL).if {	  
+          (slo != NULL).if {
             site := NODE.new_read (itm_op.position) slot slo receiver val self val intern FALSE;
             list_current.add_last site;
             val := site.result_expr;
@@ -116,7 +99,7 @@ Section Public
           };
         };
       };
-      // Pre-fix.      
+      // Pre-fix.
       idx_pre := idx - 1;
       continue := TRUE;
       {(idx_pre >= low) && {continue}}.while_do {
@@ -127,12 +110,12 @@ Section Public
         ((idx_pre = low) || {itm_op != NULL}).if {
           itm_op ?= value_list.item idx_pre;
           slo := typ.get_slot (operator (ALIAS_STR.slot_prefix) name (itm_op.name));
-          (slo = NULL).if {	  
+          (slo = NULL).if {
             error_slot (itm_op.position) name "prefix" operator (itm_op.name) in typ;
           };
           site := NODE.new_read (itm_op.position) slot slo receiver val self val intern FALSE;
           list_current.add_last site;
-          val := site.result_expr;	    	    
+          val := site.result_expr;
           idx_pre := idx_pre - 1;
           continue := TRUE;
         };
@@ -141,9 +124,12 @@ Section Public
       idx := idx_post;
       (idx < value_list.upper).if {
         // Infix.
-        typ := val.static_type.raw;                            
+        typ := val.static_type.raw;
+        (typ = TYPE_VOID).if {
+          semantic_error (val.position,"Expression type `Void'.");
+        };
         itm_op ?= value_list.item idx;
-        op_name := itm_op.name;      
+        op_name := itm_op.name;
         (op_name = ALIAS_STR.symbol_equal).if {
           instr := EXPR_EQUAL.create (itm_op.position) with NULL and NULL;
         }.elseif {op_name = ALIAS_STR.symbol_not_equal} then {
@@ -156,11 +142,11 @@ Section Public
           };
           instr := NODE.new_read_partial (itm_op.position) slot slo;
         };
-        val_list.add_last instr;      
+        val_list.add_last instr;
       };
       low := idx_post + 1;
     }.do_while {idx <= value_list.upper};
-                                    
+
     {val_list.count = 1}.until_do {
       // Search max level.
       max_lev := -1;
@@ -176,14 +162,14 @@ Section Public
 	    max_pri := ALIAS_STR.keyword_right;
 	    max_pos := j;
 	  };
-	} else {	  
+	} else {
 	  // Other:
 	  slo := site.data.slot;
-	  ( 
+	  (
 	    (slo.priority > max_lev) ||
 	    {
-	      (slo.priority = max_lev) && 
-	      {slo.associativity = max_pri} && 
+	      (slo.priority = max_lev) &&
+	      {slo.associativity = max_pri} &&
 	      {max_pri = ALIAS_STR.keyword_right}
 	    }
 	  ).if {
@@ -193,16 +179,16 @@ Section Public
 	  };
 	};
       };
-      
+
       n_t   ?= val_list.item max_pos;
       left  ?= val_list.item (max_pos - 1);
       right ?= val_list.item (max_pos + 1);
       (n_t = NULL).if {
 	// '=' or '!='.
-	extern ?= val_list.item max_pos;	
-	extern.set_left left and_right right;	
+	extern ?= val_list.item max_pos;
+	extern.set_left left and_right right;
 	loc  := type_boolean.default.get_temporary (extern.position);
-	instr:= loc.write (extern.position) value extern; 
+	instr:= loc.write (extern.position) value extern;
 	list_current.add_last instr;
 	val := loc.read (instr.position);
       } else {
@@ -215,35 +201,35 @@ Section Public
 	list_current.add_last n_t;
 	val := n_t.result_expr;
       };
-      
+
       // Delete operator.
       val_list.remove max_pos;
       val_list.remove max_pos;
       //
-      val_list.put val to (max_pos - 1);      
+      val_list.put val to (max_pos - 1);
     };
 
     result ?= val_list.first;
-    
-    // Free Array Temporary.    
+
+    // Free Array Temporary.
     ALIAS_ARRAY(INSTR).free val_list;
-    
+
     result
   );
-  
+
   //
   // Display.
   //
-  
+
   - append_in buffer:STRING <-
   (
     (value_list.lower).to (value_list.upper) do { i:INTEGER;
       value_list.item i.append_in buffer;
     };
   );
-  
-Section Private  
-  
+
+Section Private
+
   - error_slot p:POSITION name s:STRING_CONSTANT operator op:STRING_CONSTANT in t:TYPE <-
   (
     string_tmp.copy "Slot ";
@@ -252,7 +238,7 @@ Section Private
     string_tmp.append op;
     string_tmp.append "' not found in ";
     string_tmp.append (t.name);
-    string_tmp.add_last '.';    
+    string_tmp.add_last '.';
     semantic_error (p,string_tmp);
   );
 

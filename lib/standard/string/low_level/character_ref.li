@@ -1,0 +1,80 @@
+Section Header
+
+  + name    := CHARACTER_REF;
+
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  - comment :=" .";
+
+Section Inherit
+
+  - parent_hashable:HASHABLE := HASHABLE;
+
+  - parent_comparable:COMPARABLE := COMPARABLE;
+
+Section Public
+
+  - item:CHARACTER;
+
+  - set_item value:CHARACTER <-
+  (
+    item := value;
+  );
+
+  - Self:SELF '<' other:SELF : BOOLEAN <-
+  (
+    item < other.item
+  );
+
+  - code:INTEGER_8 <-
+  // ASCII code of Current
+  (
+    item.code
+  );
+
+  - to_upper:SELF <-
+  (
+    item.to_upper
+  );
+
+  - to_lower:SELF <-
+  // Conversion of Current to lower case
+  (
+    item.to_lower
+  );
+
+  // Object Printing:
+
+  - out_in_tagged_out_memory <- fill_tagged_out_memory;
+
+  - fill_tagged_out_memory <-
+  (
+    item.fill_tagged_out_memory;
+  );
+
+  // Hashing:
+
+  - hash_code:INTEGER <-
+  (
+    item.hash_code
+  );
+
+  //
+  // MHMH :
+  //
+
+  /*
+  - Self:SELF '=='  Right 60 other:E :BOOLEAN <-
+  ( + my_other:SELF;
+
+    my_other := other;
+    Self = my_other
+  );*/
+
+  - Self:SELF '=='  Right 60 other:E :BOOLEAN <-
+  (
+    + same:SELF;
+    same ?= other;
+    (same != NULL) && {! (Self < same)} && { ! (same < Self)}
+  );

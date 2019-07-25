@@ -1,0 +1,50 @@
+Section Header
+
+  + name     := FONT;
+
+  - comment  := "rendered font";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  + name:STRING;
+
+  + font_height:UINTEGER_32 := 24;
+  + nb_chars:INTEGER := 96;
+
+
+  - create s:ABSTRACT_STRING :SELF <-
+  (
+    + result:SELF;
+    result := SELF.clone;
+    result.make s;
+    result
+  );
+
+  - make s:ABSTRACT_STRING <-
+  (
+    name := STRING.create_from_string s;
+
+    load;
+  );
+
+  - enable <- deferred;
+  - disable <- deferred;
+
+  - print_zone body:{} <-
+  (
+    enable;
+    body.value;
+    disable;
+  );
+
+  - load <- deferred;
+  - unload <- deferred;
+
+  - print text:ABSTRACT_STRING at (x,y:INTEGER) <- deferred;
+
+  // get default font
+  - default:FONT <- (deferred;NULL);

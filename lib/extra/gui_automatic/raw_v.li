@@ -1,47 +1,27 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := RAW_V;
-  
+
   - copyright := "Jonathan Ponte, Maxime Audrin, Benoit Sonntag";
-  
+
   - comment   := "Vertical menu for GUII.";
-  
+
 Section Inherit
-  
+
   - parent_internal_inode:INTERNAL_INODE := INTERNAL_INODE;
-  
+
 Section Public
-  
+
   - representation:STRING_CONSTANT := "RAW_V";
   + content:G_WIN_OUT;
-  
+
   - make_representation <-
   (
     +expr:G_EXPR;
-    
+
     list.foreach {
       i:INODE;
-      
+
       (i.priority>covering).if {
         i.make_representation;
         (expr=NULL).if {
@@ -53,10 +33,10 @@ Section Public
     };
     content:=G_RAW.create expr;
   );
-  
-  
+
+
   //Evaluation
-  
+
   - compute_size_from_prc p:INTEGER <-
   [ ? {! list.is_empty}; ]
   (
@@ -79,15 +59,15 @@ Section Public
     //"raw_v.width: ".print;width.print;'\n'.print;
     //"raw_v.height: ".print;height.print;'\n'.print;
   );
-  
-  
+
+
   - semantic_evaluation (w,h:INTEGER) :BOOLEAN<-
   (
     bugw_screen:=w;
     bugh_screen:=h;
-    
+
     !list.is_empty && {
-      browse_group { 
+      browse_group {
         i:INODE;
         (i.operator != '&')
       }
@@ -101,7 +81,7 @@ Section Public
         +son_height:INTEGER;
         +son_connector_w:INTEGER;
         +son_connector_h:INTEGER;
-        
+
         (!i.list.is_empty).if {
           tmp:=MENU_V_OUT.evaluate i width screen_width height screen_height;
           (tmp > best_prc).if {
@@ -150,7 +130,7 @@ Section Public
             son_height:=i.height;
           };
         };
-        
+
         (best_prc > 0).if {
           i.set_representation parent;
           i.set_width son_width;
@@ -163,11 +143,11 @@ Section Public
       nb=list.count
     }
   );
-  
+
   - space_evaluation (w,h:INTEGER) :REAL_32<-
   (
     + area,r,result:REAL_32;
-    
+
     // Space evaluation
     compute_size_from_prc 0;
     ((height > h) || {width > w}).if {
@@ -208,12 +188,12 @@ Section Public
     result
   )
   [ ? {Result.in_range 0 to 100}; ];
-  
-  
+
+
   - evaluate n:INODE width w:INTEGER height h:INTEGER : REAL_32<-
   (
     + result:REAL_32;
-    
+
     //"w_screen".print;w.print;"\n".print;
     //"h_screen".print;h.print;"\n".print;
     n.set_representation RAW_V;
@@ -228,4 +208,4 @@ Section Public
     result
   )
   [ ? {Result.in_range 0 to 100}; ];
-  
+

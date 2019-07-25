@@ -1,37 +1,17 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := INTEGER_CST;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Integer constant";
-  
+
 Section Inherit
-  
+
   + parent_constant:Expanded CONSTANT;
-  
+
 Section Public
 
   //
@@ -39,22 +19,22 @@ Section Public
   //
 
   + value:INTEGER_64;
-  
+
   - set_value new_value:INTEGER_64 <-
   (
     value := new_value;
     check_type;
   );
-  
+
   - to_power:INTEGER_64 <-
   // 2^Result = self or else -1
   ( + result,val:INTEGER_64;
-    
+
     val := value;
     (val = 0).if {
       result := -1;
-    } else {      
-      {(val & 1) = 0}.while_do {		
+    } else {
+      {(val & 1) = 0}.while_do {
 	val := val >> 1;
 	result := result + 1;
       };
@@ -64,17 +44,17 @@ Section Public
     };
     result
   );
-  
+
   - is_signed:BOOLEAN <-
   ( + typ:STRING_CONSTANT;
-    
-    typ := static_type.raw.name;   
+
+    typ := static_type.raw.name;
     (typ = ALIAS_STR.prototype_integer_64) ||
     {typ = ALIAS_STR.prototype_integer_32} ||
     {typ = ALIAS_STR.prototype_integer_16} ||
     {typ = ALIAS_STR.prototype_integer_8 }
   );
-  
+
   - is_saturated:BOOLEAN <-
   ( + result:BOOLEAN;
 
@@ -95,9 +75,9 @@ Section Public
 	result := value = 0FFh;
       };
     };
-    result    
+    result
   );
-  
+
   //
   // Creation.
   //
@@ -108,12 +88,12 @@ Section Public
     result.make p value v type t;
     result
   );
-  
+
   - make p:POSITION value v:INTEGER_64 type t:TYPE_FULL <-
   (
     position := p;
     value := v;
-    static_type := t;    
+    static_type := t;
     check_type;
   );
 
@@ -122,7 +102,7 @@ Section Public
   //
   // Comparaison.
   //
-  
+
   - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-
   ( + p:INTEGER_CST;
     p ?= other;
@@ -145,14 +125,14 @@ Section Public
   //
 
   - genere buffer:STRING <-
-  (    
-    buffer.add_last ' ';    
-    value.append_in buffer;    
+  (
+    buffer.add_last ' ';
+    value.append_in buffer;
     (value > UINTEGER_32.maximum.to_integer_64).if {
       buffer.append "LLU";
     }.elseif {value > INTEGER.maximum.to_integer_64} then {
       buffer.append "LU";
-    };    
+    };
   );
 
   //
@@ -167,13 +147,13 @@ Section Public
     value.append_in buffer;
     display_ref buffer;
   );
-  
+
 Section Private
-  
+
   - check_type <-
   ( + error:BOOLEAN;
     + min,max:INTEGER_64;
-    
+
     // Check Range.
     (static_type.raw.name)
     .when (ALIAS_STR.prototype_uinteger_64) then {
@@ -204,7 +184,7 @@ Section Private
       // Nothing. (Pb: BSBS : Can't range test.)
     }
     .when (ALIAS_STR.prototype_integer_32) then {
-      ((value < INTEGER.minimum) || {value > INTEGER.maximum.to_integer_64}).if { 
+      ((value < INTEGER.minimum) || {value > INTEGER.maximum.to_integer_64}).if {
 	error := TRUE;
 	min   := INTEGER.minimum;
 	max   := INTEGER.maximum.to_integer_64;
@@ -224,12 +204,12 @@ Section Private
 	max   := INTEGER_8.maximum.to_integer_64;
       };
     };
-    
+
     (error).if {
       string_tmp.copy "Invalid constant integer (";
       value.append_in string_tmp;
       string_tmp.append ") cast into ";
-      static_type.append_name_in string_tmp;      
+      static_type.append_name_in string_tmp;
       string_tmp.append " [";
       min.append_in string_tmp;
       string_tmp.append "..";
@@ -242,7 +222,7 @@ Section Private
       value := 0;
     };
   );
-  
+
 
 
 

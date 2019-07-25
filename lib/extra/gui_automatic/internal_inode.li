@@ -1,46 +1,26 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := INTERNAL_INODE;
 
   - copyright := "Jonathan Ponte, Maxime Audrin, Benoit Sonntag";
 
   - comment   := "Interface Node for GUII.";
-  
+
   // Warning: This Prototype is shared. All the data have to be deferred !
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
 
-Section Private  
-  
+Section Private
+
   //
   // Append for the problem with Dynamic inheritance !
   //
 
-  
-Section Public  
-  
+
+Section Public
+
   //
   // Data.
   //
@@ -81,12 +61,12 @@ Section Public
   - is_xor:BOOLEAN <- operator = '^';
   - is_and:BOOLEAN <- operator = '&';
   - is_or:BOOLEAN  <- operator = '|';
-  
+
   //
   // Added.
   //
   - Self:SELF '+' other:INODE :INODE <- deferred;
-  
+
   //
   // Method.
   //
@@ -105,21 +85,21 @@ Section Public
   //
   // browse
   //
-  
-  - browse_group tst:BLOCK :BOOLEAN <-
+
+  - browse_group tst:{INODE; BOOLEAN} :BOOLEAN <-
   (
     + i:INTEGER;
     (! list.is_empty).if {
-	i := list.lower;
-	{(i <= list.upper) && {tst.value (list.item i)}}.while_do {
-	  i := i + 1;
-
-	};
-	i > list.upper
-    }
+      i := list.lower;
+      {(i <= list.upper) && {tst.value (list.item i)}}.while_do {
+        i := i + 1;
+        
+      };      
+    };
+    i > list.upper
   );
-  
-  - browse_group_group tst:BLOCK :BOOLEAN <-
+
+  - browse_group_group tst:{INODE; BOOLEAN} :BOOLEAN <-
   [ ? {! list.is_empty}; ]
   ( + i,j:INTEGER;
     + lst:LINKED_LIST(INODE);
@@ -142,11 +122,11 @@ Section Public
     };
     result
   );
-  
+
   - get_nitem_from_prc p:INTEGER : INTEGER <-
   (
     + j:INTEGER;
-    
+
     j:=0;
     list.foreach {
       i:INODE;
@@ -156,7 +136,7 @@ Section Public
     };
     j
   );
-  
+
   - get_area_prc (w,h:INTEGER):REAL_32 <-
   [
     ? {width <= w};
@@ -197,7 +177,7 @@ Section Public
         " | \n".print;
       };
       (list.lower).to (list.upper) do { j:INTEGER;
-        base.print; 
+        base.print;
         " +- ".print;
         (j != list.upper).if {
           base.append " |  ";
@@ -205,15 +185,15 @@ Section Public
           base.append "    ";
         };
         list.item j.display;
-        base.remove_last 4;	
+        base.remove_last 4;
       };
     };
   );
-  
+
   - display_dimensions <-
   (
     +j:INTEGER;
-    
+
     dimensions.foreach {
       i:DIMENSION;
       j:=j+1;
@@ -242,7 +222,7 @@ Section Public
       };
     };
   );
-  
+
   - get_best_disposition :INTEGER <-
   (
     +j:INTEGER;
@@ -260,6 +240,5 @@ Section Public
 
 
 Section Private
-  
+
   - base:STRING := STRING.create 250;
-  

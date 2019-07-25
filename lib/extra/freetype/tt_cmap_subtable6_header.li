@@ -1,0 +1,48 @@
+Section Header
+
+  + name        := TT_CMAP_SUBTABLE6_HEADER;
+  - comment     :="Header Subtable";
+
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+
+Section Inherit
+
+  - parent:OBJECT := OBJECT;
+
+Section Mapping
+
+  + format:UINTEGER_16;
+
+  + length:UINTEGER_16;
+
+  + version:UINTEGER_16;
+
+  + first_code:UINTEGER_16;
+
+  + entry_count:UINTEGER_16;
+
+Section Public
+
+  - to_big_endian <-
+  (
+    format := PROCESSOR.to_motorola_ushort format;
+    length := PROCESSOR.to_motorola_ushort length;
+    version := PROCESSOR.to_motorola_ushort version;
+    first_code := PROCESSOR.to_motorola_ushort first_code;
+    entry_count := PROCESSOR.to_motorola_ushort entry_count;
+  );
+
+  - print <-
+  (
+    "\n   Format:".print;
+    format.print;
+    "\n   length:".print;
+    length.print;
+    "\n   Version:".print;
+    version.print;
+    "\n   First_code:".print;
+    first_code.print;
+    "\n   Entry count:".print;
+    entry_count.print;
+  );

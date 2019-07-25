@@ -1,60 +1,40 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name := AVL_DICTIONARY(V, K);
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
-  
+
   - comment := "Associative memory. Values of type `V' are stored using Keys of type `K'.";
-	
-  // Efficient implementation of DICTIONARY using an AVL balanced tree. 
-  // AVL stands for the names of G. M. Adel'son-Velskii and E. M. Landis, 
-  // two Russian mathematicians who first came up with this method of keeping 
+
+  // Efficient implementation of DICTIONARY using an AVL balanced tree.
+  // AVL stands for the names of G. M. Adel'son-Velskii and E. M. Landis,
+  // two Russian mathematicians who first came up with this method of keeping
   // the tree balanced.
 
 Section Insert
-  
+
   + parent_avl_tree:Expanded AVL_TREE(K);
 
 Section Inherit
-  
+
   + parent_simple_dictionary:Expanded SIMPLE_DICTIONARY(V, K);
-  
+
 Section Private
-  
+
   - key_memory:K <- item_memory;
-		
+
 Section Public
-  
+
   - capacity:INTEGER <- count;
 
-  - at k:K :V <- 
+  - at k:K :V <-
   ( + dic:AVL_DICTIONARY_NODE(V,K);
     dic ?= root.at k;
     dic.value
   );
 
-  - fast_at k:K :V <- 
+  - fast_at k:K :V <-
   ( + dic:AVL_DICTIONARY_NODE(V,K);
     dic ?= root.fast_at k;
     dic.value
@@ -63,7 +43,7 @@ Section Public
   - reference_at k:K :V <-
   ( + result:V;
     + n:AVL_DICTIONARY_NODE(V, K);
-    
+
     (root != NULL).if {
       n := root.at k;
       (n != NULL).if {
@@ -76,7 +56,7 @@ Section Public
   - fast_reference_at k:K :V <-
   ( + result:V;
     + n:AVL_DICTIONARY_NODE(V, K);
-		
+
     (root != NULL).if {
       n := root.fast_at k;
       (n != NULL).if {
@@ -85,9 +65,9 @@ Section Public
     };
     result
   );
-  
+
   - put v:V to k:K <- add v to k;
-  
+
   - add v:V to k:K <-
   (
     value_memory := v;
@@ -104,7 +84,7 @@ Section Public
 
   - occurrences v:V :INTEGER <-
   ( + result:INTEGER;
-    
+
     (root != NULL).if {
       result := root.occurrences v;
     };
@@ -113,7 +93,7 @@ Section Public
 
   - fast_occurrences v:V :INTEGER <-
   ( + result:INTEGER;
-    
+
     (root != NULL).if {
       result := root.fast_occurrences v;
     };
@@ -121,7 +101,7 @@ Section Public
   );
 
   - key_at v:V :K <- root.key_at v;
-		
+
   - fast_key_at v:V :K <- root.fast_key_at v;
 
   - clear_count <- clear_count_and_capacity;
@@ -154,7 +134,7 @@ Section Public
   );
 
   - internal_key k:K :K <- root.at(k).key;
-  
+
   - make <-
   (
     map := FAST_ARRAY(AVL_TREE_NODE(K)).create 0;
@@ -166,19 +146,19 @@ Section Public
   );
 
 Section Private
-  
+
   + value_memory:V;
 
   - set_value_and_key n:AVL_TREE_NODE(K) <-
   ( + dic:AVL_DICTIONARY_NODE(V,K);
-    
+
     dic ?= n;
     dic.make (value_memory, key_memory);
   );
 
   - set_value n:AVL_TREE_NODE(K) <-
   ( + dic:AVL_DICTIONARY_NODE(V,K);
-    
+
     dic ?= n;
     dic.set_value value_memory;
   );
@@ -195,7 +175,7 @@ Section Private
   - discard_node n:AVL_DICTIONARY_NODE(V, K) <-
   ( + v:V;
     + k:K;
-		
+
     n.make (v, k);
   );
 
@@ -203,12 +183,12 @@ Section Private
   (
     AVL_DICTIONARY_NODE(V, K).clone
   );
-  
-  
-  //		
+
+
+  //
   //invariant
   //
-  
+
   //[ ...
    // -? {lost_nodes != NULL};
    // -? {lost_nodes = common_lost_nodes.at generating_type};

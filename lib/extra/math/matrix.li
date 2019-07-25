@@ -1,0 +1,30 @@
+Section Header
+
+  + name     := MATRIX(E);
+
+  - comment  := "(n,m) matrix";
+
+Section Inherit
+
+  - parent_abstract_matrix:Expanded ABSTRACT_MATRIX(E);
+
+Section Public
+
+  //
+  // Creation.
+  //
+
+  - create (n,m:INTEGER) :SELF <-
+  ( + result:SELF;
+    result := SELF.clone;
+    result.make (n,m);
+    result
+  );
+
+  - create (n,m:INTEGER) value val:E :SELF <-
+  ( + result:SELF;
+    result := SELF.clone;
+    result.make (n,m);
+    result.set_all_with val;
+    result
+  );

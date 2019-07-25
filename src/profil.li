@@ -1,47 +1,53 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := PROFIL;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Method with costumization";
-  
+
 Section Inherit
-  
-  + parent_any:Expanded ANY; 
-  
+
+  + parent_any:Expanded ANY;
+
+  - parent_parameter_to_type:Expanded PARAMETER_TO_TYPE;
+
 Section PROFIL_LIST
 
   + life_index:INTEGER;
-  
+
   - set_life_index idx:INTEGER <-
   (
     life_index := idx;
   );
-  
+
 Section Public
+
+  - arg_type_tmp:FAST_ARRAY(EXPR);
+  - parameter_to_type p:ITM_TYPE_PARAMETER :TYPE_FULL <-
+  ( + idx:INTEGER;
+    + result:TYPE_FULL;
+
+    (p.name = ALIAS_STR.prototype_self).if {
+      // For Self.
+      result := type_self;
+    } else {
+      // For Genericity.
+      //result := type_self.raw.parameter_to_type p;
+      result := slot_code.receiver_type.parameter_to_type p;
+      (result = NULL).if {
+        // For Type parametric.
+        idx := slot_code.get_index_argument_type p;
+        (idx != - 1).if {
+          result := arg_type_tmp.item idx.static_type + TYPE_FULL.generic_bit;
+        };
+      };
+    };
+    result
+  );
+
   - propagation_external <-
   (
     (external_present).if_false {
@@ -51,51 +57,51 @@ Section Public
       };
     };
   );
-  
+
 Section Public
-  
-  //  
+
+  //
   // Graph info.
   //
-  
+
   - hash_code:INTEGER <- name.hash_code;
-  
+
   + external_present:BOOLEAN;
-    
+
   + set_call:HASHED_DICTIONARY(INTEGER,PROFIL);
-  
+
   + set_back:HASHED_SET(PROFIL);
-  
+
   - add_call p:PROFIL <-
-  ( + cnt:INTEGER;    
-    (set_call.fast_has p).if {      
+  ( + cnt:INTEGER;
+    (set_call.fast_has p).if {
       cnt := set_call.fast_at p;
       cnt := cnt + 1;
     } else {
       cnt := 1;
-    };    
+    };
     set_call.fast_put cnt to p;
-    p.set_back.fast_add Self;        
+    p.set_back.fast_add Self;
   );
-  
+
   - alloc_profil_main <-
   (
     set_call := HASHED_DICTIONARY(INTEGER,PROFIL).create;
     set_back := HASHED_SET(PROFIL).create;
     name := "main";
   );
-  
+
   - set_external_present b:BOOLEAN <-
   (
     external_present := b;
   );
-  
+
   - genere_graph out:STRING <-
   ( + key:PROFIL;
     + cnt:INTEGER;
     + is_force:BOOLEAN;
     + j:INTEGER;
-    
+
     (external_present).if {
       j := set_call.lower;
       {(j <= set_call.upper) && {! is_force}}.while_do {
@@ -106,7 +112,7 @@ Section Public
       is_force := TRUE;
     };
     (is_force).if {
-      (set_call.lower).to (set_call.upper) do { j:INTEGER;        
+      (set_call.lower).to (set_call.upper) do { j:INTEGER;
         key := set_call.key j;
         cnt := set_call.item j;
         output_code.append name;
@@ -116,100 +122,100 @@ Section Public
           output_code.append "[label=\"";
           cnt.append_in output_code;
           output_code.append "\"]";
-        };      
+        };
         output_code.append ";\n";
       };
-      (external_present).if {      
+      (external_present).if {
         out.append name;
         out.append " [color=red];\n";
       };
     };
   );
-  
+
   //
   //
   //
-    
+
   - slot:SLOT <- deferred;
 
   - is_interrupt:BOOLEAN;
-  
+
   - is_external:BOOLEAN;
-  
-  + type_self:TYPE_FULL; 
-    
-  + argument_list:FAST_ARRAY(LOCAL);  
-  
-  + result_list:Expanded SLIM_ARRAY(LOCAL);
-  
+
+  + type_self:TYPE_FULL;
+
+  + argument_list:FAST_ARRAY(LOCAL);
+
+  + result_list:SLIM_ARRAY(LOCAL);
+
   + code:LIST;
   + context:LOCAL;
-  
+
   + count_intern_call:INTEGER;
-  
+
   + link_count:INTEGER;
   + cop_link_count:INTEGER;
-  
+
   + name:STRING_CONSTANT;
-    
+
   - is_context_sensitive:BOOLEAN <- deferred;
-    
+
   + stat:INTEGER_8 := -1;
   // 00 : No recursive, No inlinable.
   // 01 : No recursive, Inlinable.
   // 10 : Recusive,     No tail.
   // 11 : Recusive,     Tail
-  
+
   - reset_recursive <-
   (
     stat := -1;
     count_intern_call := 0;
   );
-  
+
   - recursivity_bit:INTEGER_8 := 10b;
   - tail_bit:INTEGER_8        := 01b;
   - inlining_bit:INTEGER_8    := 01b;
-  
+
   - is_tail_recursive:BOOLEAN     <- stat = 11b;
   - is_not_tail_recursive:BOOLEAN <- stat = 10b;
   - is_inlinable:BOOLEAN          <- stat = 01b;
   - is_recursive:BOOLEAN          <- (stat & recursivity_bit) != 0;
 
   //
-  
+
   - mode_recursive:BOOLEAN;
-  
+
   - set_mode_recursive b:BOOLEAN <-
   (
     mode_recursive := b;
   );
-    
+
   - set_life <-
-  (     
+  (
     PROFIL_LIST.set_life Self;
-    (mode_recursive).if {      
-      execute_recursive;      
+    (mode_recursive).if {
+      execute_recursive;
     };
   );
 
   - link call:CALL_SLOT <-
-  ( 
+  (
     (call.cop_argument != NULL).if {
       cop_link_count := cop_link_count + 1;
     } else {
       link_count := link_count + 1;
     };
   );
-  
+
   - unlink call:CALL_SLOT <-
   (
     (call.cop_argument != NULL).if {
       cop_link_count := cop_link_count - 1;
       ? {cop_link_count >= 0};
     } else {
-      link_count := link_count - 1;    
+      link_count := link_count - 1;
       ? {link_count >= 0};
-    };        
+    };
   );
 
   - write_argument args:FAST_ARRAY(EXPR) :FAST_ARRAY(WRITE) <-
@@ -217,30 +223,30 @@ Section Public
     + val:EXPR;
     + wrt:WRITE;
     + result:FAST_ARRAY(WRITE);
-    
+
     (args.count != argument_list.count).if {
       semantic_error (args.last.position,"Incorrect vector size.");
     };
-    
+
     result := FAST_ARRAY(WRITE).create_with_capacity (argument_list.count);
     (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
       loc := argument_list.item j;
       val := args.item j;
-      (loc != NULL).if {	
+      (loc != NULL).if {
 	wrt := loc.write (val.position) value val;
 	result.add_last wrt;
-      } else {	
+      } else {
 	result.add_last NULL;
 	val.remove;
       };
     };
     result
   );
-  
+
   //
   // Comparaison.
   //
-  
+
   - compatibility_with other:PROFIL <-
   ( + n1,n2:INTEGER;
     (argument_list.count != other.argument_list.count).if {
@@ -272,226 +278,256 @@ Section Public
       };
     };
   );
-  
+
   - lookup n:STRING_CONSTANT :LOCAL <-
   ( + j:INTEGER;
     + result:LOCAL;
-    
+
     j := argument_list.lower;
-    {(j > argument_list.upper) || {argument_list.item j.name = n}}.until_do {      
+    {(j > argument_list.upper) || {argument_list.item j.name = n}}.until_do {
       j := j + 1;
     };
     (j <= argument_list.upper).if {
       result := argument_list.item j;
-    } else {
+    }.elseif {result_list != NULL} then {
       j := result_list.lower;
-      {(j > result_list.upper) || {result_list.item j.name = n}}.until_do {      
+      {(j > result_list.upper) || {result_list.item j.name = n}}.until_do {
         j := j + 1;
       };
       (j <= result_list.upper).if {
         result := result_list.item j;
       };
     };
-        
+
     result
   );
-  
+
   //
   // Execute.
   //
-  
+
   - remove_inline <-
-  (    
-    PROFIL_LIST.remove Self;    
+  (
+    PROFIL_LIST.remove Self;
   );
-  
+
   - remove <-
-  ( 
-    code.remove;    
+  (
+    code.remove;
   );
-  
+
   - search_and_convert_tail_recursive <-
   ( + switch:SWITCH;
     + msg:CALL_SLOT;
     + lst:LIST;
     + count_recur:INTEGER;
-            
+
     (
       (! mode_recursive)      &&
-      {is_not_tail_recursive} &&       
-      {! code.is_empty} && 
+      {is_not_tail_recursive} &&
+      {! code.is_empty} &&
       {result_list.is_empty}
-    ).if {                      
-      switch ?= code.last;            
-      (switch != NULL).if {	                
+    ).if {
+      switch ?= code.last;
+      (switch != NULL).if {
 	// Verification cases:
 	(switch.list.lower).to (switch.list.upper) do { j:INTEGER;
 	  lst := switch.list.item j.code;
 	  (lst.is_empty).if_false {
 	    msg ?= lst.last;
-	    ((msg != NULL) && {msg.profil = Self}).if {	      	      
+	    ((msg != NULL) && {msg.profil = Self}).if {
 	      count_recur := count_recur + 1;
 	    };
 	  };
 	};
 	(count_recur = switch.list.count).if {
 	  semantic_error (slot.position,"Recursivity without end.");
-        };        	
+        };
         ((count_intern_call - 1) = count_recur).if {
           ((link_count = count_intern_call) || {! is_context_sensitive}).if {
-            new_execute_pass;              
-            stat := 0; 
+            new_execute_pass;
+            stat := 0;
             convert_tail_recursive;
           };
         };
       };
     };
   );
-  
+
   - i_am_the_last i:INSTR :BOOLEAN <-
   (
     code.i_am_the_last i
   );
-  
+
   - execute_recursive <-
-  ( + old_list_current:LIST;    
-    
+  ( + old_list_current:LIST;
+    + old_profil_current:PROFIL;
+
     (stat = -1).if {
-      count_intern_call := count_intern_call + 1;            
-      (count_intern_call = 1).if {	  	  
-	old_list_current   := list_current;
-	//
+      count_intern_call := count_intern_call + 1;
+      (count_intern_call = 1).if {
+        old_list_current   := list_current;
+        old_profil_current := profil_current;
+        //
+        profil_current := Self;
 	execute 3;
-	//	
-	list_current   := old_list_current;
-	? {code != NULL};      
-	(count_intern_call = 1).if {	  
+	//
+        list_current   := old_list_current;
+        profil_current := old_profil_current;
+	? {code != NULL};
+	(count_intern_call = 1).if {
           stat := 0;
 	} else {
-          stat := recursivity_bit;          
-        };	              
+          stat := recursivity_bit;
+        };
       };
     };
   );
-  
+
   - execute inline_lev:INTEGER <-
   ( + old_seq_inline:UINTEGER_32;
-        
+
     list_current  := NULL;
     old_seq_inline := seq_inline;
-    
-    CALL_SLOT.reset_count_context_sensitive;  
-    
+
+    CALL_SLOT.reset_count_context_sensitive;
+
     seq_call_and_loop := seq_call_and_loop + 1;
-    
-    search_and_convert_tail_recursive;    
-    
-    code ?= code.execute; 
-    
-    // BSBS: Netoyer les result pas utile
-    
+
+    search_and_convert_tail_recursive;
+
+    code ?= code.execute;
+    // Nettoyer les result ...
+    (result_list != NULL).if {
+      (result_list.lower).to (result_list.upper) do { i:INTEGER;      
+        ((result_list.item i != NULL) && {result_list.item i.ensure_count = 0}).if {
+          result_list.put NULL to i;
+        };
+      };
+    };
     LOCAL_SEQ.clear;
-    
+
     seq_call_and_loop := seq_call_and_loop + 1;
-        
+
     (
       (
         (
-          (CALL_SLOT.count_context_sensitive = 0) && 
+          (CALL_SLOT.count_context_sensitive = 0) &&
           {! mode_recursive} &&
           {stat = 0} &&
-          {is_context_sensitive || {(seq_inline - old_seq_inline) < inline_lev}} 
+          {is_context_sensitive || {(seq_inline - old_seq_inline) < inline_lev}}
         ) || {link_count = 1}
       ) &&
       {! is_interrupt} && {! is_external} // &&
       //{(cop_argument = NULL) || {! result_list.is_empty}}
     ).if {
-      stat := stat | inlining_bit;      
+      stat := stat | inlining_bit;
     };
+    (
+      (is_external) &&
+      {argument_list.first != NULL} &&
+      {argument_list.first.ensure_count = 0}
+    ).if {
+      argument_list.put NULL to 0;
+    };    
   );
-  
+
   //
   // Genere.
   //
-  
+
   - is_static:BOOLEAN <- deferred;
-  
+
   - genere_handler buffer:STRING <-
   (
     (link_count != 0).if {
       genere_handler_intern buffer;
-      buffer.append ";\n"; 
+      buffer.append ";\n";
     };
     ((cop_link_count != 0) && {result_list.count = 0}).if {
       genere_handler_cop buffer;
-      buffer.append ";\n"; 
+      buffer.append ";\n";
     };
   );
-  
+
   - genere_handler_intern buffer:STRING <-
-  ( + ts:TYPE_FULL;    
+  ( + ts:TYPE_FULL;
     + v:LOCAL;
-    
+    + i_result:INTEGER;
+
     (is_static).if {
       buffer.append "static ";
-    };        
-    
-    // Result.    
-    (result_list.is_empty).if {
-      buffer.append "void ";
-    } else {      
-      ts := result_list.first.type;            
+    };
+
+    // Result.
+    {(i_result <= result_list.upper) && {result_list.item i_result = NULL}}.while_do {
+      i_result := i_result + 1;
+    };
+    (i_result <= result_list.upper).if {
+      ts := result_list.item i_result.type;
       ts.genere_declaration buffer;
       ts.genere_star_declaration buffer;
       buffer.add_last ' ';
+      i_result := i_result + 1;
+    } else {      
+      buffer.append "void ";
     };
-    
+
     // Name.
     buffer.append name;
     buffer.add_last '(';
-    
-    // Arguments.    
+
+    // Arguments.
     (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
       v := argument_list.item j;
       (v != NULL).if {
-        ? {(v.style = ' ') || {v.style = '!'}};        
-        genere v result FALSE in buffer;	
+        ? {(v.style = ' ') || {v.style = '!'}};
+        genere v result FALSE in buffer;
         buffer.add_last ',';
       };
-    };    
-    
-    // Results.      
-    (result_list.lower + 1).to (result_list.upper) do { j:INTEGER;
-      v := result_list.item j;
-      v.set_result TRUE;
-      genere v result TRUE in buffer;
-      buffer.add_last ',';
     };
+
+    // Results.
+    {i_result <= result_list.upper}.while_do {
+      {(i_result <= result_list.upper) && {result_list.item i_result = NULL}}.while_do {
+        i_result := i_result + 1;
+      };
+      (i_result <= result_list.upper).if {
+        v := result_list.item i_result;
+        v.set_result TRUE;
+        genere v result TRUE in buffer;
+        buffer.add_last ',';
+        i_result := i_result + 1;
+      };
+    };
+    //    
     (buffer.last = ',').if {
       buffer.remove_last 1;
     };
     buffer.add_last ')';
   );
-  
+
   - genere_handler_cop buffer:STRING <-
   (
     buffer.append "lith_object *COP_";
     buffer.append name;
     buffer.append "(lith_object *obj,pthread_mutex_t *mutex)";
   );
-  
+
   - genere buffer:STRING <-
-  ( + loc:LOCAL;
-    + t,ts:TYPE_FULL;
+  ( 
+    + ts:TYPE_FULL;
     + v:LOCAL;
     + np:INTEGER;
     + low:INTEGER;
-    + idf:STRING_CONSTANT;
-    
+
     ((stat & recursivity_bit) != 0).if {
       counter_recursivity_function := counter_recursivity_function + 1;
     };
     counter_function := counter_function + 1;
+    (is_speed_push).if {
+      PUSH_SPEED.start_c_function name;
+    };
     //
     profil_current := Self;
     ((link_count != 0) || {result_list.count != 0}).if {
@@ -501,55 +537,34 @@ Section Public
         buffer.add_last '\n';
         genere_handler_cop buffer;
         buffer.append "\n{ ";
-        
+
         buffer.append " self;\n\
         \  self = ";
         buffer.append "ptr;\n\
         \  pthread_mutex_lock (&(self->mutex));\n\
         \  pthread_setspecific(current_thread,self);\n  ";
         buffer.append name;
-        buffer.append "(self);\n";        
+        buffer.append "(self);\n";
         buffer.append "  pthread_mutex_unlock (&(self->mutex));\n\
         \  return(NULL);\n\
         \};\n";
       };
       // Version normal.
       buffer.add_last '\n';
-      genere_handler_intern buffer;      
+      genere_handler_intern buffer;
       buffer.add_last '\n';
       add_comment buffer;
       //
       buffer.append "{\n";
       indent.append "  ";
-      code.genere_extern buffer;    
-      (result_list.is_empty).if_false {
-        loc := result_list.first;
-        buffer.append indent;      
-        buffer.append "return(";          
-        t := loc.type;
-        (
-          (t.is_expanded) && 
-          {! t.is_expanded_ref} && 
-          {! t.is_expanded_c}
-        ).if {
-          buffer.add_last '&';
-        };	
-        (loc.my_alias = NULL).if {
-          idf := loc.intern_name;
-        } else {
-          idf := loc.my_alias.intern_name;
-        };
-        buffer.append idf;
-        buffer.append ");\n";    
-      };
-      // End.
-      indent.remove_last 2;    
+      code.genere_extern buffer result result_list;      
+      indent.remove_last 2;
       buffer.append indent;
-      buffer.append "}\n";    
-    } else {    
+      buffer.append "}\n";
+    } else {
       // COP direct.
       buffer.add_last '\n';
-      genere_handler_cop buffer;      
+      genere_handler_cop buffer;
       buffer.add_last '\n';
       add_comment buffer;
       //
@@ -559,24 +574,24 @@ Section Public
         buffer.append indent;
         v := argument_list.first;
         ((v != NULL) && {v.name = ALIAS_STR.variable_self}).if {
-          genere v result FALSE in buffer;	
+          genere v result FALSE in buffer;
           buffer.add_last '=';
           put_cast_self buffer;
-          buffer.append "obj;\n";      
+          buffer.append "obj;\n";
           low := 1;
-        };        
+        };
       };
-      (argument_list.count-low > 0).if {        
+      (argument_list.count-low > 0).if {
         (low).to (argument_list.upper) do { j:INTEGER;
           v := argument_list.item j;
           (v != NULL).if {
             buffer.append indent;
-            genere v result FALSE in buffer;	
+            genere v result FALSE in buffer;
             buffer.append "=(";
             ts := v.type;
             ts.genere_declaration buffer;
             buffer.add_last ' ';
-            ts.genere_star_declaration buffer;	
+            ts.genere_star_declaration buffer;
             buffer.append ")((";
             put_cast_self buffer;
             buffer.append "obj)->param_";
@@ -585,48 +600,57 @@ Section Public
             np := np + 1;
           };
         };
-        type_self.raw.set_param np;        
-      };         
+        type_self.raw.set_param np;
+      };
       buffer.append "  pthread_mutex_unlock(&obj->mutex);\n";
-      buffer.append "  pthread_mutex_lock(mutex);\n";      
+      buffer.append "  pthread_mutex_lock(mutex);\n";
       //
       name.print; '\n'.print;
-      
-      code.genere_extern buffer;    
+
+      code.genere_extern buffer result NULL;
       //
       buffer.append "  return NULL;\n}\n";
       indent.remove_last 2;
-    };    
+    };
   );
-  
+    
   //
   // Display.
   //
-    
+
   - display buffer:STRING <-
-  (    
+  (
     buffer.append (slot.name);
     append_type buffer;
-  );    
-  
+  );
+
   - display_all buffer:STRING <-
   (
     display buffer;
     code.display buffer;
     buffer.append "\n---------------------\n";
   );
-  
-Section Private  
-  
+
+  //
+  // Statistic
+  //
+
+  - nb_func_arg:FAST_ARRAY2(INTEGER)     := FAST_ARRAY2(INTEGER).create (8,8);
+  - nb_arg_size_type:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create 64;
+
+//  - list_cpa:HASHED_SET(ABSTRACT_STRING) := HASHED_SET(ABSTRACT_STRING).create;
+
+Section Private
+
   - put_cast_self buffer:STRING <-
   (
     buffer.add_last '(';
-    type_self.genere_declaration buffer;	
+    type_self.genere_declaration buffer;
     buffer.add_last ' ';
     type_self.genere_star_declaration buffer;
     buffer.add_last ')';
   );
-  
+
   - add_comment buffer:STRING <-
   (
     buffer.append "/* ";
@@ -641,20 +665,94 @@ Section Private
     } else {
       buffer.append "Inlinable.";
     };
+    (is_context_sensitive).if {
+      buffer.append " CONTEXT!";
+    } else {
+      buffer.append " NO CONTEXT!";
+    };
     buffer.append " */\n";
   );
-  
+
+  /*
+  - recur_cpa buf:STRING arg n:INTEGER <-
+  ( + var:LOCAL;
+    + tmp:ABSTRACT_STRING;
+
+    (n > argument_list.upper).if {
+      tmp := list_cpa.reference_at buf;
+      (tmp = NULL).if {
+        list_cpa.add (ALIAS_STR.get buf);
+      };
+    } else {
+      var := argument_list.item n;
+      (var != NULL).if {
+        var.type_list.lower.to (var.type_list.upper) do { i:INTEGER;
+          buf.add_last ' ';
+          buf.append (var.type_list.item i.name);
+          recur_cpa buf arg (n+1);
+          buf.keep_head (Old buf.count);
+        };
+      } else {
+        recur_cpa buf arg (n+1);
+      };
+    };
+  );
+  */
+
   - append_type buffer:STRING <-
   ( + v:VARIABLE;
-    
+    + nb_arg,nb_arg_poly,tmp:INTEGER;
+    //+ s:SLOT;
+
     buffer.add_last '(';
     (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
       v := argument_list.item j;
       (v != NULL).if {
+        nb_arg := nb_arg + 1; // BSBS à mettre ds le if
+        (is_statistic).if {
+
+          (v.type_set.count > 1).if {
+            nb_arg_poly := nb_arg_poly + 1;
+          };
+          tmp := v.type_set.count;
+          (tmp > nb_arg_size_type.upper).if {
+            nb_arg_size_type.force 1 to tmp;
+          } else {
+            nb_arg_size_type.put (
+              nb_arg_size_type.item tmp + 1
+            ) to tmp;
+          };
+        };
+        v.type.display buffer;
 	v.display_type buffer;
 	buffer.add_last ',';
       };
     };
+    (is_statistic).if {
+      (
+        (nb_arg      > nb_func_arg.upper1) ||
+        {nb_arg_poly > nb_func_arg.upper2}
+      ).if {
+        warning_error (position,"Too much arguments for a statistic.");
+      } else {
+        tmp := nb_func_arg.item (nb_arg,nb_arg_poly) + 1;
+        nb_func_arg.put tmp to (nb_arg,nb_arg_poly);
+      };
+    };
+    /*
+    string_tmp.clear;
+    nb_arg.append_in string_tmp;
+    string_tmp.add_last ' ';
+    s := slot;
+    (s != NULL).if {
+      string_tmp.append (type_self.raw.name);
+      string_tmp.add_last ' ';
+      string_tmp.append (s.name);
+    } else {
+      string_tmp.append name;
+    };
+    recur_cpa string_tmp arg (argument_list.lower);
+    */
     (buffer.last = ',').if {
       buffer.remove_last 1;
     };
@@ -662,61 +760,62 @@ Section Private
     (result_list.is_empty).if {
       buffer.append " Void ";
     } else {
-      buffer.append " With result ";      
+      buffer.append " With result ";
     };
   );
-  
+
   - genere v:LOCAL result is_res:BOOLEAN in buffer:STRING <-
   ( + ts:TYPE_FULL;
-    
+
     ts := v.type;
+
     ts.genere_declaration buffer;
     buffer.add_last ' ';
-    ts.genere_star_declaration buffer;	
+    ts.genere_star_declaration buffer;
     (is_res).if {
       buffer.add_last '*';
     };
     buffer.append (v.intern_name);
   );
-  
+
 Section PROFIL, LISAAC
-  
+
   - counter_function:INTEGER;
   - counter_recursivity_function:INTEGER;
-  
+
 Section Private
-  
+
   - convert_tail_recursive <-
   ( + switch:SWITCH;
-    + msg_slot:CALL_SLOT;    
-    + body:LIST;     
+    + msg_slot:CALL_SLOT;
+    + body:LIST;
     + loop:LOOP;
     + push:PUSH;
     + new_code:LIST;
-        
-    new_code := LIST.create (code.position);        
-    (debug_level_option != 0).if {      
+
+    new_code := LIST.create (code.position);
+    (debug_level_option != 0).if {
       push ?= code.first;
-      new_code.add_last (push.my_copy);      
+      new_code.add_last (push.my_copy);
       push.set_first FALSE;
     };
-            
+
     loop := LOOP.create position name name body code;
     new_code.add_last loop;
-        
+
     // Extract Switch/body:
     switch ?= code.last;
     (switch.list.lower).to (switch.list.upper) do { k:INTEGER;
       body := switch.list.item k.code;
-      (body.is_empty).if_false {	
+      (body.is_empty).if_false {
 	msg_slot ?= body.last;
-        ((msg_slot != NULL) && {msg_slot.profil = Self}).if {	  	  
-          link_count := link_count - 1;          
+        ((msg_slot != NULL) && {msg_slot.profil = Self}).if {
+          link_count := link_count - 1;
 	  msg_slot.argument_to_assignment body index (body.upper) alias FALSE style '!';
 	  body.put (LOOP_END.create (msg_slot.position) loop loop) to (body.upper);
-	};	
+	};
       };
     };
     count_intern_call := 1;
-    code := new_code;    
+    code := new_code;
   );

@@ -1,131 +1,111 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := NODE;
 
   - copyright := "2003-2007 Benoit Sonntag";
-  
+
   - author    := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment   := "Parent for all switch node";
-    
+
 Section Inherit
-  
+
   + parent_instr:Expanded INSTR;
-  
+
 Section NODE, PROFIL_BLOCK, ITM_OLD
-  
+
   - node_list_base:LINKED_LIST(NODE_TYPE) := node_list;
-  
+
   - node_list:LINKED_LIST(NODE_TYPE) := LINKED_LIST(NODE_TYPE).create;
-  
+
   - set_node_list l:LINKED_LIST(NODE_TYPE) <-
   (
     node_list := l;
   );
-  
-Section PROTOTYPE  
-  
+
+Section PROTOTYPE
+
   - extend_pass <-
   ( + j:INTEGER;
     + is_ok:BOOLEAN;
-    
+
     VARIABLE.update;
-    j := node_list.lower;    
+    j := node_list.lower;
     {j <= node_list.upper}.while_do {
-      is_ok := node_list.item j.update;      
+      is_ok := node_list.item j.update;
       (is_ok).if {
 	node_list.remove j;
-      } else {	
+      } else {
 	j := j + 1;
-      };	            
-    };   
+      };
+    };
   );
-  
+
 Section Public
-  
+
   //
   // Extern Creation read.
   //
-  
-  - new_read p:POSITION slot s:SLOT receiver rec:EXPR 
+
+  - new_read p:POSITION slot s:SLOT receiver rec:EXPR
   self my_self:EXPR intern is_intern:BOOLEAN :NODE <-
   ( + result:NODE_TYPE;
     + dta:DTA_RD;
-    //    
+    //
     dta := DTA_RD.create p call s self my_self intern is_intern;
     result := NODE_TYPE.create rec with dta;
-    //    
+    //
     node_list.add_last result;
     result
   );
 
-  - new_read p:POSITION slot s:SLOT receiver rec:EXPR 
+  - new_read p:POSITION slot s:SLOT receiver rec:EXPR
   with larg:FAST_ARRAY(EXPR) intern is_intern:BOOLEAN :NODE <-
-  ( + dta:DTA_RD_ARGS;        
+  ( + dta:DTA_RD_ARGS;
     + result:NODE_TYPE;
-    
-    // Control argument type.            
+
+    // Control argument type.
     dta := DTA_RD_ARGS.create p call s with larg intern is_intern;
-    s.check_argument_type larg for dta;    
+    s.check_argument_type larg for dta;
     result := NODE_TYPE.create rec with dta;
-    //    
+    //
     node_list.add_last result;
     result
   );
-  
+
   //
   // Just for ITM_EXPRESSION.
   //
-  
+
   - new_read_partial p:POSITION slot s:SLOT :NODE_TYPE <-
-  ( + dta:DTA_RD_ARGS;    
-        
+  ( + dta:DTA_RD_ARGS;
+
     dta := DTA_RD_ARGS.create_partial p call s;
     NODE_TYPE.create_partial dta
   );
-  
+
   - new_read_finalize (rec:EXPR,s:SLOT) with larg:FAST_ARRAY(EXPR) <-
-  ( + dta:DTA_RD_ARGS;    
-    // Control argument type.            
+  ( + dta:DTA_RD_ARGS;
+    // Control argument type.
     dta ?= data;
-    
+
     dta.make (data.position) call s with larg intern FALSE;
-    data.slot.check_argument_type larg for dta;            
+    data.slot.check_argument_type larg for dta;
     make rec with data;
-    //        
+    //
     node_list.add_last Self;
   );
-  
+
   //
   // Extern creation writes.
   //
-  
+
   - new_write p:POSITION slot s:SLOT receiver rec:EXPR value val:EXPR :NODE <-
-  ( + dta:DTA_WR_VALUE;    
+  ( + dta:DTA_WR_VALUE;
     + result:NODE_TYPE;
-        
+
     dta := DTA_WR_VALUE.create p slot s self rec value val;
     result := NODE_TYPE.create rec with dta;
-    //    
+    //
     node_list.add_last result;
     result
   );
@@ -133,53 +113,54 @@ Section Public
   - new_write p:POSITION slot s:SLOT receiver rec:EXPR code val:ITM_CODE :NODE <-
   ( + dta:DTA_WR_CODE;
     + result:NODE_TYPE;
-    
+
     dta := DTA_WR_CODE.create p slot s self rec code val;
     result := NODE_TYPE.create rec with dta;
     //
     node_list.add_last result;
     result
   );
-  
+
   //
   // Extern creation cast.
   //
-  
+
   - new_cast p:POSITION type typ:TYPE_FULL with val:EXPR :NODE <-
+  [ -? {p != 0}; ]
   ( + dta:DTA_CAST;
     + result:NODE_TYPE;
-    
+
     dta := DTA_CAST.create p type typ;
     result := NODE_TYPE.create val with dta;
     //
     node_list.add_last result;
     result
   );
-  
+
   //
   // Extern creation value block.
   //
-  
+
   - new_block p:POSITION receiver e:EXPR with larg:FAST_ARRAY(EXPR) :NODE <-
   ( + dta:DTA_BLOCK;
-    + result:NODE_TYPE;    
+    + result:NODE_TYPE;
     + lst_typ_f:FAST_ARRAY(TYPE_FULL);
     + new_expr:EXPR;
     + block_model:TYPE_BLOCK;
     + pb:PROFIL_BLOCK;
     + pos:POSITION;
-    
+
     pb ?= e.static_type.raw;
     (pb = NULL).if {
       block_model ?= e.static_type.raw;
     } else {
-      block_model := pb.to_type_block;      
+      block_model := pb.to_type_block;
     };
-    // Control argument type.            
+    // Control argument type.
     lst_typ_f := block_model.argument_list;
     pos       := block_model.position;
-    
-    (lst_typ_f.count+1 != larg.count).if {      
+
+    (lst_typ_f.count+1 != larg.count).if {
       string_tmp.copy "Incorrect size of vector argument for this block. (Value:";
       larg.count.append_in string_tmp;
       string_tmp.append ", Type:";
@@ -189,12 +170,12 @@ Section Public
       pos.put_position;
       p  .put_position;
       POSITION.send_error;
-    };  
-    (larg.lower + 1).to (larg.upper) do { j:INTEGER;            
+    };
+    (larg.lower + 1).to (larg.upper) do { j:INTEGER;
       new_expr := larg.item j.check_type (lst_typ_f.item (j-1)) with pos;
       larg.put new_expr to j;
     };
-    //    
+    //
     (debug_level_option != 0).if {
       (profil_current = NULL).if {
 	crash_with_message "NODE";
@@ -205,27 +186,30 @@ Section Public
     };
     //
     dta    := DTA_BLOCK.create block_model with larg;
-    result := NODE_TYPE.create e with dta;    
+    result := NODE_TYPE.create e with dta;
     //
     node_list.add_last result;
     result
   );
-  
-Section Public  
-  
-  - position:POSITION <- data.position;
-  
+
+Section Public
+
+  - position:POSITION <-
+  (
+    data.position
+  );
+
   + data:DTA;
-  
-  + expr:EXPR;  
-    
+
+  + expr:EXPR;
+
   + first_code:LIST;
-  + first_type:TYPE;  
+  + first_type:TYPE;
   + switch:SWITCH;
-  
-  - count:INTEGER <- 
+
+  - count:INTEGER <-
   ( + result:INTEGER;
-    
+
     (switch != NULL).if {
       result := switch.count;
     }.elseif {first_type != NULL} then {
@@ -233,63 +217,69 @@ Section Public
     };
     result
   );
-  
+
   - result_expr:EXPR <- deferred;
-  
+
   //
   // Execute.
   //
-  
+
   - remove <-
   (
     data.remove;
-    (switch = NULL).if {      
+    (switch = NULL).if {
       expr.remove;
       (first_code != NULL).if {
 	first_code.remove;
       };
-    } else {      
+    } else {
       switch.remove;
     };
   );
-  
+
   - execute:INSTR <-
   ( + result:INSTR;
 
     data.remove;
     (switch != NULL).if {
-      result := switch.execute;      
-    } else {            
-      expr.remove;      
+      result := switch.execute;
+    } else {
+      expr.remove;
       (first_code != NULL).if { // Warning: Dead Code!
 	result := first_code.execute;
       };
     };
     result
   );
-    
-  
-Section NODE, DTA  
+
+  - genere buffer:STRING <-
+  (
+    "Genere NODE!\n".print;
+    crash;
+  );
+
+
+Section NODE, DTA
 
   //
   // Update.
   //
-  
+
   - update_link self_type:TYPE_FULL :BOOLEAN <-
   (
     deferred;
   );
-  
+
 Section Public
-    
+
   //
   // Display.
   //
-  
+
   - display buffer:STRING <-
   (
     (switch = NULL).if {
-      (first_code = NULL).if {	
+      (first_code = NULL).if {
 	to_pointer.append_in buffer;
 	buffer.append "<NODE VIDE=";
 	expr.display buffer;
@@ -306,4 +296,4 @@ Section Public
       switch.display buffer;
     };
   );
-  
+

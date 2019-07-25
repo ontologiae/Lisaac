@@ -1,30 +1,10 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := KNIGHT;
-  
+
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
 
-  - comment := 
+  - comment :=
   "The classic KNIGHT problem on a N times N square chessboard. \
   \The knight have to pass on all places of the chessboard once \
   \a time. For instance, here is solution for a 7 X 7 chesboard,\
@@ -37,13 +17,13 @@ Section Header
   \           43   22   41   32   15    8   47                  \
   \           34   31   20   45   48   13    6                  \
   \           21   44   33   14    7   46   49                  ";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
 
 Section Private
-  
+
   - chess_min:INTEGER := 3;
 
   - chess_max:INTEGER := 24;
@@ -78,7 +58,7 @@ Section Private
     ? {line <= size};
     ? {1 <= column};
     ? {column <= size};
-    
+
     chessboard := ARRAY2(INTEGER).create (1,1) to (size,size);
     chessboard.put 1 to (line,column);
     (solution (line,column)).if {
@@ -94,10 +74,10 @@ Section Private
   - solution (line,column:INTEGER) :BOOLEAN <-
   ( + value,i:INTEGER;
     + result:BOOLEAN;
-    
+
     (chessboard.count = chessboard.item (line,column)).if {
       result := TRUE;
-    } else {      
+    } else {
       i := 1;
       value := chessboard.item (line,column);
       {(result) || {i > 8}}.until_do {
@@ -111,7 +91,7 @@ Section Private
   - try (line, column, value:INTEGER) :BOOLEAN <-
   // Try to place the knight by used cross back-tracking method.
   ( + result:BOOLEAN;
-    
+
     nb_tries := nb_tries + 1;
     (chessboard.valid_index (line,column)).if {
       (chessboard.item (line,column) = 0).if {
@@ -129,7 +109,7 @@ Section Private
   // Ask for question `s' until the answer is in range `min' `max'.
   ( + stop:BOOLEAN;
     + result:INTEGER;
-    
+
     {stop}.until_do {
       s.print;
       IO.read_integer;
@@ -144,13 +124,13 @@ Section Private
     };
     result
   );
-  
+
 Section Public
-  
+
   - print <-
   // Display the cheesboard.
   ( + separator:STRING;
-    
+
     separator := STRING.create_filled (' ',(3 * chessboard.upper1 + 1));
     separator.fill_with '-';
     separator.extend '\n';
@@ -168,27 +148,27 @@ Section Public
       separator.print;
     };
   );
-    
+
   - main <-
   ( + size, line, column:INTEGER;
-    
+
     ((COMMAND_LINE.upper >= 1) && {COMMAND_LINE.item 1.is_integer}).if {
       size := COMMAND_LINE.item 1.to_integer;
     };
     (! size.in_range chess_min to chess_max).if {
       size := ask ("Chess-board size: ",chess_min,chess_max);
-    };    
+    };
     ((COMMAND_LINE.upper >= 2) && {COMMAND_LINE.item 2.is_integer}).if {
       line := COMMAND_LINE.item 2.to_integer;
     };
     (! line.in_range 1 to size).if {
       line := ask ("Start line: ",1,size);
-    };    
+    };
     ((COMMAND_LINE.upper >= 3) && {COMMAND_LINE.item 3.is_integer}).if {
       column := COMMAND_LINE.item 3.to_integer;
-    };    
+    };
     (! column.in_range 1 to size).if {
       column := ask ("Start column: ",1,size);
-    };    
+    };
     knight (size,line,column);
   );

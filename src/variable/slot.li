@@ -1,78 +1,58 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := SLOT;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parent for slot runnable";
-  
+
 Section Inherit
-  
+
   + parent_itm_slot:ITM_SLOT := ITM_SLOT;
-  
+
 Section Public
-  
+
   - common_slot:SLOT <- Self;
-  
+
   + slot_id:SLOT_DATA;
-  
+
   + receiver_type:TYPE;
-  
+
   //
   // Creation.
   //
-  
+
   - create s:ITM_SLOT type t:TYPE :SLOT <-
   ( + result:SLOT;
-        
+
     result := clone;
-    result.make s type t    
+    result.make s type t
   );
-  
+
   - make s:ITM_SLOT type t:TYPE :SLOT <-
   ( + result:SLOT;
-        
+
     parent_itm_slot := s;
     receiver_type := t;
     //
     (affect = '<').if {
-      // Code.      
-      result := slot_code_intern := SLOT_CODE.create Self with value;      
+      // Code.
+      result := slot_code_intern := SLOT_CODE.create Self with value;
     } else {
-      // Data      
+      // Data
       create_slot_data;
       result := slot_data_intern;
-    };    
+    };
     //
     result
   );
-    
+
   //
   // Style.
   //
-  
+
   - lower_style:INTEGER <-
   ( + result:INTEGER;
     (slot_data_intern = NULL).if {
@@ -80,10 +60,10 @@ Section Public
     };
     result
   );
-  
-  - upper_style:INTEGER <- 
+
+  - upper_style:INTEGER <-
   ( + result:INTEGER;
-    (slot_code_intern != NULL).if {      
+    (slot_code_intern != NULL).if {
       (slot_code_list != NULL).if {
 	result := slot_code_list.upper + 2;
       } else {
@@ -92,11 +72,11 @@ Section Public
     };
     result
   );
-  
+
   - slot_data:SLOT_DATA <-
-  (     
+  (
     (slot_data_intern = NULL).if {
-      create_slot_data;      
+      create_slot_data;
       (slot_id = NULL).if {
 	slot_id := SLOT_DATA.create common_slot type_full (TYPE_ID.get_index 1.default);
 	slot_id.init;
@@ -104,10 +84,10 @@ Section Public
     };
     slot_data_intern
   );
-    
+
   - slot_code idx:INTEGER :SLOT_CODE <-
   ( + result:SLOT_CODE;
-    
+
     (idx = 1).if {
       result := slot_code_intern;
     } else {
@@ -119,7 +99,7 @@ Section Public
   - add_style v:ITM_CODE :INTEGER <-
   ( + slot:SLOT_CODE;
     + result:INTEGER;
-           
+
     slot := SLOT_CODE.create common_slot with v;
     (slot_code_intern = NULL).if {
       slot_code_intern := slot;
@@ -136,14 +116,14 @@ Section Public
 	slot_id.init;
       };
       result := slot_code_list.upper + 2;
-    };    
+    };
     result
   );
 
   //
   // Display.
   //
-  
+
   - display_all <-
   (
     (lower_style).to (upper_style) do { j:INTEGER;
@@ -152,31 +132,31 @@ Section Public
   );
 
 Section Public
-  
+
   + slot_data_intern:SLOT_DATA; // Index 0
   + slot_code_intern:SLOT_CODE; // Index 1
-  
+
   + slot_code_list:FAST_ARRAY(SLOT_CODE); // Index x+2
-  + slot_data_list:FAST_ARRAY(SLOT_DATA); // Vector data slot  
-  
+  + slot_data_list:FAST_ARRAY(SLOT_DATA); // Vector data slot
+
   - create_slot_data <-
   ( + typ:TYPE_FULL;
-    + tm:ITM_TYPE_MULTI;            
+    + tm:ITM_TYPE_MULTI;
     + ts:ITM_TYPE_MONO;
-    
-    tm ?= result_type;    
-    (tm != NULL).if {            
+
+    tm ?= result_type;
+    (tm != NULL).if {
       slot_data_list := FAST_ARRAY(SLOT_DATA).create_with_capacity (tm.count-1);
-      (tm.lower).to (tm.upper-1) do { k:INTEGER;	
+      (tm.lower).to (tm.upper-1) do { k:INTEGER;
 	typ := tm.item k.to_run_for receiver_type;
 	slot_data_list.add_last (
 	  SLOT_DATA.create common_slot type_full typ
 	);
-      };      
-      typ := tm.last.to_run_for NULL;
+      };
+      typ := tm.last.to_run_for receiver_type;
     } else {
       ts ?= result_type;
       typ := ts.to_run_for receiver_type;
     };
-    slot_data_intern := SLOT_DATA.create common_slot type_full typ;    
+    slot_data_intern := SLOT_DATA.create common_slot type_full typ;
   );

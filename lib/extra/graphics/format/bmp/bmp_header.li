@@ -1,52 +1,32 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := BMP_HEADER;
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
-  
+
   - comment     := "Mapping BMP Image File Header structure";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
-  
+
 Section Mapping
-  
+
   //
   // File Header
   //
-  
+
   + file_type1:CHARACTER;     //00h  Must be 'B'
-  + file_type2:CHARACTER;     //01h  Must be 'M'  
+  + file_type2:CHARACTER;     //01h  Must be 'M'
   + file_size:UINTEGER_32;       //02h  Size of file
   + reserved:UINTEGER_32;        //06h
-  + map_bitmap_offset:UINTEGER_32;   //0Ah   Offset of the data section  
-  
+  + map_bitmap_offset:UINTEGER_32;   //0Ah   Offset of the data section
+
   //
   // Bitmap Header
   //
-  
+
   + header_size:UINTEGER_32;     //0Eh  Size of this header
   + map_width:INTEGER;            //12h  width (in pixel) of the image
   + map_height:INTEGER;           //16h  height (in pixel)
@@ -61,15 +41,15 @@ Section Mapping
   + size_of_bitmap:UINTEGER_32;  //22h  size of image (in octet), useful for compression
   + h_resolution:UINTEGER_32;    //26h  horizontal resolution (in pixel per meter)
   + v_resolution:UINTEGER_32;    //2Ah  vertical resolution (in pixel per meter)
-  + colors_used:UINTEGER_32;     //2Eh  number of colors 
+  + colors_used:UINTEGER_32;     //2Eh  number of colors
   + colors_important:UINTEGER_32;//32h  number of important colors
 
-Section Public  
-  
+Section Public
+
   - bits_per_pixel:UINTEGER_16 <- map_bits_per_pixel;
-  
+
   - width :INTEGER <- map_width;
-  - height:INTEGER <- map_height;   
+  - height:INTEGER <- map_height;
   - bitmap_offset:UINTEGER_32 <- map_bitmap_offset;
 
   - file_type:STRING <-
@@ -79,17 +59,17 @@ Section Public
     result.add_last file_type2;
     result
   );
-  
+
   - is_valid:BOOLEAN <-
   (
     (file_type1 = 'B') && {file_type2 = 'M'}
   );
-  
+
   - is_bgr_format:BOOLEAN <-
   (
     header_size = object_size + get_nb_colors * 3
   );
-  
+
   - get_nb_colors:INTEGER <-
   ( + result:INTEGER;
     (colors_used = 0).if {
@@ -105,32 +85,32 @@ Section Public
     };
     result
   );
-  
+
   - is_1bit:BOOLEAN <-
   (
     bits_per_pixel = 1
   );
-  
+
   - is_4bit:BOOLEAN <-
   (
     bits_per_pixel = 4
   );
-  
+
   - is_8bit:BOOLEAN <-
   (
     bits_per_pixel = 8
   );
-  
+
   - is_24bit:BOOLEAN <-
   (
     bits_per_pixel = 24
   );
-  
+
   - is_rle8_compressed:BOOLEAN <-
   (
     compression = 1
   );
-  
+
   - print <-
   (
     "\nFile size: ".print;
@@ -147,13 +127,13 @@ Section Public
     bits_per_pixel.print;
     "\nCompression: ".print;
     compression
-    .when 0 then {"None".print;} 
+    .when 0 then {"None".print;}
     .when 1 then {"8-bit RLE".print;}
     .when 2 then {"4-bit RLE".print;}
-    .when 3 then {"Bitfield".print;};    
+    .when 3 then {"Bitfield".print;};
     "\nSize of bitmap: ".print;
     size_of_bitmap.print;
     "\nColors used: ".print;
-    colors_used.print;   
+    colors_used.print;
     '\n'.print;
   );

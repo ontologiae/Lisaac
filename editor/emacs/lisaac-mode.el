@@ -689,6 +689,8 @@
 
   ;; compatibility MS-DOS
   (replace-string "" "")
+  ;; Remove space not necessary
+  ;(replace-regexp " +$" "")
  ; (global-font-lock-mode t)
   (global-set-key "\M-g" 'goto-line)
 

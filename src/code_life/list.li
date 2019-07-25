@@ -1,154 +1,193 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := LIST;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Expression list, immediate evaluation";
-  
+
 Section Inherit
-  
+
   + parent_instr:Expanded INSTR;
-  
-Section Private  
-  
-  + expr_list:FAST_ARRAY(INSTR);
-    
-Section Public  
-  
+
+Section Private
+
+  + expr_list:NATIVE_ARRAY(INSTR);
+
+  + capacity:INTEGER;
+
+  - move lower_index:INTEGER to upper_index:INTEGER <-
+  (
+    upper_index.downto lower_index do { i:INTEGER;
+      expr_list.put (expr_list.item i) to (i + 1);
+    };
+  )
+  [
+    +? {count = Old count};
+  ];
+
+  - swap idx1:INTEGER with idx2:INTEGER <-
+  ( + e:INSTR;
+
+    e := expr_list.item idx1;
+    expr_list.put (expr_list.item idx2) to idx1;
+    expr_list.put e to idx2;
+  );
+
+Section Public
+
   - is_invariant:BOOLEAN <-
   ( + result:BOOLEAN;
     + j:INTEGER;
-    
+
     result := TRUE;
-    j := expr_list.lower;
-    {(j <= expr_list.upper) && {result}}.while_do {
-      result := expr_list.item j.is_invariant;
+    j := lower;
+    {(j <= upper) && {result}}.while_do {
+      result := item j.is_invariant;
       j := j + 1;
     };
     result
-  );    
-  
+  );
+
   - old_seq_or_and:UINTEGER_32;
-  
+
   //
   // Linked list INSTR.
   //
-  
-  - lower:INTEGER <- expr_list.lower + 1;
-  - upper:INTEGER <- expr_list.upper + 1;
-  - count:INTEGER <- expr_list.count;
-  
-  - first:INSTR  <- expr_list.first;  
-  - second:INSTR <- expr_list.second;
-  
-  - item i:INTEGER :INSTR <- expr_list.item (i-1);
-  
-  - current_item:INSTR <- expr_list.item index;
-  
-  - last:INSTR <- expr_list.last;
-  
+
+  - lower:INTEGER <- 0;
+  + upper:INTEGER;
+  - count:INTEGER <- upper + 1;
+
+  - first:INSTR  <-
+  [ -? {upper >= 0}; ]
+  (
+    expr_list.item 0
+  );
+
+  - second:INSTR <-
+  [ -? {upper >= 1}; ]
+  (
+    expr_list.item 1
+  );
+
+  - item i:INTEGER :INSTR <-
+  [ -? {i.in_range 0 to upper}; ]
+  (
+    expr_list.item i
+  );
+
+  - current_item:INSTR <- item index;
+
+  - last:INSTR <- item upper;
+
   - add_first i:INSTR <-
   (
-    expr_list.add_first i;
+    add_last i;
+    (upper = 0).if {
+    }.elseif {upper = 1} then {
+      swap 0 with 1;
+    } else {
+      move 0 to (upper - 1);
+      expr_list.put i to 0;
+    };
   );
-  
-  - add_last i:INSTR <- 
-  (
-    expr_list.add_last i;
-  );  
-  
-  - add e:INSTR to idx:INTEGER <-
-  (
-    expr_list.add e to (idx-1);
+
+  - add_last i:INSTR <-
+  ( + new_capacity:INTEGER;
+
+    (upper + 1 >= capacity).if {
+      new_capacity := 2 * capacity;
+      expr_list := expr_list.realloc capacity with new_capacity;
+      capacity := new_capacity;
+    };
+    upper := upper + 1;
+    expr_list.put i to upper;
   );
-  
+
+  - add element:INSTR to index:INTEGER <-
+  [ -? {index.in_range 0 to (upper+1)}; ]
+  (
+    add_last element;
+    (index != upper).if {
+      move index to (upper - 1);
+      expr_list.put element to index;
+    };
+  );
+
   - put e:INSTR to idx:INTEGER <-
+  [ -? {idx.in_range 0 to upper}; ]
   (
-    expr_list.put e to (idx-1);
-  );  
+    expr_list.put e to idx;
+  );
 
   - remove_last <-
+  [ -? {upper >= 0}; ]
   (
-    expr_list.remove_last;
+    upper := upper - 1;
   );
-  
+
   - remove_index idx:INTEGER <-
+  [ -? {idx.in_range 0 to upper}; ]
   (
-    expr_list.remove (idx-1);
+    expr_list.remove idx until upper;
+    upper := upper - 1;
   );
-    
+
   //
   // Iterator.
-  //  
-  
-  + index:INTEGER;
-  
+  //
+
+  + index:INTEGER := -1;
+
   - inc_index <-
   (
     index := index + 1;
   );
-  
+
   - insert_before e:INSTR <-
-  ( 
-    ? {e != NULL};
-    expr_list.add e to (index - 1);
+  [ -? {e != NULL}; ]
+  (
+    add e to index;
     index := index + 1;
   );
 
   - insert e:INSTR to idx:INTEGER <-
-  ( 
-    ? {e != NULL};
-    expr_list.add e to (idx - 1);
+  [ -? {e != NULL}; ]
+  (
+    add e to idx;
     (idx <= index).if {
       index := index + 1;
     };
   );
-  
+
   //
   // Flags.
   //
-  
+
   - is_empty:BOOLEAN <- count = 0;
-  
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION :SELF <-
   ( + result:SELF;
+
     result := clone;
     result.make p;
     result
   );
-    
+
   - make p:POSITION <-
   (
     new_depend_pass;
     position  := p;
-    expr_list := FAST_ARRAY(INSTR).create_with_capacity 2;
+    upper     := -1;
+    capacity  := 2;
+    expr_list := NATIVE_ARRAY(INSTR).calloc_intern capacity;
   );
 
   - my_copy:SELF <-
@@ -166,63 +205,81 @@ Section Public
   //
 
   - remove <-
-  (     
+  (
     (lower).to (upper) do { j:INTEGER;
       item j.remove;
-    };    
+    };
   );
-    
+
   //
   // Execute.
   //
-  
-  - i_am_the_last i:INSTR :BOOLEAN <- 
+
+  - i_am_the_last i:INSTR :BOOLEAN <-
   (
     last.i_am_the_last i
   );
-  
+
   - execute:INSTR <-
-  ( + result:INSTR;    
-        
-    execute_case;    
+  ( + result:INSTR;
+    
+    POSITION.push_context Self;
+    
+    execute_case;
 
     (list_current != NULL).if {
-      // Fusion list.      
-      (expr_list.is_empty).if_false {
+      // Merge the child list in the parent list
+      //
+      // Optimization: don't copy the last instruction but instead return it
+      // so it avoid shifting all elements of 1 position before shifting them
+      // back because the list is no longer there.
+      (is_empty).if_false {
         lower.to (upper-1) do { j:INTEGER;
           list_current.insert_before (item j);
-        };        
-        result := last; 
-        ? {result != NULL};      
+        };
+        result := last;
+        ? {result != NULL};
         new_execute_pass;
       };
-    } else {              
+    } else {
       result := Self;
-    };    
-    result    
-  );  
+    };
+    POSITION.pop_context;
     
-  - execute_case <-  
-  ( + new_expr:INSTR; 
+    result
+  );
+
+  - execute_case <-
+  ( + new_expr:INSTR;
     + old_list_current:LIST;
-    
+
+    + old_expr:INSTR;
+    + old_index:INTEGER;
+
     //
-    seq_list.add_last Self; 
+    seq_list.add_last Self;
     seq_inline := seq_inline + 1;
-    
-    // Update Context.    
+
+    // Update Context.
     old_list_current := list_current;
-    list_current := Self;    
-       
+    list_current := Self;
+
     // Execute expression list.
-    ? {index = 0};
+    ? {index = -1};
+
+    //"LIST BEG : ".print; print; '\n'.print;
+
     index := lower;
-    {index <= upper}.while_do {            
-      old_seq_or_and := seq_or_and;                  
-      new_expr := item index.execute;      
-      (new_expr != NULL).if {	
-        put new_expr to index;        
-        index := index + 1;        
+    {index <= upper}.while_do {
+      old_seq_or_and := seq_or_and;
+
+      old_expr := item index;
+      old_index := index;
+
+      new_expr := item index.execute;
+      (new_expr != NULL).if {
+        put new_expr to index;
+        index := index + 1;
         (new_expr = CALL_NULL).if {
           // Delete all ...
           {index <= upper}.while_do {
@@ -232,60 +289,94 @@ Section Public
         };
       } else {
 	remove_index index;
-      };                  
+      };
     };
-      
-    // Last.    
-    old_seq_or_and := seq_or_and;            
-    index := 0; // Debug necessity
-        
+
+    //"LIST END : ".print; print; '\n'.print;
+
+    // Last.
+    old_seq_or_and := seq_or_and;
+    index := -1; // Debug necessity
+
     // Restore Context.
-    list_current := old_list_current;    
+    list_current := old_list_current;
     //
-    seq_list.remove_last;    
+    seq_list.remove_last;
     seq_inline := seq_inline + 1;
   );
-  
+
 Section Public
-  
+
   //
   // Generation.
   //
-  
+
   - genere buffer:STRING <-
-  (         
+  (
     buffer.append "{\n";
     indent.append "  ";
-    
+
     current_list_level := current_list_level + 1;
-    
+
     genere_body buffer;
-    
+
     current_list_level := current_list_level - 1;
-    
-    indent.remove_last 2;    
+
+    indent.remove_last 2;
     buffer.append indent;
     buffer.add_last '}';
   );
-    
-  - genere_extern buffer:STRING <-
-  ( + pos_local:INTEGER;   
-              
-    // Local.    
+  
+
+  - genere_extern buffer:STRING result result_list:SLIM_ARRAY(LOCAL) <-
+  ( + pos_local,i_result:INTEGER;    
+    + t:TYPE_FULL;
+    + loc:LOCAL;
+    + idf:ABSTRACT_STRING;
+
+    // Local.
     pos_local := buffer.count+1;
     stack_local.clear;
-    
+
     ALIASER_LOCAL.reset;
-    
+
     genere_body buffer;
     
-    // Local.    
-    string_tmp.clear;        
+    // Result.
+    ((result_list != NULL) && {! result_list.is_empty}).if {
+      {(i_result <= result_list.upper) && {result_list.item i_result = NULL}}.while_do {
+        i_result := i_result + 1;
+      };
+      (i_result <= result_list.upper).if {
+        loc := result_list.item i_result;
+        buffer.append indent;
+        buffer.append "return(";
+        t := loc.type;
+        (
+          (t.is_expanded) &&
+          {! t.is_expanded_ref} &&
+          {! t.is_expanded_c}
+        ).if {
+          buffer.add_last '&';
+        };
+        (loc.my_alias = NULL).if {
+          idf := loc.intern_name;
+        } else {
+          idf := loc.my_alias.intern_name;
+        };
+        ALIASER_LOCAL.add_var_size loc;
+        buffer.append idf;
+        buffer.append ");\n";
+      };
+    };
+    
+    // Local.
+    string_tmp.clear;
     add_local (ALIASER_LOCAL.var_size.item 3) in string_tmp; // 64 bits
     add_local (ALIASER_LOCAL.var_size.item 2) in string_tmp; // 32 bits
     add_local (ALIASER_LOCAL.var_size.item 1) in string_tmp; // 16 bits
     add_local (ALIASER_LOCAL.var_size.item 0) in string_tmp; //  8 bits
-    buffer.insert_string string_tmp to pos_local;          
+    buffer.insert_string string_tmp to pos_local;
   );
   
   //
@@ -293,31 +384,32 @@ Section Public
   //
 
   - display buffer:STRING <-
-  (    
-    // Begin List.    
+  (
+    // Begin List.
     buffer.add_last '(';
-        
+
     // Code.
     buffer.add_last '\n';
     indent.append "  ";
-    
-    (lower).to (upper) do { j:INTEGER;
-      buffer.append indent;      
+
+    lower.to upper do { j:INTEGER;
+      buffer.append indent;
       item j.display buffer;
       buffer.add_last '\n';
-    };    
+    };
     indent.remove_last 2;
     buffer.append indent;
-    
+
     // End List.
     buffer.add_last ')';
     display_ref buffer;
   );
-  
-Section Private  
-  
+
+Section Private
+
   - genere_body buffer:STRING <-
   ( + old_count,j:INTEGER;
+
     j := lower;
     {j <= upper}.while_do {
       buffer.append indent;
@@ -325,49 +417,70 @@ Section Private
       {
         item j.genere buffer;
         j := j + 1;
-      }.do_while {(j <= upper) && {old_count = buffer.count}};      
+      }.do_while {(j <= upper) && {old_count = buffer.count}};
       buffer.append ";\n";
-    };        
-  );  
+    };
+  );
   
+Section Public
+/*
+  - stat_local:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create 128;
+  - stat_local_null:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create 128;
+*/
+Section Private
+
   - add_local tab:FAST_ARRAY(LOCAL) in buf:STRING <-
+  // Generate C code to add locals
   ( + loc:LOCAL;
     + t:TYPE_FULL;
     + cur:INTEGER;
     //+ i:INTEGER;
-    
+
     (! tab.is_empty).if {
       (tab.lower).to (tab.upper) do { j:INTEGER;
-	loc := tab.item j;	
+        loc := tab.item j;
         loc.is_result.if_false {
+          /*
+          (loc.type.is_expanded).if {
+            count_local_expanded := count_local_expanded + 1;
+            stat_local.put (stat_local.item 0 + 1) to 0;
+          } else {
+            ((loc.type_set != NULL) && {! loc.type_set.is_empty}).if {
+              (loc.type.raw.subtype_list != NULL).if {
+                idx := loc.type.raw.subtype_list.count; //loc.type_set.count;
+              } else {
+                idx := loc.type_set.count;
+              };
+              stat_local.put (stat_local.item idx + 1) to idx;
+
+
+              (loc.type_set.last = TYPE_MARK).if {
+
+                stat_local_null.put (stat_local_null.item idx + 1) to idx;
+
+                (loc.type_set.count = 1).if {
+                  count_local_always_null := count_local_always_null + 1;
+                } else {
+                  count_local_null := count_local_null + 1;
+                };
+              }.elseif {loc.type_set.count = 1} then {
+                count_local_mono := count_local_mono + 1;
+              } else {
+                count_local_not_null := count_local_not_null + 1;
+              };
+            } else {
+              count_local_not_null := count_local_not_null + 1;
+            };
+          };
+          */
           (loc.type.raw = TYPE_CONTEXT).if {
             context_counter := context_counter + 1;
           } else {
             local_counter := local_counter + 1;
           };
-          /*
-          (
-            (loc.ensure_count != 0) && 
-            {profil_current != NULL} && 
-            {loc.type.raw != TYPE_CONTEXT}
-          ).if {            
-            i := profil_current.result_list.lower;
-            {
-              (i <= profil_current.result_list.upper) && 
-              {profil_current.result_list.item i != loc}
-            }.while_do {
-              i := i + 1;
-            };
-            (i > profil_current.result_list.upper).if {
-              
-              loc.intern_name.print;
-              ' '.print;
-              loc.ensure_count.print; 
-              '\n'.print;
-              
-            };
-          };
-          */
+          //
+          simplify_type loc; // BSBS: Pas utile (c est un pb de result non utiliser)
+          //
           (((buf.count + loc.intern_name.count - cur) > 70) || {t != loc.type}).if {
             // New line
             (t != NULL).if {
@@ -385,12 +498,31 @@ Section Private
           buf.append (loc.intern_name);
         };
       };
-      buf.append ";\n";     
+      buf.append ";\n";
     };
   );
-  
+/*  
+  - add_local_gros tab:FAST_ARRAY(LOCAL) in buf:STRING <-
+  // Generate C code to add locals
+  ( + loc:LOCAL;
+    
+    (! tab.is_empty).if {
+      (tab.lower).to (tab.upper) do { j:INTEGER;
+        loc := tab.item j;
+        loc.is_result.if_false {
+          buf.append indent;
+          buf.append "Var ";
+          buf.append (loc.intern_name);
+          buf.add_last ':';
+          buf.append (loc.type.raw.intern_name);
+          buf.append ";\n";          
+        };
+      };
+    };
+  );
+*/
 Section LISAAC
 
   - local_counter:INTEGER;
-  
+
   - context_counter:INTEGER;

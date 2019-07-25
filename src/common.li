@@ -1,0 +1,128 @@
+Section Header
+
+  + name        := COMMON;
+
+  - copyright   := "2009 Mildred Ki'Lya";
+
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Mildred Ki'Lya <http://ki.lya.online.fr>";
+  - comment     := "Common code to shorter and the compiler";
+
+  - external := `#include "path.h"`;
+
+Section Inherit
+
+  - parent_any:ANY := ANY;
+
+Section Public
+
+  - version :STRING_CONSTANT := "0.40";
+
+  - command_line_header name:STRING_CONSTANT :STRING_CONSTANT <-
+  ( + before, after :STRING_CONSTANT;
+    + total_length, count :INTEGER;
+    total_length := 60;
+    before :=
+    "----------------------------------------------------------------\n\
+    \--               Lisaac IS An Advanced Compiler               --\n\
+    \--";
+    after :=                                                      "--\n\
+    \--            LORIA - LSIIT - UDS - CNRS - FRANCE             --\n\
+    \--         Benoit SONNTAG - benoit.sonntag@lisaac.org         --\n\
+    \--                   http://www.lisaac.org/                   --\n\
+    \----------------------------------------------------------------\n";
+    string_tmp.copy name;
+    string_tmp.append " - version ";
+    string_tmp.append version;
+    count := string_tmp.count;
+    (count % 2 = 1).if {
+      string_tmp.add_last ' ';
+      count := count + 1;
+    };
+    string_tmp2.copy before;
+    1.to ((total_length - count) / 2) do { i:INTEGER;
+      string_tmp .add_last ' ';
+      string_tmp2.add_last ' ';
+    };
+    string_tmp2.append string_tmp;
+    string_tmp2.append after;
+    ALIAS_STR.get string_tmp2
+  );
+
+  - command_line_footer:STRING_CONSTANT :=
+    "                                                                \n\
+    \Bug report:                                                     \n\
+    \    post in: benoit.sonntag@lisaac.org                          \n";
+
+  - print_info <-
+  ( + debug_code, lisaac_optim :STRING_CONSTANT;
+
+    compiler_debug_with_code.if {
+      debug_code := " (with source code)";
+    } else {
+      debug_code := " (without source code)";
+    };
+    compiler_optimization.if {
+      lisaac_optim := "yes";
+    } else {
+      lisaac_optim := "no";
+    };
+    "Version:              ".print; version.print; '\n'.print;
+    "Built on:             ".print; compile_date.print; ' '.print;
+                                    compile_time.print; '\n'.print;
+    "Debug Level:          ".print; debug_level.print; debug_code.println;
+    "Inline Level:         ".print; compiler_inlining_level.println;
+    "Lisaac optimizations: ".print; lisaac_optim.println;
+
+    '\n'.print;
+    (path_lisaac_builtin = path_lisaac).if {
+      "Lisaac path:          ".print; path_lisaac.println;
+    } else {
+      "Lisaac path:".println;
+      "  builtin:            ".print; path_lisaac_builtin.println;
+      "  current:            ".print; path_lisaac.println;
+    };
+  );
+
+  - path_lisaac_builtin:STRING_CONSTANT <-
+  ( + path:NATIVE_ARRAY(CHARACTER);
+    + j :INTEGER;
+    path := `LISAAC_DIRECTORY`:NATIVE_ARRAY(CHARACTER);
+    string_tmp.clear;
+    j := 0;
+    {path.item j != '\0'}.while_do {
+      string_tmp.add_last (path.item j);
+      j := j + 1;
+    };
+    ((string_tmp.last != '/') && {string_tmp.last != '\\'}).if {
+      string_tmp.add_last '/';
+    };
+    path_lisaac_builtin := ALIAS_STR.get string_tmp;
+    path_lisaac_builtin
+  );
+
+  - path_lisaac_env:STRING_CONSTANT <-
+  ( + path_str :STRING;
+    path_str := ENVIRONMENT.get_environment_variable "LISAAC_DIRECTORY";
+    (path_str != NULL).if {
+      string_tmp.copy path_str;
+      ((string_tmp.last != '/') && {string_tmp.last != '\\'}).if {
+        string_tmp.add_last '/';
+      };
+      path_lisaac_env := ALIAS_STR.get string_tmp;
+    } else {
+      path_lisaac_env := NULL;
+    };
+    path_lisaac_env
+  );
+
+  - path_lisaac:STRING_CONSTANT <-
+  (
+    (path_lisaac_env != NULL).if {
+      path_lisaac := path_lisaac_env;
+    } else {
+      path_lisaac := path_lisaac_builtin;
+    };
+    path_lisaac
+  );
+

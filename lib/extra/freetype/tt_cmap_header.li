@@ -1,0 +1,34 @@
+Section Header
+
+  + name        := TT_CMAP_HEADER;
+  - comment     :="Header Table for CMAP";
+
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+
+Section Inherit
+
+  - parent:OBJECT := OBJECT;
+
+Section Mapping
+
+  + version:UINTEGER_16;
+
+  + num_tables:UINTEGER_16;
+
+Section Public
+
+  - to_big_endian <-
+  (
+    version := PROCESSOR.to_motorola_ushort version;
+    num_tables := PROCESSOR.to_motorola_ushort num_tables;
+  );
+
+  - print <-
+  (
+    "\n   Version: ".print;
+    version.print;    
+    "\n   Num tables: ".print;
+    num_tables.print;
+    '\n'.print;
+  );

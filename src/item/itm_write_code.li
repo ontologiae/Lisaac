@@ -1,43 +1,23 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_WRITE_CODE;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Assignment slot with new code";
-  
+
 Section Inherit
-  
+
   + parent_itm_write:Expanded ITM_WRITE;
-  
+
 Section Public
 
   - type:STRING_CONSTANT <- "<-";
 
   //
-  // Runnable 
+  // Runnable
   //
 
   - to_run_expr:EXPR <-
@@ -49,15 +29,15 @@ Section Public
     + type:TYPE_FULL;
     + slot:SLOT;
     + name:STRING_CONSTANT;
-        
+
     itm_read ?= assign;
     name := itm_read.name;
-    ? {itm_read != NULL};  
+    ? {itm_read != NULL};
     loc := lookup (ALIAS_STR.variable_self);
     rec := loc.read position;
     //
-    type     := rec.static_type;    
-    slot     := type.get_slot name; 
+    type     := rec.static_type;
+    slot     := type.get_slot name;
     (slot = NULL).if {
       string_tmp.copy "Slot `";
       string_tmp.append name;
@@ -70,11 +50,11 @@ Section Public
     node := NODE.new_write position slot slot receiver rec code value;
     list_current.add_last node;
     result := node.result_expr;
-    
+
     result
   );
 
-  
+
 
 
 

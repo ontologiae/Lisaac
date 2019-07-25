@@ -1,40 +1,20 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := CALCULATOR;
-    
+
   - bibliography:= "http://IsaacOS.com";
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "The first program.";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
-  
+
 Section Private
-   
+
   - result_screen:G_IN;
-  - error_screen:G_OUT;  
-  
+  - error_screen:G_OUT;
+
   - add_last car:CHARACTER <-
   (
     result_screen.text.add_last car;
@@ -46,7 +26,7 @@ Section Private
     result_screen.text.add_first car;
     result_screen.refresh;
   );
-  
+
   - evaluate <-
   ( + result:REAL_32;
     (result_screen.text.count > 1).if {
@@ -56,16 +36,16 @@ Section Private
       result := PARSE_EXPR.parse (result_screen.text);
       error_screen.text.copy (PARSE_EXPR.error_message);
       error_screen.refresh;
-      (PARSE_EXPR.error_message.is_empty).if {    
+      (PARSE_EXPR.error_message.is_empty).if {
         result_screen.text.clear;
         result.append_in (result_screen.text);
         result_screen.refresh;
       };
     };
   );
-  
+
 Section Public
-  
+
   - init:G_EXPR <-
   (
     G_RAW.create (
@@ -75,70 +55,70 @@ Section Public
     ).fix_height /
     (
       (
-        G_BUTTON.create (G_OUT.create "DEL" justify (G_OUT.center)) 
-        action { b:G_BUTTON; 
+        G_BUTTON.create (G_OUT.create "DEL" justify (G_OUT.center))
+        action { b:G_BUTTON;
           (result_screen.text.is_empty).if_false {
             result_screen.text.remove_last 1;
             result_screen.refresh;
           };
         } /
-        G_BUTTON.create (G_OUT.create " 7 " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " 7 " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '7'; } /
-        G_BUTTON.create (G_OUT.create " 4 " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " 4 " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '4'; } /
-        G_BUTTON.create (G_OUT.create " 1 " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " 1 " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '1'; } /
-        G_BUTTON.create (G_OUT.create " 0 " justify (G_OUT.center)) 
-        action { b:G_BUTTON; add_last '0'; } 
+        G_BUTTON.create (G_OUT.create " 0 " justify (G_OUT.center))
+        action { b:G_BUTTON; add_last '0'; }
       ) | (
-        G_BUTTON.create (G_OUT.create "CLR" justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create "CLR" justify (G_OUT.center))
         action { b:G_BUTTON; result_screen.text.clear; result_screen.refresh; } /
-        G_BUTTON.create (G_OUT.create " 8 " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " 8 " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '8'; } /
-        G_BUTTON.create (G_OUT.create " 5 " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " 5 " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '5'; } /
-        G_BUTTON.create (G_OUT.create " 2 " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " 2 " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '2'; } /
-        G_BUTTON.create (G_OUT.create " . " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " . " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '.'; }
       ) | (
         G_BUTTON.create (G_OUT.create " ( " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '('; } /
-        G_BUTTON.create (G_OUT.create " 9 " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " 9 " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '9'; } /
-        G_BUTTON.create (G_OUT.create " 6 " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " 6 " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '6'; } /
-        G_BUTTON.create (G_OUT.create " 3 " justify (G_OUT.center)) 
-        action { b:G_BUTTON; add_last '3'; } /      
+        G_BUTTON.create (G_OUT.create " 3 " justify (G_OUT.center))
+        action { b:G_BUTTON; add_last '3'; } /
         G_BUTTON.create (G_OUT.create " = " justify (G_OUT.center))
         action { b:G_BUTTON; evaluate; }
       ) | (
-        G_BUTTON.create (G_OUT.create " ) " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " ) " justify (G_OUT.center))
         action { b:G_BUTTON; add_last ')'; } /
-        G_BUTTON.create (G_OUT.create " / " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " / " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '/'; } /
-        G_BUTTON.create (G_OUT.create " x " justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create " x " justify (G_OUT.center))
         action { b:G_BUTTON; add_last 'x'; } /
-        G_BUTTON.create (G_OUT.create " - " justify (G_OUT.center))       
+        G_BUTTON.create (G_OUT.create " - " justify (G_OUT.center))
         action { b:G_BUTTON; add_last '-'; } /
         G_BUTTON.create (G_OUT.create " + " justify (G_OUT.center))
-        action { b:G_BUTTON; add_last '+'; } 
+        action { b:G_BUTTON; add_last '+'; }
       )
-    ) 
+    )
     /
     G_RAW.create (error_screen := G_OUT.create "").fix_height
   );
-  
+
   - run:G_WIN_OUT <-
   (
     G_WIN_OUT.create "Calculator" with init
   );
-  
+
   - main <-
-  ( 
+  (
     // Init window.
     VIDEO.make_size (200,200);
-    
+
     // Screen definition.
     DESK.make VIDEO with init;
   );

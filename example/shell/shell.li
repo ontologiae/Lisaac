@@ -1,50 +1,30 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := SHELL;
-     
+
   - author  := "Benoit Sonntag";
-  
+
   - comment := "Small Shell, example File System manager";
-  
+
 Section Inherit
-  
+
   + parent_area_mask:Expanded AREA_MASK;
-  
+
   + parent_g_expr:Expanded G_EXPR;
-  
-Section Private  
-  
-  - command:STRING;    
-  
+
+Section Private
+
+  - command:STRING;
+
   - cmds:FAST_ARRAY(STRING);
-  
+
   - dir:DIRECTORY;
-  
+
   - string_tmp:STRING := STRING.create 255;
-  
+
   - execute <-
   ( + cmd:STRING;
-    
+
     cmd := cmds.first;
     //
     // Entry command.
@@ -56,18 +36,18 @@ Section Private
     }.elseif {cmd ~= "version"} then {
       print_screen "Small Lisaac shell Version 0.2\n";
     }.elseif {cmd ~= "rm"} then {
-      rm;      
+      rm;
     }.elseif {cmd ~= "mv"} then {
       mv;
-    //  
-    // Directory Manager.  
+    //
+    // Directory Manager.
     //
     }.elseif {cmd ~= "cd"} then {
       cd;
     }.elseif {cmd ~= "mkdir"} then {
       mkdir;
-    //  
-    // File Manager.  
+    //
+    // File Manager.
     //
     }.elseif {cmd ~= "cat"} then {
       cat;
@@ -81,7 +61,7 @@ Section Private
       print_screen "\': Command not found.\n";
     };
   );
-  
+
   - help <-
   (
     print_screen
@@ -100,23 +80,23 @@ Section Private
     \  cat <src>           : Open and display file <src>.\n\
     \  mkfile <src> <text> : Creat <src> file with <text>.\n";
   );
-  
+
   //
   // Entry manager.
   //
-  
+
   - ls <-
   ( + e:ENTRY;
     + f:FILE;
-    
+
     (dir.open).if_false {
       print_screen "`ls\': Permission denied.\n";
     } else {
-      print_screen "----Access----  ----Update----  ---Size--   ----Name----\n";    
+      print_screen "----Access----  ----Update----  ---Size--   ----Name----\n";
       dir.lower.to (dir.upper) do { i:INTEGER;
         e := dir.item i;
         string_tmp.clear;
-        // Access.        
+        // Access.
         e.access_date.append_short_in string_tmp;
         string_tmp.add_last ' ';
         e.access_time.append_short_in string_tmp;
@@ -125,7 +105,7 @@ Section Private
         e.update_date.append_short_in string_tmp;
         string_tmp.add_last ' ';
         e.update_time.append_short_in string_tmp;
-        string_tmp.append "  ";      
+        string_tmp.append "  ";
         // Name.
         (e.is_directory).if {
           string_tmp.append "          d ";
@@ -141,7 +121,7 @@ Section Private
       };
     };
   );
-    
+
   - mv <-
   ( + src,dst:STRING;
     (cmds.count < 3).if {
@@ -150,7 +130,7 @@ Section Private
       print_screen "`mv\': Too many arguments.\n";
     } else {
       src := cmds.item 1;
-      dst := cmds.item 2;      
+      dst := cmds.item 2;
       (dir.move src to dst).if_false {
         print_screen "`mv\': cannot rename file `";
         print_screen dst;
@@ -166,7 +146,7 @@ Section Private
     }.elseif {cmds.count != 2} then {
       print_screen "`rm\': Too many arguments.\n";
     } else {
-      param := cmds.item 1;      
+      param := cmds.item 1;
       (dir.remove param).if_false {
         print_screen "`rm\': cannot remove `";
         print_screen param;
@@ -174,25 +154,25 @@ Section Private
       };
     };
   );
-  
+
   //
   // Directory manager
   //
-  
+
   - cd <-
   ( + e:ENTRY;
     + param:STRING;
-    
+
     (cmds.count > 2).if {
       print_screen "`cd\': Too many arguments.\n";
-    }.elseif {cmds.count = 1} then {      
+    }.elseif {cmds.count = 1} then {
       dir := FILE_SYSTEM;
     } else {
       param := cmds.item 1;
       e := dir.get_entry param;
       (e != NULL).if {
         (e.is_directory).if {
-          dir ?= e;                    
+          dir ?= e;
         } else {
           print_screen "`";
           print_screen param;
@@ -205,11 +185,11 @@ Section Private
       };
     };
   );
-  
+
   - mkdir <-
   ( + e:ENTRY;
     + param:STRING;
-       
+
     (cmds.count = 1).if {
       print_screen "`mkdir\': Too few arguments.\n";
     }.elseif {cmds.count != 2} then {
@@ -224,16 +204,16 @@ Section Private
       };
     };
   );
-  
+
   //
   // File manager.
   //
-  
+
   - cat <-
   ( + e:ENTRY;
     + param:STRING;
     + file:FILE;
-    
+
     (cmds.count = 1).if {
       print_screen "`cat\': Too few arguments.\n";
     }.elseif {cmds.count != 2} then {
@@ -251,9 +231,9 @@ Section Private
           print_screen "`";
           print_screen param;
           print_screen "\': Not open.\n";
-        } else {          
+        } else {
           string_tmp.clear;
-          string_tmp.set_capacity (file.size.to_integer);          
+          string_tmp.set_capacity (file.size.to_integer);
           file.read string_tmp size (file.size);
           print_screen string_tmp;
           print_screen "\n";
@@ -262,11 +242,11 @@ Section Private
       };
     };
   );
-    
+
   - mkfile <-
   ( + f:FILE;
     + param:STRING;
-       
+
     (cmds.count = 1).if {
       print_screen "`mkfile\': Too few arguments.\n";
     } else {
@@ -287,9 +267,9 @@ Section Private
       };
     };
   );
-  
+
   - exit_shell <-
-  (    
+  (
     print_screen "Good bye.\n";
     (is_isaac).if {
       x_screen := y_screen := 0;
@@ -298,85 +278,85 @@ Section Private
       die_with_code 0;
     };
   );
-  
+
 Section Public
-  
+
   //
   // Text mode.
   //
-  
+
   - main <-
   ( + command:STRING;
-        
+
     cmds := FAST_ARRAY(STRING).create_with_capacity 10;
     command := STRING.create 100;
     dir := FILE_SYSTEM;
-    
+
     {
       print_screen (dir.path);
       print_screen " > ";
       command.clear;
       IO.read_line_in command;
-      
-      (command.is_empty).if_false {       
+
+      (command.is_empty).if_false {
         cmds.clear;
-        command.split_in cmds;              
+        command.split_in cmds;
         execute;
       };
     }.endless_loop;
   );
-  
+
   //
   // Graphics Mode.
   //
-  
+
   + my_window:G_WIN_OUT;
-  
+
   - is_isaac:BOOLEAN <- my_window != NULL;
-  
+
   - run s:ABSTRACT_STRING :G_WIN_OUT <-
   (
     video_line_tmp  := BMP_LINE(PIXEL_32).create (VIDEO.width);
     x_screen := y_screen := 0;
     load_font s;
-    command := STRING.create 100;    
+    command := STRING.create 100;
     cmds := FAST_ARRAY(STRING).create_with_capacity 10;
-    
+
     dir := FILE_SYSTEM;
-    
- //   new_command;    
+
+ //   new_command;
     my_window := G_WIN_OUT.create "Mini Shell" with (Self.fix_width.fix_height)
   );
-  
+
   //
   // Update position.
   //
-  
+
   - width_min:INTEGER  := 80*8;
-  
+
   - height_min:INTEGER := 16 * 16;
-  
+
   - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
-  ( 
+  (
     update rac from (x,y) size (w,h);
     redraw (x_window,y_window) to (x_window+width-1,y_window+height-1);
     new_command;
   );
-  
+
   //
   // Display.
   //
-    
-  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-  
-  (    
-    mask_draw (x0,y0) to (x1,y1) color green;         
+
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
+  (
+    mask_draw (x0,y0) to (x1,y1) color green;
   );
-  
+
   - print_screen st:ABSTRACT_STRING <-
   ( + car:CHARACTER;
     + line:FAST_ARRAY(UINTEGER_16);
-    
-    (is_isaac).if {    
+
+    (is_isaac).if {
       color green;
       (st.lower).to (st.upper) do { j:INTEGER;
         car := st.item j;
@@ -390,16 +370,16 @@ Section Public
         } else {
           x_screen := 0;
           y_screen := y_screen + 16;
-        };      
+        };
         (y_screen >= y_max).if {
           0.to 15 do { i:INTEGER;
-            sav_line.put (mask.item i) to i; 
+            sav_line.put (mask.item i) to i;
           };
           16.to y_max do { y:INTEGER;
-            mask.put (mask.item y) to (y-16);	  
+            mask.put (mask.item y) to (y-16);
           };
           0.to 15 do { i:INTEGER;
-            line := sav_line.item i; 	  
+            line := sav_line.item i;
             line.clear;
             mask.put line to (y_max-15+i);
           };
@@ -408,22 +388,22 @@ Section Public
           color green;
         };
       };
-    } else {  
+    } else {
       st.print;
     };
   );
-  
-Section Private  
+
+Section Private
 
   - font:FAST_ARRAY(UINTEGER_8);
-  
+
   - x_screen:INTEGER;
   - y_screen:INTEGER;
-  
+
   - print_char car:CHARACTER at (x,y:INTEGER) <-
   ( + ofs,px,py:INTEGER;
     + mask:UINTEGER_8;
-    
+
     py := y;
     ofs := car.to_uinteger_8.to_integer * 16;
     ofs.to (ofs+15) do { o:INTEGER;
@@ -439,15 +419,15 @@ Section Private
       py := py + 1;
     };
   );
-  
+
   - sav_line:FAST_ARRAY(FAST_ARRAY(UINTEGER_16)) := FAST_ARRAY(FAST_ARRAY(UINTEGER_16)).create 16;
-  
+
   - load_font s:ABSTRACT_STRING <-
-  ( + cur_dir:DIRECTORY;    
+  ( + cur_dir:DIRECTORY;
     + e:ENTRY;
     + f:FILE;
-        
-    cur_dir := FILE_SYSTEM;          
+
+    cur_dir := FILE_SYSTEM;
     string_tmp.copy s;
     string_tmp.append "font.fnt";
     e := cur_dir.get_entry string_tmp;
@@ -456,24 +436,24 @@ Section Private
       f.open;
       font := FAST_ARRAY(UINTEGER_8).create_with_capacity 4096;
       f.read font size 4096;
-      f.close;      
+      f.close;
     } else {
       "\nFile 'font.fnt' Not Found!".print;
       die_with_code 0;
-    };    
+    };
   );
-  
+
   - color_4_to_8 n:INTEGER :UINTEGER_32 <-
   (
     ((255.to_real_16_16 /# 15) *# n).to_integer
   );
-  
+
   - color_table:NATIVE_ARRAY(UINTEGER_32) :=
   ( + result:NATIVE_ARRAY(UINTEGER_32);
     + r,g,b,col:UINTEGER_32;
-    
+
     result := NATIVE_ARRAY(UINTEGER_32).create 4096;
-    0.to 4095 do { c:INTEGER;      
+    0.to 4095 do { c:INTEGER;
       r := color_4_to_8 ((c & 0F00h) >> 8);
       g := color_4_to_8 ((c & 00F0h) >> 4);
       b := color_4_to_8  (c & 000Fh);
@@ -487,33 +467,33 @@ Section Private
     };
     result
   );
-  
+
   - col_trans col:UINTEGER_32:UINTEGER_32<-
   ( + idx:UINTEGER_32;
-    
-    idx := 
+
+    idx :=
     ((col >> 12) & 0F00h) | // Red
     ((col >>  8) & 00F0h) | // Green
     ((col >>  4) & 000Fh);  // Blue
     color_table.item idx
   );
-  
+
   + video_line_tmp:ABSTRACT_BMP_LINE;
-  
+
   - y_command:INTEGER;
-  
+
   - new_command <-
-  (     
-    y_command := y_screen;    
-    command.clear;    
+  (
+    y_command := y_screen;
+    command.clear;
     cursor := 0;
     update_command TRUE;
   );
-  
+
   - update_command is_actif:BOOLEAN <-
   ( + y_max:INTEGER;
     + line:FAST_ARRAY(UINTEGER_16);
-    
+
     y_command.to (mask.upper) do { y:INTEGER;
       line := mask.item y;
       (! line.is_empty).if {
@@ -532,21 +512,21 @@ Section Private
     print_screen string_tmp;
     redraw (x_window,y_window+y_command) to (x_window+width-1,y_window+y_max);
   );
-  
-  - cursor:INTEGER;  
-  
+
+  - cursor:INTEGER;
+
 Section Public
-  
+
   - receive msg:EVENT <-
   ( + evt_key:EVENT_KEYBOARD;
     + evt_mouse:EVENT_MOUSE;
     + key:CHARACTER;
     + cmd:UINTEGER_8;
-    
+
     evt_mouse ?= msg;
     (evt_mouse != NULL).if {
       parent_area_mask.receive msg;
-    };    
+    };
     evt_key ?= msg;
     (evt_key != NULL).if {
       cmd := (evt_key.key >> 8).to_uinteger_8;
@@ -557,15 +537,15 @@ Section Public
 	.when '\13\' then {
 	  update_command FALSE;
 	  print_screen "\n";
-	  (command.is_empty).if_false {       
+	  (command.is_empty).if_false {
 	    cmds.clear;
 	    command.split_in cmds;
-	    execute;	   
-	  };	  
+	    execute;
+	  };
       	  new_command;
 	}
-	// Move cursor.	
-	.when 'L' then { 
+	// Move cursor.
+	.when 'L' then {
 	  (cursor != 0).if {
 	    cursor := cursor - 1;
 	  };
@@ -595,29 +575,29 @@ Section Public
 	};
       } else {
 	command.insert key to cursor;
-	cursor := cursor + 1;	
+	cursor := cursor + 1;
       };
       update_command TRUE;
     };
   );
-  
-  - slave_pixel_hard (x,y:INTEGER) color col:UINTEGER_32 <- 
-  (     
-    parent_area_mask.slave_pixel_hard (x,y) color (col_trans col);     
+
+  - slave_pixel_hard (x,y:INTEGER) color col:UINTEGER_32 <-
+  (
+    parent_area_mask.slave_pixel_hard (x,y) color (col_trans col);
   );
-  
-  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER color col:UINTEGER_32<- 
-  ( 
+
+  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER color col:UINTEGER_32<-
+  (
     parent_area_mask.slave_line_h_hard (x1,y) until x2 color (col_trans col);
   );
 
-  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER 
+  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER
   image line:ABSTRACT_BMP_LINE offset ofs:INTEGER <-
   ( + col:UINTEGER_32;
-    
+
     ofs.to (ofs+x2-x1) do { o:INTEGER;
       col := line.get_color o;
-      video_line_tmp.put (col_trans col) to o;      
+      video_line_tmp.put (col_trans col) to o;
     };
     parent_area_mask.slave_line_h_hard (x1,y) until x2 image video_line_tmp offset ofs;
   );

@@ -1,0 +1,14 @@
+Section Header
+  
+  + name := ANY_CHAMENEOS_REDUX;
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+
+Section Public 
+
+  - blue:    INTEGER := 0;
+  - red:     INTEGER := 1;
+  - yellow:  INTEGER := 2;
+  - invalid: INTEGER := 3;

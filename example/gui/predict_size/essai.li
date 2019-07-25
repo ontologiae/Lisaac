@@ -1,45 +1,25 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ESSAI;
-    
+
   - bibliography:= "http://IsaacOS.com";
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "The first program.";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
-  
-Section Public  
-  
+
+Section Public
+
   - win:G_WIN_OUT;
-  
+
   - main <-
-  ( + w,h:INTEGER;    
-        
+  ( + w,h:INTEGER;
+
     VIDEO.auto_make;
-    
-    // Size prediction compute without allocation:    
+
+    // Size prediction compute without allocation:
     (w,h) := G_WIN_OUT.predict_size (
       G_DIV_EXPR.predict_size (
         G_BUTTON.predict_size (
@@ -49,7 +29,7 @@ Section Public
         G_OR_EXPR.predict_size (
           G_BUTTON.predict_size (
             G_IMG.predict_size "tools.bmp"
-          ) 
+          )
         ) and (
           G_RAW.predict_size (
             G_IN.predict_size (40,10)
@@ -57,21 +37,21 @@ Section Public
         )
       )
     ) with_title TRUE;
-    
+
     "Size prediction for futur window : ".print;
-    w.print; 
+    w.print;
     " x ".print;
     h.print;
     '\n'.print;
-    
+
     // Verification with allocation:
-    "Open window and click on `Size window'...\n".print;        
+    "Open window and click on `Size window'...\n".print;
     // Creation.
     win := G_WIN_OUT.create "WIN" with (
       (
         G_BUTTON.create (
           G_OUT.create "Size window"
-        ) action { b:G_BUTTON; 
+        ) action { b:G_BUTTON;
           "Size real for actual window      : ".print;
           win.width.print;
           " x ".print;
@@ -90,7 +70,7 @@ Section Public
         )
       )
     );
-    
+
     // +---------------------+
     // |         size        |
     // +---+-----------------+
@@ -100,7 +80,7 @@ Section Public
     // | l |                 |
     // | s |                 |
     // +---+-----------------+
-        
+
     DESK.make VIDEO with (
       G_BUTTON.create (G_OUT.create "Open window") connect win.fix_height /
       G_RAW.create (G_OUT.create "")

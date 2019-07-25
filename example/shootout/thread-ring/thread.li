@@ -1,0 +1,43 @@
+Section Header
+  
+  - name := THREAD;
+    
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Public
+  
+  + index:INTEGER;
+  
+  + data:INTEGER;
+  
+  + next:THREAD;
+  
+  - set_next nxt:THREAD <-
+  (
+    next := nxt;
+  );
+  
+  - set_data n:INTEGER <-
+  (
+    (n = 0).if {      
+      index.print;   
+      '\n'.print;            
+      die_with_code 0;
+    } else {            
+      next.set_data (n-1);
+    };
+    data := n;
+  );
+  
+  - make idx:INTEGER with nxt:THREAD :SELF <-
+  ( 
+    next := nxt;
+    index := idx;
+    Self
+  );
+
+
+
+  

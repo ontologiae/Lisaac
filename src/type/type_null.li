@@ -1,124 +1,97 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := TYPE_NULL;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Special type NULL";
-  
+
 Section Inherit
-  
+
   + parent_type:Expanded TYPE;
-  
+
 Section Public
-  
+
   - name:STRING_CONSTANT <- ALIAS_STR.variable_null;
-  
+
   - intern_name:STRING_CONSTANT <- name;
-    
+
   //
   // Creation.
   //
 
   - make_null <-
-  ( 
-    index       := index_count;
+  (
+//    index       := index_count;
     index_count := index_count + 1;
-    dico_type.fast_put Self to name;    
+    dico_type.fast_put Self to name;
     slot_run := FAST_ARRAY(SLOT).create_with_capacity 1; // BSBS: Plus utile !
     default := TYPE_FULL.create Self with 0;
   );
-  
-  - get_local_slot n:STRING_CONSTANT :SLOT <- NULL; 
-  
+
+  - get_local_slot n:STRING_CONSTANT :SLOT <- NULL;
+
   - get_path_slot n:STRING_CONSTANT :SLOT <- NULL;
-  
+
   //
   // Error.
   //
-  
+
   //- bug:INTEGER;
-  
+
   - product_error p:POSITION in lst:LIST with ctext:LOCAL <-
-  (     
-    (debug_level_option != 0).if {      
+  (
+    (debug_level_option != 0).if {
       lst.add_last (
 	PUSH.create p context ctext first FALSE
-      );      
-    };    
-    lst.add_last CALL_NULL;        
+      );
+    };
+    lst.add_last CALL_NULL;
   );
-  
+
 Section Public
-  
+
   //
   // Import / Export
   //
-    
+
   - is_export_to t:TYPE_FULL :BOOLEAN <- FALSE;
 
   - is_import_to t:TYPE_FULL :BOOLEAN <- FALSE;
-  
+
   //
   //
   //
-  
-  - is_sub_type other:TYPE :BOOLEAN <- TRUE;  
-  
+
+  - is_sub_type other:TYPE :BOOLEAN <- TRUE;
+
   - genere_typedef <-
   (
   );
-  
+
   - genere_struct <-
   (
-    (is_java).if_false {
-      output_decl.append 
-      "/* NULL */\n\
-      \#ifndef NULL\n\
-      \#define NULL ((void *)0)\n\
-      \#endif\n\n";
-    };
+    output_decl.append
+    "/* NULL */\n\
+    \#ifndef NULL\n\
+    \#define NULL ((void *)0)\n\
+    \#endif\n\n";
   );
-  
+
   //
   // Code source generation.
   //
-  
-  - put_id buffer:STRING <- 
+
+  - put_id buffer:STRING <-
   (
     put_value buffer;
   );
-  
-  - put_access_id e:EXPR in buffer:STRING <- e.genere buffer;   
-  
-  - put_value buffer:STRING <- 
-  ( 
-    (is_java).if {
-      buffer.append "null";
-    } else {
-      buffer.append name;
-    };
+
+  - put_access_id e:EXPR in buffer:STRING <- e.genere buffer;
+
+  - put_value buffer:STRING <-
+  (
+    buffer.append name;
   );
-  

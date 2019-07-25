@@ -1,81 +1,61 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := ABSTRACT_STRING;
 
   - export  := STRING;
-    
+
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
-  
+
   - comment := "Generic prototype for STRING and STRING_CONSTANT";
-  
+
 Section Inherit
-  
+
   - parent_hashable:HASHABLE := HASHABLE;
-  
+
   - parent_comparable:COMPARABLE := COMPARABLE;
-  
+
 Section Public  //ABSTRACT_STRING, ABSTRACT_ENTRY
-  
+
   + storage:NATIVE_ARRAY(CHARACTER);
   // Collection containing characters
-  
+
 Section Public
-  
+
   + count:INTEGER;
   // size
-  
-  - lower:INTEGER := 1; 
-  
+
+  - lower:INTEGER := 1;
+
   - upper:INTEGER <- count;
   // size
-  
+
   - capacity:INTEGER <- count;
   // size
-  
+
   //
   // Access.
   //
-  
+
   - item index:INTEGER :CHARACTER <-
   // Character at position `index'.
   // * Require: index is valid
   [
     -? {valid_index index};
   ]
-  (         
+  (
     storage.item (index - 1)
   );
-  
+
   - Self:SELF '@' Left 1 index:INTEGER :CHARACTER <-
   // Character at position `index'.
   (
     item index
   );
-  
+
   //
   // Switch case :
   //
-  
+
   - when value:ABSTRACT_STRING then block:{} :ABSTRACT_STRING <-
   // When `Self' equal `value', execute `block'
   (
@@ -93,7 +73,7 @@ Section Public
   - case value:ABSTRACT_STRING then block:{} :ABSTRACT_STRING <-
   // * See: `when_then'
   ( + result :ABSTRACT_STRING;
-    
+
     ((Self != ABSTRACT_STRING) && {Self ~= value}).if {
       block.value;
       result := ABSTRACT_STRING;
@@ -106,7 +86,7 @@ Section Public
   - case_if test:{BOOLEAN} then block:{} :ABSTRACT_STRING <-
   // If `test' is true then `block'
   ( + result :ABSTRACT_STRING;
-    
+
     ((Self != ABSTRACT_STRING) && test).if {
       block.value;
       result := ABSTRACT_STRING;
@@ -125,18 +105,18 @@ Section Public
   //
   // Testing.
   //
-  
+
   - valid_index index:INTEGER :BOOLEAN <-
   // True when `index' is valid (i.e., inside actual bounds).
   ( index.in_range lower to count );
-  
+
   - is_empty : BOOLEAN <- count = 0;
 
-  
+
   - hash_code: INTEGER <-
   // Return a hashcode
   ( + result:INTEGER;
-    
+
     1.to count do { i:INTEGER;
       result := (5 * result) + (item i).code;
     };
@@ -145,16 +125,16 @@ Section Public
     };
     result
   );
-  
+
   - Self:SELF '<' other:SELF :BOOLEAN <- Self ~< other;
-  
+
   - Self:SELF '~>' other:ABSTRACT_STRING :BOOLEAN <- other ~< Self;
-  
+
   - Self:SELF '~<' other:ABSTRACT_STRING :BOOLEAN <-
   // Is Current less than `other' ?
   ( + i: INTEGER;
     + result: BOOLEAN;
-    
+
     i := 1;
     {(count < i) || {other.count < i} || {item i != other.item i}}.until_do {
       i := i + 1;
@@ -164,12 +144,36 @@ Section Public
     } else {
       (other.count < i).if {
         result := FALSE;
+      } else {
+        result := item i < other.item i;
       };
-      result := item i < other.item i;
     };
     result
   );
-  
+
+  - Self:SELF '!<' other:ABSTRACT_STRING :BOOLEAN <-
+  // Is Current less than `other' ? But, the `upper' to `lower' comparaison
+  ( + i1,i2: INTEGER;
+    + result:BOOLEAN;
+
+    i1 := upper;
+    i2 := other.upper;
+    {(i1 < lower) || {i2 < other.lower} || {item i1 != other.item i2}}.until_do {
+      i1 := i1 - 1;
+      i2 := i2 - 1;
+    };
+    (i1 < lower).if {
+      result := i2 >= other.lower;
+    } else {
+      (i2 < other.lower).if {
+        result := FALSE;
+      } else {
+        result := item i1 < other.item i2;
+      };
+    };
+    result
+  );
+
   - compare other:ABSTRACT_STRING :INTEGER <-
   // Compare alphabetically `Self' to `other'
   ( + i: INTEGER;
@@ -195,10 +199,10 @@ Section Public
         };
       };
     };
-    
+
     result
   );
-  
+
   - same_as other:ABSTRACT_STRING :BOOLEAN <-
   // Case insensitive `=='.
   ( + s1, s2:NATIVE_ARRAY(CHARACTER);
@@ -223,8 +227,8 @@ Section Public
     };
     result
   );
-  
-  - Self:SELF '==' Left 40 other:OBJECT :BOOLEAN <-
+
+  - Self:SELF '==' Left 40 other:E :BOOLEAN <-
   // Has Current the same text as `other' ?
   ( + same:ABSTRACT_STRING;
     same ?= other;
@@ -244,45 +248,45 @@ Section Public
     };
     result
   );
-  
+
   - item_code i:INTEGER :INTEGER <-
   // Code of character at position `i'.
   (
     ? { valid_index i};
     storage.item (i - 1).code
   );
-  
+
   - index_of ch:CHARACTER since start_index:INTEGER :INTEGER <-
   // Index of first occurrence of `c' at or after `start_index',
   // result = count + 1, if none.
   ( + result:INTEGER;
     ? { start_index.in_range 1 to (count + 1)};
-    
+
     result := start_index;
-    
+
     {(result > count) || {ch = item result}}.until_do {
       result := result + 1;
     };
-        
+
     result
   );
-  
+
   - last_index_of ch:CHARACTER since start_index:INTEGER :INTEGER <-
   // Index of first occurrence of `c' at or before `start_index',
   // 0 if none.
   ( + result:INTEGER;
     ? {start_index.in_range 0 to upper};
-    
+
     result := start_index;
-    
+
     {(result < lower) || {ch = item result}}.until_do {
       result := result - 1;
     };
-        
-    ? {(result != 0) ->> {item result = ch}};    
+
+    ? {(result != 0) ->> {item result = ch}};
     result
   );
-  
+
   - fast_index_of ch:CHARACTER :INTEGER <-
   // Gives the index of the first occurrence `ch' or
   // 0 if none.
@@ -291,7 +295,7 @@ Section Public
     ? {(result != count + 1) ->> {item result = ch}};
     result
   );
-  
+
   - index_of ch:CHARACTER :INTEGER <-
   // Gives the index of the first occurrence of 'ch' or
   // 0 if none.
@@ -299,49 +303,70 @@ Section Public
     fast_index_of ch
   );
 
-  - first_index_of c:CHARACTER :INTEGER <-  
+  - first_index_of c:CHARACTER :INTEGER <-
   // Index of first occurrence of `c' at index 1 or after index 1.
   (
     fast_index_of c
   );
-  
+
   - fast_last_index_of ch:CHARACTER :INTEGER <-
   // Gives the index of the last occurrence `ch' or
   // 0 if none.
   (+ result:INTEGER;
-    result := 1 + storage.fast_reverse_index_of ch from (upper-1);    
-    
-    ? {(result != 0) ->> {item result = ch}};    
+    result := 1 + storage.fast_reverse_index_of ch from (upper-1);
+
+    ? {(result != 0) ->> {item result = ch}};
     result
   );
-    
+
   - last_index_of c:CHARACTER :INTEGER <-
   // Index of last occurrence of `c' at index upper or before index upper.
   (
     fast_last_index_of c
   );
-  
+
+  - first_difference_index other:ABSTRACT_STRING :INTEGER <-
+  // First difference index with `other'.
+  // if `other' is equal `Self', return `upper' + 1
+  [ -? {other != NULL}; ]
+  ( + result:INTEGER;
+
+    (Self = other).if {
+      result := upper + 1;
+    } else {
+      result := lower;
+      {
+        (result <= upper) &&
+        {result <= other.upper} &&
+        {item result = other.item result}
+      }.while_do {
+        result := result + 1;
+      };
+    };
+    result
+  );
+
   - has ch:CHARACTER :BOOLEAN <- storage.fast_has ch until (count - 1);
   // True if `ch' is in the STRING.
-  
+
   - has_substring other:ABSTRACT_STRING :BOOLEAN <-
   // True if `other' is in the STRING.
   ( first_substring_index other != 0 );
-    
+
   - occurrences c:CHARACTER :INTEGER <-
   // Number of times character `c' appears in the string.
   (
     storage.fast_occurrences c until (count - 1)
   );
-  
+
   - has_suffix s:ABSTRACT_STRING :BOOLEAN <-
   // True if suffix of `Current' is `s'.
   (
     + result:BOOLEAN;
     + i1,i2:INTEGER;
-    
+
     ? { s != NULL };
-    
+
     (s.count <= count).if {
       i1 := count - s.count + 1;
       i2 := 1;
@@ -351,18 +376,17 @@ Section Public
       };
       result := i1 > count;
     };
-    
+
     result
   );
-  
+
   - has_prefix p:ABSTRACT_STRING :BOOLEAN <-
   // True if prefix of `Current' is `p'.
+  [ ? { p != NULL }; ]
   (
     + result:BOOLEAN;
     + i:INTEGER;
-    
-    ? { p != NULL };
-    
+
     ( p.count <= count ).if {
       i := p.count;
       { (i = 0) || { item i != p.item i}}.until_do {
@@ -370,19 +394,19 @@ Section Public
       };
       result := i = 0;
     };
-    
+
     result
   );
-  
+
   // Testing and Conversion:
-  
+
   - is_boolean:BOOLEAN <-
   // does self represent a BOOLEAN?
   // valid BOOLEANS are "TRUE" and "FALSE".
   (
     (Self == "TRUE") || { Self == "FALSE"}
   );
-  
+
   - to_boolean:BOOLEAN <-
   // Boolean value;
   // "true" yields true, "false" yields false (what a surprise).
@@ -390,7 +414,7 @@ Section Public
     ?{ is_boolean };
     Self == "TRUE"
   );
-  
+
   - is_bit:BOOLEAN <-
   // True when the contents is a sequence of bits (i.e., mixed
   // characters `0' and characters `1').
@@ -426,15 +450,15 @@ Section Public
     + negative: BOOLEAN;
     + result:BOOLEAN;
     + cc: CHARACTER;
-    
+
     // state 0: nothing read.
     // state 1: "+" or "-" read.
     // state 2: in the number.
     // state 3: after the number.
     // state 4: error.
-    
+
     i := 1;
-    
+
     { (state = 4) || {i > count}}.until_do {
       cc := item i;
       ( state = 0).if {
@@ -478,20 +502,20 @@ Section Public
         };
       }.elseif { state = 3 } then {
         cc.is_separator.if {
-        } else {            
+        } else {
           state := 4;
         };
       };
-      
+
       i := i + 1;
     };
     ( (state != 0) && { state != 4}).if {
       result := TRUE;
     };
-    
+
     result
   );
-  
+
   - is_integer_64:BOOLEAN <-
   // Does self represent an INTEGER_64?
   // `Result' is true if and only if the following two conditions hold:
@@ -513,15 +537,15 @@ Section Public
     + negative: BOOLEAN;
     + result:BOOLEAN;
     + cc: CHARACTER;
-    
+
     // state 0: nothing read.
     // state 1: "+" or "-" read.
     // state 2: in the number.
     // state 3: after the number.
     // state 4: error.
-    
+
     i := 1;
-    
+
     { (state = 4) || {i > count}}.until_do {
       cc := item i;
       ( state = 0).if {
@@ -565,20 +589,20 @@ Section Public
         };
       }.elseif { state = 3 } then {
         cc.is_separator.if {
-        } else {            
+        } else {
           state := 4;
         };
       };
-      
+
       i := i + 1;
     };
     ( (state != 0) && { state != 4}).if {
       result := TRUE;
     };
-    
+
     result
   );
-  
+
   - to_integer:INTEGER <-
   // self must look like an INTEGER.
   (
@@ -586,7 +610,7 @@ Section Public
     + cc: CHARACTER;
     + negative: BOOLEAN;
     + result:INTEGER;
-    
+
     ? { is_integer };
     // state 0: nothing read.
     // state 1: "+" or "-" read.
@@ -630,13 +654,13 @@ Section Public
         // cc.is_separator
         i := count; // terminate the loop
       };
-      
+
       i := i + 1;
     };
-    
+
     result
   );
-  
+
   - to_integer_64:INTEGER_64 <-
   // self must look like an INTEGER.
   (
@@ -644,8 +668,8 @@ Section Public
     + cc: CHARACTER;
     + negative: BOOLEAN;
     + result:INTEGER_64;
-    
-    ? { is_integer };
+
+    ? { is_integer_64 };
     // state 0: nothing read.
     // state 1: "+" or "-" read.
     // state 2: in the number.
@@ -688,13 +712,13 @@ Section Public
         // cc.is_separator
         i := count; // terminate the loop
       };
-      
+
       i := i + 1;
     };
-    
+
     result
   );
-  
+
   - is_hexadecimal :BOOLEAN <-
   ( + j:INTEGER;
     + result:BOOLEAN;
@@ -720,7 +744,7 @@ Section Public
   - is_octal :BOOLEAN <-
   ( + result:BOOLEAN;
     + j:INTEGER;
-    (is_empty).if_false {        
+    (is_empty).if_false {
       j := lower;
       {(j > upper) || {! item j.is_octal_digit}}.until_do {
         j:=j+1;
@@ -733,7 +757,7 @@ Section Public
   - to_octal:INTEGER_64 <-
   ( + result:INTEGER_64;
     ? {is_octal};
-    
+
     lower.to upper do { j:INTEGER;
       result := (result << 3) | item j.octal_value;
     };
@@ -759,7 +783,7 @@ Section Public
   - to_binary :INTEGER_64 <-
   ( + result:INTEGER_64;
     ? {is_bit};
-    
+
     lower.to upper do { j:INTEGER;
       result := result << 1;
       (item j = '1').if {
@@ -768,7 +792,7 @@ Section Public
     };
     result
   );
-  
+
   - is_real_16_16:BOOLEAN <-
   // Does self represent an REAl_16_16 ?
   // `Result' is true if and only if the following two conditions hold:
@@ -792,17 +816,17 @@ Section Public
     + result:BOOLEAN;
     + cc: CHARACTER;
     + d:INTEGER;
-    
+
     // state 0: nothing read.
     // state 1: "+" or "-" read.
     // state 2: in the number before the point
     // state 3: in the number after the point
     // state 4: after the number.
     // state 5: error.
-    
+
     i := 1;
     d := 1;
-    
+
     { (state = 5) || {i > count}}.until_do {
       cc := item i;
       ( state = 0).if {
@@ -854,7 +878,7 @@ Section Public
           state := 5;
         };
       };
-      
+
       i := i + 1;
     };
     negative.if {
@@ -863,24 +887,24 @@ Section Public
     ( (state != 0) && { state != 5}).if {
       result := TRUE;
     };
-    
+
     result
   );
-  
+
   - to_real_16_16:REAL_16_16 <-
   (
     + i, state, value_int: INTEGER;
     + value:REAL_16_16;
-    + negative: BOOLEAN;    
+    + negative: BOOLEAN;
     + cc: CHARACTER;
     + d:INTEGER;
-    
+
     // state 0: nothing read.
     // state 1: "+" or "-" read.
     // state 2: in the number before the point
     // state 3: in the number after the point
     // state 4: after the number.
-    
+
     i := 1;
     d := 1;
 
@@ -906,7 +930,7 @@ Section Public
         cc.is_digit.if {
           value_int := value_int * 10 + cc.decimal_value;
         }.elseif { cc = '.' } then {
-          state := 3;        
+          state := 3;
           value := value_int.to_real_16_16;
         } else {  // cc is separator
           value := value_int.to_real_16_16;
@@ -923,25 +947,25 @@ Section Public
         // cc is separator
         i := count;  // terminate the loop
       };
-      
+
       i := i + 1;
     };
-    
+
     (state = 2).if {
       value := value_int.to_real_16_16;
     };
-    
+
     negative.if {
       value := - value;
     };
-    
+
     value
   );
-  
+
   //
   // Modification:
   //
-  
+
   - Self:SELF '+' other:ABSTRACT_STRING :STRING_BUFFER <-
   // Create a new STRING which is the concatenation of
   // `self' and `other'.
@@ -955,9 +979,9 @@ Section Public
     result
   )
   [
-    +? {Result.count = count + other.count};
+    +? {Result.count = Old count + other.count};
   ];
-    
+
   - as_lower:STRING <-
   // New object with all letters in lower case.
   (
@@ -967,7 +991,7 @@ Section Public
     result.to_lower;
     result
   );
-  
+
   - as_upper:STRING <-
   // New object with all letters in upper case.
   (
@@ -976,18 +1000,18 @@ Section Public
     result.copy Self;
     result.to_upper;
     result
-  ); 
-  
+  );
+
   // Other features:
-  
+
   - first:CHARACTER <-
   // Access to the very `first' character.
   (
     + result:CHARACTER;
     //? {! is_empty};
-    
+
     result := storage.item 0;
-    
+
     //? { result == item 1};
     result
   );
@@ -997,13 +1021,13 @@ Section Public
   (
     + result:CHARACTER;
     ? {! is_empty};
-    
+
     result := storage.item (count - 1);
-    
+
     ? { result = item count};
     result
   );
-    
+
   - substring start_index:INTEGER to end_index:INTEGER :STRING <-
   // New string consisting of items [`start_index'.. `end_index'].
   [
@@ -1014,71 +1038,71 @@ Section Public
   ( + c:INTEGER;
     + result:STRING;
 
-    
+
     c := end_index - start_index + 1;
     result := STRING.create c;
     result.set_count c;
     result.storage.slice_copy storage to 0 from (start_index - 1) to (end_index - 1);
-    
+
     result
   )
   [
     +? { Result.count = end_index - start_index + 1 };
   ];
-  
-  - substring_begin start:INTEGER to_begin end:INTEGER :STRING <- 
+
+  - substring_begin start:INTEGER to_begin end:INTEGER :STRING <-
   (
     substring start to end
   );
-  
+
   - substring_begin start:INTEGER to_end end:INTEGER :STRING <-
   (
     substring start to (upper-end-1)
   );
-  
+
   - substring_end start:INTEGER to_end end:INTEGER :STRING <-
   (
     substring (upper-start-1) to (upper-end-1)
   );
-  
+
   - substring_index (other:ABSTRACT_STRING,start_index:INTEGER) :INTEGER <-
   // Position of the first occurrence of `other' at or after 1
   // or 0 f none.
   ( + i,s,result:INTEGER;
-    
+
     //? {! other.is_empty };
     ? { (start_index >=1) && { start_index <= count + 1 }};
-    
+
     s := start_index;
     {(result != 0) || {(s + other.count - 1) > count }}.until_do {
       i := 1;
       {(i > other.count) || {item (s + i - 1) != other.item i}}.until_do {
         i := i + 1;
       };
-      
+
       (i > other.count).if {
         result := s;
       } else {
         s := s + 1;
       };
     };
-    
+
     result
   );
-  
+
   - first_substring_index other:ABSTRACT_STRING :INTEGER <-
   // Position of the first occurrence of `other' at or after 1
   // or 0 if none.
   (
     ? {! other.is_empty };
-    
+
     substring_index (other,1)
   );
 
   //
   // Splitting a STRING:
   //
-  
+
   - partition sep:ABSTRACT_STRING from start_index:INTEGER :(STRING, STRING, STRING) <-
   [
     -? {sep != NULL};
@@ -1122,13 +1146,13 @@ Section Public
         result.copy split_buffer;
       };
     };
-    
+
     result
   )
   [
     +? { (Result != NULL) ->> { ! Result.is_empty }};
   ];
-  
+
   - split_str sep:ABSTRACT_STRING in words:COLLECTION(STRING) <-
   // Same jobs as `split_str' but result is appended in `words'.
   [
@@ -1139,7 +1163,7 @@ Section Public
     // i    first character of the next word
     // j-1  last character of the next word
     // j    first character of the next separator
-    
+
     i := 1;
     { j := substring_index(sep, i); j != 0 }.while_do {
       words.add_last (substring i to (j-1));
@@ -1162,10 +1186,10 @@ Section Public
       };
     };
     ? { (result != NULL) ->> { ! result.is_empty }};
-    
+
     result
   );
-  
+
   - split_in words:COLLECTION(STRING) <-
   // Same jobs as `split' but result is appended in `words'.
   (
@@ -1173,7 +1197,7 @@ Section Public
     // state = 0: waiting next word.
     // state = 1: inside a new word.
     + c: CHARACTER;
-    
+
     ? { words != NULL};
     old_count := words.count;
     (count > 0).if {
@@ -1189,7 +1213,7 @@ Section Public
           (! c.is_separator).if {
             string_buffer.append_character c;
           } else {
-            words.add_last (string_buffer.twin);            
+            words.add_last (string_buffer.twin);
             state := 0;
           };
         };
@@ -1198,9 +1222,22 @@ Section Public
         words.add_last (string_buffer.twin);
       };
     };
-    
+
     ? { (words.count) >= old_count };
   );
+  
+  - is_upper:BOOLEAN <-
+  // True, if all characters `is_upper' or '_' or digit.
+  ( + i:INTEGER;
+    + c:CHARACTER;
+    i := lower;
+    {(i <= upper) && {
+      (c := item i; c.is_upper) || {c = '_'} || {c.is_digit}}
+    }.while_do { 
+      i := i + 1;
+    };
+    i > upper
+  );    
   
   - split_at sep:CHARACTER :ARRAY(STRING) <-
   // Split the string at characters `c' into an array of words.
@@ -1214,13 +1251,13 @@ Section Public
         result.copy split_buffer;
       };
     };
-       
+
     result
   )
   [
     +? { (Result != NULL) ->> { ! Result.is_empty }};
   ];
-  
+
   - split_at sep:CHARACTER in words:COLLECTION(STRING) <-
   // Same jobs as `split' but result is appended in `words'.
   (
@@ -1228,7 +1265,7 @@ Section Public
     // state = 0: waiting next word.
     // state = 1: inside a new word.
     + c: CHARACTER;
-    
+
     ? { words != NULL};
     old_count := words.count;
     (count > 0).if {
@@ -1244,7 +1281,7 @@ Section Public
           (c != sep).if {
             string_buffer.append_character c;
           } else {
-            words.add_last (string_buffer.twin);            
+            words.add_last (string_buffer.twin);
             state := 0;
           };
         };
@@ -1253,15 +1290,17 @@ Section Public
         words.add_last (string_buffer.twin);
       };
     };
-    
+
     ? { (words.count) >= old_count };
   );
-  
+
+  /*
   - get_new_iterator:ITERATOR(CHARACTER) <-
   (
     ITERATOR_ON_STRING(CHARACTER).create Self
   );
-  
+  */
+
   - same_string other:ABSTRACT_STRING :BOOLEAN <-
   // Do self and other have the same character sequence?
   // Useful in proper descendants of STRING.
@@ -1269,25 +1308,28 @@ Section Public
     ? { other != NULL };
     Self == other.to_string
   );
-  
+
   - to_string:STRING <-
   // New STRING having the same character sequence as self.
   // Useful in proper descendants of STRING.
   (
     STRING.create_from_string Self
   );
-  
+
+  - to_abstract_string :ABSTRACT_STRING <- Self;
+
   - string_buffer:STRING := STRING.create 256; // Private, temporary once buffer.
-  
+
   - split_buffer:ARRAY(STRING) := ARRAY(STRING).create_with_capacity 4 lower 1;
-    
+
   //
   // Display.
   //
-  
-  - print <- 
-  (    
-    IO.put_string Self;      
+
+  - print <-
+  (
+    //print_runtime_stack; die_with_code 1; // to track the first print...
+    IO.put_string Self;
   );
 
   -  printline <-
@@ -1295,23 +1337,23 @@ Section Public
     IO.put_string Self;
     IO.put_string "\n";
   );
-  
+
   - fast_print <-
   (
     SYSTEM_IO.print_string Self;
   );
-  
+
   - println <-
-  [ -? {storage.item count = '\0'}; ]
   (
-    to_external.println;
+    print;
+    '\n'.print;
   );
-  
+
   //
   // The guru section
   //
-  
-  - to_external:NATIVE_ARRAY(CHARACTER) <- 
+
+  - to_external:NATIVE_ARRAY(CHARACTER) <-
   // Gives C access to the internal `storage' (may be dangerous).
   // To be compatible with C, a null character is added at the end
   // of the internal `storage'. This extra null character is not
@@ -1320,6 +1362,5 @@ Section Public
     deferred;
     NULL
   );
-
 
 

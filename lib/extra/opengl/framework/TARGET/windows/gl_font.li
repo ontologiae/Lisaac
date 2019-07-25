@@ -1,0 +1,52 @@
+Section Header
+
+  + name     := GL_FONT;
+
+  - comment  := "Win32 - OpenGl rendered font";
+
+  - external := `static HFONT  hFont,hOldFont;`;
+
+Section Inherit
+
+  + parent_font_abstract:Expanded GL_FONT_ABSTRACT;
+
+Section Public
+
+  - default:FONT <-
+  (
+    create "Arial"
+  );
+
+  - load <-
+  (
+    + fontname:NATIVE_ARRAY(CHARACTER);
+    + b,h:UINTEGER_32;
+    + n:INTEGER;
+
+    n := nb_chars;
+    base := `glGenLists(@n)`:UINTEGER_32;
+
+    h := font_height;
+    fontname := name.to_external;
+    `hFont = CreateFont(@h,0,0,0,FW_BOLD,
+      FALSE,// italic
+      FALSE,// underlined
+      FALSE,// strikeout
+      ANSI_CHARSET,OUT_TT_PRECIS,CLIP_DEFAULT_PRECIS,
+      ANTIALIASED_QUALITY, // font quality
+      FF_DONTCARE|DEFAULT_PITCH,
+      @fontname);
+    `;
+    // select font & save old font to avoid memory leak
+    `hOldFont = (HFONT)SelectObject(win.hdc, hFont)`;
+
+    // cree des bitmaps a partir de la fonte
+    b := base;
+    `wglUseFontBitmaps(win.hdc, 32, @n, @b)`;
+  );
+
+  - unload <-
+  (
+    parent_font_abstract.unload;
+    `SelectObject(win.hdc, hOldFont)`;
+  );

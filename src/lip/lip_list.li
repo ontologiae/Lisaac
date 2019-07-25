@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := LIP_LIST;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -32,9 +12,9 @@ Section Inherit
   + parent_lip_code:Expanded LIP_CODE;
 
 Section Public
-  
+
   + list:FAST_ARRAY(LIP_CODE);
-  
+
   //
   // Creation.
   //
@@ -47,15 +27,15 @@ Section Public
   );
 
   - make p:POSITION with v:FAST_ARRAY(LIP_CODE) <-
-  ( 
+  (
     position := p;
     list := v;
   );
-  
+
   //
   // Run.
   //
-  
+
   - run <-
   (
     run_intern;
@@ -63,18 +43,18 @@ Section Public
       semantic_error (position,"Incorrect expression.");
     };
   );
-  
+
   - run_expr:LIP_CONSTANT <-
-  (     
+  (
     run_intern;
     (list.last = NULL).if {
       semantic_error (position,"Unreachable expression.");
     };
     list.last.run_expr
   );
-  
+
 Section Private
-  
+
   - run_intern <-
   (
     (list.lower).to (list.upper-1) do { i:INTEGER;

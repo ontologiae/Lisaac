@@ -19,87 +19,76 @@
 //                     http://isaacproject.u-strasbg.fr/                     //
 ///////////////////////////////////////////////////////////////////////////////
 Section Inherit
-  
+
   + parent:STRING;
 
 Section Private
   
-  + is_valid:BOOLEAN;
+  + any:STRING;
   
-  - src_path <-
-  ( 
-    path_li "src/";
-    path_li "src/tools/";
-    path_li "src/type/";
-    path_li "src/item/";
-    path_li "src/constant/";
-    path_li "src/variable/";
-    path_li "src/external/";
-    path_li "src/external/logic/";
-    path_li "src/external/arithmetic/";
-    path_li "src/external/comparison/";
-    path_li "src/dispatcher/";
-    path_li "src/code_life/";    
-    path_li "src/lip/";    
-  );
+  + is_valid:BOOLEAN;
+
+  + is_shorter:BOOLEAN;
   
   - compiler_path <-
   (
-    src_path;    
+    any := "compiler";
+    path "./*";
     input_file := "lisaac";
-    path_li "src/compiler_any/";
   );
-    
+
   - shorter_path <-
   (
-    src_path;    
+    any := "shorter";
+    path "./*";
     input_file := "shorter";
-    path_li "src/shorter_any/";
   );
-    
+
   //
   // Execute function.
   //
-  
+
   - front_end <-
-  (    
-    general_front_end;        
-    ((input_file = "") | (input_file = "lisaac")).if {    
+  (
+    general_front_end;
+    ((input_file = "") | (input_file = "lisaac")).if {
       compiler_path;
       (is_valid).if {
         boost;
       };
-    };                 
+    };
   );
-  
+
   - back_end <-
   (
     general_back_end;
     (is_valid).if {
+      execute "cp shorter ../bin/.";
       execute "cp lisaac.c ../bin/.";
       execute "cp lisaac ../bin/.";
-    };    
+      execute "cp build_label.c ../bin/.";
+      execute "cp build_label ../bin/.";
+    };
   );
-  
+
 Section Public
-  
+
   - compiler <-
   // Compile the Lisaac compiler.
   (
     compiler_path;
   );
-  
+
   - shorter <-
   // Compile the shorter.
   (
     shorter_path;
   );
-  
+
   - valid <-
-  // Compile the Lisaac compiler with `-boost' option and 
+  // Compile the Lisaac compiler with `-boost' option and
   // update your `/bin' compiler version.
   (
-    is_valid := TRUE;    
+    is_valid := TRUE;
   );
-  
-  
+

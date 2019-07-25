@@ -1,0 +1,16 @@
+Section Header
+
+  + name     := VIEWPORT;
+
+  - comment  := "(x0,y0,width,height) viewport";
+
+Section Inherit
+
+  + parent_vector:Expanded VECTOR4(UINTEGER_32);
+
+Section Public
+
+  - x0:UINTEGER_32 <- x;
+  - y0:UINTEGER_32 <- y;
+  - width:UINTEGER_32 <- z;
+  - height:UINTEGER_32 <- w;

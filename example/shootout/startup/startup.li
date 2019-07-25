@@ -1,0 +1,11 @@
+Section Header
+  
+  + name  := STARTUP;
+    
+Section Public
+    
+  - main <-
+  (     
+    //"hello world\n".fast_print;
+    "hello world\n".print;
+  );

@@ -1,76 +1,79 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := INSTR;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parent for all Instruction.";
-  
-Section Inherit
-  
-  + parent_itm_object:Expanded ITM_OBJECT;
-  
-Section Public
-  
-  - is_invariant:BOOLEAN <- FALSE;
-  
-  //
-  //
-  //
-  
-  - hash_code:INTEGER <- INTEGER.force_conversion position;
 
-  - my_copy:SELF <- 
-  ( 
+Section Inherit
+
+  + parent_itm_object:Expanded ITM_OBJECT;
+
+Section Public
+
+  - is_invariant:BOOLEAN <- FALSE;
+  // TODO: Documentation
+  // For expressions, it seems they are invariant if they are constant, like
+  // sizeof or binary operators on two invariant expressions.
+  // For instructions, it is redefined in LIST, SWITCH and WRITE
+
+  //
+  //
+  //
+
+  - hash_code:INTEGER <- INTEGER.force_conversion position;
+  // Hash code of instruction for storage
+
+  - my_copy:SELF <-
+  // TODO: Documentation
+  // Would be to copy the instruction and make sure memory is allocated
+  // correctly. Not really sure though.
+  // Deferred
+  (
     debug_display;
-    deferred; 
-    NULL 
-  );  
-  
+    deferred;
+    NULL
+  );
+
   //
   // Executing pass.
   //
 
   - cmp other:INSTR :BOOLEAN := FALSE;
-  
+  // TODO: Documentation
+  // Not redefined, Not used as far as I can grep. Seems unused.
+
   - i_am_the_last i:INSTR :BOOLEAN <- (i = Self);
-  
-  - execute:INSTR <- 
-  ( 
+  // TODO: Documentation
+  // It seems to have something to do with the last expression of a list that
+  // is also a return value. Perhaps it checks whether the instruction i is the
+  // returned instruction of an instruction.
+  // Redefined in LIST, SWITCH and PROFIL
+  // Used in LIST, CALL_SLOT, SWITCH and PROFIL
+
+  - execute:INSTR <-
+  // TODO: Documentation
+  // Deferred
+  (
     debug_display;
-    deferred; 
+    deferred;
     NULL
   );
-  
-  - remove <- 
+
+  - remove <-
+  // TODO: Documentation
+  // Deferred
   (
-    debug_display;    
+    debug_display;
     deferred;
   );
 
-  - genere buffer:STRING <- 
+  - genere buffer:STRING <-
+  // Generate the C code in `buffer'
+  // Deferred
   (
     // BUG.
     display buffer;
@@ -78,12 +81,13 @@ Section Public
     // FIN BUG.
     //deferred;
   );
-
+  
   //
   // Display.
   //
 
   - display_ref buffer:STRING <-
+  // Display reference for debug purposes
   (
     is_verbose.if {
       buffer.append "<";
@@ -92,18 +96,40 @@ Section Public
     };
   );
 
-  - display buffer:STRING <- 
+  - display buffer:STRING <-
+  // Display instruction for debug purposes
+  // Deferred
   (
     "INSTR.display\n".print;
-    deferred; 
+    deferred;
   );
 
   - debug_display <-
+  // Print the result of the `display' slot
   ( + voir:STRING;
-    
+
     voir := STRING.create 250;
     display voir;
     voir.print;
     '\n'.print;
   );
-  
+
+  - simplify_type v:VARIABLE <-
+  // TODO: Documentation
+  // Not redefined anywhere, used in LIST, READ and WRITE
+  ( + tmp_type:TYPES_TMP;
+
+    ((! v.is_static) && {! v.type.is_strict}).if {
+      tmp_type := TYPES_TMP.new;
+      v.get_type tmp_type;
+      (tmp_type.count != 0).if {
+        (tmp_type.first = TYPE_NULL).if {
+          tmp_type.remove_first;
+          (tmp_type.count = 1).if {
+            v.set_type (tmp_type.first.default.to_strict);
+          };
+        };
+      };
+      tmp_type.free;
+    };
+  );

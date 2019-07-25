@@ -1,67 +1,47 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_TYPE_STYLE;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Type with style";
-  
+
 Section Inherit
-  
+
   + parent_itm_type_simple:Expanded ITM_TYPE_SIMPLE;
-  
-Section Private 
-  
+
+Section Private
+
   - dico_ts:FAST_ARRAY(ITM_TYPE_STYLE) := FAST_ARRAY(ITM_TYPE_STYLE).create_with_capacity 32;
-  
+
   - create n:STRING_CONSTANT style s:STRING_CONSTANT :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make n style s;
     result
   );
-  
+
   - make n:STRING_CONSTANT style s:STRING_CONSTANT <-
   (
     name  := n;
     style := s;
   );
-  
-Section Public  
-  
+
+Section Public
+
   + style:STRING_CONSTANT;
-  
+
   - get n:STRING_CONSTANT style s:STRING_CONSTANT :SELF <-
-  ( + result:SELF; 
+  ( + result:SELF;
     + idx:INTEGER;
-    
+
     idx := dico_ts.lower;
     {
       (idx <= dico_ts.upper) && {
-	(dico_ts.item idx.name  != n) || 
+	(dico_ts.item idx.name  != n) ||
 	{dico_ts.item idx.style != s}
       }
     }.while_do {
@@ -75,5 +55,5 @@ Section Public
     };
     result
   );
-  
+
 

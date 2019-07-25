@@ -1,0 +1,34 @@
+Section Header
+
+  + name     := EVENT_LISTENER;
+
+Section Inherit
+
+  - parent_framework_any:FRAMEWORK_ANY := FRAMEWORK_ANY;
+
+Section Public
+
+  //
+  // Keyboard events
+  //
+
+  - keydown k:INTEGER <-
+  (
+  );
+
+  - keyup k:INTEGER <-
+  (
+  );
+
+
+  //
+  // Mouse events
+  //
+
+  - move (x,y:INTEGER) <-
+  (
+  );
+
+  - click b:INTEGER <-
+  (
+  );

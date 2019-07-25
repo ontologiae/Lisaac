@@ -1,78 +1,58 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
 
   + name    := DESK_BOARD;
-    
+
   - bibliography:="http://IsaacOS.com";
   - author      :="Sonntag Benoit (bsonntag@loria.fr)";
   - comment     :="Interface managment for Intelligent System And Advanced Concept.";
 
   - date    :="2003/04";
-  
-Section Inherit  
-  
+
+Section Inherit
+
   + parent_g_raw:Expanded G_RAW;
-  
+
 Section Private
-    
+
   - path_base:ABSTRACT_STRING;
-  
+
   - path_tmp:STRING := STRING.create 256;
-  
+
   - path l:ABSTRACT_STRING :STRING <-
   (
     path_tmp.copy path_base;
-    path_tmp.append l; 
+    path_tmp.append l;
     path_tmp
-  );    
-  
+  );
+
 Section Public
-  
+
   - bug1:G_WIN_OUT;
   - bug2:G_WIN_OUT;
 
-  
+
   - isaac:G_WIN_OUT;
   - tools:G_WIN_OUT;
   - multimedia:G_WIN_OUT;
   - game:G_WIN_OUT;
-    
+
   - create_with path_dir:ABSTRACT_STRING :SELF <-
-  (         
+  (
     path_base := path_dir;
     isaac := G_WIN_OUT.create (
-      G_RAW.create (        
+      G_RAW.create (
         G_BUTTON.create (G_IMG.create (path "terminal.bmp") | G_OUT.create " Terminal ")
         connect (SHELL.run path_dir) /
         G_BUTTON.create (G_OUT.create " Monitor ")
         connect (bug1 := MONITOR.run)
       ) /
       G_RAW.create (
-        G_BUTTON.create (G_IMG.create (path "about.bmp") | G_OUT.create " About ") 
+        G_BUTTON.create (G_IMG.create (path "about.bmp") | G_OUT.create " About ")
         connect (ABOUT.run path_dir) /
         G_BUTTON.create (G_IMG.create (path "reboot.bmp") | G_OUT.create " Reboot ")
         action { b:G_BUTTON; "Reboot...\n".print; die_with_code 0; }
       )
-    );    
+    );
     tools := G_WIN_OUT.create (
       G_RAW.create (
         G_BUTTON.create (G_IMG.create (path "calc.bmp") | G_OUT.create " Calculator ")
@@ -82,7 +62,7 @@ Section Public
     multimedia := G_WIN_OUT.create (
       G_RAW.create (
         G_BUTTON.create (G_IMG.create (path "viewer.bmp") | G_OUT.create " Viewer ")
-        connect (VIEWER.run) 
+        connect (VIEWER.run)
       ) /
       G_RAW.create (
         G_BUTTON.create (G_IMG.create (path "video.bmp") | G_OUT.create " Video ")
@@ -94,20 +74,20 @@ Section Public
         G_BUTTON.create (G_OUT.create " Glass ")
         connect (GLASS.run path_dir) /
         G_BUTTON.create (G_OUT.create " Fire ")
-        connect (FIRE.run) 
+        connect (FIRE.run)
       )
-    );    
+    );
     game := G_WIN_OUT.create (
       G_RAW.create (
-        G_BUTTON.create (G_IMG.create (path "tetris.bmp") | G_OUT.create " Tetris ") 
+        G_BUTTON.create (G_IMG.create (path "tetris.bmp") | G_OUT.create " Tetris ")
         connect (TETRIS.run) /
-        G_BUTTON.create (G_IMG.create (path "power4.bmp") | G_OUT.create " Power 4 ") 
+        G_BUTTON.create (G_IMG.create (path "power4.bmp") | G_OUT.create " Power 4 ")
         connect (FOURONLINE.run) /
         G_BUTTON.create (G_IMG.create (path "sudoku.bmp") | G_OUT.create " Sudoku ")
         connect (SU_DOKU.run)
       )
     );
-    
+
     make (
       G_RAW.create
       (
@@ -117,13 +97,13 @@ Section Public
         G_BUTTON.create (G_IMG.create (path "game.bmp"))       connect game
       ).fix_width |
       G_OUT.create "Isaac Operating System" justify (G_OUT.center) |
-      G_RAW.create 
+      G_RAW.create
       (
-        G_BUTTON.create (G_IMG.create (path "desk1.bmp")) 
+        G_BUTTON.create (G_IMG.create (path "desk1.bmp"))
         action { b:G_BUTTON;
           move_virtual_screen 0;
         } |
-        G_BUTTON.create (G_IMG.create (path "desk2.bmp")) 
+        G_BUTTON.create (G_IMG.create (path "desk2.bmp"))
         action { b:G_BUTTON;
           move_virtual_screen (-DESK.width);
         }
@@ -132,11 +112,11 @@ Section Public
     );
     Self
   );
-  
+
   - receive msg:EVENT <-
   ( + evt_time:EVENT_TIMER;
-        
-    evt_time ?= msg;    
+
+    evt_time ?= msg;
     ((evt_time != NULL) && {evt_time.destination = NULL}).if {
       (DESK.virtual_screen.x_window != pos_v).if {
         DESK.virtual_screen.move (inc_v>>1,0);
@@ -150,18 +130,18 @@ Section Public
       } else {
         TIMER.sub_client Self;
       };
-    } else {    
+    } else {
       parent_g_raw.receive msg;
     };
   );
-  
+
 Section Private
-  
+
   - pos_v:INTEGER;
   - inc_v:INTEGER;
-  
+
   - move_virtual_screen p:INTEGER <-
-  (     
+  (
     (DESK.virtual_screen.x_window != p).if {
       pos_v := p;
       (DESK.virtual_screen.x_window > p).if {
@@ -169,8 +149,8 @@ Section Private
       } else {
         inc_v := 2;
       };
-      TIMER.add_client Self;    
-    };            
+      TIMER.add_client Self;
+    };
   );
 
 

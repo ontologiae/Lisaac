@@ -1,52 +1,32 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := EXPR_BINARY;
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Binary Expression.";
-  
+
 Section Inherit
-  
+
   + parent_expr:Expanded EXPR;
-    
+
 Section Public
-  
+
   + left:EXPR;
 
   + right:EXPR;
-    
+
   //
   // Constructor
   //
-  
+
   - create l:EXPR and r:EXPR :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make l and r;
     result
   );
-  
+
   - make l:EXPR and r:EXPR <-
   (
     left  := l;

@@ -1,13 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-//                                                                            //
-//                             MPEG2 Decode Video                             //
-//                                                                            //
-//                     LORIA - UHP - INRIA - ST - FRANCE                      //
-//               (c) INRIA (see `licence.txt' for more details)               //
-//                     Benoit SONNTAG - bsonntag@loria.fr                     //
-//                           http://www.IsaacOS.com                           //
-//                                                                            //
-////////////////////////////////////////////////////////////////////////////////
 Section Header
   
   + name         := PMV;

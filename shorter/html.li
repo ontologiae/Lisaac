@@ -11,36 +11,36 @@
   \</head>\n\
   \<body BGCOLOR=\"#FFFFFF\">\n\
   \\n";
-  
-  - end :=    
+
+  - end :=
   "\n</body>\n\
   \</html>\n";
-  
-  - keyword := 
+
+  - keyword :=
   "<strong><font color=\"#A020F0\">" + token + "</font></strong>";
 
-  - keyword_section := 
+  - keyword_section :=
   "<br><br><strong><font color=\"#A020F0\">" + token + "</font></strong>";
-  
-  - integer := 
+
+  - integer :=
   "<font color=\"#A020F0\">" + token + "</font>";
-  
-  - character := 
+
+  - character :=
   "<font color=\"#5F9EA0\">" + token + "</font>";
-  
+
   - string :=
   "<font color=\"#BC8F8F\">" + token + "</font>";
-  
+
   - operator :=
   "<font color=\"#B8860B\">" + token + "</font>";
-  
+
   - keyprototype :=
   "<font color=\"#008000\">"+token+"</font>";
 
   - prototype :=
   "<a href=\"" + token + ".html\">\
   \<font color=\"#008000\">"+token+"</font></a>";
-  
+
   - comment_header_line := " ";
 
   - comment_line :=
@@ -48,29 +48,29 @@
 
   - comment_slot_line :=
   "<br><em><strong><font color=\"#707070\">&nbsp &nbsp &nbsp &nbsp " + token + "</font></strong></em>";
-  
-  - comment := 
+
+  - comment :=
   " ";
-  
-  - slot := 
+
+  - slot :=
   "<strong><font color=\"#0000FF\">" + token + "</font></strong>";
 
-  - slot_call := 
+  - slot_call :=
   "<font color=\"#0000FF\">" + token + "</font>";
-  
+
   - slot_style :=
   "<br><br><strong><font color=\"#FF0000\">&nbsp &nbsp " + token + "</font></strong>";
-  
-  - block := 
-  "<font color=\"#FF0000\">" + token + "</font>";  
-  
-  - external := 
+
+  - block :=
+  "<font color=\"#FF0000\">" + token + "</font>";
+
+  - external :=
   "<em><strong><font color=\"#A4DEA4\">" + token + "</font></strong></em>";
-  
+
   //
   // Recursive Option.
   //
-  
+
   - index :=
   "<html><head><title>Lisaac Documentation</title></head>\n\
   \<frameset cols=\"260,*\" border=\"3\" frameborder=\"yes\" \
@@ -87,9 +87,9 @@
   \<h3>Frame Error</h3>\n\
   \<p>This web site works only with frames.</p>\n\
   \</noframes>\n\
-  \</html>\n";  
-  
-  - default := 
+  \</html>\n";
+
+  - default :=
   "<html><head><title>Proto</title></head>\n\
   \<body bgcolor=\"#FFFFFF\">\n\
   \<H1>Lisaac documentation</H1>\n\
@@ -101,24 +101,24 @@
   "<html><head><title>List Directories</title></head>\n\
   \<body bgcolor=\"#FFFFFF\">\n\
   \<a href=\"file_list.html\" target=\"file\">All</a>\n";
-  
+
   - directory_list_item :=
   "<br><a href=\""+token+".html\" target=\"file\">"+token+"</a>\n";
-  
-  - directory_list_end := 
+
+  - directory_list_end :=
   "</body>\n\
   \</html>";
 
   - file_list_begin :=
   "<html><head><title>All Files</title></head>\n\
   \<body bgcolor=\"#F0F0FF\" link=\"black\" vlink=\"black\">\n";
-  
+
   - file_list_item :=
   "<br><a href=\""+token+".html\" target=\"content\">"+token+"</a>\n";
-  
+
   - file_list_end :=
   "</body>\n\
   \</html>";
-  
+
 
 

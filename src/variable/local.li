@@ -1,59 +1,39 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := LOCAL;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Local slot";
-  
+
 Section Inherit
-  
+
   + parent_variable:Expanded VARIABLE;
-  
-Section Public  
-  
+
+Section Public
+
   // BSBS: Doit pas etre utile.
-  
+
   + is_result :BOOLEAN := FALSE;
 
-  - set_result r:BOOLEAN <- 
+  - set_result r:BOOLEAN <-
   (
     is_result := r;
   );
-  
+
   //
   // Copy alias manager.
   //
-  
+
   - is_alias:BOOLEAN;
-  
-  - alias_on <-  
+
+  - alias_on <-
   (
     is_alias := TRUE;
   );
-  
+
   - alias_off <-
   (
     (list_alias.lower).to (list_alias.upper) do { j:INTEGER;
@@ -62,37 +42,37 @@ Section Public
     list_alias.clear;
     is_alias := FALSE;
   );
-  
+
   - list_alias:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 64;
-  
+
   - get_alias:LOCAL <-
   (
     (my_alias = NULL).if {
       my_alias := my_copy;
-      my_alias.set_type_list type_list;
-      list_alias.add_last Self;	
+      my_alias.set_type_set type_set;
+      list_alias.add_last Self;
     };
     my_alias
   );
-  
+
   + my_alias:LOCAL;
-  
+
   - set_my_alias new_loc:LOCAL <-
   (
     my_alias := new_loc;
   );
-  
+
   + list_level:INTEGER;
-  
+
   - set_list_level lev:INTEGER <-
   (
     list_level := lev;
   );
-    
+
   - write p:POSITION with r:EXPR value val:EXPR :WRITE <-
   ( + result:WRITE;
-    
-    (my_alias != NULL).if {      
+
+    (my_alias != NULL).if {
       result := my_alias.write_direct p with NULL value val;
     }.elseif {is_alias} then {
       result := get_alias.write_direct p with NULL value val;
@@ -101,42 +81,42 @@ Section Public
     };
     result
   );
-  
+
   - read p:POSITION with r:EXPR :READ <-
   ( + result:READ;
-        
-    (my_alias != NULL).if {      
+
+    (my_alias != NULL).if {
       result := my_alias.read_direct p with NULL;
-    }.elseif {is_alias} then { 
+    }.elseif {is_alias} then {
       // Case : Argument function (see CALL_SLOT)
-      result := get_alias.read_direct p with NULL; 
+      result := get_alias.read_direct p with NULL;
     } else {
       //? {! is_alias};
       result := read_direct p with NULL;
-    };        
+    };
     result
   );
-  
+
   //
   // Sequence optimizer
   //
-  
+
   + last_seq:LOCAL_SEQ;
-  
+
   - reset_last_write w:WRITE <-
-  (  
+  (
     ((last_seq != NULL) && {last_seq.last_write = w}).if {
       last_seq.set_last_write NULL;
     };
   );
-  
+
   - set_last_seq s:LOCAL_SEQ <-
   (
     last_seq := s;
   );
-  
+
   - set_write w:WRITE <-
-  (                
+  (
     (last_seq = NULL).if {
       LOCAL_SEQ.new Self;
       //"LOCAL:".print;
@@ -145,30 +125,30 @@ Section Public
     (
       (! PROFIL.mode_recursive) &&
       {loop_invariant = NULL} &&
-      {last_seq.last_write != NULL} &&            
+      {last_seq.last_write != NULL} &&
       {last_seq.last_index != -1} &&
       {last_seq.last_list_current = list_current} &&
       {last_seq.last_index < list_current.index}  &&
       {last_seq.last_seq_call_local_and_loop = seq_call_local_and_loop} &&
       {list_current.item (last_seq.last_index) = last_seq.last_write} // BSBS: Voir pourquoi pas tjrs le cas
-    ).if {                         
+    ).if {
       list_current.put (last_seq.last_write.value) to (last_seq.last_index);
-      unwrite (last_seq.last_write);      
+      unwrite (last_seq.last_write);
       new_execute_pass;
-    };    
+    };
     // Save context
     last_seq.set_seq w;
   );
-  
+
   - set_read <-
   (
     (last_seq != NULL).if {
       last_seq.set_last_index (-1);
     };
   );
-  
+
   - get_last_index:INTEGER <- last_seq.last_index;
-  
+
   - is_invariant:BOOLEAN <-
   (
     (loop_seq_call_local_and_loop = seq_call_local_and_loop) &&
@@ -179,7 +159,7 @@ Section Public
       ) || {style = ' '}
     }
   );
-  
+
   - get_last_value rec:EXPR :EXPR <-
   [
     ? {rec = NULL};
@@ -191,7 +171,7 @@ Section Public
     + g:SLOT_DATA;
     /*
     + bug:BOOLEAN;
-    
+
     (intern_name == "__tmp__TC").if {
       bug:=TRUE;
       "0\n".print;
@@ -204,13 +184,13 @@ Section Public
         };
       };
     };
-     */ 
-    
-    
+     */
+
+
     (
-      (! PROFIL.mode_recursive) && {loop_invariant = NULL} && 
+      (! PROFIL.mode_recursive) && {loop_invariant = NULL} &&
       {last_seq != NULL} && {last_seq.last_write != NULL}
-    ).if {      
+    ).if {
       /*
       (bug).if {
         "1\n".print;
@@ -231,77 +211,77 @@ Section Public
 	};
 	(
 	  ( // Constant propagation.
-	    val.is_constant 
-	  ) || 
+	    val.is_constant
+	  ) ||
 	  { // Local propagation.
 	    (l != NULL) && {
 	      (
-		(l.last_seq != NULL) && {l.last_seq.last_write != NULL} && 
-		{l.last_seq.last_seq_index < last_seq.last_seq_index} && 
-		{last_seq.last_seq_call_local_and_loop = seq_call_local_and_loop} 
-	      ) || {l.require_count <= 1} || {l.style = ' '}
+		(l.last_seq != NULL) && {l.last_seq.last_write != NULL} &&
+		{l.last_seq.last_seq_index < last_seq.last_seq_index} &&
+		{last_seq.last_seq_call_local_and_loop = seq_call_local_and_loop}
+	      ) || {(l.require_count <= 1) && {l.style != 'R'}} || {l.style = ' '}
 	    }
 	  } ||
 	  { // Global propagation.
 	    (g != NULL) && {g.style = '-'} && {
-	      (		
-		(g.last_write != NULL) && {g.last_seq_index < last_seq.last_seq_index} && 
-		{last_seq.last_seq_call_and_loop = seq_call_and_loop} && 
+	      (
+		(g.last_write != NULL) && {g.last_seq_index < last_seq.last_seq_index} &&
+		{last_seq.last_seq_call_and_loop = seq_call_and_loop} &&
 		{is_seq_list (g.last_list_current)}
 	      ) || {g.require_count = 1}
 	    }
 	  }
-	).if {	  	  
+	).if {
 	  result := val.my_copy;
 	}.elseif {
 	  // Propagation step by step.
 	  (last_seq.last_seq_or_and = seq_or_and) &&
 	  {ensure_count = 1} &&
-	  {list_current.index > list_current.lower} && 
-	  {list_current.item (list_current.index - 1) = last_seq.last_write} 
-	} then {    	  
+	  {list_current.index > list_current.lower} &&
+	  {list_current.item (list_current.index - 1) = last_seq.last_write}
+	} then {
 	  unwrite (last_seq.last_write);
 	  last_seq.set_last_write NULL;
-	  list_current.put NOP to (list_current.index - 1);	  
+	  list_current.put NOP to (list_current.index - 1);
 	  result := val;
 	};
-      };      
+      };
     };
     result
   );
-  
-  - set_type_list t:TYPES <-
+
+  - set_type_set t:TYPES <-
   (
-    type_list := t;
+    type_set := t;
   );
-  
+
   //
   //
   //
-    
+
   - is_local:BOOLEAN <- TRUE;
-    
+
   //
   // Creation.
   //
-    
-  - create p:POSITION name n:STRING_CONSTANT 
+
+  - create p:POSITION name n:STRING_CONSTANT
   style c:CHARACTER type t:TYPE_FULL result r:BOOLEAN :SELF<-
   ( + result:SELF;
-    result := clone;    
+    result := clone;
     result.make p name n style c type t result r;
     result
   );
-    
-  - create p:POSITION name n:STRING_CONSTANT 
+
+  - create p:POSITION name n:STRING_CONSTANT
   style c:CHARACTER type t:TYPE_FULL :SELF<-
   ( + result:SELF;
-    result := clone;    
+    result := clone;
     result.make p name n style c type t result FALSE;
     result
   );
-  
-  - make p:POSITION name n:STRING_CONSTANT 
+
+  - make p:POSITION name n:STRING_CONSTANT
   style c:CHARACTER type t:TYPE_FULL result r:BOOLEAN <-
   ( + tmp:TYPES_TMP;
     ? {p.code != 0};
@@ -310,75 +290,75 @@ Section Public
     position    := p;
     name        := n;
     is_result   := r;
-    intern_name := ALIAS_STR.get_intern n; 
-            
+    intern_name := ALIAS_STR.get_intern n;
+
     ((t.is_expanded) && {! t.is_expanded_c}).if {
       type := t + TYPE_FULL.expanded_ref_bit;
     } else {
       type := t;
     };
     style := c;
-    
-    (is_static).if {      
-      tmp := TYPES_TMP.new;            
-      tmp.add (t.raw);      
-      type_list := tmp.to_types;                  
+
+    (is_static).if {
+      tmp := TYPES_TMP.new;
+      tmp.add (t.raw);
+      type_set := tmp.to_types;
     } else {
-      type_list := TYPES_TMP.types_empty;
-    };    
+      type_set := TYPES_TMP.types_empty;
+    };
   );
-  
+
   - my_copy:LOCAL <-
   ( + result:LOCAL;
-    
+
     result := LOCAL.create position name name style style type type;
     result
   );
-  
+
   //
   // Value.
   //
 
   - init <-
   ( + val:EXPR;
-    + i:INSTR;    
-    + int:INTEGER_CST;    
-    
-    val := type.default_value position;    
-    (ALIAS_STR.is_integer (type.raw.name)).if { 
+    + i:INSTR;
+    + int:INTEGER_CST;
+
+    val := type.default_value position;
+    (ALIAS_STR.is_integer (type.raw.name)).if {
       int ?= val;
-      (int != NULL).if {	  
+      (int != NULL).if {
 	int.cast_type type;
-      }; 
+      };
     } else {
       val := val.check_type type with position;
     };
     i := write position value val;
-    list_current.add_last i;    
+    list_current.add_last i;
   );
-    
+
   - set_intern_name n:STRING_CONSTANT <-
   (
     intern_name := n;
   );
-    
+
 Section VARIABLE
-  
-  - new_read p:POSITION with r:EXPR :READ <- 
+
+  - new_read p:POSITION with r:EXPR :READ <-
   [ -? {r = NULL}; ]
-  (             
+  (
     READ_LOCAL.create p with Self
   );
-  
+
   - new_write p:POSITION with r:EXPR value v:EXPR :WRITE <-
   [ -? {r = NULL}; ]
   ( + result:WRITE;
-    result := WRITE_LOCAL.create p with v in Self;    
-    result    
+    result := WRITE_LOCAL.create p with v in Self;
+    result
   );
-  
+
   /*
-  - new_access r:EXPR :ACCESS <- 
+  - new_access r:EXPR :ACCESS <-
   (
     ACCESS_LOCAL.create Self
   );

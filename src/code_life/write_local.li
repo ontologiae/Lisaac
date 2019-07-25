@@ -1,47 +1,27 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := WRITE_LOCAL;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Write local";
-  
+
 Section Inherit
 
   + parent_write:Expanded WRITE;
-    
+
 Section Public
-    
+
   + local:LOCAL;
-  
+
   - variable:VARIABLE <- local;
-  
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION with val:EXPR in l:LOCAL :SELF <-
   ( + result:SELF;
     ? {p.code != 0};
@@ -49,36 +29,36 @@ Section Public
     result.make p with val in l;
     result
   );
-  
+
   - make p:POSITION with val:EXPR in l:LOCAL <-
-  (     
+  (
     position := p;
     local    := l;
     value    := val;
   );
-    
+
   //
   // Execute.
   //
-  
+
   - execute_access_unlink:INSTR <- NULL;
-  
+
   - execute_access_link;
 
-  - execute_argument:BOOLEAN <- 
+  - execute_argument:BOOLEAN <-
   // BSBS: Cette methode foireuse ne doit plus etre necessaire (utilise execute normal)
   ( + new_val:INSTR;
-    + read:READ;    
+    + read:READ;
     + result:BOOLEAN;
-    
+
     ? { variable != NULL };
     ? { value    != NULL };
-    
+
     read ?= value;
     (ensure_count = 0).if {
       //
       // Supprime affectation.
-      //      
+      //
       new_val := value.execute_unlink;
       (new_val = NULL).if {
 	result := TRUE;
@@ -91,31 +71,34 @@ Section Public
     } else {
       //
       // Execution normal.
-      //            
+      //
       execute_access_link;
-      value := value.execute_link;      
+      value := value.execute_link;
     };
     result
-  );  
-  
+  );
+
   //
   // Genere
   //
-  
+
   - genere buffer:STRING <-
   ( + idf:STRING_CONSTANT;
-    
-    idf := ALIASER_LOCAL.write Self;        
+
+    idf := ALIASER_LOCAL.write Self;
+
     (quiet_generation).if_false {
-      (local.is_result).if { 
+      (local.is_result).if {
         buffer.add_last '*';
-      };    
-      buffer.append idf; 
+        buffer.append (local.intern_name);
+      } else {
+        buffer.append idf;
+      };
       //
       ((value.static_type.raw = TYPE_NULL) && {variable.type.raw.is_block}).if {
         buffer.append ".__id=0";
-      } else {        
-        buffer.add_last '=';    
+      } else {
+        buffer.add_last '=';
         genere_value buffer;
       };
     };
@@ -123,25 +106,23 @@ Section Public
   
   - genere_first_result buffer:STRING <-
   ( + idf:STRING_CONSTANT;
-    
-    idf := ALIASER_LOCAL.write Self;        
-    (local.is_result).if { 
+
+    idf := ALIASER_LOCAL.write Self;
+    (local.is_result).if {
       buffer.add_last '*';
     };
-    buffer.append idf;    
-    //    
-    buffer.add_last '=';    
+    buffer.append idf;
+    //
+    buffer.add_last '=';
   );
   
   - genere_argument_result buffer:STRING <-
   ( + idf:STRING_CONSTANT;
-    
+
     idf := ALIASER_LOCAL.write Self;
     buffer.add_last '&';
-    buffer.append idf; 
+    buffer.append idf;
   );
-  
-
 
 
 

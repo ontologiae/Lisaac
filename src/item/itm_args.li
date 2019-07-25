@@ -1,89 +1,69 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_ARGS;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "One argument vector";
-  
+
 Section Inherit
-  
+
   + parent_itm_argument:Expanded ITM_ARGUMENT;
-  
+
 Section Public
 
   + name:FAST_ARRAY(STRING_CONSTANT);
-  
+
   + type:ITM_TYPE_MULTI;
-  
+
   - upper:INTEGER <- name.upper;
-  
+
   //
   // Creation.
   //
-  
-  - create p:POSITION name n:FAST_ARRAY(STRING_CONSTANT) 
+
+  - create p:POSITION name n:FAST_ARRAY(STRING_CONSTANT)
   type t:ITM_TYPE_MULTI :SELF <-
   ( + result:SELF;
-    
+
     result := SELF.clone;
     result.make p name n type t;
     result
   );
 
-  - make p:POSITION name n:FAST_ARRAY(STRING_CONSTANT) 
+  - make p:POSITION name n:FAST_ARRAY(STRING_CONSTANT)
   type t:ITM_TYPE_MULTI <-
   (
     position := p;
     name     := n;
     type     := t;
   );
-        
+
   //
   // Running.
   //
 
-  - item idx:INTEGER :ITM_TYPE_MONO <- 
+  - item idx:INTEGER :ITM_TYPE_MONO <-
   ( ? {idx.in_range 0 to upper};
     type.item idx
   );
-  
+
   - to_run_in arg_lst:FAST_ARRAY(LOCAL) for p:PARAMETER_TO_TYPE <-
   ( + t:TYPE_FULL;
-    
+
     (name.lower).to (name.upper) do { j:INTEGER;
-      t := type.item j.to_run_for p;      
+      t := type.item j.to_run_for p;
       arg_lst.add_last (
 	LOCAL.create position name (name.item j) style ' ' type t
       );
     };
   );
-  
+
   - get_index_type p:ITM_TYPE_PARAMETER :INTEGER <-
   ( + i:INTEGER;
-    
+
     i := name.lower;
     {(i <= name.upper) && {type.item i != p}}.while_do {
       i := i + 1;
@@ -93,22 +73,22 @@ Section Public
 
   - check larg:FAST_ARRAY(EXPR) index idx:INTEGER for p:PARAMETER_TO_TYPE :INTEGER <-
   ( + new_expr:EXPR;
-    
+
     (type.lower).to (type.upper) do { i:INTEGER;
       new_expr := larg.item (idx+i).check_type (type.item i.to_run_for p) with position;
       larg.put new_expr to (idx+i);
     };
     idx + type.count
-  );    
-  
+  );
+
   //
   // Display.
   //
-  
+
   - append_in buffer:STRING <-
-  ( 
+  (
     buffer.add_last '(';
-    (name.lower).to (name.upper - 1) do { j:INTEGER;      
+    (name.lower).to (name.upper - 1) do { j:INTEGER;
       buffer.append (name.item j);
       buffer.add_last ':';
       type.item j.append_in buffer;
@@ -116,14 +96,14 @@ Section Public
     };
     buffer.append (name.last);
     buffer.add_last ':';
-    type.last.append_in buffer;    
+    type.last.append_in buffer;
     buffer.add_last ')';
   );
-  
+
   - shorter_in buf:STRING <-
   (
     buf.add_last '(';
-    (name.lower).to (name.upper - 1) do { j:INTEGER;      
+    (name.lower).to (name.upper - 1) do { j:INTEGER;
       (name.item j = ALIAS_STR.variable_self).if {
         put (name.item j) to buf like (ALIAS_STR.short_keyword);
       } else {
@@ -135,8 +115,8 @@ Section Public
     };
     put (name.last) to buf like (ALIAS_STR.short_local);
     buf.add_last ':';
-    type.last.shorter_in buf;    
+    type.last.shorter_in buf;
     buf.add_last ')';
   );
-  
+
 

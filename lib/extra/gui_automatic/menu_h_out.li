@@ -1,38 +1,18 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := MENU_H_OUT;
 
   - copyright := "Jonathan Ponte, Maxime Audrin, Benoit Sonntag";
 
   - comment   := "Honrizontal menu out for GUII.";
-  
+
 Section Inherit
-  
+
   - parent_internal_inode:INTERNAL_INODE := INTERNAL_INODE;
-  
+
 Section Public
-  
- 
+
+
   - representation:STRING_CONSTANT := "MENU_H_OUT";
 
   - print <-
@@ -93,7 +73,7 @@ Section Public
     bugh_screen:=h;
 
     !list.is_empty && {
-      browse_group { 
+      browse_group {
         i:INODE;
         (i.operator != '&')
       }
@@ -179,5 +159,5 @@ Section Public
 /*
       // -> 1) R = Faisabilité de l'espace (% de recouvrement des items) (1:25%, 2:50%, 3:75%)
       // -> 2) A = Note de calcul d'aire. (% sur l'écran total)
-      // Result = (R*100-A)/100  
+      // Result = (R*100-A)/100
 */

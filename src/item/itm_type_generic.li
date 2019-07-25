@@ -1,76 +1,56 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_TYPE_GENERIC;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Generic style type";
-  
+
 Section Inherit
-  
+
   + parent_itm_type_style:Expanded ITM_TYPE_STYLE;
-  
+
 Section Private
-  
+
   - dico_tg:FAST_ARRAY(ITM_TYPE_GENERIC) := FAST_ARRAY(ITM_TYPE_GENERIC).create_with_capacity 32;
 
   - create n:STRING_CONSTANT style s:STRING_CONSTANT with lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make n style s with lt;
     result
   );
-  
+
   - make n:STRING_CONSTANT style s:STRING_CONSTANT with lt:FAST_ARRAY(ITM_TYPE_MONO) <-
   (
     name      := n;
     style     := s;
     list_type := lt;
   );
- 
+
 Section Public
-  
-  - hash_code:INTEGER <- name.hash_code; 
+
+  - hash_code:INTEGER <- name.hash_code;
 
   + list_type:FAST_ARRAY(ITM_TYPE_MONO);
-  
-  - get n:STRING_CONSTANT style s:STRING_CONSTANT 
+
+  - get n:STRING_CONSTANT style s:STRING_CONSTANT
   with lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
   ( + result:SELF;
     + idx:INTEGER;
-    
+
     idx := dico_tg.lower;
     {
       (idx <= dico_tg.upper) && {
-	(dico_tg.item idx.name      != n ) || 
-	{dico_tg.item idx.style     != s } || 
+	(dico_tg.item idx.name      != n ) ||
+	{dico_tg.item idx.style     != s } ||
 	{dico_tg.item idx.list_type != lt}
       }
     }.while_do {
       idx := idx + 1;
-    };    
+    };
     (idx <= dico_tg.upper).if {
       result ?= dico_tg.item idx;
     } else {
@@ -79,29 +59,35 @@ Section Public
     };
     result
   );
-  
+
   - to_run_for p:PARAMETER_TO_TYPE :TYPE_FULL <-
   ( + lst:FAST_ARRAY(TYPE_FULL);
     + t:TYPE_FULL;
-    + j:INTEGER;    
+    + j:INTEGER;
     + result:TYPE_FULL;
-    
+    + path:STRING_CONSTANT;
+
     lst := ALIAS_ARRAY(TYPE_FULL).new;
-    j := list_type.lower;    
+    j := list_type.lower;
     {
-      t := list_type.item j.to_run_for p;                  
+      t := list_type.item j.to_run_for p;
       lst.add_last t;
       j := j + 1;
     }.do_while {(j <= list_type.upper) && {t != NULL}};
     (t = NULL).if {
       ALIAS_ARRAY(TYPE_FULL).free lst;
-    } else {            
-      lst := ALIAS_ARRAY(TYPE_FULL).alias lst;      
-      result := TYPE_GENERIC.get Self with lst;
+    } else {
+      lst := ALIAS_ARRAY(TYPE_FULL).alias lst;
+      (p != NULL).if {
+        path := p.position.prototype.filename;
+      } else {
+        path := input_path;
+      };
+      result := TYPE_GENERIC.get (path,Self) with lst;
     };
     result
   );
-  
+
   - append_in buffer:STRING <-
   (
     (style != NULL).if {
@@ -117,7 +103,7 @@ Section Public
     list_type.last.append_in buffer;
     buffer.add_last ')';
   );
-  
+
   - shorter_in buf:STRING <-
   (
     (style != NULL).if {
@@ -133,12 +119,12 @@ Section Public
     list_type.last.shorter_in buf;
     buf.add_last ')';
   );
-  
+
   //
   // Cast.
   //
-  
-  - append_cast_name_in buf:STRING <- 
+
+  - append_cast_name_in buf:STRING <-
   (
     parent_itm_type_style.append_cast_name_in buf;
     buf.append "_of_";

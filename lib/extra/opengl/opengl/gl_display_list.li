@@ -1,0 +1,50 @@
+Section Header
+
+  + name     := GL_DISPLAY_LIST;
+
+  - author   := "OpenGL display list";
+
+Section Inherit
+
+  - parent_display_list:DISPLAY_LIST := DISPLAY_LIST;
+
+Section Public
+
+  + id_list:INTEGER;// OpenGL id to call display list
+
+  - create body:{} :SELF <-
+  (
+    + result:SELF;
+    result := SELF.clone;
+    result.make body;
+    result
+  );
+
+  - make body:{} <-
+  (
+    + id:INTEGER;
+
+    id := id_list := `glGenLists(1)`:INTEGER;
+
+    `glNewList(@id, GL_COMPILE)`;
+
+    body.value;
+
+    `glEndList()`;
+  );
+
+  - call <-
+  (
+    + id:INTEGER;
+
+    id := id_list;
+    `glCallList(@id)`;
+  );
+
+  - destroy <-
+  (
+     + id:INTEGER;
+
+    id := id_list;
+    `glDeleteLists(@id, 1)`;
+  );

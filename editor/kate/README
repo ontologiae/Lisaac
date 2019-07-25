@@ -1,26 +1,32 @@
 ####################################################
 1/ Presentation
 
-The "lisaac_v2.xml" file contains a syntactically-based coloration scheme recognizing Lisaac v0.2 source code for Kate, an open-source code editor (http://www.kate-editor.org/).
-It attempts to detect lexical and syntactic errors by colorizing the code in red from the point where the error is detected, (which is not necessarily the one where the error is).
-
+The "lisaac.xml" file contains a syntactically-based coloration scheme recognizing 
+Lisaac source code for Kate, an open-source code editor (http://www.kate-editor.org/).
+It attempts to detect lexical and syntactic errors by colorizing the code in red from 
+the point where the error is detected, (which is not necessarily the one where the error is).
 
 ####################################################
 2/ Installation
 
-There are 2 possibilies to install the "lisaac_v2.xml" file.
+There are 2 possibilies to install the "lisaac.xml" file.
 
-* If you're not the station administrator, or if you don't want other Kate users to have direct access to this scheme, copy the file in <your_home_directory>/.kde/share/apps/katepart/syntax. There might have missing subfolders, in this case you'll have to create them.
+* If you're not the station administrator, or if you don't want other Kate users to have 
+direct access to this scheme, copy the file in <your_home_directory>/.kde/share/apps/katepart/syntax. 
+There might have missing subfolders, in this case you'll have to create them.
 
-* If you're the station administrator, and if you want all the Kate users to have direct access to this scheme, copy the file in /usr/share/apps/katepart/syntax as root. Depending on the system you use, the "apps" folder could be in a different place that "/usr/share". In Debian, it's there.
+* If you're the station administrator, and if you want all the Kate users to have direct access 
+to this scheme, copy the file in /usr/share/apps/katepart/syntax as root. Depending on the system
+you use, the "apps" folder could be in a different place that "/usr/share". In Debian, it's there.
 
-Once you've copied the file in the right place, restart Kate. The Lisaac coloration scheme will be available in "Sources/Lisaac v0.2". It will be automatically used when you open a file having a ".li" extension (except if you have set another preference by hand).
-
-WARNING : if you also have the mode for Lisaac v0.1, it might happen that the wrong mode is chosen when opening a lisaac file. You'll just have to switch from one to another manually depending on the version of Lisaac the source code is written for by choosing "Sources/Lisaac" or "Sources/Lisaac v0.2" in Kate.
+Once you've copied the file in the right place, restart Kate. The Lisaac coloration scheme will be available in "Sources/Lisaac". 
+It will be automatically used when you open a file having a ".li" extension (except if you have set another preference by hand).
 
 ####################################################
 3/ Known limitations
 
-There are a number of issues due to the way Kate interprets the coloration schemes. So don't be surprised to have a correct coloration even if there are syntaxic errors in your source code. But do not hesitate to send me a mail at "anthony.pajot@etu.enseeiht.fr" with a copy of all or part of your lisaac code if the scheme detects an error whereas the code is correct or if Kate gets stucked while you're typing code.
+There are a number of issues due to the way Kate interprets the coloration schemes. 
+So don't be surprised to have a correct coloration even if there are syntaxic errors 
+in your source code.
 
 Enjoy !

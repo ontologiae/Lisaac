@@ -1,0 +1,124 @@
+Section Header
+
+  + name      := STATE;
+
+  - copyright := "2003-2010 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  + begin_action:{ ANT; } := { a:ANT; }; // BSBS: Mettre E
+
+  + action:{ ANT; } := { a:ANT; }; // BSBS: Bug compilo 0.39 rc1 (cmp NULL error)
+
+  + end_action:{ ANT; } := { a:ANT; };
+
+  + transitions:FAST_ARRAY(TRANSITION);
+
+  + sub_state:STATE;
+
+  + parent_state:STATE;
+
+Section STATE
+
+  - update_parent other:STATE <-
+  (
+    (parent_state != other).if {
+      parent_state := other;
+      transitions.foreach { t:TRANSITION;
+        t.state.update_parent other;
+      };
+    };
+  );
+
+Section Public
+
+  + name:ABSTRACT_STRING;
+
+  //
+  // Creation.
+  //
+
+  - create n:ABSTRACT_STRING :SELF <-
+  create n begin_action NULL action NULL end_action NULL;
+
+  - create n:ABSTRACT_STRING begin_action b_a:{ ANT; } :SELF <-
+  create n begin_action b_a action NULL end_action NULL;
+
+  - create n:ABSTRACT_STRING action a:{ ANT; } :SELF <-
+  create n begin_action NULL action a end_action NULL;
+
+  - create n:ABSTRACT_STRING end_action e_a:{ ANT; } :SELF <-
+  create n begin_action NULL action NULL end_action e_a;
+
+  - create n:ABSTRACT_STRING begin_action b_a:{ ANT; }
+  action a:{ ANT; } :SELF <-
+  create n begin_action b_a action a end_action NULL;
+
+  - create n:ABSTRACT_STRING begin_action b_a:{ ANT; }
+  end_action e_a:{ ANT; } :SELF <-
+  create n begin_action b_a action NULL end_action e_a;
+
+  - create n:ABSTRACT_STRING action a:{ ANT; }
+  end_action e_a:{ ANT; } :SELF <-
+  create n begin_action NULL action a end_action e_a;
+
+  - create n:ABSTRACT_STRING begin_action b_a:{ ANT; }
+  action a:{ ANT; } end_action e_a:{ ANT; } :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make n begin_action b_a action a end_action e_a;
+    result
+  );
+
+  - make n:ABSTRACT_STRING begin_action b_a:{ ANT; }
+  action a:{ ANT; } end_action e_a:{ ANT; } <-
+  (
+    name := n;
+    begin_action := b_a;
+    action := a;
+    end_action := e_a;
+    transitions := FAST_ARRAY(TRANSITION).create_with_capacity 2;
+  );
+
+  //
+  // Transition.
+  //
+
+  - to other:STATE if cmp:{ ANT; BOOLEAN} <-
+  (
+    transitions.add_last (TRANSITION.create other if cmp);
+  );
+
+  //
+  // Sub-state engin.
+  //
+
+  - has other:STATE <-
+  (
+    sub_state := other;
+    other.update_parent Self;
+  );
+
+  - run a:AGENT <- // BSBS E!!!
+  ( + ant:ANT;
+    ant ?= a;
+
+    (action != NULL).if {
+      action.value ant;
+    };
+    (parent_state != NULL).if {
+      parent_state.run a;
+    };
+    transitions.foreach { t:TRANSITION;
+      (t.condition.value ant).if {
+        a.set_state (t.state);
+      };
+    };
+  );

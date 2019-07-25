@@ -1,0 +1,39 @@
+Section Header
+
+  + name     := QUADRICS;
+
+  - comment  := "3D Primitive (sphere,cylinder,...)";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - fill_mode:INTEGER  <- 1;
+  - point_mode:INTEGER  <- 2;
+  - line_mode:INTEGER  <- 3;
+
+  - begin_quadric <- deferred;
+  - end_quadric <- deferred;
+
+  - new_quadric body:{} <-
+  (
+    begin_quadric;
+    body.value;
+    end_quadric;
+  );
+
+  - enable_texture <- deferred;
+
+  - disable_texture <- deferred;
+
+  - set_style style:INTEGER <- deferred;
+
+  //
+  // Quadrics
+  //
+
+  - draw_sphere (radius,slices,stacks:REAL_32) <- deferred;
+  - draw_cylinder (base,top,height,slices,stacks:REAL_32) <- deferred;
+  - draw_disk (inner,outer,slices,loops:REAL_32) <- deferred;

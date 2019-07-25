@@ -1,80 +1,60 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := WRITE;
 
   - copyright   := "2003-2007 Benoit Sonntag";
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Write local, global or slot";
-  
+
 Section Inherit
 
   + parent_instr:Expanded INSTR;
-    
+
 Section Public
-  
+
   //
   // Debug !!!!
   //
-  
+
   + is_delete:BOOLEAN;
-  
+
   + is_create:BOOLEAN;
-  
+
   - set_delete <-
   (
     is_delete := TRUE;
   );
-  
+
   - set_create <-
   (
     is_create := TRUE;
   );
-  
+
   //
   // Fin debug !!!!
   //
-  
+
   + quiet_generation:BOOLEAN;
-  
+
   - set_quiet_generation <-
   (
     quiet_generation := TRUE;
   );
-  
+
   - is_invariant:BOOLEAN <- value.is_invariant;
-  
+
   - variable:VARIABLE <-
   (
-    deferred;    
+    deferred;
     NULL
   );
-  
-  - static_type:TYPE_FULL <- 
-  ( 
+
+  - static_type:TYPE_FULL <-
+  (
     variable.type
   );
-  
+
   + value:EXPR;
 
   - set_value new:EXPR <-
@@ -83,62 +63,62 @@ Section Public
   );
 
   - ensure_count:INTEGER <- variable.ensure_count;
-  
+
   - get_type t:TYPES_TMP <-
   (
     (value != NULL).if {
       value.get_type t;
     };
   );
-    
+
   - my_copy:SELF <-
-  ( + new_val:EXPR;    
+  ( + new_val:EXPR;
     + result:SELF;
-    
+
     new_val := value.my_copy;
     result ?= variable.write position value new_val;
     result
   );
-  
+
   //
   // Execute.
   //
-  
-  - execute_access_unlink:INSTR <- 
+
+  - execute_access_unlink:INSTR <-
   (
     deferred;
     NULL
   );
-  
+
   - execute_access_link <- deferred;
-  
+
   - execute:INSTR <-
   ( + result:INSTR;
     + read:READ;
     + val:INSTR;
     + slot:SLOT_DATA;
-    
+
     ? { variable != NULL };
     ? { value    != NULL };
-    
+
+    simplify_type variable;
     //debug_display;
-    
+
     slot ?= variable;
-    (      
+    (
       ( // First case : No link.
         (ensure_count = 0) && {(slot = NULL) || {! slot.id_section.is_mapping}}
-      ) || 
+      ) ||
       { // Second case : a := a;
 	read ?= value;
-	(read != NULL) && 
+	(read != NULL) &&
 	{variable = read.variable} &&
 	{(variable.is_local) || {variable.style = '-'}}	// BSBS: Ce cas dans rentrer dans set_write
       }
     ).if {
       //
       // Supprime affectation.
-      //  
-                  
+      //     
       val := execute_access_unlink;
       (val != NULL).if {
 	list_current.insert_before val;
@@ -149,91 +129,93 @@ Section Public
     } else {
       //
       // Execution normal.
-      //            
+      //
       /*( // BSBS: Bug, mais de toute facon le gain n'est pas la... (entre +5 a +20)
-	(loop_invariant != NULL) && {list_current = loop_invariant.body} && 
+	(loop_invariant != NULL) && {list_current = loop_invariant.body} &&
 	{is_invariant} && {variable.get_last_index != -1}
-      ).if {	
+      ).if {
 	//old_loop_invariant := loop_invariant;
 	//loop_invariant := NULL;
 	//
 	variable.reset_last_write Self;
 	loop_list.insert_before Self;
 	//
-	//execute_access_link;      
-	//value := value.execute_link;      
+	//execute_access_link;
+	//value := value.execute_link;
 	//seq_index := seq_index + 1;
 	//
 	//loop_invariant := old_loop_invariant;
 	result := NOP;
 	count_invariant := count_invariant + 1;
       } else { */
-        
-        execute_access_link;              
-	value := value.execute_link;      
+
+        execute_access_link;
+	value := value.execute_link;
 	seq_index := seq_index + 1;
 	variable.set_write Self;
-	result := Self;      
+	result := Self;
       //};
     };
     result
   );
-    
+
   - remove <-
-  (
-    variable.unwrite Self;
+  ( + l:LOCAL;
+    l ?= variable;
+    ((l != NULL) && {l.my_alias != NULL}).if {
+      // It's for generation code, with ALIAS_LOCAL and SWITCH fusion case.
+      l.my_alias.unwrite Self;
+    } else {
+      variable.unwrite Self;
+    };
     value.remove;
   );
-  
+
   //
   // Genere
   //
-    
+
   - genere_value buffer:STRING <-
-  (            
-    (is_java).if {
-      value.genere buffer;    
-    } else {    
-      (
-        (static_type.is_expanded_ref) && 
-        {! value.static_type.is_expanded_ref}
-      ).if {
-        ? {value.static_type.is_expanded};
-        buffer.append "&(";
-        value.genere buffer;    
-        buffer.add_last ')';
-      }.elseif {
-        (static_type.is_expanded) && {! static_type.is_expanded_ref} &&
-        {(! value.static_type.is_expanded) || {value.static_type.is_expanded_ref}} &&
-        {value.static_type.raw != TYPE_NULL} // For Pointer := NULL
-      } then {
-        buffer.append "*(";
-        value.genere buffer;    
-        buffer.add_last ')';
-      } else {
-        value.genere buffer;
-      };
+  (
+    (
+      (static_type.is_expanded_ref) &&
+      {! value.static_type.is_expanded_ref}
+    ).if {
+      ? {value.static_type.is_expanded};
+      buffer.append "&(";
+      value.genere buffer;
+      buffer.add_last ')';
+    }.elseif {
+      (static_type.is_expanded) && {! static_type.is_expanded_ref} &&
+      {(! value.static_type.is_expanded) || {value.static_type.is_expanded_ref}} &&
+      {value.static_type.raw != TYPE_NULL} // For Pointer := NULL
+    } then {
+      buffer.append "*(";
+      value.genere buffer;
+      buffer.add_last ')';
+    } else {
+      value.genere buffer;
     };
   );
-    
+  
   //
   // Display.
   //
 
   - display buffer:STRING <-
-  (    
+  (
     //crash;
     buffer.append (variable.intern_name);
-    
+
     buffer.add_last '[';
     variable.type.append_name_in buffer;
     buffer.add_last ']';
-        
+
     buffer.append " :=";
     //to_pointer.append_in buffer;
     display_ref buffer;
     buffer.add_last ' ';
-        
+
     (value = NULL).if {
       buffer.append "<NULL>";
     } else {
@@ -246,13 +228,9 @@ Section Public
     is_verbose.if {
       buffer.add_last '<';
       buffer.append (object_id.to_string);
-      buffer.add_last '/';      
-      ensure_count.append_in buffer;     
+      buffer.append "/E";
+      ensure_count.append_in buffer;
       buffer.add_last '>';
     };
   );
-  
-
-
-
 

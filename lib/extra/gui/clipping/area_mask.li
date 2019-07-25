@@ -1,62 +1,42 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := AREA_MASK;
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
-  
+
   - comment     := "Mask Window Clipping.";
-    
+
   - version     := 2;
-  
+
 Section Inherit
-  
+
   + parent_area:Expanded AREA;
-    
-Section Public  
+
+Section Public
 
   + mask:FAST_ARRAY(FAST_ARRAY(UINTEGER_16));
-  
+
   - clear_mask <-
-  ( 
+  (
     (mask.lower).to (mask.upper) do { y:INTEGER;
       mask.item y.clear;
     };
   );
-  
+
   //
   // Creation
   //
-  
+
   - make father:AREA from (x0,y0:INTEGER) size (w,h:INTEGER) <-
   (
     mask := FAST_ARRAY(FAST_ARRAY(UINTEGER_16)).create_with_capacity h;
     0.to (h-1) do { y:INTEGER;
       mask.add_last (FAST_ARRAY(UINTEGER_16).create_with_capacity 2);
     };
-    parent_area.make father from (x0,y0) size (w,h);    
+    parent_area.make father from (x0,y0) size (w,h);
   );
-  
+
   - resize (w,h:INTEGER) <-
   (
     mask.resize h;
@@ -65,39 +45,39 @@ Section Public
     };
     parent_area.resize (w,h);
   );
-  
+
   //
   // Master display
   // (Build mask)
   //
 
-  - pixel_hard (x,y:INTEGER) color col:UINTEGER_32 <- 
-  ( 
+  - pixel_hard (x,y:INTEGER) color col:UINTEGER_32 <-
+  (
     add_mask (x,y) until x;
     parent_area.pixel_hard (x,y) color col;
   );
-  
-  - line_h_hard (x0,y0:INTEGER) until x1:INTEGER color col:UINTEGER_32 <- 
-  ( 
+
+  - line_h_hard (x0,y0:INTEGER) until x1:INTEGER color col:UINTEGER_32 <-
+  (
     add_mask (x0,y0) until x1;
     parent_area.line_h_hard (x0,y0) until x1 color col;
   );
 
   - line_h_hard (x0,y0:INTEGER) until x1:INTEGER image line:ABSTRACT_BMP_LINE offset ofs:INTEGER <-
-  ( 
+  (
     add_mask (x0,y0) until x1;
     parent_area.line_h_hard (x0,y0) until x1 image line offset ofs;
   );
-  
+
   //
   // Slave display
   // (Use Mask)
   //
 
-  - slave_pixel_hard (x,y:INTEGER) color col:UINTEGER_32 <- 
+  - slave_pixel_hard (x,y:INTEGER) color col:UINTEGER_32 <-
   ( + line:FAST_ARRAY(UINTEGER_16);
     + idx:INTEGER;
-    
+
     line := mask.item y;
     ((line.is_empty) || {x < line.first} || {x > line.last}).if {
       parent_area.pixel_hard (x,y) color col;
@@ -108,13 +88,13 @@ Section Public
       };
     };
   );
-  
-  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER color col:UINTEGER_32 <- 
+
+  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER color col:UINTEGER_32 <-
   ( + line:FAST_ARRAY(UINTEGER_16);
     + idx,xb,xe,xx2:INTEGER;
-        
+
     line := mask.item y;
-    ((line.is_empty) || {x2 < line.first} || {x1 > line.last}).if { 
+    ((line.is_empty) || {x2 < line.first} || {x1 > line.last}).if {
       parent_area.line_h_hard (x1,y) until x2 color col;
     } else {
       (x1 < line.first).if {
@@ -131,9 +111,9 @@ Section Public
 	  idx := idx + 1;
 	};
       };
-      (x2 > line.last).if {	
+      (x2 > line.last).if {
 	parent_area.line_h_hard ((line.last+1),y) until x2 color col;
-	xx2 := line.last; 
+	xx2 := line.last;
       } else {
 	xx2 := x2;
       };
@@ -146,13 +126,13 @@ Section Public
     };
   );
 
-  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER 
+  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER
   image line:ABSTRACT_BMP_LINE offset ofs:INTEGER <-
   ( + l:FAST_ARRAY(UINTEGER_16);
     + idx,xb,xe,xx2:INTEGER;
-    
+
     l := mask.item y;
-    ((l.is_empty) || {x2 < l.first} || {x1 > l.last}).if { 
+    ((l.is_empty) || {x2 < l.first} || {x1 > l.last}).if {
       parent_area.line_h_hard (x1,y) until x2 image line offset ofs;
     } else {
       (x1 < l.first).if {
@@ -170,7 +150,7 @@ Section Public
 	};
       };
       (x2 > l.last).if {
-	parent_area.line_h_hard ((l.last+1),y) until x2 image line offset 
+	parent_area.line_h_hard ((l.last+1),y) until x2 image line offset
 	(ofs + (l.last+1) - x1);
 	xx2 := l.last;
       } else {
@@ -185,32 +165,32 @@ Section Public
       };
     };
   );
-  
+
   - mask_draw (x0,y0:INTEGER) to (x1,y1:INTEGER) color col:UINTEGER_32 <-
   ( + line:FAST_ARRAY(UINTEGER_16);
     + xb,xe,lower,upper,idx:INTEGER;
     + xx0,xx1:UINTEGER_16;
-    
+
     xx0 := x0.to_uinteger_16;
-    xx1 := x1.to_uinteger_16;    
+    xx1 := x1.to_uinteger_16;
     y0.to y1 do { y:INTEGER;
       line := mask.item y;
       (! line.is_empty).if {
 	((xx0 <= line.last) && {xx1 >= line.first}).if {
-	  (xx0 <= line.first).if {	    
-	    lower := idx := 0;	  
+	  (xx0 <= line.first).if {
+	    lower := idx := 0;
 	  } else {
 	    idx := search xx0 in line low 0;
 	    (idx.is_odd).if {
 	      lower := idx + 1;
-	    } else {	      
+	    } else {
 	      xe := line.item (idx + 1).min xx1;
 	      parent_area.line_h_hard (xx0,y) until xe color col;
-	      lower := idx + 2;	      
+	      lower := idx + 2;
 	    };
 	  };
 	  (xx1 >= line.last).if {
-	    upper := line.upper;	    
+	    upper := line.upper;
 	  } else {
 	    upper := search xx1 in line low idx;
 	    (upper.is_even).if {
@@ -218,44 +198,44 @@ Section Public
 		xb := line.item upper;
 		parent_area.line_h_hard (xb,y) until xx1 color col;
 	      };
-	      upper := upper - 1;	      
+	      upper := upper - 1;
 	    };
-	  };	  
+	  };
 	  // Other segment.
 	  (lower).to (upper) by 2 do { x:INTEGER;
 	    xb := line.item x;
-	    xe := line.item (x+1);	  
+	    xe := line.item (x+1);
 	    parent_area.line_h_hard (xb,y) until xe color col;
 	  };
 	};
       };
     };
-    
+
     //display_mask;
   );
-  
+
 Section Private
-  
+
   - add_mask (x_beg,y:INTEGER) until x_end:INTEGER <-
   ( + line:FAST_ARRAY(UINTEGER_16);
     + i1,i2:INTEGER;
     + x1,x2:UINTEGER_16;
     + is_right,is_left:BOOLEAN;
-    
+
     x1 := x_beg.to_uinteger_16;
     x2 := x_end.to_uinteger_16;
     line := mask.item y;
-    (line.is_empty).if {      
+    (line.is_empty).if {
       line.add_last x1;
       line.add_last x2;
     }.elseif {x1 > (line.last+1)} then {
       line.add_last x1;
       line.add_last x2;
     }.elseif {(x2+1) < line.first} then {
-      line.add_first x1; 
+      line.add_first x1;
       line.add x2 to 1;
     } else {
-      (x1 <= line.first).if { 
+      (x1 <= line.first).if {
 	i1 := line.lower;
 	line.put x1 to i1;
       } else {
@@ -266,15 +246,15 @@ Section Private
 	line.put x2 to i2;
       } else {
 	i2 := search x2 in line low i1;
-      };      
+      };
       (i1 = i2).if {
 	((i1.is_odd) && {i1 != line.upper}).if {
 	  // free space
 	  is_left  := (x1-1) = line.item i1;
-	  is_right := (x2+1) = line.item (i2+1); 
+	  is_right := (x2+1) = line.item (i2+1);
 	  (is_left).if {
 	    (is_right).if {
-	      line.remove i1 to (i1+1);	      
+	      line.remove i1 to (i1+1);
 	    } else {
 	      line.put x2 to i1;
 	    };
@@ -283,24 +263,24 @@ Section Private
 	      line.put x1 to (i1+1);
 	    } else {
 	      line.add x1 to (i1+1);
-	      line.add x2 to (i1+2);  
+	      line.add x2 to (i1+2);
 	    };
 	  };
 	};
       } else {
-        // i1 != i2        
+        // i1 != i2
 	(i1.is_odd).if {
 	  is_left  := (x1-1) = line.item i1;
 	  (is_left).if {
 	    //
 	  } else {
-	    line.put x1 to (i1+1); 
+	    line.put x1 to (i1+1);
 	    i1 := i1 + 2;
 	  };
 	} else {
 	  i1 := i1 + 1;
 	};
-        (i2.is_odd).if {                    
+        (i2.is_odd).if {
 	  is_right := (i2 < line.upper) && {(x2+1) = line.item (i2+1)};
 	  (is_right).if {
 	    i2 := i2 + 1;
@@ -322,7 +302,7 @@ Section Private
   //
   // Debug.
   //
-  
+
   - print_line line:FAST_ARRAY(UINTEGER_16) <-
   (
     0.to (line.upper) by 2 do { j:INTEGER;
@@ -335,7 +315,7 @@ Section Private
     };
     '\n'.print;
   );
-  
+
   - check_mask <-
   ( + line:FAST_ARRAY(UINTEGER_16);
     (mask.lower).to (mask.upper) do { y:INTEGER;
@@ -347,13 +327,13 @@ Section Private
 	(line.lower).to (line.upper-1) do { x:INTEGER;
 	  (line.item x <= line.item (x+1)).if {
 	    (
-	      (x != 0) && {x.is_even} && 
+	      (x != 0) && {x.is_even} &&
 	      {line.item x - 1 = line.item (x-1)}
 	    ).if {
 	      bug_mask (y,"Disconnect");
 	    };
 	    (
-	      (x != 0) && {x.is_even} && 
+	      (x != 0) && {x.is_even} &&
 	      {line.item x <= line.item (x-1)}
 	    ).if {
 	      bug_mask (y,"Order / Disconnect");
@@ -365,7 +345,7 @@ Section Private
       };
     };
   );
-  
+
   - bug_mask (y:INTEGER,msg:ABSTRACT_STRING) <-
   (
     "\nERROR MASK: Line #".print;
@@ -376,7 +356,7 @@ Section Private
     print_line (mask.item y);
     die_with_code 0;
   );
-  
+
   - display_mask <-
   ( + line:FAST_ARRAY(UINTEGER_16);
     + x1,x2:UINTEGER_16;
@@ -387,11 +367,11 @@ Section Private
       (! line.is_empty).if {
 	(line.lower).to (line.upper) by 2 do { x:INTEGER;
 	  x1 := line.item x;
-	  x2 := line.item (x+1);	  
+	  x2 := line.item (x+1);
 	  parent.parent.pixel_to (x1,y) color white;
 	  parent.parent.pixel_to (x2,y) color blue;
 	  //parent.parent.line_h x1,y until x2 color red;
-	  //'['.print; 
+	  //'['.print;
 	  //x1.print; ','.print; x2.print;
 	  //']'.print;
 	  // IO.read_line;
@@ -400,16 +380,16 @@ Section Private
       };
     };
   );
-  
+
   //
   // Sub routine
   //
-    
+
   - search x:UINTEGER_16 in line:FAST_ARRAY(UINTEGER_16) low l:INTEGER :INTEGER <-
   ( + low,up:INTEGER;
     + med,result:INTEGER;
-    low := l; 
-    up  := line.upper + 1;    
+    low := l;
+    up  := line.upper + 1;
     {(up - low) > 2}.while_do {
       med := ((up + low) >> 1) & 0FFFEh;
       (x >= line.item med).if {
@@ -426,4 +406,3 @@ Section Private
     result
   );
 
-    

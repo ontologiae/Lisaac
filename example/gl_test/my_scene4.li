@@ -1,0 +1,140 @@
+Section Header
+  
+  + name     := MY_SCENE4;
+  
+  - comment   := "first program";
+  
+Section Inherit
+  
+  - parent_framework:FRAMEWORK := FRAMEWORK;
+
+  + parent_scene:Expanded SCENE;
+
+  - parent_event_listener:EVENT_LISTENER := EVENT_LISTENER;
+  
+Section Public  
+
+  - main <-
+  (      
+    "Key : Change color.\n".print;
+    // create OpenGL device
+    OPENGL.make (800,600) title "GL demo test";
+    
+    // set up framework
+    FRAMEWORK.make OPENGL;
+    
+    attach_scene Self;
+    add_key_listener Self;   
+    
+    // start it all
+    run;
+  );
+  
+Section Public
+  
+  //
+  //  test particule engine
+  //
+ 
+  // origine de l'explosion
+  - orig:VECTOR3(REAL_32) := VECTOR3(REAL_32).create (0.0,0,0.0);
+  
+  + camera:CAMERA := CAMERA.create_position (VECTOR3(REAL_32).create (0,20,-300));
+  
+  + particle_system:PARTICLE_SYSTEM;
+  + pf_pos:VECTOR3(REAL_32) := VECTOR3(REAL_32).create (-0.5,1.0,1.0);
+  
+  + constraint:CONSTRAINT;
+  
+  + tex:TEXTURE;
+  
+  + color_scheme:INTEGER;
+  
+  
+  + modelview:MATRIX4(REAL_32);
+  
+   
+  - initialize:BOOLEAN <-
+  (        
+    camera.view.make (0, -20, 300);
+    camera.view.normalize;
+    
+    particle_system := PARTICLE_SYSTEM.create orig;
+ 
+    //
+    // constraints test
+    //
+    
+    constraint := POINT_FORCE.create (pf_pos,0.8,0,0.001);
+    particle_system.add_constraint constraint;    
+    
+    constraint := BOUNCE_PLANE.create (VECTOR3(REAL_32).create (0,1,0), 40);
+    particle_system.add_constraint constraint;
+    
+    
+    // load particle texture
+    TEXTURE.set_wrapping_mode (TEXTURE.clamp);
+    tex := renderer.texture2d.create_from (IMAGE.create "data/flare.bmp");
+    
+    modelview := MATRIX4(REAL_32).create;
+    TRUE
+  );
+  
+  + dx:VECTOR3(REAL_32) := VECTOR3(REAL_32).create (0,0,0);
+  + dy:VECTOR3(REAL_32) := VECTOR3(REAL_32).create (0,0,0);
+  
+  + curtime:REAL_32;
+  
+  + sphere:SPHERE := SPHERE.create (VECTOR3(REAL_32).create (0,0,0),2,10,10);
+  
+  - render t:REAL_32 <-
+  (          
+    camera.look;
+    renderer.transform.get_modelview modelview;
+    
+    curtime := curtime + t;
+    
+    pf_pos.set_x (100.0 * (0.78*curtime).cos);
+    pf_pos.set_y (50.0 * (0.3*curtime).cos);
+    pf_pos.set_z (100.0 * (1.0*curtime).sin);  
+    
+    // let particles face the camera (billboard) 
+    dx.make (modelview.item (0,0), modelview.item (1,0), modelview.item (2,0));
+    dy.make (modelview.item (0,1), modelview.item (1,1), modelview.item (2,1));
+    
+    renderer.blending.apply (renderer.blending.one_minus_dst_color,renderer.blending.one);
+    renderer.blending.enable;//////
+    
+    particle_system.update (t);
+    
+    // render scene
+    tex.bind;
+    particle_system.render (dx,dy);
+    
+    tex.disable;
+    renderer.transform.new_matrix {
+      sphere.render;
+      renderer.transform.translatef(pf_pos.x,pf_pos.y,pf_pos.z);
+      sphere.render;
+    };
+  );
+  
+  - keydown k:INTEGER <-
+  (
+    (k = KEYCODE.k_escape).if {
+       FRAMEWORK.stop;
+    };
+
+    color_scheme := (color_scheme+1) % 4;
+    
+    color_scheme
+    .when 0 then {
+      particle_system.set_color_fire;
+    }.when 1 then {
+      particle_system.set_color_ice;
+    }.when 2 then {
+      particle_system.set_color_smoke;
+    }.when 3 then {
+      particle_system.set_color_rainbow;
+    };
+  );

@@ -1,104 +1,84 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := TYPE_ID;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Virtual type style slot segregation";
-  
+
 Section Inherit
-  
+
   + parent_type:Expanded TYPE;
-  
-Section Private  
-  
+
+Section Private
+
   - list_id:FAST_ARRAY(TYPE_ID);
-  
+
   - create i:INTEGER :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make i;
     result
   );
-      
+
   - make i:INTEGER <-
   (
     index := i;
     default := TYPE_FULL.create Self with 0;
   );
-  
-Section Public    
-    
+
+Section Public
+
   - name:STRING_CONSTANT <- ALIAS_STR.prototype_type_id;
-  
+
   - intern_name:STRING_CONSTANT <- name;
-  
+
   - get_index idx:INTEGER :TYPE_ID <-
   ( + result:TYPE_ID;
-    
+
     (idx > list_id.upper).if {
       result := TYPE_ID.create idx;
       list_id.add_last result;
       ? {list_id.upper = idx};
     } else {
       result := list_id.item idx;
-    };      
+    };
     result
   );
 
-  - make_type_id <-  
-  ( 
+  - make_type_id <-
+  (
     list_id := FAST_ARRAY(TYPE_ID).create_with_capacity 3;
     list_id.add_last (create 0);
     list_id.add_last (create 1);
   );
-  
+
   - add_genere_list; // Nothing.
-  
+
   - genere_struct; // Nothing.
 
-  - is_sub_type other:TYPE :BOOLEAN <- 
-  ( 
+  - is_sub_type other:TYPE :BOOLEAN <-
+  (
     other.name = name
   );
-  
+
   //
   // Declaration generation.
   //
-  
+
   - put_generic_declaration buffer:STRING <- buffer.append "int";
-  
+
   - put_reference_star_declaration buffer:STRING; // Nothing.
-  
+
   //
   // Code source generation.
   //
-  
+
   - put_id buffer:STRING <- index.append_in buffer;
-  
+
   - put_access_id e:EXPR in buffer:STRING <- e.genere buffer;
-  
+
   - put_value buffer:STRING <- index.append_in buffer;

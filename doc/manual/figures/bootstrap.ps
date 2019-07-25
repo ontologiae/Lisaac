@@ -1,0 +1,1516 @@
+%!PS-Adobe-3.0
+%%BoundingBox: 0 388 260 721
+%%Title: bootstrap
+%%CreationDate: Mon Aug 23 10:47:33 2004
+%%Creator: Tgif-4.1.43-QPL written by William Chia-Wei Cheng (bill.cheng@acm.org)
+%%ProducedBy: (unknown)
+%%Orientation: Portrait
+%%Pages: 1
+%%DocumentFonts: (atend)
+%%EndComments
+%%BeginProlog
+
+/tgifdict 88 dict def
+tgifdict begin
+
+/tgifellipsedict 6 dict def
+tgifellipsedict /mtrx matrix put
+
+/TGEL % tgifellipse
+ { tgifellipsedict begin
+      /yrad exch def
+      /xrad exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      xrad yrad scale
+      0 0 1 0 360 arc
+      savematrix setmatrix
+   end
+ } def
+
+/tgifarrowtipdict 8 dict def
+tgifarrowtipdict /mtrx matrix put
+
+/TGAT % tgifarrowtip
+ { tgifarrowtipdict begin
+      /dy exch def
+      /dx exch def
+      /h exch def
+      /w exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      dy dx atan rotate
+      0 0 moveto
+      w neg h lineto
+      w neg h neg lineto
+      savematrix setmatrix
+   end
+ } def
+
+/tgifpatdict 10 dict def
+
+/tgifpatbyte
+ { currentdict /retstr get exch
+   pat i cellsz mod get put
+ } def
+
+/tgifpatproc
+ { 0 1 widthlim {tgifpatbyte} for retstr
+   /i i 1 add def
+ } def
+
+/TGPF % tgifpatfill
+ { tgifpatdict begin
+      /h exch def
+      /w exch def
+      /lty exch def
+      /ltx exch def
+      /cellsz exch def
+      /pat exch def
+
+      /widthlim w cellsz div cvi 1 sub def
+      /retstr widthlim 1 add string def
+      /i 0 def
+
+      tgiforigctm setmatrix
+      ltx lty translate
+      w h true [1 0 0 1 0 0] {tgifpatproc} imagemask
+      ltx neg lty neg translate
+   end
+ } def
+
+/pat3 <8000000008000000> def
+/pat4 <8800000022000000> def
+/pat5 <8800220088002200> def
+/pat6 <8822882288228822> def
+/pat7 <aa55aa55aa55aa55> def
+/pat8 <77dd77dd77dd77dd> def
+/pat9 <77ffddff77ffddff> def
+/pat10 <77ffffff77ffffff> def
+/pat11 <7fffffff7fffffff> def
+/pat12 <8040200002040800> def
+/pat13 <40a00000040a0000> def
+/pat14 <ff888888ff888888> def
+/pat15 <ff808080ff080808> def
+/pat16 <f87422478f172271> def
+/pat17 <038448300c020101> def
+/pat18 <081c22c180010204> def
+/pat19 <8080413e080814e3> def
+/pat20 <8040201008040201> def
+/pat21 <8844221188442211> def
+/pat22 <77bbddee77bbddee> def
+/pat23 <c1e070381c0e0783> def
+/pat24 <7fbfdfeff7fbfdfe> def
+/pat25 <3e1f8fc7e3f1f87c> def
+/pat26 <0102040810204080> def
+/pat27 <1122448811224488> def
+/pat28 <eeddbb77eeddbb77> def
+/pat29 <83070e1c3870e0c1> def
+/pat30 <fefdfbf7efdfbf7f> def
+/pat31 <7cf8f1e3c78f1f3e> def
+
+/TGMAX
+ { exch dup 3 1 roll exch dup 3 1 roll gt { pop } { exch pop } ifelse
+ } def
+/TGMIN
+ { exch dup 3 1 roll exch dup 3 1 roll lt { pop } { exch pop } ifelse
+ } def
+/TGSW { stringwidth pop } def
+
+/bd { bind def } bind def
+
+/GS { gsave } bd
+/GR { grestore } bd
+/NP { newpath } bd
+/CP { closepath } bd
+/CHP { charpath } bd
+/CT { curveto } bd
+/L { lineto } bd
+/RL { rlineto } bd
+/M { moveto } bd
+/RM { rmoveto } bd
+/S { stroke } bd
+/F { fill } bd
+/TR { translate } bd
+/RO { rotate } bd
+/SC { scale } bd
+/MU { mul } bd
+/DI { div } bd
+/DU { dup } bd
+/NE { neg } bd
+/AD { add } bd
+/SU { sub } bd
+/PO { pop } bd
+/EX { exch } bd
+/CO { concat } bd
+/CL { clip } bd
+/EC { eoclip } bd
+/EF { eofill } bd
+/IM { image } bd
+/IMM { imagemask } bd
+/ARY { array } bd
+/SG { setgray } bd
+/RG { setrgbcolor } bd
+/SD { setdash } bd
+/W { setlinewidth } bd
+/SM { setmiterlimit } bd
+/SLC { setlinecap } bd
+/SLJ { setlinejoin } bd
+/SH { show } bd
+/FF { findfont } bd
+/MS { makefont setfont } bd
+/AR { arcto 4 {pop} repeat } bd
+/CURP { currentpoint } bd
+/FLAT { flattenpath strokepath clip newpath } bd
+/TGSM { tgiforigctm setmatrix } def
+/TGRM { savematrix setmatrix } def
+
+end
+
+%%EndProlog
+%%Page: 1 1
+
+%%PageBoundingBox: 0 388 260 721
+tgifdict begin
+/tgifsavedpage save def
+
+1 SM
+1 W
+
+0 SG
+
+72 0 MU 72 11 MU TR
+72 128 DI 100.000 MU 100 DI DU NE SC
+
+GS
+
+/tgiforigctm matrix currentmatrix def
+
+% BOX
+0 SG
+GS
+   NP 64 128 M 144 128 L 144 224 L 64 224 L CP 1 SG F
+   0 SG
+   NP 64 128 M 144 128 L 144 224 L 64 224 L CP EC NP
+   pat7 8 56 120 96 112 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 64 128 M 144 128 L 144 224 L 64 224 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 75 151 M 132 151 L 132 180 L 75 180 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      104 163 M
+      GS
+        GS
+        0
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Compiler) SH
+      GR
+      0 14 RM
+      GS
+        GS
+        0
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Code) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Code) SH
+      GR
+   GR
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   152 173 M
+   152 183 L
+   188 183 L
+   188 188 L
+   224 178 L
+   188 168 L
+   188 173 L
+CP
+GS
+   1 SG EF
+GR
+GS
+   S
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      179 181 M
+      GS
+        GS
+        0
+            0
+        AD
+        GR
+      2 DI NE 0 RM
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 82 196 M 125 196 L 125 211 L 82 211 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      104 208 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Eiffel) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Eiffel) SH
+      GR
+   GR
+
+% BOX
+0 SG
+GS
+   NP 368 136 M 460 136 L 460 220 L 368 220 L CP 1 SG F
+   0 SG
+   NP 368 136 M 460 136 L 460 220 L 368 220 L CP EC NP
+   pat29 8 360 128 104 96 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 368 136 M 460 136 L 460 220 L 368 220 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 377 155 M 450 155 L 450 188 L 377 188 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      414 168 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) SH
+      GR
+      0 17 RM
+      GS
+        GS
+        0
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) SH
+      GR
+   GR
+
+% BOX
+0 SG
+GS
+   NP 64 288 M 144 288 L 144 384 L 64 384 L CP 1 SG F
+   0 SG
+   NP 64 288 M 144 288 L 144 384 L 64 384 L CP EC NP
+   pat3 8 56 280 96 112 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 64 288 M 144 288 L 144 384 L 64 384 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 75 311 M 132 311 L 132 340 L 75 340 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      104 323 M
+      GS
+        GS
+        0
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Compiler) SH
+      GR
+      0 14 RM
+      GS
+        GS
+        0
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Code) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Code) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 82 356 M 125 356 L 125 371 L 82 371 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      104 368 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Lisaac) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Lisaac) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 380 224 M 451 224 L 451 239 L 380 239 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      416 236 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Executable) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Executable) SH
+      GR
+   GR
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   152 329 M
+   152 339 L
+   188 339 L
+   188 344 L
+   224 334 L
+   188 324 L
+   188 329 L
+CP
+GS
+   1 SG EF
+GR
+GS
+   S
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      179 337 M
+      GS
+        GS
+        0
+            0
+        AD
+        GR
+      2 DI NE 0 RM
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 384 196 M 448 196 L 448 211 L 384 211 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      416 208 M
+      GS
+        GS
+        0
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 1) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 1) SH
+      GR
+   GR
+
+% BOX
+0 SG
+GS
+   NP 233 292 M 325 292 L 325 376 L 233 376 L CP 1 SG F
+   0 SG
+   NP 233 292 M 325 292 L 325 376 L 233 376 L CP EC NP
+   pat23 8 224 288 104 96 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 233 292 M 325 292 L 325 376 L 233 376 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 242 315 M 315 315 L 315 348 L 242 348 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      279 328 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) SH
+      GR
+      0 17 RM
+      GS
+        GS
+        0
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) SH
+      GR
+   GR
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   325 347 M
+   325 321 L
+   339 321 L
+   339 308 L
+   353 334 L
+   339 360 L
+   339 347 L
+CP
+GS
+   1 SG EF
+GR
+GS
+   EC NP
+   pat23 8 320 304 40 64 TGPF
+GR
+GS
+   S
+GR
+
+% BOX
+0 SG
+NP 233 136 M 325 136 L 325 220 L 233 220 L CP F
+GS
+   10 SM
+   GS
+      NP 233 136 M 325 136 L 325 220 L 233 220 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 244 160 M 317 160 L 317 193 L 244 193 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      245 173 M
+      GS
+            0 SG
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            ( Eiffel) SH
+      GR
+      0 17 RM
+      GS
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) SH
+      GR
+   GR
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   323 191 M
+   323 165 L
+   337 165 L
+   337 152 L
+   351 178 L
+   337 204 L
+   337 191 L
+CP
+GS
+   EF
+GR
+GS
+   S
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      333 182 M
+      GS
+        GS
+        0
+            0
+        AD
+        GR
+      2 DI NE 0 RM
+      GR
+   GR
+
+% BOX
+0 SG
+GS
+   NP 368 292 M 460 292 L 460 376 L 368 376 L CP 1 SG F
+   0 SG
+   NP 368 292 M 460 292 L 460 376 L 368 376 L CP EC NP
+   pat26 8 360 288 104 96 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 368 292 M 460 292 L 460 376 L 368 376 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 377 311 M 450 311 L 450 344 L 377 344 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      414 324 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) SH
+      GR
+      0 17 RM
+      GS
+        GS
+        0
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 380 380 M 451 380 L 451 395 L 380 395 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      416 392 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Executable) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Executable) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 384 352 M 448 352 L 448 367 L 384 367 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      416 364 M
+      GS
+        GS
+        0
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 2) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 2) SH
+      GR
+   GR
+
+% BOX
+0 SG
+GS
+   NP 64 448 M 144 448 L 144 544 L 64 544 L CP 1 SG F
+   0 SG
+   NP 64 448 M 144 448 L 144 544 L 64 544 L CP EC NP
+   pat3 8 56 440 96 112 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 64 448 M 144 448 L 144 544 L 64 544 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 75 471 M 132 471 L 132 500 L 75 500 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      104 483 M
+      GS
+        GS
+        0
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Compiler) SH
+      GR
+      0 14 RM
+      GS
+        GS
+        0
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Code) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Code) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 82 516 M 125 516 L 125 531 L 82 531 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      104 528 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Lisaac) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Lisaac) SH
+      GR
+   GR
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   152 489 M
+   152 499 L
+   188 499 L
+   188 504 L
+   224 494 L
+   188 484 L
+   188 489 L
+CP
+GS
+   1 SG EF
+GR
+GS
+   S
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      179 497 M
+      GS
+        GS
+        0
+            0
+        AD
+        GR
+      2 DI NE 0 RM
+      GR
+   GR
+
+% BOX
+0 SG
+GS
+   NP 233 452 M 325 452 L 325 536 L 233 536 L CP 1 SG F
+   0 SG
+   NP 233 452 M 325 452 L 325 536 L 233 536 L CP EC NP
+   pat26 8 224 448 104 96 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 233 452 M 325 452 L 325 536 L 233 536 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 242 475 M 315 475 L 315 508 L 242 508 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      279 488 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) SH
+      GR
+      0 17 RM
+      GS
+        GS
+        0
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) SH
+      GR
+   GR
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   325 507 M
+   325 481 L
+   339 481 L
+   339 468 L
+   353 494 L
+   339 520 L
+   339 507 L
+CP
+GS
+   1 SG EF
+GR
+GS
+   EC NP
+   pat26 8 320 464 40 64 TGPF
+GR
+GS
+   S
+GR
+
+% BOX
+0 SG
+GS
+   NP 368 452 M 460 452 L 460 536 L 368 536 L CP 1 SG F
+   0 SG
+   NP 368 452 M 460 452 L 460 536 L 368 536 L CP EC NP
+   pat8 8 360 448 104 96 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 368 452 M 460 452 L 460 536 L 368 536 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 377 471 M 450 471 L 450 504 L 377 504 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      414 484 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) SH
+      GR
+      0 17 RM
+      GS
+        GS
+        0
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 380 540 M 451 540 L 451 555 L 380 555 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      416 552 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Executable) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Executable) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 384 512 M 448 512 L 448 527 L 384 527 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      416 524 M
+      GS
+        GS
+        0
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 3) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 3) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 248 511 M 312 511 L 312 526 L 248 526 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      249 523 M
+      GS
+            0 SG
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 2) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 248 352 M 312 352 L 312 367 L 248 367 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      280 364 M
+      GS
+        GS
+        0
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 1) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 1) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      376 224 M
+      64 -96 atan DU cos 10.000 MU 280 exch SU
+      exch sin 10.000 MU 288 exch SU L
+   TGSM
+   2 W
+   S
+   1 W
+GR
+GS
+   TGSM
+   NP
+      280 288 10.000 4.000 -96 64 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      280 288 10.000 4.000 -96 64 TGAT
+   CP F
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      372 384 M
+      64 -96 atan DU cos 10.000 MU 276 exch SU
+      exch sin 10.000 MU 448 exch SU L
+   TGSM
+   2 W
+   S
+   1 W
+GR
+GS
+   TGSM
+   NP
+      276 448 10.000 4.000 -96 64 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      276 448 10.000 4.000 -96 64 TGAT
+   CP F
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      12 187 M
+      GS
+            0 SG
+            /Courier-Bold FF [18 0 0 -18 0 0] MS
+            (1) SH
+      GR
+   GR
+
+% OVAL
+0 SG
+GS
+   GS
+      NP 16 180 12 12 TGEL
+      2 W
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      12 343 M
+      GS
+            0 SG
+            /Courier-Bold FF [18 0 0 -18 0 0] MS
+            (2) SH
+      GR
+   GR
+
+% OVAL
+0 SG
+GS
+   GS
+      NP 16 336 12 12 TGEL
+      2 W
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      12 507 M
+      GS
+            0 SG
+            /Courier-Bold FF [18 0 0 -18 0 0] MS
+            (3) SH
+      GR
+   GR
+
+% OVAL
+0 SG
+GS
+   GS
+      NP 16 500 12 12 TGEL
+      2 W
+      S
+   GR
+GR
+
+% BOX
+0 SG
+GS
+   NP 64 608 M 144 608 L 144 704 L 64 704 L CP 1 SG F
+   0 SG
+   NP 64 608 M 144 608 L 144 704 L 64 704 L CP EC NP
+   pat3 8 56 600 96 112 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 64 608 M 144 608 L 144 704 L 64 704 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 75 631 M 132 631 L 132 660 L 75 660 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      104 643 M
+      GS
+        GS
+        0
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Compiler) SH
+      GR
+      0 14 RM
+      GS
+        GS
+        0
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Code) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier FF [12 0 0 -12 0 0] MS
+            (Code) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 82 676 M 125 676 L 125 691 L 82 691 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      104 688 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Lisaac) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Lisaac) SH
+      GR
+   GR
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   152 649 M
+   152 659 L
+   188 659 L
+   188 664 L
+   224 654 L
+   188 644 L
+   188 649 L
+CP
+GS
+   1 SG EF
+GR
+GS
+   S
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      179 657 M
+      GS
+        GS
+        0
+            0
+        AD
+        GR
+      2 DI NE 0 RM
+      GR
+   GR
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   325 667 M
+   325 641 L
+   339 641 L
+   339 628 L
+   353 654 L
+   339 680 L
+   339 667 L
+CP
+GS
+   1 SG EF
+GR
+GS
+   EC NP
+   pat8 8 320 624 40 64 TGPF
+GR
+GS
+   S
+GR
+
+% BOX
+0 SG
+GS
+   NP 368 612 M 460 612 L 460 696 L 368 696 L CP 1 SG F
+   0 SG
+   NP 368 612 M 460 612 L 460 696 L 368 696 L CP EC NP
+   pat8 8 360 608 104 96 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 368 612 M 460 612 L 460 696 L 368 696 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 377 631 M 450 631 L 450 664 L 377 664 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      414 644 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) SH
+      GR
+      0 17 RM
+      GS
+        GS
+        0
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 380 700 M 451 700 L 451 715 L 380 715 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      416 712 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Executable) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [12 0 0 -12 0 0] MS
+            (Executable) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 384 672 M 448 672 L 448 687 L 384 687 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      416 684 M
+      GS
+        GS
+        0
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 3) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 3) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      12 667 M
+      GS
+            0 SG
+            /Courier-Bold FF [18 0 0 -18 0 0] MS
+            (N) SH
+      GR
+   GR
+
+% OVAL
+0 SG
+GS
+   GS
+      NP 16 660 12 12 TGEL
+      2 W
+      S
+   GR
+GR
+
+% BOX
+0 SG
+GS
+   NP 232 612 M 324 612 L 324 696 L 232 696 L CP 1 SG F
+   0 SG
+   NP 232 612 M 324 612 L 324 696 L 232 696 L CP EC NP
+   pat8 8 224 608 104 96 TGPF
+GR
+GS
+   10 SM
+   GS
+      NP 232 612 M 324 612 L 324 696 L 232 696 L CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 241 627 M 314 627 L 314 660 L 241 660 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      278 640 M
+      GS
+        GS
+        0
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Bold FF [14 0 0 -14 0 0] MS
+            (Lisaac) SH
+      GR
+      0 17 RM
+      GS
+        GS
+        0
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Compiler) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 248 668 M 312 668 L 312 683 L 248 683 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      280 680 M
+      GS
+        GS
+        0
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 3) TGSW 
+        AD
+        GR
+      2 DI NE 0 RM
+            0 SG
+            /Courier-Oblique FF [12 0 0 -12 0 0] MS
+            (version 3) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      372 544 M
+      64 -96 atan DU cos 10.000 MU 276 exch SU
+      exch sin 10.000 MU 608 exch SU L
+   TGSM
+   2 W
+   S
+   1 W
+GR
+GS
+   TGSM
+   NP
+      276 608 10.000 4.000 -96 64 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      276 608 10.000 4.000 -96 64 TGAT
+   CP F
+GR
+
+GR
+tgifsavedpage restore
+end
+showpage
+
+%%Trailer
+%MatchingCreationDate: Mon Aug 23 10:47:33 2004
+%%DocumentFonts: Courier-Oblique
+%%+ Courier-Bold
+%%+ Courier
+%%EOF

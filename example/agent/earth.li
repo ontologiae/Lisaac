@@ -1,0 +1,212 @@
+Section Header
+
+  + name      := EARTH;
+
+  - copyright := "2003-2010 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  - parent_world:WORLD := WORLD;
+
+  + parent_area:Expanded AREA;
+
+  + parent_g_expr:Expanded G_EXPR;
+
+Section Private
+
+  - zoom:INTEGER := 8;
+
+  - screen:ABSTRACT_BITMAP;
+
+Section Public
+
+  - size:INTEGER;
+
+  //
+  // Update position.
+  //
+
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  (
+    update rac from (x,y) size (w,h);
+  );
+
+  //
+  // Creation.
+  //
+
+  - make_earth sz:INTEGER <-
+  (
+    size := sz;
+    width_min  := sz * zoom;
+    height_min := sz * zoom;
+    screen := BITMAP(PIXEL_24).create_size (width_min,height_min);
+  );
+
+  //
+  // Random.
+  //
+
+  - random_position:(INTEGER,INTEGER) <-
+  ( + x,y:INTEGER;
+    {
+      x := (width_min  / zoom-1).random_upper;
+      y := (height_min / zoom-1).random_upper;
+    }.do_while {is_busy (x,y) != 0};
+    x,y
+  );
+
+  //
+  // Food / Ant.
+  //
+
+  - put_food (x,y:INTEGER) type col:UINTEGER_32 <-
+  [
+    -? {x.in_range 0 to (width_min /zoom-1)};
+    -? {y.in_range 0 to (height_min/zoom-1)};
+  ]
+  ( + px,py:INTEGER;
+    px := x * zoom;
+    py := y * zoom;
+    screen.rectangle_fill (px,py) to (px+zoom-1,py+zoom-1) color col;
+  );
+
+  - put_ant (x,y:INTEGER) color col:UINTEGER_32 <-
+  ( + px,py:INTEGER;
+    px := x * zoom;
+    py := y * zoom;
+    screen.line (px       ,py) to (px+zoom-1,py+zoom-1) color white;
+    screen.line (px+zoom-1,py) to (px       ,py+zoom-1) color col;
+  );
+
+  - clear (x,y:INTEGER) <-
+  [
+    -? {x.in_range 0 to (width_min /zoom-1)};
+    -? {y.in_range 0 to (height_min/zoom-1)};
+  ]
+  ( + px,py:INTEGER;
+    px := x * zoom;
+    py := y * zoom;
+    screen.rectangle_fill (px,py) to (px+zoom-1,py+zoom-1) color black;
+  );
+
+  - is_busy (x,y:INTEGER) :UINTEGER_32 <-
+  (
+    screen.get_color_hard (x*zoom,y*zoom)
+  );
+
+  //
+  // Display.
+  //
+
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
+  (
+    clipping (x0,y0) to (x1,y1);
+    put_bitmap screen to (0,0);
+  );
+
+  //
+  // Events.
+  //
+
+  - count:INTEGER;
+
+  - receive msg:EVENT <-
+  ( + evt_keyboard:EVENT_KEYBOARD;
+    + evt_mouse:EVENT_MOUSE;
+
+    parent_world.receive msg;
+    refresh;
+    count := count + 1;
+    ((count % 1000) = 0).if {
+      count.print;
+      '\n'.print;
+    };
+
+    evt_keyboard ?= msg;
+    (evt_keyboard != NULL).if {
+      keyboard_event (evt_keyboard.key);
+    };
+
+    evt_mouse ?= msg;
+    (evt_mouse != NULL).if {
+      mouse_event evt_mouse;
+    };
+  );
+
+  - keyboard_event key:UINTEGER_16 <-
+  (
+    (key = 16416).if {
+      //"Display...\n".print;
+      //display_ant := ! display_ant;
+    };
+  );
+
+  - mouse_event evt:EVENT_MOUSE <-
+  ( + win:AREA;
+
+    win := DESK.get_object (evt.x_current,evt.y_current);
+    (win != Self).if {
+      DESK.receive evt;
+    } else {
+
+    };
+  );
+
+  - get_probability (x,y:INTEGER) type col:UINTEGER_32 :REAL_32 <-
+  ( + result:REAL_32;
+    //result := k1 / (k1 + density (x,y) type col);
+    //result * result
+    result := 1.0 - my_density (x,y) type col;
+    result
+  );
+
+  - put_probability (x,y:INTEGER) type col:UINTEGER_32 :REAL_32 <-
+  ( + result:REAL_32;
+    /*
+    result := density (x,y) type col;
+    (result < k2).if {
+      result := result * 2.0;
+    } else {
+      result := 1.0;
+    };
+    */
+    result := my_density (x,y) type col;
+    result
+  );
+
+Section Private
+
+  - density (x,y:INTEGER) type col:UINTEGER_32 :REAL_32 <-
+  ( + sum,dis:REAL_32;
+    ((y-1).max 0).to ((y+1).min (size-1)) do { py:INTEGER;
+      ((x-1).max 0).to ((x+1).min (size-1)) do { px:INTEGER;
+        (col = is_busy (px,py)).if {
+          dis := ((py-y)*(py-y)+(px-x)*(px-x)).sqrt;
+          sum := sum + 1.0 - dis / alpha;
+        };
+      };
+    };
+    (sum / 9.0).max 0.0
+  );
+
+  - my_density (x,y:INTEGER) type col:UINTEGER_32 :REAL_32 <-
+  ( + sum:REAL_32;
+    ((y-1).max 0).to ((y+1).min (size-1)) do { py:INTEGER;
+      ((x-1).max 0).to ((x+1).min (size-1)) do { px:INTEGER;
+        (col = is_busy (px,py)).if {
+          sum := sum + 1.0;
+        };
+      };
+    };
+    sum / 9.0
+  );
+
+  - alpha:REAL_32 := 0.5;
+
+  - k1:REAL_32 := 0.1;
+
+  - k2:REAL_32 := 0.15;

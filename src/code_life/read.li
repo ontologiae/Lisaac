@@ -1,82 +1,62 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := READ;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Read for local, global or slot";
-  
+
 Section Inherit
 
   + parent_expr:Expanded EXPR;
-    
+
 Section Public
-  
+
   - is_slot:BOOLEAN <- FALSE;
-  
-  - variable:VARIABLE <- 
+
+  - variable:VARIABLE <-
   (
     deferred;
     NULL
   );
 
-  - static_type:TYPE_FULL <- 
-  ( 
+  - static_type:TYPE_FULL <-
+  (
     variable.type
   );
-  
+
   - my_copy:SELF <-
   ( + result:SELF;
     result ?= variable.read position;
     result
   );
-  
+
   //
   // Searching.
   //
-  
+
   - get_type t:TYPES_TMP <-
-  (     
+  (
     variable.get_type t;
   );
-  
+
   - get_last_value:EXPR <- variable.get_last_value NULL;
-  
+
   //
   // Executing pass.
   //
 
   - remove <-
   (
-    variable.unread Self;      
+    variable.unread Self;
   );
-    
+
   - is_require_constant:CONSTANT <-
   ( + result:CONSTANT;
     + j:INTEGER;
-    + val:EXPR;   
+    + val:EXPR;
     + req_list:FAST_ARRAY(WRITE);
     //? { variable.require_first != NULL };
     /* BSBS: A REVOIR
@@ -109,22 +89,22 @@ Section Public
     result
   );
 
-  - execute_access_unlink:INSTR <- 
+  - execute_access_unlink:INSTR <-
   (
     deferred;
     NULL
   );
-  
+
   - execute_access_link <- deferred;
-  
+
   - execute_unlink:INSTR <-
   // Delete read
   (
     variable.unread Self;
     new_execute_pass;
-    execute_access_unlink    
+    execute_access_unlink
   );
-  
+
   - execute_link:EXPR <-
   ( + cst:CONSTANT;
     + rec:INSTR;
@@ -133,34 +113,20 @@ Section Public
     + s:SLOT_DATA;
     + l:LOCAL;
     + wrt:WRITE;
-    + tmp_type:TYPES_TMP;
     //+ old_loop_invariant:LOOP;
-    
-    // Simplify type.
-    ((! variable.is_static) && {! variable.type.is_strict}).if {
-      tmp_type := TYPES_TMP.new;
-      variable.get_type tmp_type;
-      (tmp_type.count != 0).if {
-        (tmp_type.first = TYPE_NULL).if {
-          tmp_type.remove_first;
-        };      
-        (tmp_type.count = 1).if {        
-          variable.set_type (tmp_type.first.default.to_strict);        
-        };
-      };
-      tmp_type.free;
-    };
-    
+
+    simplify_type variable;
+
     //
     s ?= variable;
-    ( 
+    (
       (s = NULL) || {
 	((s.style != '+') || {! s.id_section.is_mapping}) &&
 	{(! variable.type.is_expanded) || {variable.type.is_default_expanded}}
       }
-    ).if {      
+    ).if {
       cst := is_require_constant;  // BSBS: Ce cas devrait rentrer dans get_last_value
-      (cst != NULL).if {
+      ((cst != NULL) && {variable.style != 'R'}).if {
 	//
 	// CONSTANT propagation.
 	//
@@ -171,30 +137,30 @@ Section Public
 	};
 	result := cst.my_copy;
 	new_execute_pass;
-      }.elseif {      
+      }.elseif {
 	(val := get_last_value) != NULL
       } then {
 	//
 	// VALUE_EXPR propagation, step by step.
-	//      	
+        //
 	result := val;
-	variable.unread Self;	
+	variable.unread Self;
 	new_execute_pass;
       };
     };
-    
+
     (result = NULL).if {
       //
       // Normal.
-      //      
-      ((is_slot) && {loop_invariant != NULL} && {is_invariant}).if {	
+      //
+      ((is_slot) && {loop_invariant != NULL} && {is_invariant}).if {
 	//old_loop_invariant := loop_invariant;
 	//loop_invariant := NULL;
 	//
 	l := static_type.get_temporary position;
 	wrt := l.write position value Self;
 	loop_list.insert_before wrt;
-	result := l.read position;	
+	result := l.read position;
 	//
 	//wrt.execute;
 	//result := result.execute_link;
@@ -204,7 +170,7 @@ Section Public
       } else {
 	variable.set_read;
 	execute_access_link;
-	result := Self;  
+	result := Self;
       };
     };
     result
@@ -218,8 +184,8 @@ Section Public
   ( + req_list:FAST_ARRAY(WRITE);
     //is_verbose.if {
       buffer.add_last '<';
-      buffer.append (object_id.to_string);
-      buffer.append "/R";
+      //buffer.append (object_id.to_string);
+      buffer.add_last 'R';
       (variable.require_first != NULL).if {
 	variable.require_first.object_id.append_in buffer;
 	req_list := variable.require_list;
@@ -237,7 +203,7 @@ Section Public
       buffer.add_last '>';
     //};
   );
-  
+
   - display buffer:STRING <-
   (
     buffer.append (variable.intern_name);

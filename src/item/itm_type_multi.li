@@ -1,69 +1,49 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_TYPE_MULTI;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "List of type";
-  
+
 Section Inherit
-  
+
   + parent_itm_type:Expanded ITM_TYPE;
-  
+
 Section Private
-  
+
   - dico:FAST_ARRAY(ITM_TYPE_MULTI) := FAST_ARRAY(ITM_TYPE_MULTI).create_with_capacity 32;
 
   - create lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make lt;
     result
   );
-  
+
   - make lt:FAST_ARRAY(ITM_TYPE_MONO) <-
   (
     list_type := lt;
   );
- 
+
 Section Public
-  
+
   + list_type:FAST_ARRAY(ITM_TYPE_MONO);
-  
+
   - count:INTEGER <- list_type.count;
-  
+
   - lower:INTEGER <- list_type.lower;
-  
+
   - upper:INTEGER <- list_type.upper;
-  
+
   - item i:INTEGER :ITM_TYPE_MONO <-
   (
     list_type.item i
   );
-  
+
   - last:ITM_TYPE_MONO <-
   (
     list_type.last
@@ -73,15 +53,15 @@ Section Public
   (
     list_type.first
   );
-  
+
   - get lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
   ( + result:SELF;
     + idx:INTEGER;
-    
+
     idx := dico.lower;
     {(idx <= dico.upper) && {dico.item idx.list_type != lt}}.while_do {
       idx := idx + 1;
-    };    
+    };
     (idx <= dico.upper).if {
       result ?= dico.item idx;
     } else {
@@ -90,15 +70,15 @@ Section Public
     };
     result
   );
-  
+
   //
   // Runnable.
   //
-  
+
   - get_expr_for p:PARAMETER_TO_TYPE :EXPR <-
   ( + lst:FAST_ARRAY(EXPR);
     + t:TYPE_FULL;
-    
+
     lst := FAST_ARRAY(EXPR).create_with_capacity count;
     lower.to upper do { i:INTEGER;
       t := item i.to_run_for p;
@@ -106,45 +86,45 @@ Section Public
     };
     EXPR_MULTIPLE.create lst
   );
-  
+
   - to_run_in lst:FAST_ARRAY(TYPE_FULL) for p:PARAMETER_TO_TYPE <-
   ( + t:TYPE_FULL;
-    
+
     lower.to upper do { i:INTEGER;
       t := item i.to_run_for p;
       lst.add_last t;
     };
   );
-  
+
   //
   // Display.
-  //  
-  
+  //
+
   - append_in buffer:STRING <-
-  (    
+  (
     buffer.add_last '(';
     display_raw buffer;
     buffer.add_last ')';
   );
-  
+
   - shorter_in buf:STRING <-
   (
     buf.add_last '(';
     shorter_raw_in buf;
     buf.add_last ')';
   );
-    
+
   - display_raw buffer:STRING <-
-  (    
+  (
     (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
       list_type.item j.append_in buffer;
       buffer.add_last ',';
     };
     list_type.last.append_in buffer;
   );
-  
+
   - shorter_raw_in buf:STRING <-
-  (    
+  (
     (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
       list_type.item j.shorter_in buf;
       buf.add_last ',';

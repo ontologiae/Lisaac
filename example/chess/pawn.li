@@ -1,0 +1,45 @@
+Section Header
+  
+  + name     := PAWN;
+  
+  - comment   := "3D Chess Game";
+  
+  - author    := "Damien Bouvarel (dams.bouvarel@wanadoo.fr)";
+  
+Section Inherit
+  
+  + parent_piece:Expanded PIECE;
+  
+Section Public
+  
+  - name:STRING_CONSTANT := "pawn";
+  
+  - model:MODEL; // shared model
+  
+  - check_move orig:SQUARE to dest:SQUARE :BOOLEAN <-
+  // is legal move?
+  ( + result:BOOLEAN;
+    
+    (dest.piece = NULL).if {
+      // no capture
+      
+      (orig.x = dest.x).if {
+        (player = 2).if {
+          result := (dest.y = orig.y+1) || {(orig.y = 1) && {dest.y = 3}};
+        } else {
+          result := (dest.y = orig.y-1) || {(orig.y = 6) && {dest.y = 4}};
+        };
+      };
+    }.elseif {player != dest.piece.player} then {
+      // capture
+      
+      (player = 2).if {
+        result := (dest.y = orig.y+1) && {(orig.x - dest.x).abs = 1};
+      } else {
+        result := (dest.y = orig.y-1) && {(orig.x - dest.x).abs = 1};
+      };
+    };
+    
+    result
+  );
+  

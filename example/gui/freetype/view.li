@@ -1,0 +1,463 @@
+Section Header
+
+  + name        := VIEW;
+  - comment     :="A font viewer.";
+
+
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+
+Section Inherit
+  
+  + parent_area:Expanded AREA;
+
+  + parent_g_expr:Expanded G_EXPR;
+
+Section Public
+  
+  - background:ABSTRACT_BITMAP;
+    //
+  // Width / Height
+  //
+
+  - width_min:INTEGER  := 640;
+
+  - height_min:INTEGER := 480;
+
+  //
+  // Creation.
+  //
+
+  - init:G_EXPR <-
+  (
+    (COMMAND_LINE.upper = 1).if {
+      load_font (COMMAND_LINE.item 1 + ".ttf");
+    } else {
+      load_font "arial.ttf";
+    };
+    
+    // Initialization bitmap.
+    background := BITMAP(PIXEL_32).create_size (width_min,height_min);
+    G_RAW.create (Self.fix_height.fix_width)
+  );
+
+  - run:G_WIN_OUT <-
+  (    
+    G_WIN_OUT.create "Free Type" with init
+  );
+
+  - main <-
+  (    
+    // Init window.
+    VIDEO.make_size (width_min+64,height_min+64);
+    DESK.make VIDEO with (
+      G_OUT.create "True Type Font" justify (G_OUT.center) / init
+    );
+  );
+
+  //
+  // Update position.
+  //
+
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  (
+    update rac from (x,y) size (w,h);
+  );
+
+  //
+  // Display.
+  //
+  
+  - c_l:INTEGER_32 := 0_00_00_00h;
+  - c_r:INTEGER_32 := 0_FF_00_00h;
+  
+  - extract:{ INTEGER_32; INTEGER_32,INTEGER_32,INTEGER_32 } := 
+  { c:INTEGER_32;
+    c >> 16, (c >> 8) & 0FFh, c & 0FFh
+  };
+  
+  - compact:{ (INTEGER_32,INTEGER_32,INTEGER_32); INTEGER_32 } :=
+  { (r,g,b:INTEGER_32);
+    r<<16 | g<<8 | b
+  };
+   
+  - medium (x,y:INTEGER_32) :INTEGER_32 <-
+  ( + xr,xg,xb, yr,yg,yb, pr,pg,pb:INTEGER_32;    
+    
+    (xr,xg,xb) := extract.value x;
+    (yr,yg,yb) := extract.value y;
+    //
+    pr := (xr+yr)>>1;
+    pg := (xg+yg)>>1;
+    pb := (xb+yb)>>1;
+    compact.value (pr,pg,pb)    
+  );
+  
+  - a0:{ (INTEGER_32,INTEGER_32); INTEGER_32,INTEGER_32 } := 
+  { (xx,yy:INTEGER_32);
+    + t:INTEGER_32;
+    t := (xx-yy) >> 4;
+    t + (xx+yy) >> 1,
+    t + yy
+  };
+  
+  - a1:{ (INTEGER_32,INTEGER_32); INTEGER_32,INTEGER_32 } := 
+  { (xx,yy:INTEGER_32);
+    + t:INTEGER_32;
+    t := xx+yy;
+    (xx+t )>>2 + t>>3,
+    (xx-yy)>>3 + yy
+  };
+  
+  - a2:{ (INTEGER_32,INTEGER_32); INTEGER_32,INTEGER_32 } := 
+  { (xx,yy:INTEGER_32);
+    + t,tt:INTEGER_32;
+    t  := xx-yy; 
+    tt := t>>4;
+    
+    xx-tt-t>>2,
+    t>>3 + tt + yy
+  };
+  
+  - a3:{ (INTEGER_32,INTEGER_32); INTEGER_32,INTEGER_32 } := 
+  { (xx,yy:INTEGER_32);
+    + t:INTEGER_32;
+    t := (xx+yy)>>2; 
+    
+    t + xx>>1,
+    t + yy>>1
+  };
+    
+  - alias (x,y:INTEGER_32) with cal:{ (INTEGER_32,INTEGER_32); INTEGER_32,INTEGER_32 } :(INTEGER_32,INTEGER_32) <-
+  ( + xr,xg,xb, yr,yg,yb, p1r,p1g,p1b, p2r,p2g,p2b:INTEGER_32;
+        
+    (xr,xg,xb) := extract.value x;
+    (yr,yg,yb) := extract.value y;
+    //
+    (p1r,p2r) := cal.value (xr,yr);
+    (p1g,p2g) := cal.value (xg,yg);
+    (p1b,p2b) := cal.value (xb,yb);
+    compact.value (p1r,p1g,p1b),
+    compact.value (p2r,p2g,p2b)
+  );
+      
+  /////////////// TEST 
+  
+  - rec (x,y:INTEGER_32) color c:INTEGER_32 <-
+  (
+    background.rectangle_fill (32+x*16,16+y*16) to (47+x*16,31+y*16) color (c.to_uinteger_32);
+  );
+  
+  - pattern (x,y:INTEGER) <-
+  ( + p1,p2:INTEGER_32;
+    + xx,yy:INTEGER;
+    
+    xx := x+1;    
+    rec (x,y) color (medium (c_l,c_r));
+    yy := y+1;
+    //
+    (p1,p2) := alias (c_l,c_r) with a0;
+    rec (x ,yy) color p1;
+    rec (xx,yy) color p2;
+    yy := yy+1;
+    //
+    (p1,p2) := alias (c_l,c_r) with a1;
+    rec (x ,yy) color p1;
+    rec (xx,yy) color p2;
+    yy := yy+1;
+    //
+    (p1,p2) := alias (c_l,c_r) with a2;
+    rec (x ,yy) color p1;
+    rec (xx,yy) color p2;
+    yy := yy+1;
+    //
+    (p1,p2) := alias (c_l,c_r) with a3;
+    rec (x ,yy) color p1;
+    rec (xx,yy) color p2;
+    yy := yy+1;
+    // 2 / 4
+    (p2,p1) := alias (c_r,c_l) with a2;
+    rec (x ,yy) color p1;
+    rec (xx,yy) color p2;
+    yy := yy+1;
+    //    
+    (p2,p1) := alias (c_r,c_l) with a1;
+    rec (x ,yy) color p1;
+    rec (xx,yy) color p2;
+    yy := yy+1;
+    //
+    (p2,p1) := alias (c_r,c_l) with a0;
+    rec (x ,yy) color p1;
+    rec (xx,yy) color p2;
+    yy := yy+1;
+  );
+  
+  - test <-
+  ( 
+    /*
+    background.rectangle_fill (16,16) to (31,16+16*16-1) color (c_l.to_uinteger_32);
+    background.rectangle_fill (32,16+8*16) to (47,16+16*16-1) color (c_l.to_uinteger_32);
+    //
+    background.rectangle_fill (48,16) to (63,16+15) color (c_r.to_uinteger_32);
+    background.rectangle_fill (64,16) to (79,16+16*9-1) color (c_r.to_uinteger_32);
+    background.rectangle_fill (80,16) to (96,16+16*16-1) color (c_r.to_uinteger_32);
+    //    
+    pattern (0,0);
+    pattern (1,8);
+    */
+    //
+    
+    background.rectangle_fill (0,0) to (40,410) color 0_FF_00_00h;    
+    background.poly_move_to (20,10);
+    background.poly_line_to (30,400);
+    background.poly_line_to (10,400);    
+    background.poly_line_to (20,10);
+    background.color 00_00_00h;
+    background.poly_trace_alias;
+    
+    background.rectangle_fill (0,0) to (410,40) color 0_FF_00_00h;    
+    background.poly_move_to (10,20);
+    background.poly_line_to (400,10);
+    background.poly_line_to (400,30);    
+    background.poly_line_to (10,20);
+    background.color 00_00_00h;
+    background.poly_trace_alias;
+    
+  );
+    
+    
+    
+  
+
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
+  ( 
+    clipping (x0,y0) to (x1,y1);    
+    test;
+    put_bitmap background to (0,0);
+  );
+
+  //
+  // Events.
+  //
+
+  - receive msg:EVENT <-
+  ( + evt_mouse:EVENT_MOUSE;
+    + win:AREA;
+    - idx_letter:INTEGER;
+
+    evt_mouse ?= msg;
+    (evt_mouse != NULL).if {
+      win := DESK.get_object (evt_mouse.x_current,evt_mouse.y_current);
+      (win != Self).if {
+        DESK.receive msg;
+      };
+      (evt_mouse.left_down).if {
+        {(idx_letter < glyphs.glyph.count) && {glyphs.glyph.item idx_letter = NULL}}.while_do {
+          idx_letter := idx_letter + 1;
+        };
+        (idx_letter < glyphs.glyph.count).if {
+          "\n\n------> Glyph #".print;
+          idx_letter.print;          
+          background.clean;
+          TT_DRAW.make (glyphs.glyph.item idx_letter) bitmap background;          
+          refresh;
+          idx_letter := idx_letter + 1;
+        };        
+      };
+    };   
+  );
+  
+  //
+  // Free type
+  //
+  
+  - is_verbose:BOOLEAN := TRUE;
+  
+  - verbose b:{} <- 
+  (
+    (is_verbose).if b;
+  );
+  
+  - glyphs:TT_GLYPH_TABLE;
+  
+  - load_font filename:ABSTRACT_STRING <-
+  ( + file:FILE;
+//    + buffer:FAST_ARRAY(UINTEGER_16);
+    + table_directory:TT_TABLE_DIR;
+//    + tmp_table_direntry:TT_TABLE_DIRENTRY;
+    + table_direntry:FAST_ARRAY(Expanded TT_TABLE_DIRENTRY);
+//    + b:ABSTRACT_BITMAP;
+    + maxp:TT_MAXP;
+    + cmap:TT_CMAP;    
+    + name:TT_NAME;
+    + head:TT_HEAD;
+    + hhea:TT_HHEA;
+    //    + hmtx:TT_HMTX;
+    //    + hdmx:TT_HDMX;
+    + loca:TT_LOCA;
+    + os2:TT_OS2;
+    + number_of_hmetrics:UINTEGER_16;
+    + number_glyph:UINTEGER_16;
+    + loc_version:INTEGER_16;
+    + idx_head,idx_hhea,idx_maxp,idx_name,idx_os2,idx_cmap:INTEGER;
+    + idx_hmtx,idx_hdmx,idx_loca,idx_glyph:INTEGER;
+    
+    file ?= FILE_SYSTEM.get_entry filename;
+    file.open;
+    table_directory := TT_TABLE_DIR.clone;
+    file.read table_directory;
+    table_directory.to_big_endian;
+    
+    verbose { table_directory.print; };
+    
+    // Read in file order.
+    
+    table_direntry := FAST_ARRAY(Expanded TT_TABLE_DIRENTRY).create_with_capacity (table_directory.numtables);
+    file.read table_direntry size (table_directory.numtables);
+    
+    "\n**** ENTRY ****\n".print;
+    0.to (table_directory.numtables - 1) do { i:INTEGER;      
+      table_direntry.item i.to_big_endian;
+      
+      verbose { table_direntry.item i.print; };
+      
+      //@@@@@@@@ HEAD TABLE
+      table_direntry.item i.is_head.if {
+        idx_head := i;
+      };
+      
+      //@@@@@@@@ HHEA TABLE
+      table_direntry.item i.is_hhea.if {
+        idx_hhea := i;
+      };
+      
+      //@@@@@@@@ MAXP TABLE
+      table_direntry.item i.is_maxp.if {
+        idx_maxp := i;
+      };
+      
+      //@@@@@@@@  NAME TABLE      
+      table_direntry.item i.is_name.if {
+        idx_name := i;
+      };
+      
+      //@@@@@@@@ OS2 TABLE
+      table_direntry.item i.is_os2.if {
+        idx_os2 := i;
+      };
+      
+      //@@@@@@@@ CMAP TABLE      
+      table_direntry.item i.is_cmap.if {
+        idx_cmap := i;
+      };
+      
+      //@@@@@@@@ HMTX TABLE
+      table_direntry.item i.is_hmtx.if {
+	idx_hmtx := i;
+      };
+
+      //@@@@@@@@ LOCA TABLE
+      table_direntry.item i.is_loca.if {
+	idx_loca := i;
+      };
+
+      //@@@@@@@@  GLYPH TABLE
+      table_direntry.item i.is_glyf.if {
+	idx_glyph := i;
+      };
+
+      //@@@@@@@@ HDMX TABLE
+      table_direntry.item i.is_hdmx.if {
+	idx_hdmx := i;
+      };
+    };
+
+
+    //
+    // Read in logical order
+    //
+    
+    //@@@@@@@@ HEAD TABLE
+    head := TT_HEAD.clone;    
+    file.set_cursor (table_direntry.item idx_head.offset);
+    file.read head;
+    head.to_big_endian;
+    loc_version := head.index_to_loc_format;
+    verbose { head.print; };
+    
+    
+    //@@@@@@@@ HHEA TABLE
+    hhea := TT_HHEA.clone;
+    file.set_cursor (table_direntry.item idx_hhea.offset);
+    file.read hhea;
+    hhea.to_big_endian;
+    number_of_hmetrics := hhea.number_of_hmetrics;
+    
+    verbose { hhea.print; };
+
+    //@@@@@@@@ MAXP TABLE    
+    maxp := TT_MAXP.clone;
+    file.set_cursor (table_direntry.item idx_maxp.offset);
+    file.read maxp;
+    maxp.to_big_endian;
+    number_glyph := maxp.num_glyphs;
+    
+    verbose { maxp.print; };
+    
+    //@@@@@@@@  NAME TABLE    
+    file.set_cursor (table_direntry.item idx_name.offset);
+    name := TT_NAME.create file;
+    
+    verbose { name.print; };
+    
+    //@@@@@@@@ OS2 TABLE    
+    os2 := TT_OS2.clone;
+    file.set_cursor (table_direntry.item idx_os2.offset);
+    file.read os2;
+    os2.to_big_endian;
+    
+    verbose { os2.print; };
+    
+    //@@@@@@@@ CMAP TABLE
+    file.set_cursor (table_direntry.item idx_cmap.offset);
+    cmap := TT_CMAP.create file;
+        
+    verbose { cmap.print; };
+    
+    /*
+    // HMTX TABLE
+    table_direntry.item idx_hmtx.print;
+    hmtx := TT_HMTX.create number_of_hmetrics,number_glyph,(buffer + (table_direntry.item idx_hmtx.offset));
+    hmtx.print;
+    */
+
+    //@@@@@@@@ LOCA TABLE
+    file.set_cursor (table_direntry.item idx_loca.offset);
+    (loc_version = 0).if {
+      loca := TT_LOCA_SHORT.create number_glyph my_file file;
+    }.elseif {loc_version = 1} then {
+      loca := TT_LOCA_LONG.create number_glyph my_file file;
+    } else {
+      "\nWrong Version loca".print;
+      crash;
+    };
+    
+    verbose { loca.print; };
+
+    //@@@@@@@@  GLYPH TABLE
+    file.set_cursor (table_direntry.item idx_glyph.offset);
+    glyphs := TT_GLYPH_TABLE.create loca my_file file;
+    
+    verbose { glyphs.print; };
+    
+    //IO.read_character;
+    
+    //@@@@@@@@HDMX TABLE
+    //hdmx := TT_HDMX.create (number_glyph,buffer + table_direntry.item idx_hdmx.offset);
+    //hdmx.print;
+  );
+
+
+
+
+

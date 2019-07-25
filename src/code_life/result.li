@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := RESULT;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -32,16 +12,18 @@ Section Inherit
   - parent_expr:EXPR := EXPR;
 
 Section Public
+
+  - position:POSITION <- write.position;
+
+  + write:WRITE;
   
-  - position:POSITION <- value.position;
-  
-  + write:WRITE;  
-  
+  - ensure_count:INTEGER <- write.ensure_count;
+
   - set_write v:WRITE <-
   (
     write := v;
   );
-  
+
   //
   // Creation.
   //
@@ -54,38 +36,55 @@ Section Public
   );
 
   - make v:WRITE <-
-  ( 
+  (
     write := v;
   );
-  
+
   - my_copy:SELF <-
   ( + wrt:WRITE;
     + rd:READ;
+    + result:SELF;
+        
     rd  ?= write.value;
-    rd  := rd.variable.read_direct (rd.position) with NULL;   
-    wrt := write.variable.write (write.position) with NULL value rd;    
-    create wrt
+    (rd = NULL).if {
+      wrt := write.variable.write (write.position) with NULL value (write.value.my_copy);
+    } else {
+      rd  := rd.variable.read_direct (rd.position) with NULL;
+      wrt := write.variable.write (write.position) with NULL value rd;
+    };
+    result := create wrt;
+    //result.debug_display;
+    result
   );
-  
+
+  - execute:INSTR <-
+  (
+    write ?= write.execute;
+    Self
+  );
+
   //
   // Remove
   //
-  
+
   - remove <-
   (
     write.remove;
   );
-    
+
   //
   // Expr definition.
-  // 
-  
+  //
+
   - static_type:TYPE_FULL <- write.value.static_type;
-  
+
   - get_type t:TYPES_TMP  <- write.value.get_type t;
-  
+
   - execute_link:EXPR     <- write.execute_link;
-  
+
   - execute_unlink:INSTR  <- write.execute_unlink;
-  
-  
+
+  - display buffer:STRING <- 
+  (
+    write.display buffer;    
+  );

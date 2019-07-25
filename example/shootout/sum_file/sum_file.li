@@ -1,0 +1,22 @@
+Section Header
+  
+  + name         := SUM_FILE;
+  
+Section Inherit
+  
+  - parent_any:OBJECT := OBJECT;
+
+Section Public
+
+  - main <-
+  ( + sum:INTEGER;
+
+    IO.read_line;
+    {IO.end_of_input}.until_do {
+      sum := sum + IO.last_string.to_integer; 
+      IO.read_line;
+    };
+
+    sum.print;
+    '\n'.print;
+  );

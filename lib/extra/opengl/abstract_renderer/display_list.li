@@ -1,0 +1,17 @@
+Section Header
+
+  + name     := DISPLAY_LIST;
+
+  - author   := "api independant display list";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - create body:{} :SELF <- deferred;
+
+  - call <- deferred;
+
+  - destroy <- deferred;

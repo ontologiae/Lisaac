@@ -1,0 +1,67 @@
+Section Header
+  
+  + name     := FRAMEWORK_TEST;
+  
+Section Inherit
+  
+  - parent_framework:FRAMEWORK := FRAMEWORK;
+  
+  - parent_event_listener:EVENT_LISTENER := EVENT_LISTENER;
+  
+Section Public
+  
+  - main <-
+  ( + caps:CAPABILITIES;
+    
+    caps := CAPABILITIES;
+    // caps.use_fullscreen;
+    // caps.set ...
+    OPENGL.set_capabilities caps;
+    
+    // create OpenGL device
+    OPENGL.make (800,600) title "GL Framework test";
+    
+    // set up framework
+    FRAMEWORK.make OPENGL;
+    
+    attach_scene TEST_SCENE;
+    add_key_listener Self;
+    
+    // start it all
+    run;
+  );
+  
+  //
+  // Events.
+  //
+  
+Section Public
+  
+  //
+  // Application events.
+  // 
+  
+  /*- draw_frame <- (
+  // override framework drawing
+  );*/
+  
+  //
+  // Input events.
+  //
+  
+  - keydown k:INTEGER <-
+  (
+    "\n==> ".print; k.print;
+    
+    (k = KEYCODE.k_escape).if {
+      //
+      FRAMEWORK.stop;
+      //
+    };
+  );
+  
+  /* // raw event slot: not to use with listeners
+  - on_keydown k:INTEGER <- (
+  );*/
+ 
+ 

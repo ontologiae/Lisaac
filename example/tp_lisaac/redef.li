@@ -1,58 +1,38 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name := REDEF;
-  
+
 Section Private
-  
+
   - my_slot:INTEGER <-
   (
     "(Original definition !) ".print;
     1
   );
-  
+
 Section Public
-  
+
   - main <-
-  ( 
+  (
     // 1 call
     "First call    : ".print;
     my_slot.print;
-    
+
     // Redéfinition of the code of this slot:
     my_slot <- (
       "(My slot have a new code !) ".print;
       2
     );
-    
+
     // 2 call
     "\nSecond call   : ".print;
     my_slot.print;
-    
+
     // Redéfinition as data of the slot
     my_slot := 3;
-    
+
     // 3 call
     "\nThird call    : (My slot became a data!) ".print;
-    my_slot.print;    
+    my_slot.print;
     '\n'.print;
   );

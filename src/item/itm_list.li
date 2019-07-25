@@ -1,56 +1,36 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_LIST;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Instruction list";
-  
+
 Section Inherit
-  
+
   + parent_itm_code:Expanded ITM_CODE;
-  
+
 Section Public
-  
+
   // BSBS: OPTIM : Dans 95% des cas, les list sont sans local (il faudrait spécialiser)
   // Mais pb avec le parser...
-  
+
   //
   // Data
   //
 
   + local_list:FAST_ARRAY(ITM_LOCAL);  // `+'
-  
+
   + static_list:FAST_ARRAY(ITM_LOCAL); // `-'
 
   + code:FAST_ARRAY(ITM_CODE);
-  
+
   + is_check_name:BOOLEAN;
-  
+
   - is_check_local:INTEGER;
-  
+
   //
   // Constructor
   //
@@ -61,12 +41,12 @@ Section Public
     result.make p;
     result
   );
-  
+
   - make p:POSITION <-
   (
-    position := p;   
+    position := p;
   );
- 
+
   //
   // Added
   //
@@ -82,19 +62,19 @@ Section Public
     ? {! l.is_empty};
     static_list := l;
   );
-  
+
   - set_code c:FAST_ARRAY(ITM_CODE) <-
   (
     code := c;
-  );    
-  
+  );
+
 Section Public
-  
+
   - is_affect:POSITION <-
   ( + result,default:POSITION;
     + j:INTEGER;
     + itm_r:ITM_RESULT;
-    
+
     j := code.lower;
     {(j < code.upper) && {result = default}}.while_do {
       itm_r ?= code.item j;
@@ -110,49 +90,49 @@ Section Public
     };
     result
   );
-  
+
   //
   // Runnable.
   //
-  
-  - to_run_expr:EXPR <- 
+
+  - to_run_expr:EXPR <-
   // List intern.
   ( + i:INSTR;
-    + var:LOCAL; 
+    + var:LOCAL;
     + stack_top:INTEGER;
     + result_top:INTEGER;
     + result:EXPR;
     + nb_result:INTEGER;
     + lr:FAST_ARRAY(EXPR);
-        
+
     stack_top  := stack_local .upper + 1;
     result_top := stack_result.upper + 1;
-            
+
     // Push Local.
-    (local_list != NULL).if {      
+    (local_list != NULL).if {
       (local_list.lower).to (local_list.upper) do { j:INTEGER;
 	var := local_list.item j.to_run;
 	stack_local.add_last var;
-	var.init;	
-      };      
+	var.init;
+      };
     };
-    (static_list != NULL).if {            
+    (static_list != NULL).if {
       (static_list.lower).to (static_list.upper) do { j:INTEGER;
 	var := static_list.item j.to_run_static;
-	stack_local.add_last var;		
-      };      
-    };        
+	stack_local.add_last var;
+      };
+    };
     // Append code.
     (code.lower).to (code.upper) do { j:INTEGER;
-      i := code.item j.to_run;      
+      i := code.item j.to_run;
       list_current.add_last i;
-    };    
-    // Compute result expr.            
-    nb_result := stack_result.upper - result_top + 1;    
-        
-    (nb_result = 0).if {            
-      result := PROTOTYPE_CST.create position type (TYPE_VOID.default); // BSBS: Alias.   
-    } else {                 
+    };
+    // Compute result expr.
+    nb_result := stack_result.upper - result_top + 1;
+
+    (nb_result = 0).if {
+      result := PROTOTYPE_CST.create position type (TYPE_VOID.default); // BSBS: Alias.
+    } else {
       (nb_result > 1).if {
 	// Creation Vector.
 	lr := FAST_ARRAY(EXPR).create_with_capacity nb_result;
@@ -163,40 +143,40 @@ Section Public
       } else {
         result := stack_result.last.read position;
       };
-    };    
+    };
     // Pop local / Result.
-    pop_stack_until stack_top;    
+    pop_stack_until stack_top;
     stack_result.remove_since result_top;
     ? {stack_result.upper = Old stack_result.upper};
-    // 
+    //
     result
   );
-  
+
   //
   // Display.
   //
-  
+
   - append_in buffer:STRING <-
   (
     (code.count = 1).if {
       buffer.add_last '(';
       code.first.append_in buffer;
-      buffer.add_last ')';      
+      buffer.add_last ')';
     } else {
-      buffer.append "(\n";      
+      buffer.append "(\n";
       (code.lower).to (code.upper) do { i:INTEGER;
         indent.append "  ";
         code.item i.append_in buffer;
         buffer.append ";\n";
       };
       indent.remove_last 2;
-      buffer.append ")";      
-    };      
+      buffer.append ")";
+    };
   );
-  
+
 Section ITM_LIST, ITM_RESULT
-  
-  - stack_result:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 16;    
+
+  - stack_result:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 16;
 
 
 

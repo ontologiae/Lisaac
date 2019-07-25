@@ -1,98 +1,78 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := CAST;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Cast type.";
-  
+
 Section Inherit
-  
+
   + parent_expr:Expanded EXPR;
-      
+
 Section Public
-  
+
   - is_invariant:BOOLEAN <- value.is_invariant;
-  
+
   + static_type:TYPE_FULL;
-  
+
   + value:EXPR;
-  
+
   //
   // Creation.
   //
-  
+
   - create t:TYPE_FULL value v:EXPR :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make t value v;
-    result    
+    result
   );
-  
+
   - make t:TYPE_FULL value v:EXPR <-
   (
     position    := v.position;
     static_type := t;
     value       := v;
   );
-  
+
   - my_copy:SELF <-
   (
     create static_type value (value.my_copy)
   );
-  
+
   //
   // Searching.
   //
-  
+
   - get_type t:TYPES_TMP <-
-  (         
+  (
     t.add (static_type.raw);
   );
-  
+
   //
   // Executing pass.
   //
-  
+
   - remove <-
-  (        
+  (
     value.remove;
   );
-    
-  - execute_unlink:INSTR <-  
+
+  - execute_unlink:INSTR <-
   (
     value.execute_unlink
   );
-  
+
   - execute_link:EXPR <-
   ( + result:EXPR;
     + int:INTEGER_CST;
     + lst_typ:TYPES_TMP;
     + other:CAST;
-    
+
     value  := value.execute_link;
     result := Self;
     //
@@ -100,12 +80,12 @@ Section Public
       result := value;
       new_execute_pass;
     }.elseif {
-      (ALIAS_STR.is_integer (static_type.raw.name)) && 
+      (ALIAS_STR.is_integer (static_type.raw.name)) &&
       {value.is_constant} &&
       { int ?= value;  // BSBS: Merde avc les prototype_cst de type type_id : INTEGER
 	int != NULL
       }
-    } then {      
+    } then {
       int.cast_type static_type;
       result := value;
       new_execute_pass;
@@ -124,22 +104,22 @@ Section Public
 	new_execute_pass;
       };
       lst_typ.free;
-    };    
+    };
     //
     result
   );
-  
+
   //
   // Genere.
   //
-  
+
   - genere buffer:STRING <-
-  (    
+  (
     buffer.add_last '(';
     buffer.add_last '(';
-    static_type.genere_declaration buffer;	
+    static_type.genere_declaration buffer;
     buffer.add_last ' ';
-    static_type.genere_star_declaration buffer;	
+    static_type.genere_star_declaration buffer;
     buffer.add_last ')';
     value.genere buffer;
     buffer.add_last ')';

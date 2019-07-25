@@ -1,0 +1,37 @@
+Section Header
+
+  + name        := TT_NAME_HEADER;
+  - comment     :=" .";
+
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+
+Section Inherit
+
+  - parent:OBJECT := OBJECT;
+
+Section Mapping
+
+  + format:UINTEGER_16;
+  + num_name_records:UINTEGER_16;
+  + storage_offset:UINTEGER_16;
+
+Section Public
+
+  - to_big_endian <-
+  (
+    format := PROCESSOR.to_motorola_ushort format;
+    num_name_records := PROCESSOR.to_motorola_ushort num_name_records;
+    storage_offset := PROCESSOR.to_motorola_ushort storage_offset;
+  );
+
+  - print <-
+  (
+    "\n     Format: ".print;
+    format.print;
+    "\n     Number records: ".print;
+    num_name_records.print;
+    "\n     Storage offset: ".print;
+    storage_offset.print;
+    '\n'.print;
+  );

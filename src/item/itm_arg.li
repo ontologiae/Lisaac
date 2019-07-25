@@ -1,52 +1,32 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := ITM_ARG;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "One argument";
-  
+
 Section Inherit
-  
+
   + parent_itm_argument:Expanded ITM_ARGUMENT;
-  
+
 Section Public
 
   + name:STRING_CONSTANT;
-  
+
   + type:ITM_TYPE_MONO;
-  
+
   - upper:INTEGER := 0;
-  
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION name n:STRING_CONSTANT type t:ITM_TYPE_MONO :SELF <-
   ( + result:SELF;
-    
+
     result := SELF.clone;
     result.make p name n type t;
     result
@@ -58,27 +38,27 @@ Section Public
     name     := n;
     type     := t;
   );
-  
+
   //
   // Running.
   //
-  
-  - item idx:INTEGER :ITM_TYPE_MONO <- 
+
+  - item idx:INTEGER :ITM_TYPE_MONO <-
   ( ? {idx = 0};
     type
-  );  
+  );
 
   - to_run_in arg_lst:FAST_ARRAY(LOCAL) for p:PARAMETER_TO_TYPE <-
   ( + t:ITM_TYPE_MONO;
-            
+
     (name = ALIAS_STR.variable_self).if {
       t := ITM_TYPE_SIMPLE.type_self;
     } else {
       t := type;
-    };    
+    };
     arg_lst.add_last (
       LOCAL.create position name name style ' ' type (t.to_run_for p)
-    );    
+    );
   );
 
   - get_index_type p:ITM_TYPE_PARAMETER :INTEGER <-
@@ -88,24 +68,24 @@ Section Public
     };
     result
   );
-  
+
   - check larg:FAST_ARRAY(EXPR) index idx:INTEGER for p:PARAMETER_TO_TYPE :INTEGER <-
   ( + new_expr:EXPR;
-    
+
     new_expr := larg.item idx.check_type (type.to_run_for p) with position;
     larg.put new_expr to idx;
     idx + 1
-  );    
+  );
 
   //
   // Display.
   //
-  
+
   - append_in buffer:STRING <-
   (
     buffer.append name;
     buffer.add_last ':';
-    type.append_in buffer;    
+    type.append_in buffer;
   );
 
   - shorter_in buf:STRING <-
@@ -116,7 +96,7 @@ Section Public
       put name to buf like (ALIAS_STR.short_local);
     };
     buf.add_last ':';
-    type.shorter_in buf;    
+    type.shorter_in buf;
   );
-  
-  
+
+

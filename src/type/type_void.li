@@ -1,61 +1,41 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := TYPE_VOID;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Special virtual Void type";
-  
+
 Section Inherit
-  
+
   + parent_type:Expanded TYPE;
-  
+
 Section Public
-  
+
   - name:STRING_CONSTANT <- ALIAS_STR.variable_void;
-  
-  - intern_name:STRING_CONSTANT <- name;    
-  
+
+  - intern_name:STRING_CONSTANT <- name;
+
   //
   // Creation.
   //
-    
+
   - make_void <-
-  ( 
-    dico_type.fast_put Self to name;    
+  (
+    dico_type.fast_put Self to name;
     default := TYPE_FULL.create Self with 0;
   );
-  
+
   //
   // Import / Export
   //
-    
+
   - is_export_to t:TYPE_FULL :BOOLEAN <- FALSE;
 
   - is_import_to t:TYPE_FULL :BOOLEAN <- FALSE;
-  
+
   //
   // Genere.
   //
@@ -64,13 +44,13 @@ Section Public
   (
     // Nothing.
   );
-  
+
   - genere_struct <-
   (
     // Nothing.
   );
-  
+
 Section Public
-  
-  - is_sub_type other:TYPE :BOOLEAN <- FALSE;  
+
+  - is_sub_type other:TYPE :BOOLEAN <- FALSE;
 

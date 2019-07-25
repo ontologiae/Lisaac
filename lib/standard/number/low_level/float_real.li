@@ -1,0 +1,13 @@
+Section Header
+
+  + name    := FLOAT_REAL;
+
+  - comment := "Real number of variable decimal part.";
+
+  - external := `#include <math.h>`;
+
+Section Insert
+
+  - parent_float_map:FLOAT_MAP := FLOAT_MAP;
+
+  - parent_real:REAL := REAL;

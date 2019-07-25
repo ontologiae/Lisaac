@@ -1,109 +1,89 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := SIZE_OF;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-    
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Size of object";
-  
+
 Section Inherit
-  
+
   + parent_expr:Expanded EXPR;
-  
-Section Public 
-  
-  - is_invariant:BOOLEAN <- TRUE;  
-  
+
+Section Public
+
+  - is_invariant:BOOLEAN <- TRUE;
+
   + receiver:TYPE_FULL;
-    
+
   - static_type:TYPE_FULL <- type_integer.default;
-  
+
   - get_type t:TYPES_TMP <-
-  (     
+  (
     t.add type_integer;
   );
-  
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION receiver e:TYPE_FULL :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make p receiver e;
     result
   );
-  
+
   - make p:POSITION receiver e:TYPE_FULL <-
   (
-    position := p;            
-    receiver := e; 
+    position := p;
+    receiver := e;
   );
-  
-  - my_copy:SELF <- SELF.create position receiver receiver; 
+
+  - my_copy:SELF <- SELF.create position receiver receiver;
   // BSBS: Tu peux meme juste renvoyer Self! Non ?
-  
+
   //
   // Remove
   //
-  
+
   - remove <-
   (
     // Nothing.
   );
-  
+
   //
   // Execute
   //
-  
+
   - execute_unlink:INSTR <-
-  (     
+  (
     NULL
   );
-  
+
   - execute_link:EXPR <-
-  (       
+  (
     Self
   );
-    
+
   //
   // Genere.
   //
-  
+
   - genere buffer:STRING <-
-  ( 
-    buffer.append "sizeof(";    
+  (
+    buffer.append "sizeof(";
     receiver.raw.put_expanded_declaration buffer;
-    buffer.add_last ')';        
+    buffer.add_last ')';
   );
-  
+
   //
   // Display.
   //
-  
+
   - display buffer:STRING <-
   (
     buffer.append "size_of(";

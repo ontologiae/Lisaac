@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := LIP_CODE;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -28,29 +8,29 @@ Section Header
   - comment   := "The main prototype";
 
 Section Inherit
-  
+
   + parent_itm_object:Expanded ITM_OBJECT;
 
 Section Public
-  
+
   - list_parent:FAST_ARRAY(STRING_CONSTANT) := FAST_ARRAY(STRING_CONSTANT).create_with_capacity 1;
-  
-  - list_method:FAST_ARRAY(LIP_SLOT_CODE) := FAST_ARRAY(LIP_SLOT_CODE).create_with_capacity 32;  
-  
+
+  - list_method:FAST_ARRAY(LIP_SLOT_CODE) := FAST_ARRAY(LIP_SLOT_CODE).create_with_capacity 32;
+
   - list_data:HASHED_DICTIONARY(LIP_SLOT_DATA,STRING_CONSTANT) :=
   HASHED_DICTIONARY(LIP_SLOT_DATA,STRING_CONSTANT).create;
-  
+
   - stack:FAST_ARRAY(LIP_SLOT_DATA) := FAST_ARRAY(LIP_SLOT_DATA).create_with_capacity 8;
-  
+
   - get_data n:STRING_CONSTANT :LIP_SLOT_DATA <-
   (
     list_data.fast_reference_at n
   );
-  
+
   - get_method n:STRING_CONSTANT :LIP_SLOT_CODE <-
   ( + j:INTEGER;
     + result:LIP_SLOT_CODE;
-    
+
     j := list_method.lower;
     {(j <= list_method.upper) && {list_method.item j.name != n}}.while_do {
       j := j + 1;
@@ -60,11 +40,11 @@ Section Public
     };
     result
   );
-  
+
   - print_usage <-
   ( + slot:LIP_SLOT_CODE;
     + is_ok:BOOLEAN;
-    
+
     (list_method.lower).to (list_method.upper) do { j:INTEGER;
       slot := list_method.item j;
       (slot.section = ALIAS_STR.section_public).if {
@@ -76,12 +56,12 @@ Section Public
       "\t Sorry, no option (see `make.lip').\n".print;
     };
   );
-  
+
   - get_integer n:STRING_CONSTANT :INTEGER <-
   ( + d:LIP_SLOT_DATA;
     + int:LIP_INTEGER;
     + result:INTEGER;
-    
+
     d := get_data n;
     (d = NULL).if {
       "Warning: Slot `".print;
@@ -96,12 +76,12 @@ Section Public
     };
     result
   );
-  
+
   - get_boolean n:STRING_CONSTANT :BOOLEAN <-
   ( + d:LIP_SLOT_DATA;
     + bool:LIP_BOOLEAN;
     + result:BOOLEAN;
-    
+
     d := get_data n;
     (d = NULL).if {
       "Warning: Slot `".print;
@@ -116,12 +96,12 @@ Section Public
     };
     result
   );
-  
+
   - get_string n:STRING_CONSTANT :STRING_CONSTANT <-
   ( + d:LIP_SLOT_DATA;
     + str:LIP_STRING;
     + result:STRING_CONSTANT;
-    
+
     d := get_data n;
     (d = NULL).if {
       "Warning: Slot `".print;
@@ -136,52 +116,95 @@ Section Public
     };
     result
   );
-  
+
   - put_string v:STRING_CONSTANT to n:STRING_CONSTANT <-
   ( + d:LIP_SLOT_DATA;
     + str:LIP_STRING;
-    
+
     d := get_data n;
     (d = NULL).if {
       "Warning: Slot `".print;
       n.print;
-      "' not found.\n".print;      
+      "' not found.\n".print;
     } else {
       str ?= d.value;
       (str = NULL).if {
         semantic_error (d.position,"STRING type is needed.");
       };
       str.set_value v;
-    };    
+    };
   );
-  
+
   - put_boolean v:BOOLEAN to n:STRING_CONSTANT <-
   ( + d:LIP_SLOT_DATA;
-        
+
     d := get_data n;
     (d = NULL).if {
       "Warning: Slot `".print;
       n.print;
-      "' not found.\n".print;      
-    } else {      
+      "' not found.\n".print;
+    } else {
       (d.set_value (LIP_BOOLEAN.get v)).if_false {
         semantic_error (d.position,"BOOLEAN type is needed.");
-      };      
-    };    
+      };
+    };
   );
-   
+
   //
   // Run.
   //
-  
+
   - run <-
   (
     warning_error (position,"Unreachable code.");
   );
-  
+
   - run_expr:LIP_CONSTANT <-
   (
     semantic_error (position,"No expression result.");
     NULL
   );
-  
+
+  - call_front_end <-
+  ( + s:LIP_SLOT_CODE;
+    // Executing `front_end':
+    s := LIP_CODE.get_method (ALIAS_STR.slot_front_end);
+    (s = NULL).if {
+      "Slot `front_end' not found in *.lip file.\n".print;
+      die_with_code exit_failure_code;
+    };
+    s.run_with NULL;
+  );
+
+  - init_path_file order:BOOLEAN <-
+  ( + k,i:INTEGER;
+    + p1,p2:STRING_CONSTANT;
+
+    (order).if {
+      path_file.bubble_sort_with { (a,b:STRING_CONSTANT);
+        b < a
+      };
+    } else {
+      path_file.bubble_sort_with { (a,b:STRING_CONSTANT);
+        b !< a
+      };
+    };
+    k := path_file.upper;
+    path_begin := path_file.first.upper;
+    {k <= path_file.lower}.until_do {
+      p1 := path_file.item k;
+      p2 := path_file.item (k-1);
+      (p1 = p2).if {
+        path_file.remove k;
+      } else {
+        path_begin := path_begin.min (p1.upper);
+        i := p1.lower;
+        {(i < path_begin) && {p1.item i = p2.item i}}.while_do {
+          i := i + 1;
+        };
+        path_begin := i;
+      };
+      k := k - 1;
+    };
+    path_begin := (path_begin - 1).max 1;
+  );

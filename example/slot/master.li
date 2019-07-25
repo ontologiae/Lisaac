@@ -1,32 +1,12 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := MASTER; // MASTER can to be clonable.
 
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Example with -/+/* slot declaration.";
-  
-Section Inherit  
-  
+
+Section Inherit
+
   //
   // Parents.
   //
@@ -34,68 +14,68 @@ Section Inherit
   + parent_plus :PARENT_PLUS := PARENT_PLUS;
 
   - parent_minus:PARENT_MINUS := PARENT_MINUS;
-    
+
   + parent_plus_expanded:Expanded PARENT_PLUS_EXPANDED;
-  
+
   - parent_minus_expanded:Expanded PARENT_MINUS_EXPANDED;
 
-Section Private  
-  
+Section Private
+
   //
   // Globals.
   //
-  
+
   + global_plus :OBJ;
 
   - global_minus:OBJ;
-      
+
   + global_plus_expanded:Expanded OBJ;
-  
+
   - global_minus_expanded:Expanded OBJ;
-  
+
   //
   // Methods.
   //
-  
+
   - method_minus (x,y:INTEGER) :INTEGER <- (x + y);
-  
+
   + method_plus (x,y:INTEGER) :INTEGER <- (x + y);
-  
+
   //
   // Locals.
   //
-    
+
   - local_minus:INTEGER <-
   ( - local:OBJ;
-    
+
     (local = NULL).if {
       local := OBJ.clone;
       local.set_value 100;
     } else {
       local.set_value (local.value + 1);
     };
-    
+
     local.value
   );
 
   - local_plus:INTEGER <-
   ( + local:OBJ;
-    
+
     (local = NULL).if {
       local := OBJ.clone;
       local.set_value 100;
     } else {
       local.set_value (local.value + 1);
     };
-    
+
     local.value
   );
 
   //
   // Display.
   //
-  
-  - display <-  
+
+  - display <-
   (
     "+========+==============+======+======+============+============+\n\
     \|".print;
@@ -112,25 +92,25 @@ Section Private
     parent_value_minus_expanded.to_string_format 4.print;
     " |       ".print;
     parent_value_plus_expanded.to_string_format 4.print;
-    " |\n\  
+    " |\n\
     \+--------+--------------+------+------+------------+------------+\n".print;
 
     // Global.
     "| Global | global.value | ".print;
-    (global_minus = NULL).if { "NULL".print; } 
+    (global_minus = NULL).if { "NULL".print; }
     else { global_minus.value.to_string_format 4.print; };
     " | ".print;
-    (global_plus  = NULL).if { "NULL".print; } 
+    (global_plus  = NULL).if { "NULL".print; }
     else { global_plus .value.to_string_format 4.print; };
     " |       ".print;
-    (global_minus_expanded = NULL).if { "NULL".print; } 
+    (global_minus_expanded = NULL).if { "NULL".print; }
     else { global_minus_expanded.value.to_string_format 4.print; };
     " |       ".print;
-    (global_plus_expanded = NULL).if { "NULL".print; } 
+    (global_plus_expanded = NULL).if { "NULL".print; }
     else { global_plus_expanded.value.to_string_format 4.print; };
     " |\n\
     \+--------+--------------+------+------+------------+------------+\n".print;
-    
+
     // Method.
     "| Method | method (2,3) | ".print;
     method_minus (2, 3).to_string_format 4.print;
@@ -146,34 +126,34 @@ Section Private
     local_plus.to_string_format 4.print;
     " |   Nothing  |   Nothing  |\n\
     \+========+==============+======+======+============+============+\n\n".print;
-  );  
-  
+  );
+
   //
   // Service.
   //
-  
+
   + name:STRING_CONSTANT;
-  
+
   - set_name new:STRING_CONSTANT <-
-  ( 
+  (
     name := new;
   );
-  
+
   - press_key <-
   (
     "Press enter ...\n".print;
     IO.read_character;
   );
-  
-Section Public  
-  
+
+Section Public
+
   - main <-
   ( + copy:SELF;
-    
+
     "\nExample with (-/+) or (-/+ Expanded) slot declaration:\n\
     \========================================================\n\n".print;
     "In this example, '#' represent either '-' , '+'\n\n".print;
-    
+
     "Object OBJ (Data/Parent):       \n\
     \-------------------------       \n\
     \Section Public                  \n\
@@ -183,24 +163,24 @@ Section Public
     \  (                             \n\
     \    value := new;               \n\
     \  );                            \n\n".print;
-    
-    
+
+
     "Object EXAMPLE:     \n\
-    \------------------- \n".print;    
-    
+    \------------------- \n".print;
+
     "Section Inherit     \n\
     \  # parent:OBJ := OBJ;                // Parent slot declaration \n\
     \  # parent_expanded:Expanded OBJ;     \n\n".print;
-    
+
     "Section Public      \n\
     \  # global:OBJ;                       // Global data slot declaration \n\
     \  # global_expanded:Expanded OBJ;     \n\n".print;
-    
+
     "  # method x,y:INTEGER :INTEGER <-    // Method slot declaration  \n\
     \  (                                                             \n\
     \    x + y                                                      \n\
     \  ); \n\n".print;
-	
+
     "  - value:INTEGER <-                                              \n\
     \  ( # local:OBJ;                    // Local slot declaration  \n\
     \    (local = NULL).if {                                        \n\
@@ -212,51 +192,51 @@ Section Public
     \                                                                  \n\
     \    local.value                                                   \n\
     \  ); \n\n".print;
-    
+
     press_key;
-    
+
     name := "ORIGINAL";
     copy := clone;
     copy.set_name "  COPY  ";
-    
+
     "************************\n\
     \***   MAIN PROGRAM   ***\n\
-    \************************\n\n".print; 
+    \************************\n\n".print;
     "Definition of an EXAMPLE object named 'original' \n\n".print;
-    Self.display; 
-    
+    Self.display;
+
     "Definition of an EXAMPLE object named 'copy' \n\
     \  ---> copy := self.clone; \n\n".print;
     copy.display;
-    "!!!!! The `Expanded' declaration slots are never with `NULL' value.\n\n".print;     
+    "!!!!! The `Expanded' declaration slots are never with `NULL' value.\n\n".print;
     press_key;
-    
+
     //
     // LOCAL.
     //
-    
+
     "==============\n\
     \= LOCAL SLOT =\n\
-    \==============\n\n".print;    
- 
+    \==============\n\n".print;
+
     " Display ORIGINAL object \n\n".print;
     Self.display;
-    "!!!!! The `-' local slot have a persistant value.\n\n".print;    
+    "!!!!! The `-' local slot have a persistant value.\n\n".print;
     press_key;
-    
+
     " Display COPY object \n\n".print;
     copy.display;
     "!!!!! The `-' local slot is shared with ORIGINAL object.\n\n".print;
     press_key;
-    
+
     //
     // PARENT.
     //
-    
+
     "===============\n\
     \= PARENT SLOT =\n\
     \===============\n\n".print;
-        
+
     " ---> ORIGINAL.parent.set_value 1\n\n".print;
     parent_value_minus    := 1;
     parent_value_plus     := 1;
@@ -272,22 +252,22 @@ Section Public
     parent_minus := PARENT_MINUS.clone;
     parent_plus  := PARENT_PLUS.clone;
     parent_value_minus    := 2;
-    parent_value_plus     := 2;    
+    parent_value_plus     := 2;
     parent_value_minus_expanded := 2;
     parent_value_plus_expanded := 2;
     Self.display;
     copy.display;
     "!!!!! The `-' parent slot is always shared with COPY object.\n\n".print;
     press_key;
-    
+
     //
     // GLOBAL.
     //
-    
+
     "===============\n\
     \= GLOBAL SLOT =\n\
     \===============\n\n".print;
-        
+
     " ---> ORIGINAL.global := OBJ.clone\n\n".print;
     global_minus := OBJ.clone;
     global_plus  := OBJ.clone;
@@ -299,11 +279,11 @@ Section Public
     //
     // METHOD.
     //
-    
+
    "===============\n\
    \= GLOBAL SLOT =\n\
    \===============\n\n".print;
-        
+
     " ---> ORIGINAL.method <- ( x,y:INTEGER; x * y)\n\n".print;
     method_minus <- ( x * y );
     method_plus  <- ( x * y );
@@ -311,5 +291,5 @@ Section Public
     copy.display;
     "!!!!! The `-' method slot is shared with COPY object.\n\n".print;
     press_key;
-    
+
   );

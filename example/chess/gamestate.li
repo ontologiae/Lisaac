@@ -1,0 +1,180 @@
+Section Header
+  
+  + name     := GAMESTATE;
+  
+  - comment   := "3D Chess Game";
+  
+  - author    := "Damien Bouvarel (dams.bouvarel@wanadoo.fr)";
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Public  
+  
+  //
+  // Game states.
+  // 0:  player 1 select a piece
+  // 1:  player 1 select a square destination
+  // 2:  move
+  // 3:  player 2 select a piece
+  // 4:  player 2 select a square destination
+  // 5:  move
+  - state:INTEGER;
+  
+  - move_orig:SQUARE;
+  - move_dest:SQUARE;
+  
+  
+  - current_piece:PIECE <-
+  ( + result:PIECE;
+    
+    piece_selected.if {
+      result := move_orig.piece;
+    };
+    result
+  );
+  
+  - current_player:INTEGER <- 
+  ( + result:INTEGER;
+    ((state < 2) || {state = 5}).if {
+      result := 1;
+    } else {
+      result := 2;
+    };
+    result
+  );
+  
+  - piece_selected:BOOLEAN <- (state = 1) || {state = 4};
+  
+  - is_moving:BOOLEAN <- (state = 2) || {state = 5};
+  
+  - capture:BOOLEAN;// true when current piece captures 
+  
+  
+  - play <-
+  ( 
+    + sign:REAL_32;// +1 or -1
+    
+    ((state = 2) || {state = 5}).if {
+      // animate move
+      
+      CHESS.camera.is_traveling.if_false {
+        // not already moving
+        
+        (current_player = 1).if {
+          sign := 1;
+        } else {
+          sign := -1;
+        };
+        
+        // first point
+        CHESS.camera.add_waypoint (CHESS.camera.position);
+        CHESS.camera.add_waypoint (CHESS.camera.view);
+        
+        (FRAMEWORK.random & 11b)
+        .when 0 then {
+          // rotate over the chessboard
+          
+          CHESS.camera.add_waypoint3f (0,250,0);
+          CHESS.camera.add_waypoint3f (0, 0, 0); 
+          
+        }.when 1 then {
+          // turn around the chessboard
+          
+          CHESS.camera.add_waypoint3f (200,200,0);
+          CHESS.camera.add_waypoint3f (0, 0, 0); 
+          
+        }.when 2 then {
+          // jump over the chessboard
+          
+          CHESS.camera.add_waypoint3f (0,500,0);
+          CHESS.camera.add_waypoint3f (0, 50, sign*10);
+          
+        }.when 3 then {
+          // walk on the chessboard
+          
+          CHESS.camera.add_waypoint3f (0,80,0);
+          CHESS.camera.add_waypoint3f (0, 50, sign*100);
+        };      
+        
+        // last point
+        CHESS.camera.add_waypoint3f (0,200,sign*300);
+        CHESS.camera.add_waypoint3f (0, 0, 0);
+      };
+    };
+  ); 
+  
+  - update square:SQUARE <-
+  (
+    ((state = 0) || {state = 3}).if {
+      // start move
+      
+      ((square.piece != NULL) && {square.piece.player = current_player}).if {
+        move_orig := square; 
+        
+        // go to next state
+        update_state;   
+      };
+    }.elseif {(state = 1) || {state = 4}} then {
+      // finish move
+      
+      move_dest := square;
+      
+      // update game state
+      do_move.if {
+        
+        // go to next state
+        update_state;   
+      } else {
+        state := state - 1; // try again
+      };
+    };
+  );
+  
+  - change_player <-
+  // go to new game cycle
+  (
+    update_state;
+    reset_capture;
+  );
+  
+  - update_state <-
+  (
+    state := (state + 1) % 6;
+  );
+  
+  - reset_capture <-
+  (
+    capture := FALSE;
+  );
+  
+Section Private
+  
+  - do_move:BOOLEAN <-
+  // move orig piece to dest square if allowed
+  ( + piece:PIECE;
+    + result:BOOLEAN;
+    
+    piece := current_piece;
+    
+    piece.check_move move_orig to move_dest.if {
+      // move ok
+      
+      capture := move_dest.piece != NULL; 
+      capture.if {
+        move_dest.piece.capture;
+      };
+       
+      move_orig.clear;
+      move_dest.set_piece piece;
+      
+      piece.set_square move_dest;
+      
+      result := TRUE;
+    };
+    
+    result
+  );
+  
+  

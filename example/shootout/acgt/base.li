@@ -1,0 +1,53 @@
+Section Header
+
+  + name      := Expanded BASE;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+  - type := `unsigned char`;
+
+  - default := `0`:BASE;
+
+Section Insert
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - value:UINTEGER_8 <- CONVERT(BASE,UINTEGER_8).on Self;
+
+  //
+  // Creation.
+  //
+
+  - create c:UINTEGER_8 :SELF <-
+  (
+    CONVERT(UINTEGER_8,SELF).on c
+  );
+
+  //
+  // Print.
+  //
+
+  - print <-
+  (
+    acgt.item ((value>>4) & 11b).print;
+    acgt.item ((value>>2) & 11b).print;
+    acgt.item (value      & 11b).print;
+  );
+
+Section Private
+
+  - acgt:FAST_ARRAY(CHARACTER) :=
+  ( + result:FAST_ARRAY(CHARACTER);
+
+    result := FAST_ARRAY(CHARACTER).create_with_capacity 4;
+    result.add_last 'A';
+    result.add_last 'C';
+    result.add_last 'G';
+    result.add_last 'T';
+    result
+  );

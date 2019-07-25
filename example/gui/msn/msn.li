@@ -1,61 +1,41 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := MSN;
-    
+
   - bibliography:= "http://IsaacOS.com";
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "The first program.";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
-  
-Section Public  
-  
+
+Section Public
+
   - history:G_OUT;
   - win_history:G_WIN_IN;
 
   - input:G_IN;
-  - win_send:G_WIN_IN;        
-  
+  - win_send:G_WIN_IN;
+
   - receive:G_OUT;
   - win_receive:G_WIN_IN;
-  
+
   - main <-
-  ( 
+  (
     + win_about:G_WIN_OUT;
     + win_exit:G_WIN_OUT;
     + action_send:{G_IN; };
-    
+
     // Init window.
     VIDEO.make_size (640,400);
-    
+
     action_send := { in:G_IN;
       history.text.append (in.text);
       win_history.set_bottom;
       in.text.clear;
     };
-    
+
     win_history := G_WIN_IN.create (250,60) with (
       history := G_OUT.create ""
     );
@@ -65,14 +45,14 @@ Section Public
     win_receive := G_WIN_IN.create (250,60) with (
       receive := G_OUT.create ""
     );
-        
+
     win_about := G_WIN_OUT.create "About ..." with (
       G_RAW.create (
 	G_OUT.create "Isaac Mensenger V.1.0\n\n\
 	\write by Foo and bar\n\
 	\GNU Licence" justify (G_OUT.center)
       ) /
-      G_BUTTON.create (G_OUT.create "Close" justify (G_OUT.center)) action 
+      G_BUTTON.create (G_OUT.create "Close" justify (G_OUT.center)) action
       { b:G_BUTTON;
 	+ w:G_WIN_OUT;
 	w ?= b.parent;
@@ -84,11 +64,11 @@ Section Public
       G_RAW.create (
 	G_OUT.create " Do you want exit MSN ? " justify (G_OUT.center)
       ) / (
-	G_BUTTON.create (G_OUT.create "Yes" justify (G_OUT.center)) action 
+	G_BUTTON.create (G_OUT.create "Yes" justify (G_OUT.center)) action
 	{ b:G_BUTTON;
 	  die_with_code exit_success_code;
-	} | 
-	G_BUTTON.create (G_OUT.create "No" justify (G_OUT.center)) action 
+	} |
+	G_BUTTON.create (G_OUT.create "No" justify (G_OUT.center)) action
 	{ b:G_BUTTON;
 	  + w:G_WIN_OUT;
 	  w ?= b.parent;
@@ -96,28 +76,28 @@ Section Public
 	}
       )
     );
-    
+
     // Screen definition.
-    DESK.make VIDEO with (             
+    DESK.make VIDEO with (
       G_RAW.create (
 	(G_OUT.create "Send message : ".fix_height) /
 	win_history
       ) / G_RAW.create (
 	(G_OUT.create "New message : ".fix_height) /
-	win_send 
-      ) / G_RAW.create (	
+	win_send
+      ) / G_RAW.create (
 	(G_OUT.create "Receive message : ".fix_height) /
 	win_receive
       ) / ((
 	G_BUTTON.create (
-	  ((G_IMG.create "help.bmp" | G_OUT.create " Help ").fix_width) 
+	  ((G_IMG.create "help.bmp" | G_OUT.create " Help ").fix_width)
 	) |
 	G_BUTTON.create (
-	  ((G_IMG.create "exit.bmp" | G_OUT.create " Exit ").fix_width) 
+	  ((G_IMG.create "exit.bmp" | G_OUT.create " Exit ").fix_width)
 	) connect win_exit |
 	G_BUTTON.create (
 	  ((G_IMG.create "about.bmp" | G_OUT.create " About ").fix_width)
 	) connect win_about
       ).fix_height)
-    );    
+    );
   );

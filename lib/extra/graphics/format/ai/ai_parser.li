@@ -1,50 +1,30 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := AI_PARSER;
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
-  
+
   - comment     :="Startup system : First object.";
-  
-  - version := 1;  
-  
-Section Inherit  
-  
+
+  - version := 1;
+
+Section Inherit
+
   - parent_object:OBJECT := OBJECT;
-  
+
 Section Public
-  
+
   - msg_err:STRING;
 
   - trace:BOOLEAN;
-  
+
   + position:INTEGER;
-  
+
   + source:FAST_ARRAY(CHARACTER);
-  
+
   - string_tmp:STRING;
-  
+
   - last_character:CHARACTER <-
   ( + result:CHARACTER;
     (position > source.upper).if {
@@ -54,22 +34,22 @@ Section Public
     };
     result
   );
-  
+
   - end_source:BOOLEAN <-
   (
     last_character = 0.to_character
   );
-  
+
   - last_integer:INTEGER;
-  
+
   - last_string:STRING_CONSTANT;
-  
+
   - last_real_16_16:REAL_16_16;
-  
+
   - last_flag:BOOLEAN;
-  
+
   - is_new_line:BOOLEAN;
-  
+
   - is_space:BOOLEAN <-
   (
     { last_character = ' '  } || { last_character = '\n' } ||
@@ -77,7 +57,7 @@ Section Public
     { last_character = '\a' } || { last_character = '\r' } ||
     { last_character = '\b' } || { last_character = '\v' }
   );
-  
+
   - read_space:BOOLEAN <-
   ( + old_pos:INTEGER;
     old_pos := position;
@@ -99,32 +79,32 @@ Section Public
     };
     ((position != old_pos) | (! end_source ))
   );
-    
-  - read_keyword s:STRING_CONSTANT :BOOLEAN <- 
+
+  - read_keyword s:STRING_CONSTANT :BOOLEAN <-
   ( + result:BOOLEAN;
     + j,old_pos:INTEGER;
     read_space;
     j := s.lower;
-    old_pos := position;    
+    old_pos := position;
     { end_source || { j > s.upper } || { last_character != s.item j }}.until_do {
       j := j + 1;
       position := position + 1;
     };
-    (j > s.upper).if {      
+    (j > s.upper).if {
       result := TRUE;
-      
+
       trace.if {
 	"\n----> Read Keyword: ".print;
 	s.print;
 	'\n'.print;
       };
-      
+
     } else {
       position := old_pos;
     };
     result
   );
-  
+
   - read_identifier:BOOLEAN <-
   ( + result:BOOLEAN;
     read_space;
@@ -132,22 +112,22 @@ Section Public
     { end_source ||  {! ( last_character.is_letter || {last_character.is_digit} || {last_character = '_'} || {last_character = '-' })}}.until_do {
       string_tmp.add_last last_character;
       position := position + 1;
-    };    
+    };
     //string_tmp.print;
     (! string_tmp.is_empty).if {
       last_string := AI_ALIAS.get string_tmp;
       result := TRUE;
     };
-    
+
     trace.if {
-      "\n----> Read_Identifier: ".print;    
+      "\n----> Read_Identifier: ".print;
       string_tmp.print;
       '\n'.print;
     };
-    
+
     result
   );
-  
+
   - read_string:BOOLEAN <-
   (+ result:BOOLEAN;
     read_space;
@@ -157,15 +137,15 @@ Section Public
       position := position + 1;
     };
     (! string_tmp.is_empty).if {
-      last_string := AI_ALIAS.get string_tmp; 
+      last_string := AI_ALIAS.get string_tmp;
       result := TRUE;
-    };      
-    result    
+    };
+    result
   );
-  
+
   - read_flag:BOOLEAN <-
   ( + result:BOOLEAN;
-    
+
     read_space;
     (last_character = '0').if {
       last_flag := FALSE;
@@ -176,19 +156,19 @@ Section Public
       result := TRUE;
       position := position + 1;
     };
-    
+
     trace.if {
       "\n----> Read Flag: ".print;
       last_flag.to_string.print;
       '\n'.print;
     };
-    
-    result  
+
+    result
   );
-  
+
   - read_integer:BOOLEAN <-
   ( + result:BOOLEAN;
-    + old_pos:INTEGER;        
+    + old_pos:INTEGER;
     read_space;
     old_pos := position;
     (last_character = '-').if {
@@ -204,7 +184,7 @@ Section Public
       { ! last_character.is_digit }.until_do {
 	string_tmp.add_last last_character;
 	position := position + 1;
-      };      
+      };
       (last_character = '.').if {
 	// Real
 	result := FALSE;
@@ -213,21 +193,21 @@ Section Public
 	last_integer := string_tmp.to_integer;
       };
     };
-    
+
     trace.if {
       "\n----> Read Integer: ".print;
       last_integer.print;
       '\n'.print;
     };
-    
-    result    
+
+    result
   );
-  
+
   - read_real_16_16:BOOLEAN <-
   ( + result:BOOLEAN;
     + old_pos:INTEGER;
     + find:BOOLEAN;
-    read_space;    
+    read_space;
     old_pos := position;
     (last_character = '-').if {
       string_tmp.add_last '-';
@@ -265,25 +245,25 @@ Section Public
 
       last_real_16_16 := string_tmp.to_real_16_16;
     };
-    
+
     trace.if {
       "\n----> Real: ".print;
       last_real_16_16.print;
       '\n'.print;
     };
-    
-    result    
+
+    result
   );
-  
+
   - read_comment:BOOLEAN <-
   (
     { end_source || { last_character = '\n'} }.until_do {
-      position := position + 1; 
+      position := position + 1;
     };
-    TRUE 
+    TRUE
   );
 
-  - read_character c:CHARACTER :BOOLEAN <- 
+  - read_character c:CHARACTER :BOOLEAN <-
   ( + result:BOOLEAN;
     read_space;
     (last_character = c).if {
@@ -295,19 +275,19 @@ Section Public
 
   //
   // Error Management
-  // 
-  
+  //
+
   - syntax_error txt:ABSTRACT_STRING <-
   (
     msg_err.clear;
     msg_err.append "\n--SYNTAX-------\n";
     msg_err.append txt;
     msg_err.append " Line ";
-    msg_err.append (get_line.to_string);    
+    msg_err.append (get_line.to_string);
     msg_err.print;
     die_with_code exit_failure_code;
   );
-  
+
   - missing_keyword txt:ABSTRACT_STRING <-
   (
     msg_err.clear;
@@ -318,13 +298,13 @@ Section Public
     msg_err.print;
     die_with_code exit_failure_code;
   );
-  
+
   - print_line <-
   (
     " Line ".print;
     get_line.to_string.print;
   );
-  
+
   - get_line:INTEGER <-
   ( + pos:INTEGER;
     + line:INTEGER;
@@ -338,74 +318,74 @@ Section Public
     };
     line
   );
-  
+
   // Last read coordinates
-  - last_x:REAL_16_16;  
+  - last_x:REAL_16_16;
   - last_y:REAL_16_16;
-    
+
   // Current Point
   - x_cur:REAL_16_16;
   - y_cur:REAL_16_16;
-  
+
 Section Public
-  
+
   + llx:REAL_16_16; // lower horizontal bound
   + urx:REAL_16_16; // upper horizontal bound
   + lly:REAL_16_16; // lower vertical bound
   + ury:REAL_16_16; // upper vertical bound
-  
-  + width :INTEGER;  
+
+  + width :INTEGER;
   + height:INTEGER;
-    
+
   //
   // Results
   //
-  
+
   + list_layer:LINKED_LIST(AI_LAYER);
-  
+
   + current_list:LINKED_LIST(AI_OPERATION);
-  
+
   + current_color:AI_COLOR;
-  
+
   //
   // Grammar Rules
   //
-  
+
   //++ DOCUMENT          -> PROLOGUE
-  //++                      SCRIPT  
+  //++                      SCRIPT
   - read_document <-
-  (     
-    trace.if {  
+  (
+    trace.if {
       "\n Read Document".print;
       print_line;
     };
-    
+
     (! read_prologue).if {
       syntax_error "Wrong file format";
     };
     (! read_script).if {
-      syntax_error "Incorrect Script";            
+      syntax_error "Incorrect Script";
     };
-    
-    trace.if {  
+
+    trace.if {
       "\n## End Read Document".print;
       print_line;
     };
   );
-    
+
   //++ PROLOGUE          -> '%!PS-Adobe-2.0 EPSF-1.2'
   //++                      [ comment ]
   //++                      '%%BoundingBox:'real real real real
   //++                      [ comment ]
-  //++                      '%%EndProlog'  
+  //++                      '%%EndProlog'
   - read_prologue:BOOLEAN <-
-  ( + result:BOOLEAN;   
-    
-    trace.if {  
+  ( + result:BOOLEAN;
+
+    trace.if {
       "\n Read Prologue".print;
       print_line;
     };
-    
+
     read_keyword (AI_ALIAS.prefix_file).if {
       { read_keyword (AI_ALIAS.bounding_box) }.until_do {
         read_comment;
@@ -426,35 +406,35 @@ Section Public
         syntax_error "Missing ury";
       };
       ury := last_real_16_16;
-      
+
       width  := (urx - llx).to_integer;
       height := (ury - lly).to_integer + 1;
-      
+
       { read_keyword (AI_ALIAS.end_prolog) }.until_do {
         read_comment;
       };
       result := TRUE;
     };
 
-    (trace && {result}).if {  
+    (trace && {result}).if {
       "\n## End Read Prologue".print;
       print_line;
     };
-        
+
     result
   );
-  
+
   //++ SCRIPT            -> SETUP
   //++                      SCRIPT_BODY
-  //++                      TRAILER  
+  //++                      TRAILER
   - read_script:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Script".print;
       print_line;
     };
-    
+
     read_setup.if {
       (! read_script_body).if {
         syntax_error "Incorrect Script Body";
@@ -463,30 +443,30 @@ Section Public
         syntax_error "Incorrect Trailer";
       };
       result := TRUE;
-    }; 
-    
-    (trace && {result}).if {  
+    };
+
+    (trace && {result}).if {
       "\n## End Read Script".print;
       print_line;
-    };   
-    
+    };
+
     result
   );
-  
+
   //++ SETUP             -> '%%BeginSetup'
   //++                      ['Adobe_illustrator_' real 'begin']
   //++                      [PROC_SETS_INIT]
   //++                      FONT_ENCODING
   //++                      [PATTERN_DEFS]
-  //++                      '%%EndSetup'  
+  //++                      '%%EndSetup'
   - read_setup:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Setup".print;
       print_line;
     };
-    
+
     read_keyword (AI_ALIAS.begin_setup).if {
       (read_keyword (AI_ALIAS.adobe_illustrator)).if {
         (! read_real_16_16).if {
@@ -506,43 +486,43 @@ Section Public
       };
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Setup".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ PROC_SETS_INIT    -> { INITIALIZE }
   - read_proc_sets_init:BOOLEAN <-
   (
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Proc Sets Init".print;
       print_line;
     };
-    
+
     {read_initialize}.while_do { };
-    
-    trace.if {  
+
+    trace.if {
       "\n## End Read Proc Sets Init".print;
       print_line;
     };
-    
+
     TRUE
   );
-  
+
   //++ INITIALIZE        -> identifier '/initialize get exec'
   - read_initialize:BOOLEAN <-
   (+ result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Initialize".print;
       print_line;
     };
-    
+
     read_identifier.if {
       (! read_keyword (AI_ALIAS.initialize)).if {
         missing_keyword (AI_ALIAS.initialize);
@@ -550,43 +530,43 @@ Section Public
       result := TRUE;
     };
 
-    (trace && {result}).if {  
+    (trace && {result}).if {
       "\n Read Initialize".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ FONT_ENCODING     -> { RE_ENCODING }
   - read_font_encoding:BOOLEAN <-
-  (    
-    trace.if {  
+  (
+    trace.if {
       "\n Read Font Encoding".print;
       print_line;
     };
-    
+
     { read_re_encoding }.while_do { };
-    
-    trace.if {  
+
+    trace.if {
       "\n## End Read Font Encoding".print;
       print_line;
     };
-    
+
     TRUE
   );
-  
+
   //++ RE_ENCODING       -> '%%BeginEncoding:' newfontname oldfontname
   //++                      Z
   //++                      '%%EndEncoding'
   - read_re_encoding:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read ReEncoding".print;
       print_line;
     };
-    
+
     read_keyword (AI_ALIAS.begin_encoding).if {
       (! read_identifier).if {
         syntax_error "Missing newfontname identifier";
@@ -602,24 +582,24 @@ Section Public
       };
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read ReEncoding".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ Z                 -> '['[NEW_ENCODING]']' '/' identifier '/' identifier integer 'Z'
   - read_upper_z:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read upper Z".print;
       print_line;
     };
-    
+
     read_character '['.if {
       read_new_encoding;
       (! read_character ']').if {
@@ -643,24 +623,24 @@ Section Public
       };
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read upper Z".print;
       print_line;
     };
-    
-    result                    
+
+    result
   );
-  
+
   //++ NEW_ENCODING      -> { integer '/' identifier { '/' identifier}}
   - read_new_encoding:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read New Encoding".print;
       print_line;
     };
-    
+
     { read_integer }.while_do {
       (! read_character '/').if {
         missing_keyword "/";
@@ -675,43 +655,43 @@ Section Public
       };
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read New Encoding".print;
       print_line;
     };
-    
-    result        
-  );  
-  
+
+    result
+  );
+
   //++ PATTERN_DEFS      -> { PATTERN }
   - read_pattern_defs:BOOLEAN <-
-  (    
-    trace.if {  
+  (
+    trace.if {
       "\n Read Pattern Def".print;
       print_line;
     };
-    
+
     { read_pattern }.while_do { };
 
-    trace.if {  
+    trace.if {
       "\n## End Read Pattern Def".print;
       print_line;
     };
     TRUE
   );
-  
+
   //++ PATTERN           -> '%%BeginPattern:' '('patternname')'
   //++                      E
   //++                      '%%EndPattern'
   - read_pattern:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Pattern".print;
       print_line;
     };
-    
+
     read_keyword (AI_ALIAS.begin_pattern).if {
       (! read_character '(').if {
         syntax_error "Mismatch parentheses";
@@ -730,29 +710,29 @@ Section Public
       };
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Pattern".print;
       print_line;
     };
-    
-    result      
+
+    result
   );
-  
+
   //++ E                 -> '(' patternname ')' real real real real real [LAYER_LIST] 'E'
   - read_upper_e:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Upper E".print;
       print_line;
     };
-    
+
     (read_character '(').if {
       (! read_identifier).if {
         syntax_error "Missing patternname identifier";
       };
-      (! read_character ')').if { 
+      (! read_character ')').if {
         syntax_error "Mismatch parentheses";
       };
       (! read_real_16_16).if {
@@ -771,50 +751,50 @@ Section Public
       (! read_character 'E').if {
         missing_keyword "E";
       };
-      
+
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Upper E".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ LAYER_LIST        -> { LAYER_COLOR LAYER_TILE }
   - read_layer_list:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Layer List".print;
       print_line;
     };
-    
+
     { read_layer_color }.while_do {
       (! read_layer_tile).if {
         syntax_error "Incorrect layer tile.";
       };
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## Read Layer List".print;
       print_line;
     };
-    
+
     TRUE
   );
-  
+
   //++ LAYER_COLOR       -> '(' COLOR ')' '@'
   - read_layer_color:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Layer Color".print;
       print_line;
     };
-    
+
     read_character '('.if {
       (! read_color).if {
         syntax_error "Incorrect Color";
@@ -824,30 +804,30 @@ Section Public
       };
       (! read_character '@').if {
         missing_keyword "@";
-      };      
+      };
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Layer Color".print;
       print_line;
     };
-    
+
     result
   );
-  
-  //++ LAYER_TILE        -> '(' TILE_DEFINITION ')' '&' 
-  //++                    | '_' '&'  
+
+  //++ LAYER_TILE        -> '(' TILE_DEFINITION ')' '&'
+  //++                    | '_' '&'
   - read_layer_tile:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Layer Tile".print;
       print_line;
     };
-    
+
     (read_character '(').if {
       (! read_tile_definition).if {
-        syntax_error "Incorrect Tile Definition";        
+        syntax_error "Incorrect Tile Definition";
       };
       (! read_character ')').if {
         syntax_error "Mismatch parentheses";
@@ -861,61 +841,61 @@ Section Public
         missing_keyword "&";
       };
       result := TRUE;
-    };     
-    
-    (trace && {result}).if {  
+    };
+
+    (trace && {result}).if {
       "\n## End Read Layer Tile".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ COLOR             -> COLOR_COMPOSITE { COLOR_COMPOSITE }
   - read_color:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Color".print;
       print_line;
     };
-        
+
     read_color_composite.if {
       { read_color_composite }.while_do {
       };
       result := TRUE;
     };
 
-    (trace && {result}).if {  
+    (trace && {result}).if {
       "\n## End Read Color".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ COLOR_COMPOSITE   -> flag 'O'
   //++                    | flag 'R'
-  //++                    | real 'g' 
-  //++                    | real 'G' 
-  //++                    | real real real real 'k' 
-  //++                    | real real real real 'K'  
-  //++                    | real real real real '(' string ')' real 'x' 
-  //++                    | real real real real '(' string ')' real 'X'   
+  //++                    | real 'g'
+  //++                    | real 'G'
+  //++                    | real real real real 'k'
+  //++                    | real real real real 'K'
+  //++                    | real real real real '(' string ')' real 'x'
+  //++                    | real real real real '(' string ')' real 'X'
   - read_color_composite:BOOLEAN <-
   ( + result:BOOLEAN;
     + c,m,y,k,g:REAL_16_16;
     + old_pos:INTEGER;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Color Composite".print;
       print_line;
     };
-    
+
     old_pos := position;
     read_flag.if {
       (read_character 'O').if {
-        result := TRUE;        
+        result := TRUE;
       }.elseif { read_character 'R'} then {
         result := TRUE;
       } else {
@@ -936,7 +916,7 @@ Section Public
 	  y := last_real_16_16;
 	  (! read_real_16_16).if {
 	    syntax_error "Incorrect K color composite.";
-	  };          
+	  };
 	  k := last_real_16_16;
 	  (read_character 'k').if {
 	    result := TRUE;
@@ -950,7 +930,7 @@ Section Public
 	      };
 	    (! read_character ')').if {
 	      syntax_error "Mismatch parentheses";
-	    };        
+	    };
 	    (! read_real_16_16).if {
 	      syntax_error "Incorrect Gray color composite.";
 	    };
@@ -962,70 +942,70 @@ Section Public
 	      result := TRUE;
 	      current_color.make_cmykg_fill (c,m,y,k,g);
 	    };
-          };                          
-	} else {                    
+          };
+	} else {
 	  position := old_pos;
 	};
       };
     };
 
-    (trace && {result}).if {  
+    (trace && {result}).if {
       "\n## End Read Color Composite".print;
       print_line;
     };
 
     result
   );
-  
+
   //++ TILE_DEFINITION   -> OBJ_WITHOUT_COL
   - read_tile_definition:BOOLEAN <-
-  ( + result:BOOLEAN;    
-    
-    trace.if {  
+  ( + result:BOOLEAN;
+
+    trace.if {
       "\n Read Tile Definition".print;
       print_line;
     };
-    
+
     result := read_obj_without_col;
-    
-    trace.if {  
+
+    trace.if {
       "\n## End Read Tile Definition".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ OBJECT            -> COLOR { OBJ_WITHOUT_COL }
   - read_object:BOOLEAN <-
   ( + result:BOOLEAN;
-    trace.if {  
+    trace.if {
       "\n Read Object".print;
       print_line;
     };
-    
+
     (read_color).if {
       result := TRUE;
       { read_obj_without_col }.while_do { };
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Object".print;
       print_line;
     };
-    
+
     result
   );
-  
-  //++ OBJ_WITHOUT_COL   -> [ GRAPHICS_STATE ] { '%%Note:' comment } ( GRAPHIC | TEXT )   
+
+  //++ OBJ_WITHOUT_COL   -> [ GRAPHICS_STATE ] { '%%Note:' comment } ( GRAPHIC | TEXT )
   - read_obj_without_col:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Obj Without col".print;
       print_line;
     };
-    
+
     read_graphics_state;
     { read_keyword (AI_ALIAS.note)}.while_do {
       read_comment;
@@ -1033,49 +1013,49 @@ Section Public
     (read_graphic || {read_text}).if {
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Obj Without col".print;
       print_line;
     };
-    
+
     result
   );
-  
-  //++ GRAPHICS_STATE    -> GRAPH_COMPOSITE { GRAPH_COMPOSITE } 
+
+  //++ GRAPHICS_STATE    -> GRAPH_COMPOSITE { GRAPH_COMPOSITE }
   - read_graphics_state:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Graphics State".print;
       print_line;
     };
-    
+
     read_graph_composite.if {
       { read_graph_composite }.while_do { };
       result := TRUE;
     };
 
-    (trace && {result}).if {  
+    (trace && {result}).if {
       "\n## End Read Graphics State".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ GRAPH_COMPOSITE   -> '[' { real } ']' integer 'd'
-  //++                    | integer  ( 'j' | 'J' | 'M' ) 
+  //++                    | integer  ( 'j' | 'J' | 'M' )
   //++                    | real ( 'i' | 'w' )
   - read_graph_composite:BOOLEAN <-
   ( + result:BOOLEAN;
     + old_pos:INTEGER;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Graph Composite".print;
       print_line;
     };
-    
+
     old_pos := position;
     (read_character '[').if {
       { read_real_16_16 }.while_do {
@@ -1097,97 +1077,97 @@ Section Public
         result := TRUE;
       }.elseif {read_character 'M'} then {
         result := TRUE;
-      } else {                      
-        position := old_pos;        
-      };
-    };
-    ((! result) && { read_real_16_16}).if { 
-      (read_character 'i').if {
-        result := TRUE;
-      }.elseif {read_character 'w'} then {
-        result := TRUE; 
       } else {
         position := old_pos;
       };
     };
-    
-    (trace && {result}).if {  
+    ((! result) && { read_real_16_16}).if {
+      (read_character 'i').if {
+        result := TRUE;
+      }.elseif {read_character 'w'} then {
+        result := TRUE;
+      } else {
+        position := old_pos;
+      };
+    };
+
+    (trace && {result}).if {
       "\n## End Read Graph Composite".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ GRAPHIC           -> PATH PAINT_OPERATOR
   - read_graphic:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Graphic".print;
       print_line;
     };
-    
+
     read_path.if {
       (! read_paint_operator).if {
         syntax_error "Incorrect Paint operator";
       };
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Graphic".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ PATH              -> COORD 'm' {PATH_COMPOSITE}
   - read_path:BOOLEAN <-
   ( + result:BOOLEAN;
     + op:AI_OPERATION;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Path".print;
       print_line;
     };
-    
+
     read_coord.if {
-      (! read_character 'm').if {        
+      (! read_character 'm').if {
         missing_keyword "m";
       };
       op := AI_MOVE.create (last_x,last_y);
       current_list.add_last op;
       x_cur := last_x;
       y_cur := last_y;
-      
+
       {read_path_composite}.while_do { };
-      
-      result := TRUE;      
-    };    
-    
-    (trace && {result}).if {  
+
+      result := TRUE;
+    };
+
+    (trace && {result}).if {
       "\n## End Read Path".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ PATH_COMPOSITE    -> COORD ( 'l' | 'L' )
   //++                    | COORD COORD ( 'v' | 'V' | 'y' | 'Y' )
   //++                    | COORD COORD COORD ( 'c' | 'C' )
   - read_path_composite:BOOLEAN <-
-  ( + result:BOOLEAN;    
+  ( + result:BOOLEAN;
     + x1,y1,x2,y2,x3,y3:REAL_16_16;
     + op:AI_OPERATION;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Path Composite".print;
       print_line;
     };
-    
+
     read_coord.if {
       x1 := last_x;
       y1 := last_y;
@@ -1200,16 +1180,16 @@ Section Public
         x2 := last_x;
         y2 := last_y;
         ((read_character 'v') || {read_character 'V'}).if {
-	  result := TRUE;          
-	  op := AI_BEZIER.create_w1 (x_cur,y_cur) w2 (x1,y1) to (x2,y2); 
+	  result := TRUE;
+	  op := AI_BEZIER.create_w1 (x_cur,y_cur) w2 (x1,y1) to (x2,y2);
           x_cur := x2;
           y_cur := y2;
         }.elseif {(read_character 'y') || {read_character 'Y'}} then {
 	  result := TRUE;
-	  op := AI_BEZIER.create_w1 (x1,y1) w2 (x2,y2) to (x2,y2); 
+	  op := AI_BEZIER.create_w1 (x1,y1) w2 (x2,y2) to (x2,y2);
           x_cur := x2;
           y_cur := y2;
-        }.elseif {read_coord} then {  
+        }.elseif {read_coord} then {
           x3 := last_x;
           y3 := last_y;
           ((read_character 'c') || {read_character 'C'}).if {
@@ -1225,37 +1205,37 @@ Section Public
         };
       } else {
         syntax_error "Incorrect Path Composite";
-      };        
+      };
     };
     (op != NULL).if {
       current_list.add_last op;
     };
 
-    (trace && {result}).if {  
+    (trace && {result}).if {
       "\n## End Read Path Composite".print;
       print_line;
     };
-    
+
     result
-  );  
-  
+  );
+
   //++ PAINT_OPERATOR    -> 'N' | 'n' | 'F' | 'f' | 'S' | 's' | 'B' | 'b' | 'H' | 'h' | 'W'
   - read_paint_operator:BOOLEAN <-
   ( + result,is_fill,is_stroke:BOOLEAN;
     + new_layer:AI_LAYER;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Paint Operator".print;
       print_line;
     };
-    
+
     result := TRUE;
     (read_character 'N').if {
       // Nothing.
-    }.elseif {read_character 'n'} then {  
-      // Nothing.      
-    }.elseif {read_character 'F'} then {        
-      // Fill.      
+    }.elseif {read_character 'n'} then {
+      // Nothing.
+    }.elseif {read_character 'F'} then {
+      // Fill.
       is_fill := TRUE;
     }.elseif {read_character 'f'} then {
       // Fill.
@@ -1280,7 +1260,7 @@ Section Public
       // ??
     }.elseif {read_character 'W'} then {
       // ??
-    } else {      
+    } else {
       syntax_error "Incorrect Paint Operator";
       result := FALSE;
     };
@@ -1290,24 +1270,24 @@ Section Public
       current_color:= current_color.clone;
       list_layer.add_last new_layer;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Paint Operator".print;
       print_line;
     };
-    
-    result    
+
+    result
   );
-  
+
   //++ TEXT              -> '/' identifier real real real integer 'z' TEXT_COMPOSITE { TEXT_CONTENT } 'T'
   - read_text:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Text".print;
       print_line;
     };
-    
+
     (read_character '/').if {
       read_identifier.if {
         read_real_16_16.if {
@@ -1331,24 +1311,24 @@ Section Public
         syntax_error "Incorrect text";
       };
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Text".print;
       print_line;
     };
-    
+
     result
   );
-  
-  //++ TEXT_CONTENT      -> [ integer ] '(' string ')' 't' 
+
+  //++ TEXT_CONTENT      -> [ integer ] '(' string ')' 't'
   - read_text_content:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Text Content".print;
       print_line;
     };
-    
+
     read_integer;
     read_character '('.if {
       read_string.if {
@@ -1362,32 +1342,32 @@ Section Public
         syntax_error "Incorrect Text content";
       };
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Text Content".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ TEXT_COMPOSITE    -> '[' real real real real real real ']' ( 'a' | 'e' | 'I' | 'o' | 'r' )
   - read_text_composite:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Text Composite".print;
       print_line;
     };
-    
+
     read_character '['.if {
       read_real_16_16.if {
         read_real_16_16.if {
           read_real_16_16.if {
-            read_real_16_16.if {  
+            read_real_16_16.if {
               read_real_16_16.if {
                 read_real_16_16.if {
-                  read_character ']'.if { 
+                  read_character ']'.if {
                     read_character 'a'.if {
                       result := TRUE;
                     }.elseif {read_character 'e'} then {
@@ -1410,25 +1390,25 @@ Section Public
         syntax_error "Incorrect Text Composite";
       };
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Text Composite".print;
       print_line;
     };
-    
+
     result
   );
-  
-  //++ COORD             -> real real 
+
+  //++ COORD             -> real real
   - read_coord:BOOLEAN <-
   ( + result:BOOLEAN;
     + old_pos:INTEGER;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Coord".print;
       print_line;
     };
-    
+
     old_pos := position;
     read_real_16_16.if {
       last_x := last_real_16_16 - llx;
@@ -1440,67 +1420,67 @@ Section Public
       };
     };
 
-    (trace && {result}).if {  
+    (trace && {result}).if {
       "\n## End Read Coord".print;
       print_line;
     };
-    
-    result    
+
+    result
   );
-  
+
   //++ SCRIPT_BODY       -> { ELEMENT | IMPORT_DOC }
   - read_script_body:BOOLEAN <-
   (
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Script Body".print;
       print_line;
     };
-    
-    { read_element || { read_import_doc } }.while_do {      
+
+    { read_element || { read_import_doc } }.while_do {
     };
-    
-    trace.if {  
+
+    trace.if {
       "\n## End Read Script Body".print;
       print_line;
     };
-    
+
     TRUE
   );
-  
+
   //++ ELEMENT           -> { A }
   //++                      GROUP | OBJECT
   - read_element:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Element".print;
       print_line;
     };
-    
+
     { read_upper_a }.while_do { };
     (read_group || { read_object }).if {
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Element".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ A                 -> flag 'A'
   - read_upper_a:BOOLEAN <-
   ( + result:BOOLEAN;
-    + old_pos:INTEGER;    
-    
-    trace.if {  
+    + old_pos:INTEGER;
+
+    trace.if {
       "\n Read A".print;
       print_line;
     };
-    
+
     old_pos := position;
     read_flag.if {
       (! read_character 'A').if {
@@ -1509,15 +1489,15 @@ Section Public
         result := TRUE;
       };
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read A".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ GROUP             -> ['*'] 'u'
   //++                      OBJECT_SEQ
   //++                      ['*'] 'U'
@@ -1526,12 +1506,12 @@ Section Public
   //++                      'Q'
   - read_group:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Group".print;
       print_line;
     };
-    
+
     read_character '*';
     (read_character 'u').if {
       (! read_object_seq).if {
@@ -1551,45 +1531,45 @@ Section Public
       };
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Group".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ OBJECT_SEQ        -> { ELEMENT }
   - read_object_seq:BOOLEAN <-
   (
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Object Seq".print;
       print_line;
     };
-    
+
     { read_element }.while_do { };
-    
-    trace.if {  
+
+    trace.if {
       "\n## End Read Object Seq".print;
       print_line;
     };
-    
+
     TRUE
   );
-  
+
   //++ IMPORT_DOC        -> '''
   //++                      '%%IncludeFile:' filename
   //++                      '~'
   - read_import_doc:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Import Doc".print;
       print_line;
     };
-    
+
     read_character '\''.if {
       (! read_keyword (AI_ALIAS.include_file)).if {
         missing_keyword (AI_ALIAS.include_file);
@@ -1602,47 +1582,47 @@ Section Public
       };
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Import Doc".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //++ TRAILER           -> '%%Trailer'
   //++                      { TERMINATE }
   - read_trailer:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Trailer".print;
       print_line;
     };
-    
+
     read_keyword (AI_ALIAS.trailer).if {
       { read_terminate }.while_do { };
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Trailer".print;
       print_line;
     };
-    
-    result    
+
+    result
   );
-  
+
   //++ TERMINATE         -> (identifier '/terminate get exec' | '_E end')
   - read_terminate:BOOLEAN <-
   ( + result:BOOLEAN;
-    
-    trace.if {  
+
+    trace.if {
       "\n Read Terminate".print;
       print_line;
     };
-    
+
     read_keyword (AI_ALIAS.end).if {
       result := TRUE;
     }.elseif {read_identifier} then {
@@ -1651,26 +1631,26 @@ Section Public
       };
       result := TRUE;
     };
-    
-    (trace && {result}).if {  
+
+    (trace && {result}).if {
       "\n## End Read Terminate".print;
       print_line;
     };
-    
+
     result
   );
-  
+
   //
   // Parser
   //
-  
+
   - create s:FAST_ARRAY(CHARACTER) :SELF <-
   ( + result:SELF;
     result := clone;
     result.make s;
     result
-  );    
-  
+  );
+
   - make s:FAST_ARRAY(CHARACTER) <-
   (
     AI_ALIAS.make;
@@ -1682,9 +1662,9 @@ Section Public
     current_color := AI_COLOR.clone;
     current_list  := LINKED_LIST(AI_OPERATION).create;
     trace := FALSE;
-    read_document;    
+    read_document;
   );
-  
+
   - draw b:ABSTRACT_BITMAP scale coef:REAL_16_16 <-
   ( + s:REAL_16_16;
     ? {list_layer != NULL};
@@ -1696,13 +1676,13 @@ Section Public
     ((width != b.width) || {height != b.height}).if {
       b.make_size (width,height);
       b.rectangle_fill (0,0) to ((width -1),(height - 1)) color 083AAD3h;
-    };    
+    };
     (s <= 0).if {
       s := 1;
     };
     (list_layer.lower).to (list_layer.upper) do { i:INTEGER;
       list_layer.item i.draw b scale s;
-    };          
+    };
   );
 
 

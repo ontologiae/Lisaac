@@ -1,43 +1,23 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := ITM_READ;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "For local access variable or send message without argument";
-  
+
   // BSBS: Optim: Penser à faire un ITM_READ_ARG3 pour tous les `if then else'
-  
+
 Section Inherit
-  
+
   + parent_itm_code:Expanded ITM_CODE;
-  
-Section Public 
-  
+
+Section Public
+
   - is_affect:POSITION; // Nothing (it's good with 0).
-  
+
   //
   // Data
   //
@@ -54,7 +34,7 @@ Section Public
     result.make p name n;
     result
   );
-  
+
   - make p:POSITION name n:STRING_CONSTANT <-
   (
     position := p;
@@ -64,16 +44,16 @@ Section Public
   //
   // Runnable
   //
-      
+
   - to_run_expr:EXPR <-
   ( + result:EXPR;
-    + loc:LOCAL;    
-            
+    + loc:LOCAL;
+
     loc := lookup name;
     (loc != NULL).if {
       //
       // Local Access.
-      //            
+      //
       (loc.style = '-').if {
 	loc.set_ensure_count 1;
 	name := loc.intern_name;
@@ -84,69 +64,72 @@ Section Public
     } else {
       //
       // Slot Access without argument.
-      //      
+      //
       result := to_run_with NULL args NULL;
     };
     result
   );
-  
+
   //
   // Display.
   //
-  
+
   - append_in buffer:STRING <-
   (
     buffer.append name;
     buffer.append "()";
   );
-  
+
 Section ITM_READ, SLOT_DATA
-  
+
   - to_run_with first_itm:ITM_CODE args larg:FAST_ARRAY(ITM_CODE) :EXPR <-
   ( + rec:EXPR;
     //
     + itm_list:ITM_LIST;
     + itm_read:ITM_READ;
     + is_resend,implicit_self:BOOLEAN;
-        
+
     //
     // Compute `rec'.
-    //    
-    
+    //
+
     (first_itm = NULL).if {
       // Implicit Self.
       rec := lookup (ALIAS_STR.variable_self).read position;
       implicit_self := TRUE;
-    } else {            
-      rec := first_itm.to_run_expr;      
+    } else {
+      rec := first_itm.to_run_expr;
       // Resend detect.
       itm_list ?= first_itm;
       (itm_list != NULL).if {
+        (itm_list.code.is_empty).if {
+          syntax_error (itm_list.position,"Instruction list is empty.");
+        };
 	itm_read ?= itm_list.code.first;
-      } else {	
+      } else {
 	itm_read ?= first_itm;
       };
       is_resend := (
-	(itm_read != NULL) && 
+	(itm_read != NULL) &&
 	{position.prototype.search_parent (itm_read.name)}
       );
     };
     to_run_with_self (rec,implicit_self,is_resend) args larg
   );
-  
-  - to_run_with_self (r:EXPR,implicit_self,is_resend:BOOLEAN) 
+
+  - to_run_with_self (r:EXPR,implicit_self,is_resend:BOOLEAN)
   args larg:FAST_ARRAY(ITM_CODE) :EXPR <-
   ( + args:FAST_ARRAY(EXPR);
     + rec_type:TYPE;
     + rec:EXPR;
     + em:EXPR_MULTIPLE;
     + pos_null:POSITION;
-    //    
+    //
     + slot_msg:SLOT;
     + is_block_value:BOOLEAN;
     //
     + base:NODE;
-    
+
     rec := r;
     //
     // Detect slot.
@@ -157,39 +140,40 @@ Section ITM_READ, SLOT_DATA
       // BSBS: Ce cas ne doit jamais arriver !
       // il se déclenche avec parent.msg.truc lorsque msg du parent n'a pas de type de retour
       // Mais que le profil général en a un...
-      semantic_error (position,"Call on Void"); 
+      semantic_error (position,"Call on Void");
     };
-        
+
     (
-      (rec_type.is_block) && 
+      (rec_type.is_block) &&
       {name = ALIAS_STR.slot_value}
     ).if {
       // { ... }.value
       is_block_value := TRUE;
     } else {
-      slot_msg := rec_type.get_slot name;     
-      (slot_msg = NULL).if {            
-	string_tmp.copy "Slot `";
+      slot_msg := rec_type.get_slot name;
+      (slot_msg = NULL).if {
+        string_tmp.copy "Slot `";
 	string_tmp.append name;
 	string_tmp.append "' not found in `";
-	rec_type.append_name_in string_tmp; 
-        string_tmp.append "'.";                        
+	rec_type.append_name_in string_tmp;
+        string_tmp.append "'.";
 	semantic_error (position,string_tmp);
-      };      
+      };
       // Verification
       (verify).if {
 	(
-	  ((larg  = NULL) && {slot_msg.argument_list.count != 1}) || 
+	  ((larg  = NULL) && {slot_msg.argument_list.count != 1}) ||
 	  {(larg != NULL) && {larg.count != slot_msg.argument_list.count-1}}
 	).if {
-	  POSITION.put_error semantic text "Incorrect number argument."; 
+	  POSITION.put_error semantic text "Incorrect number argument.";
 	  slot_msg.position.put_position;
 	  position.put_position;
 	  POSITION.send_error;
 	};
-	last_position := slot_msg.position;	
-	( !
-	  slot_msg.id_section.access rec_type with (profil_slot.type_self.raw)
+	last_position := slot_msg.position;
+        (
+          (profil_slot != NULL) &&
+          {! slot_msg.id_section.access rec_type with (profil_slot.type_self.raw)}
 	).if {
 	  string_tmp.copy "Type ";
 	  profil_slot.type_self.append_name_in string_tmp;
@@ -211,18 +195,18 @@ Section ITM_READ, SLOT_DATA
       rec := em.expr_list.first;
     };
     (larg != NULL).if {
-      (larg.lower).to (larg.upper) do { j:INTEGER;        
+      (larg.lower).to (larg.upper) do { j:INTEGER;
 	add_arg (larg.item j.to_run_expr) to (j+1) in args for slot_msg block is_block_value;
       };
     };
-            
+
     //
     // Send message.
     //
     (is_block_value).if {
-      // { ... }.value      
-      args := ALIAS_ARRAY(EXPR).copy args;      
-      args.put (args.first.my_copy) to 0;      
+      // { ... }.value
+      args := ALIAS_ARRAY(EXPR).copy args;
+      args.put (args.first.my_copy) to 0;
       //rec := slot_msg.slot_data_intern.read position with rec;
       base := NODE.new_block position receiver rec with args;
     }.elseif {args.count = 1} then {
@@ -231,43 +215,43 @@ Section ITM_READ, SLOT_DATA
 	args.put (lookup (ALIAS_STR.variable_self).read position) to 0;
 	args.first.remove;
       };
-      
+
       ((verify) && {is_all_warning} && {name == "deferred"}).if {
 	string_tmp.copy "Deferred in `";
 	profil_slot.slot.pretty_name_in string_tmp;
 	string_tmp.append "' for ";
-	rec.static_type.append_name_in string_tmp;	
+	rec.static_type.append_name_in string_tmp;
 	warning_error (position,string_tmp);
       };
-      
-      base := NODE.new_read position slot slot_msg 
+
+      base := NODE.new_read position slot slot_msg
       receiver rec self (args.first) intern implicit_self;
-      
+
       ALIAS_ARRAY(EXPR).free args;
     } else {
       // Classic message with arguments.
       (is_resend).if {
-	args.put (lookup (ALIAS_STR.variable_self).read position) to 0;	
+	args.put (lookup (ALIAS_STR.variable_self).read position) to 0;
       } else {
 	args.put (args.first.my_copy) to 0;
       };
       args := ALIAS_ARRAY(EXPR).copy args;
-      base := NODE.new_read position slot slot_msg 
+      base := NODE.new_read position slot slot_msg
       receiver rec with args intern implicit_self;
     };
     list_current.add_last base;
-        
+
     (larg != NULL).if {
       ALIAS_ARRAY(ITM_CODE).free larg;
     };
-        
-    ? {base.result_expr != NULL};    
-    base.result_expr    
+
+    ? {base.result_expr != NULL};
+    base.result_expr
   );
-  
+
 Section Private
-  
-  - add_arg e:EXPR to idx:INTEGER 
+
+  - add_arg e:EXPR to idx:INTEGER
   in args:FAST_ARRAY(EXPR) for slot:SLOT block is_block_value:BOOLEAN <-
   ( + em:EXPR_MULTIPLE;
     + count:INTEGER;
@@ -275,7 +259,7 @@ Section Private
     + ts:ITM_TYPE_SIMPLE;
     + t:TYPE_FULL;
     + ex:EXPR;
-    
+
     em ?= e;
     (em != NULL).if {
       count := em.cardinality;
@@ -284,8 +268,8 @@ Section Private
       count := 1;
       args.add_last e;
     };
-    (verify).if {      
-      (! is_block_value).if {	
+    (verify).if {
+      (! is_block_value).if {
         itm_arg := slot.argument_list.item idx;
         (itm_arg.count != count).if {
           string_tmp.copy "Incorrect vector size for #";
@@ -297,16 +281,16 @@ Section Private
           string_tmp.append ", call #";
           count.append_in string_tmp;
           string_tmp.add_last ')';
-	  POSITION.put_error semantic text string_tmp; 
+	  POSITION.put_error semantic text string_tmp;
 	  itm_arg.position.put_position;
-          e.position.put_position;          
+          e.position.put_position;
 	  POSITION.send_error;
         };
         (args.count > 1).if {
           (itm_arg.lower).to (itm_arg.upper) do { i:INTEGER;
-            ts ?= itm_arg.item i;          
+            ts ?= itm_arg.item i;
             ((ts != NULL) && {ts = ITM_TYPE_SIMPLE.type_self}).if {
-              ex := args.item (args.upper - itm_arg.upper + i);            
+              ex := args.item (args.upper - itm_arg.upper + i);
               t := ex.static_type;
               ((! t.is_expanded) && {! t.is_strict}).if {
                 string_tmp.copy "Type expression (";
@@ -326,4 +310,3 @@ Section Private
       };
     };
   );
-  

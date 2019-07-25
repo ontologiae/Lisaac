@@ -1,0 +1,50 @@
+Section Header
+  
+  + name     := MY_OBJECT;
+  
+  - comment   := "Basic rendered object using display list";
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Public  
+  
+  + name:UINTEGER_32;
+  
+  + geometry:DISPLAY_LIST;
+  
+  + position:VECTOR3(REAL_32);
+  + rotation:VECTOR3(REAL_32);
+  
+  
+  - create list:DISPLAY_LIST name id:UINTEGER_32 at (pos,rot:VECTOR3(REAL_32)) :SELF <-
+  ( + result:SELF;
+    result := SELF.clone;
+    result.make (id,list,pos,rot);
+    result
+  );
+  
+  - make (id:UINTEGER_32,list:DISPLAY_LIST,pos,rot:VECTOR3(REAL_32)) <- 
+  (
+    name := id;
+    geometry := list;
+    position := pos.copy;
+    rotation := rot.copy;
+  );
+  
+  - draw renderer:RENDERER <-
+  (      
+    renderer.transform.new_matrix {
+      renderer.transform.rotatef (rotation.x, 1,0,0);
+      renderer.transform.rotatef (rotation.y, 0,1,0);
+      renderer.transform.rotatef (rotation.z, 0,0,1);
+      renderer.transform.translatef (position.x, position.y, position.z);
+      geometry.call;
+    };
+  );
+  
+  - update <-
+  (
+    rotation.make (rotation.x+0.1, rotation.y+0.08, rotation.z+0.03);
+  );

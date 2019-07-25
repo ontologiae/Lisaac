@@ -1,0 +1,46 @@
+Section Header
+
+  + name     := CONE;
+
+  - comment  := "3D cone";
+
+Section Inherit
+
+  - parent_framework:FRAMEWORK_ANY := FRAMEWORK_ANY;
+
+Section Public
+
+  + radius_base:REAL_32;
+  + cone_height:REAL_32;
+  + slices:REAL_32;
+
+  + position:VECTOR3(REAL_32);
+
+
+  - create (p:VECTOR3(REAL_32),r,h,sl:REAL_32) :SELF <-
+  (
+    + result:SELF;
+    result := SELF.clone;
+    result.make (p,r,h,sl);
+    result
+  );
+
+  - make (p:VECTOR3(REAL_32),r,h,sl:REAL_32) <-
+  (
+    radius_base := r;
+    cone_height := h;
+    slices := sl;
+    position := p;
+  );
+
+  - render <-
+  (
+    renderer.transform.push_matrix;
+
+    renderer.transform.translatef (position.x, position.y, position.z);
+
+    renderer.quadrics.new_quadric {
+      renderer.quadrics.draw_cylinder (radius_base,0,cone_height,slices,1);
+    };
+    renderer.transform.pop_matrix;
+  );

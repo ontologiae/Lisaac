@@ -1,0 +1,222 @@
+Section Header
+  
+  + name     := MY_SCENE9;
+  
+  - comment   := "first program";
+  
+Section Inherit
+  
+  - parent_framework:FRAMEWORK := FRAMEWORK;
+
+  + parent_scene:Expanded SCENE;
+  
+  - parent_mouse_listener:EVENT_LISTENER := EVENT_LISTENER;
+  
+Section Public  
+  
+  - main <- 
+  (   
+    "Click: Select object.\n".print;
+    // create OpenGL device
+    OPENGL.make (800,600) title "GL Demo test";
+    
+    // set up framework
+    FRAMEWORK.make OPENGL;
+    
+    attach_scene Self;
+    add_key_listener MY_EVENT_LISTENER;
+    add_mouse_listener Self;
+
+    // start it all
+    run;
+  );
+  
+Section Public
+  
+  //
+  //  Picking demo
+  //
+  
+  + obj:FAST_ARRAY(MY_OBJECT);
+  
+  + camera:CAMERA;
+  
+  - initialize:BOOLEAN <-
+  (    
+    + sphere:SPHERE;
+    + cylinder:CYLINDER;
+    + cone:CONE;
+    + pos,rot:VECTOR3(REAL_32);
+    + list:DISPLAY_LIST;
+    
+    camera := CAMERA.create;
+    
+    camera.position.make (0,1,-10);
+    camera.view.make (0,-1,10);
+    camera.view.normalize;
+    
+    pos := VECTOR3(REAL_32).zero;
+    rot := VECTOR3(REAL_32).zero;
+    
+    sphere := SPHERE.create (pos,1,10,10);
+    cylinder := CYLINDER.create (pos,1,1,2,10,10);
+    cone := CONE.create (pos,1,2,10);
+    
+    obj := FAST_ARRAY(MY_OBJECT).create_with_capacity 3;
+    
+    // object #1
+    list := renderer.display_list.create {
+      renderer.color_buffer.set_color3f(1,0,0);
+      sphere.render;
+    };
+    pos.make (-3,0,-1);
+    obj.add_last (MY_OBJECT.create list name 0 at (pos,rot));
+    
+    // object #2
+    list := renderer.display_list.create {
+      renderer.color_buffer.set_color3f(0,1,0);
+      cylinder.render;
+    };
+    pos.make (3,0,0);
+    rot.make (90,0,0);
+    obj.add_last (MY_OBJECT.create list name 1 at (pos,rot)); 
+    
+    // object #3
+    list := renderer.display_list.create {
+      renderer.color_buffer.set_color3f(0,0,1);
+      cone.render;
+    };
+    pos.make (0,0,0);
+    rot.make (-90,0,0);
+    obj.add_last (MY_OBJECT.create list name 2 at (pos,rot)); 
+    
+    renderer.enable_lighting;
+    renderer.light.enable_default_light;
+    renderer.material.enable_color; // enable color & material
+    TRUE
+  );
+  
+  - obj_selected:INTEGER := -1;
+  
+  - render t:REAL_32 <-
+  (  
+    + x:INTEGER;
+    
+    camera.look;
+    
+    update_objects;
+    draw_objects FALSE; 
+  
+    x := renderer.width / 2 - 50;
+    renderer.font.print_zone {
+      out.print "Pick an object" at (x,50);
+      obj_selected
+      .when 0 then {
+        out.print "You picked a sphere" at (x,500);
+      }
+      .when 1 then {
+        out.print "You picked a cylinder" at (x,500)  
+      }
+      .when 2 then {
+        out.print "You picked a cone" at (x,500);         
+      }
+      .when (-1) then {
+        out.print "No selected object" at (x,500);
+      };
+    };
+  ); 
+  
+  - update_objects <-
+  (
+    obj.lower.to (obj.upper) do { i:INTEGER; 
+      obj.item i.update;
+    };
+  );
+  
+  - draw_objects select_mode:BOOLEAN <-
+  (
+    select_mode.if {
+      renderer.name_stack.init;
+      renderer.name_stack.push (-1);// not to have an empty stack
+    };
+    obj.lower.to (obj.upper) do { i:INTEGER; 
+      select_mode.if {
+        renderer.name_stack.load (obj.item i.name);
+      };
+      obj.item i.draw renderer;
+    };
+  );
+  
+  - hits:FAST_ARRAY(UINTEGER_32) := FAST_ARRAY(UINTEGER_32).create 512; 
+
+  - process_hits (nb_hits:INTEGER, buffer:FAST_ARRAY(UINTEGER_32)) <-
+  (
+    + choose,depth:UINTEGER_32;
+    
+    //
+    //  Buffer format:
+    //    for each hit:
+    //       0:  number of names for this hit
+    //       1:  z-min value of the hit
+    //       2:  z-max value of the hit
+    //       3:  content of the name stack (bottom of stack)
+    //       ...
+    
+    // choose the closest object hit
+    (nb_hits > 0).if {
+      choose := buffer.item 3;
+      depth := buffer.item 1;
+      
+      1.to (nb_hits-1) do { i:INTEGER;
+        (buffer.item (i*4+1) < depth).if { // here the name stack has 1 elt
+          choose := buffer.item (i*4+3);
+          depth := buffer.item (i*4+1);
+        };
+      };
+      obj_selected := choose;
+    } else {   
+      obj_selected := -1;
+    };
+  );
+  
+  - click b:INTEGER <-
+  (
+    + nb_hits:INTEGER;
+    + x,y:UINTEGER_32;
+    + v:VIEWPORT;
+    
+    ((b & 1) = 0).if {
+      // left click
+      
+      x := event.mouse_x;
+      y := event.mouse_y;
+      v := renderer.viewport;
+      
+      // start selection mode, hits are recorded in 'hits' array
+      renderer.begin_selection_in hits size 512;
+      
+      // restrict the viewing volume to the mouse click region
+      renderer.transform.new_projection {
+        renderer.transform.push_matrix;
+        renderer.transform.load_identity;
+        
+        // create 5x5 pixel picking region near cursor location 
+        renderer.transform.pickmatrix (x, v.height - y, 5, 5) in v;
+        
+        // multiply it the viewing volume matrix
+        renderer.transform.perspective (renderer.fov, (v.width-v.x0).to_real/(v.height-v.y0).to_real, 0.1, 100);
+      };
+      
+      // draw objects in selection buffer
+      draw_objects TRUE;
+      
+      // go back to previous projection
+      renderer.transform.new_projection {
+        renderer.transform.pop_matrix;
+      };
+      
+      // go back to render mode 
+      nb_hits := renderer.end_selection;
+      process_hits (nb_hits, hits);
+    };
+  );

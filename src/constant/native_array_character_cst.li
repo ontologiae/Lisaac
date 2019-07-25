@@ -1,39 +1,19 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := NATIVE_ARRAY_CHARACTER_CST;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "String constant";
-  
+
 Section Inherit
-  
+
   + parent_constant:Expanded CONSTANT;
-  
+
 Section Public
-     
+
   //
   // Value.
   //
@@ -50,7 +30,7 @@ Section Public
     result.make p text n;
     result
   );
-  
+
   - make p:POSITION text n:STRING_CONSTANT <-
   (
     position := p;
@@ -63,8 +43,8 @@ Section Public
   //
   // Comparaison.
   //
-  
-  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-  
+
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-
   ( + p:NATIVE_ARRAY_CHARACTER_CST;
     p ?= other;
     (p != NULL) && {string = p.string}
@@ -75,12 +55,12 @@ Section Public
   //
 
   - genere buffer:STRING <-
-  ( 
+  (
     buffer.add_last '\"';
     buffer.append string;
     buffer.add_last '\"';
   );
-  
+
   //
   // Display.
   //
@@ -92,8 +72,8 @@ Section Public
     buffer.add_last '\"';
     display_ref buffer;
   );
-  
-  
+
+
 
 
 

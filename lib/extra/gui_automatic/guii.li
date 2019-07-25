@@ -1,61 +1,41 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := GUII;
-  
+
   - copyright := "Jonathan Ponte, Maxime Audrin, Benoit Sonntag";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
-  
+
 Section Private
-  
+
   - internal_create a:INODE screen_width w:INTEGER screen_height h:INTEGER<-
   (
     root:=a;
     screen_width:=w;
     screen_height:=h;
   );
-  
+
 Section Public
-  
+
   + root:INODE;
   + screen_width:INTEGER;
   + screen_height:INTEGER;
   + placement:G_EXPR;
-  
-  
+
+
   - create a:INODE screen_width w:INTEGER screen_height h:INTEGER :GUII<-
   (
     +result:SELF;
-    
+
     result:=clone;
     a.set_screen_width w;
     a.set_screen_height h;
     result.internal_create a screen_width w screen_height h;
     result
   );
-  
+
   - make_interface <-
   (
     INODE.set_used_width 0;
@@ -68,15 +48,15 @@ Section Public
 
   - run_interface <-
   (
-    VIDEO.make (screen_width,screen_height);
+    VIDEO.make_size (screen_width,screen_height);
     DESK.make VIDEO with placement;
   );
-  
-  
+
+
   - set_depth node:INODE from j:INTEGER <-
   (
     +dpth:INTEGER;
-    
+
     dpth:=j+1;
     node.list.foreach{
       i:INODE;
@@ -86,20 +66,20 @@ Section Public
       };
     };
   );
-  
+
   - evaluation i:INODE dimensions k:INTEGER :INTERNAL_INODE<-
-  (         
+  (
     +best_prc:REAL_32;
     +tmp:REAL_32;
     +parent:INTERNAL_INODE;
     +w:INTEGER;
     +h:INTEGER;
-    
+
     w:=i.dimensions.item k.width;
     h:=i.dimensions.item k.height;
-    
+
     "Evaluation for dimensions ".print;k.print;" : width ".print;w.print;", height ".print;h.print;'\n'.print;
-    
+
     (!i.list.is_empty).if {
       tmp:=MENU_BAR.evaluate i width w height h;"\n\n".print;
       (tmp>best_prc).if {
@@ -146,39 +126,39 @@ Section Public
     };
     parent
   );
-  
+
   - make_dimensions <-
   (
     /*
     * i : le noeud courant
-    * k : la position courante du noeud i 
+    * k : la position courante du noeud i
     * j : la case courante du tableau de dimensions du noeud i+1
     */
-    
+
     /* initialisation pour le premier noeud */
     root.list.first.dimensions.add_last (DIMENSION.create (screen_width,screen_height,0) score 0);
-    
+
     /* evaluation de chaque noeud et pour chaque position */
     root.list.lower.to (root.list.upper) do {
       i:INTEGER;
-      
+
       "Dimensions for ".print;root.list.item i.name.print;'\n'.print;
       root.list.item i.display_dimensions;'\n'.print;
-      
+
       /* evaluation du noeud i pour chaque position k possible */
       root.list.item i.dimensions.lower.to (root.list.item i.dimensions.upper) do {
         k:INTEGER;
         +pattern:INTERNAL_INODE;
         +width_item:INTEGER;
         +height_item:INTEGER;
-        
+
         pattern:=evaluation (root.list.item i) dimensions k;
-        
+
         width_item:=root.list.item i.width;
         height_item:=root.list.item i.height;
-        
+
         root.list.item i.name.print;" : width ".print;width_item.print;','.print;" height ".print;height_item.print;"\n\n".print;
-        
+
         /* pour chaque dimensions de i on crée 2 nouvelles dimensions pour i+1 */
         (i<root.list.upper).if {
           (2*k-1).to (2*k) do {
@@ -187,7 +167,7 @@ Section Public
             +h:INTEGER;
             +l:INTEGER;
             +score:REAL_32;
-            
+
             /* pour une position impaire: placement à droite
             largeur=largeur restante - largeur de l'item courant
             hauteur=hauteur restante

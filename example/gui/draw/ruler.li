@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := RULER;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -27,26 +7,26 @@ Section Header
   - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
 
 Section Inherit
-  
+
   + parent_area:Expanded AREA;
-  
+
   + parent_g_expr:Expanded G_EXPR;
-  
+
   - parent_any:ANY := ANY;
-  
+
 Section Public
 
   //
   // Update position.
   //
-  
+
   - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
-  ( 
+  (
     update rac from (x,y) size (w,h);
   );
-  
+
   - string_tmp:STRING := STRING.create 10;
-  
+
   - print (x,y:INTEGER) number n:REAL_32 decimal p:INTEGER <-
   (
     string_tmp.clear;

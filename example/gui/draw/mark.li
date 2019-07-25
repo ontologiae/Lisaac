@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := MARK;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -31,12 +11,12 @@ Section Inherit
   - parent_any:ANY := ANY;
 
 Section Public
-  
+
   + is_horizontal:BOOLEAN;
   - is_vertical:BOOLEAN <- ! is_horizontal;
-  
+
   + position:INTEGER_32;
-  
+
   //
   // Creation.
   //
@@ -49,25 +29,25 @@ Section Public
   );
 
   - make <-
-  ( 
-    
+  (
+
   );
-  
+
   //
   // File.
   //
-  
+
   - create_with buf:FAST_ARRAY(UINTEGER_8) at ps:INTEGER :(SELF,INTEGER) <-
   ( + r:SELF;
-    
+
     r := clone;
     r, r.make_with buf at ps
   );
-  
+
   - make_with buf:FAST_ARRAY(UINTEGER_8) at ps:INTEGER :INTEGER <-
   ( + t:UINTEGER_8;
-    
-    t := buf.item ps; 
+
+    t := buf.item ps;
     is_horizontal := (t != 0);
     position := read_integer_32 buf at (ps+1);
     ps + 5

@@ -1,37 +1,17 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := ESSAI_DROP_DOWN;
 
   - copyright := "Jonathan Ponte, Maxime Audrin, Benoit Sonntag";
 
   - comment   := "Interface Node for GUII.";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
-  
+
 Section Public
-  
+
   - main <-
   (
     +base:INODE;
@@ -55,13 +35,13 @@ Section Public
             )/*+(
               INODE.create_xor "Page" priority 100
             )*/;
-    
+
     //
     // Evaluation.
     //
 
     guii:=GUII.create base screen_width 800 screen_height 600;
     guii.set_depth base from 0;
-    guii.evaluation base;
+    guii.evaluation base dimensions 1;
     guii.run_interface;
   );

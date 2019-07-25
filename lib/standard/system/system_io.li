@@ -1,0 +1,47 @@
+Section Header
+
+  + name     := SYSTEM_IO;
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  - comment  := "Lower level for Input / Output";
+
+  - external := `
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Hardware 'print_char' */
+void print_char(char car)
+{
+  fputc(car,stdout);
+}
+
+/* Hardware 'exit' */
+int die_with_code(int code)
+{
+  exit(code);
+}
+
+`;
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - print_char byte:CHARACTER <-
+  // Low level buffered output.
+  (
+    `fputc((int)@byte,stdout)`;
+  );
+
+   - print_error_char byte:CHARACTER <-
+  // Low level buffered error output.
+  (
+    `fputc((int)@byte,stderr)`;
+  );
+
+  - get_char :CHARACTER <- `fgetc(stdin)`:(CHARACTER);
+
+  - eof:CHARACTER <- `EOF`:CHARACTER;

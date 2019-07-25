@@ -1,0 +1,30 @@
+Section Header
+  
+  + name     := QUEEN;
+  
+  - comment   := "3D Chess Game";
+  
+  - author    := "Damien Bouvarel (dams.bouvarel@wanadoo.fr)";
+  
+Section Inherit
+  
+  + parent_piece:Expanded PIECE;
+  
+Section Public
+  
+  - name:STRING_CONSTANT := "queen";
+  
+  - model:MODEL; // shared model
+  
+  - check_move orig:SQUARE to dest:SQUARE :BOOLEAN <-
+  // is legal move?
+  ( + result:BOOLEAN;
+  
+    ((dest.piece = NULL) || {player != dest.piece.player}).if {
+      result := BISHOP.check_move orig to dest;
+      result.if_false {
+        result := ROOK.check_move orig to dest;
+      };
+    };
+    result
+  );

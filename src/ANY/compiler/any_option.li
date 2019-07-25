@@ -1,0 +1,27 @@
+Section Header
+
+  + name        := ANY_OPTION;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Option for compiler (see shorter)";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - is_shorter :BOOLEAN := FALSE;
+
+  - is_shorter2:BOOLEAN := FALSE;
+
+  //
+  // Option du Shorter.
+  //
+
+  - is_short_private:BOOLEAN;
+  - is_short_code:BOOLEAN;
+

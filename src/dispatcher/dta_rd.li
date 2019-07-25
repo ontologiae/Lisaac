@@ -1,76 +1,57 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := DTA_RD;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Read site";
-    
+
 Section Inherit
-  
+
   + parent_dta:Expanded DTA;
-  
-  - parent_parameter_to_type:Expanded PARAMETER_TO_TYPE;  
-  
+
+  - parent_parameter_to_type:Expanded PARAMETER_TO_TYPE;
+
 Section Public
-  
+
   + is_intern:BOOLEAN;
-  
+
   - parameter_to_type p:ITM_TYPE_PARAMETER :TYPE_FULL <-
   ( + result:TYPE_FULL;
-    
+
     (p.name = ALIAS_STR.prototype_self).if {
       // For Self.
-      result := self_arg.static_type;            
+      result := self_arg.static_type;
     } else {
-      // For genericity.      
+      // For genericity.
       result := slot.receiver_type.parameter_to_type p;
-      //result := self_arg.static_type.raw.parameter_to_type p;      
+      //result := self_arg.static_type.raw.parameter_to_type p;
     };
-    
+
     result
   );
-  
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION call sl:SLOT self arg:EXPR intern flag:BOOLEAN :SELF <-
+  [ -? {p != 0}; ]
   ( + result:SELF;
-    
+
     result := clone;
-    result.make p call sl self arg intern flag;        
+    result.make p call sl self arg intern flag;
     result
   );
-  
+
   - make p:POSITION call sl:SLOT self arg:EXPR intern flag:BOOLEAN <-
-  ( ? {sl != NULL};    
-    position    := p;              
+  ( ? {sl != NULL};
+    position    := p;
     slot        := sl;
-    self_arg    := arg;    
-    result_expr := get_expr_result;  
+    self_arg    := arg;
+    result_expr := get_expr_result;
     is_intern   := flag;
     (profil_current = NULL).if {
       context := context_main;
@@ -78,24 +59,24 @@ Section Public
       context := profil_current.context;
     };
   );
-  
+
   //
   //
   //
-  
+
   - display buffer:STRING <-
   (
     buffer.append "DTA_READ";
   );
-  
+
 Section DTA_RD
-  
+
   - get_expr_result:EXPR <-
   ( + result:EXPR;
-        
+
     (slot.id_section.is_interrupt).if {
       result := type_pointer.default.get_temporary_expr position;
-    } else {            
+    } else {
       result := slot.result_type.get_expr_for Self;
     };
     result

@@ -1,0 +1,18 @@
+Section Header
+
+  + name := AVL_CONSTANTS;
+
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+Section Insert
+
+  - parent_object:OBJECT := OBJECT;
+
+Section SELF
+
+  - balanced:INTEGER := 0;
+
+  - imbalanced_left:INTEGER := -1;
+
+  - imbalanced_right:INTEGER := 1;

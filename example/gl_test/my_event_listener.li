@@ -1,0 +1,52 @@
+Section Header
+  
+  + name     := MY_EVENT_LISTENER;
+  
+  - comment  := "catch key events";
+  
+Section Inherit
+
+  - parent_event_listener:EVENT_LISTENER := EVENT_LISTENER;
+  
+Section Public
+  
+  - keydown k:INTEGER <-
+  (
+    + char:CHARACTER;
+    
+    "\n==> ".print; k.print;
+    
+    k
+    .when (KEYCODE.k_escape) then {
+       FRAMEWORK.stop;
+    }.when (KEYCODE.k_f1) then {
+      //ENGINE.screenshot "screenshot.tga";
+    };
+    
+    char := k.to_character.to_upper;
+    char
+    .when 'L' then {
+  //    ENGINE.toggle_lighting;
+    }.when 'B' then {
+  //    ENGINE.toggle_blending;    
+    }.when 'F' then {
+  //    ENGINE.toggle_fog; 
+    }.when 'W' then {
+  //    ENGINE.toggle_wireframe;  
+    };
+  );
+  
+  - move (x,y:INTEGER) <- 
+  (
+    
+  );  
+  
+  - click b:INTEGER <- 
+  (
+    ((b & 1) != 0).if {  
+      "Right Click\n".print;
+    } else {
+      "Left Click\n".print;
+    };
+  );
+  

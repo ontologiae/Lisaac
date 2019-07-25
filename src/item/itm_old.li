@@ -1,62 +1,42 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_OLD;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Old primitive for contract";
-  
+
 Section Inherit
-  
+
   + parent_itm_code:Expanded ITM_CODE;
-  
+
 Section Public
-    
+
   + value:ITM_CODE;
-  
+
   //
   // Constructor
   //
-  
+
   - create p:POSITION value val:ITM_CODE :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p value val;
     result
   );
-  
+
   - make p:POSITION value val:ITM_CODE <-
   (
     position := p;
     value    := val;
   );
-  
+
   //
   // Runnable
   //
-    
+
   - to_run_expr:EXPR <-
   ( + expr_old:EXPR;
     + instr:INSTR;
@@ -66,60 +46,62 @@ Section Public
     + node:NODE_TYPE;
     + old_stack_local:FAST_ARRAY(LOCAL);
     + old_profil:PROFIL;
-    
+
     old_stack_local := stack_local;
     old_profil      := profil_current;
-    stack_local     := stack_local_empty;    
+    stack_local     := stack_local_empty;
     profil_current  := profil_slot;
-    ? {stack_local.is_empty};    
+    ? {stack_local.is_empty};
     //
     old_upper  := list_current.upper;
     expr_old   := value.to_run_expr;
     result_old := expr_old.static_type.get_temporary position;
     list_current.add_last (result_old.write position value expr_old);
     diff := list_current.upper - old_upper;
-    // Move instr to up.   
+    // Move instr to up.
     lst := profil_slot.code;
-    {diff != 0}.while_do {      
+    {diff != 0}.while_do {
       instr := list_current.last;
       //
       (NODE.node_list != NODE.node_list_base).if {
-	node ?= instr;
-	(node != NULL).if {
+        `/* Bug1 */`;
+        node ?= instr;
+        `/* Bug-end */`;
+        (node != NULL).if {
 	  NODE.node_list.remove (NODE.node_list.fast_first_index_of node);
 	  NODE.node_list_base.add_last node;
 	};
       };
-      
+
       list_current.remove_last;
       (debug_level_option != 0).if {
-	? { + push:PUSH;      
+	? { + push:PUSH;
 	  push ?= lst.first;
 	  (push != NULL) && {push.is_first}
 	};
 	lst.add instr to (lst.lower + 1);
       } else {
-	lst.add_first instr;      
+	lst.add_first instr;
       };
       diff := diff - 1;
-    };    
+    };
     //
     profil_current := old_profil;
     stack_local := old_stack_local;
     //
     result_old.read position
   );
-  
+
   //
   // Display.
   //
-  
+
   - append_in buffer:STRING <-
   (
     buffer.append "Old ";
     value.append_in buffer;
   );
-  
+
 Section Private
-  
+
   - stack_local_empty:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create 0;

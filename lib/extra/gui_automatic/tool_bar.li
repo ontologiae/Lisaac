@@ -1,38 +1,18 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := TOOL_BAR;
 
   - copyright := "Jonathan Ponte, Maxime Audrin, Benoit Sonntag";
 
   - comment   := "Tool bar for GUII.";
-  
+
 Section Inherit
-  
+
   + menu_parent:MENU_H:=MENU_H;
-  
+
 Section Public
-  
- 
+
+
   - representation:STRING_CONSTANT := "TOOL_BAR";
 
   - print <-
@@ -40,7 +20,7 @@ Section Public
     "TOOL_BAR".print;
   );
 
-/*  - get_menu_parent:INTERNAL_INODE <- 
+/*  - get_menu_parent:INTERNAL_INODE <-
   ( + is_menu_bar:TOOL_BAR;
 
     is_menu_bar ?= Self;
@@ -64,7 +44,7 @@ Section Public
     bugh_screen:=h;
 
     !list.is_empty && {
-      browse_group { 
+      browse_group {
         i:INODE;
         (i.operator != '&')
       }

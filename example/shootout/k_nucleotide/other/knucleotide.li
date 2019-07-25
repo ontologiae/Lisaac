@@ -1,0 +1,186 @@
+Section Header
+  
+  + name := KNUCLEOTIDE;
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Public
+  
+  - buffer:STRING;
+  
+  - dico1:HASHED_SET(SORTER);
+  - dico2:HASHED_SET(SORTER);
+  - dico3:HASHED_SET(SORTER);
+  - dico4:HASHED_SET(SORTER);
+  - dico6:HASHED_SET(SORTER);
+  - dico12:HASHED_SET(SORTER);
+  - dico18:HASHED_SET(SORTER);
+  
+  - idf:STRING_CONSTANT := "GGTATTTTAATTTATAGT";
+  - key:SORTER;
+  
+  - main <-
+  (
+    key := SORTER.clone;
+    // Read file.
+    buffer := STRING.create 10240;
+    {      
+      buffer.clear;
+      IO.read_line_in buffer;      
+    }.do_until {buffer.has_prefix ">THREE"};
+    buffer.clear;
+    
+    {! IO.end_of_input}.while_do {      
+      IO.read_line_in buffer;      
+    };
+    buffer.to_upper;
+    // Compute frequently.
+    dico1  := HASHED_SET(SORTER).create;
+    dico2  := HASHED_SET(SORTER).create;
+    dico3  := HASHED_SET(SORTER).create;
+    dico4  := HASHED_SET(SORTER).create;
+    dico6  := HASHED_SET(SORTER).create;
+    dico12 := HASHED_SET(SORTER).create;
+    dico18 := HASHED_SET(SORTER).create;
+    
+    count;
+    // Display.
+    sort dico1;    
+    sort dico2;
+    
+    key.init_with (idf.storage);
+    //
+    key.set_count 3;
+    display key in dico3;
+    //
+    key.set_count 4;
+    display key in dico4;
+    //
+    key.set_count 6;
+    display key in dico6;
+    //
+    key.set_count 12;
+    display key in dico12;
+    //
+    key.set_count 18;
+    display key in dico18;    
+    
+  );
+  
+  - count <-
+  (     
+    (buffer.lower).to (buffer.upper - 1) do { j:INTEGER;            
+      key.init_with (buffer.storage + (j - 1));
+      //
+      key.set_count 1;
+      inc_key key in dico1;
+      //      
+      key.set_count 2;
+      inc_key key in dico2;
+      //
+      key.set_count 3;
+      inc_key key in dico3;
+      //
+      key.set_count 4;
+      inc_key key in dico4;
+      //
+      key.set_count 6;
+      inc_key key in dico6;
+      //
+      key.set_count 12;
+      inc_key key in dico12;
+      //
+      key.set_count 18;
+      inc_key key in dico18;
+    };
+    key.init_with (buffer.storage + (buffer.upper - 1));
+    //
+    key.set_count 1;
+    inc_key key in dico1;
+  );
+  
+  - inc_key key:SORTER in dico:HASHED_SET(SORTER) <-
+  ( + new_key:SORTER;
+        
+    new_key := dico.reference_at key;
+    (new_key = NULL).if {      
+      new_key := key.clone;      
+      dico.add new_key;
+    } else {
+      new_key.inc_freq;
+    };
+  );
+  
+  - display key:SORTER in dico:HASHED_SET(SORTER) <-
+  ( + ref:SORTER;
+    
+    ref := dico.reference_at key;
+    (ref = NULL).if {
+      '0'.print;
+    } else {
+      ref.freq.print;
+    };
+    '\t'.print;
+    key.print;
+    '\n'.print;
+  );
+  
+  - array:NATIVE_ARRAY(SORTER) := NATIVE_ARRAY(SORTER).create 16;
+  - string_tmp:STRING := STRING.create 5;
+  
+  - sort dico:HASHED_SET(SORTER) <-
+  ( + count,low,up,i,freq:INTEGER;
+    + r:INTEGER;
+    + swap:BOOLEAN;
+    + s:SORTER;
+    + tmp:SORTER;
+  
+    (dico.lower).to (dico.upper) do { j:INTEGER;
+      s := dico.item j;      
+      array.put s to (j-1);      
+      count := count + s.freq;
+    };
+    //array.bubble_sort;        
+    
+    low := 0;
+    up  := dico.count - 2;
+    {
+      swap := FALSE;
+      (low).to (up) do { j:INTEGER;
+	(array.item j.freq < array.item (j+1).freq).if {
+	  tmp := array.item j;
+	  array.put (array.item (j+1)) to j;
+	  array.put tmp to (j+1);
+	  swap := TRUE;	  
+	};
+	i := dico.count - 2 - j;
+	(array.item i.freq < array.item (i+1).freq).if {
+	  tmp := array.item i;
+	  array.put (array.item (i+1)) to i;
+	  array.put tmp to (i+1);
+	  swap := TRUE;	  
+	};
+	
+      };
+      low := low + 1;
+      up  := up  - 1;
+    }.do_while {swap};    
+    0.to (dico.count-1) do { j:INTEGER;
+      s := array.item j;
+      s.print;
+      ' '.print;      
+      freq := s.freq;
+      //
+      r := (freq * 100_000) / count;
+      (r / 1000).print;
+      '.'.print;
+      string_tmp.clear;
+      (r % 1000).append_in string_tmp format 3 with '0';      
+      string_tmp.print;
+      //
+      '\n'.print;
+    };
+    '\n'.print;
+  );

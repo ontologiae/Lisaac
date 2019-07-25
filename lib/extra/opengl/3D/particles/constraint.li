@@ -1,0 +1,19 @@
+Section Header
+
+  + name     := CONSTRAINT;
+
+  - comment  := "part of particle engine";
+
+Section Inherit
+
+  - parent_framework:FRAMEWORK_ANY := FRAMEWORK_ANY;
+
+Section Public
+
+  - apply_to p:PARTICLE time t:REAL_32 <- deferred;
+
+
+
+
+
+

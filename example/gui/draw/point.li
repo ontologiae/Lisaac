@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := POINT;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -31,13 +11,13 @@ Section Inherit
   - parent_any:ANY := ANY;
 
 Section Public
-  
+
   + x:INTEGER_32;
   + y:INTEGER_32;
-  
+
   - x_screen:INTEGER <- ecrx x;
   - y_screen:INTEGER <- ecry y;
-  
+
   //
   // Creation.
   //
@@ -50,25 +30,25 @@ Section Public
   );
 
   - make (px,py:INTEGER_32) <-
-  ( 
+  (
     x := px;
-    y := py;    
+    y := py;
   );
-  
+
   //
   // Transformation
   //
-  
+
   - move (dx,dy:INTEGER_32) <-
   (
     x := x + dx;
     y := y + dy;
   );
-  
+
   //
   // Display
   //
-  
+
   - draw_border_in bmp:ABSTRACT_BITMAP <-
   (
     deferred;
@@ -78,4 +58,4 @@ Section Public
   (
     deferred;
   );
-  
+

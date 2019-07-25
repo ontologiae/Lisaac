@@ -1,0 +1,112 @@
+Section Header
+  +name := RPC;
+  - external:=`
+#include <rpc/types.h>
+#include <rpc/xdr.h>
+#include <rpc/rpc.h>
+#include <sys/types.h>
+#include <unistd.h>
+int result;
+char* string_result;
+`;
+	
+  -author:="HILBERT Jérôme (hilbertjerome@gmail.com), FUHLHABER Simon(simon.fuhlhaber@gmail.com)";
+		
+Section Inherit
+  -parent_object:OBJECT :=OBJECT;
+
+
+Section Public
+	
+  - li_registerrpc_string prognum:INTEGER proc procnum:INTEGER fon fonction:POINTER :BOOLEAN <-
+  (
+    + stream:INTEGER;
+    stream:=`registerrpc(@prognum,1,@procnum,@fonction,(xdrproc_t)xdr_wrapstring,(xdrproc_t)xdr_wrapstring)`:(INTEGER);
+    (stream==0)
+  );
+	
+  - li_callrpc_string host:ABSTRACT_STRING prog prognum:INTEGER proc procnum:INTEGER param param:ABSTRACT_STRING :(STRING,BOOLEAN) <-
+  (
+    + stream:INTEGER;
+    + to_c1,to_c2:NATIVE_ARRAY(CHARACTER);
+    + result:NATIVE_ARRAY(CHARACTER);
+    + res:STRING;
+    + count:INTEGER;
+		
+    res:=STRING.create 256;
+    to_c1 := host.to_external;
+    to_c2 := param.to_external;
+    `enum clnt_stat stat;
+    stat=callrpc(@to_c1,@prognum,1,@procnum,(xdrproc_t)xdr_wrapstring,
+    (char *)&@to_c2,(xdrproc_t)xdr_wrapstring,(char *)&@result);
+    `;
+    stream:=`(stat == RPC_SUCCESS)`:(INTEGER);
+    // 		"stream:".print;stream.print;"\n".print;
+    (stream==1).if{
+      count:=`strlen(@result)`:INTEGER;
+      res.resize count;
+      res.set_storage result;
+      // 		res.print;"\n".print;
+    }else{res.copy "echec de l'appel\n"};
+    (res,(stream==1))
+  );
+
+  - li_svc_run <-
+  (
+    `svc_run()`;
+  );
+	
+  - get_ip :STRING <-
+  (
+    + to_lisaac:NATIVE_ARRAY(CHARACTER);
+    + res:STRING;
+    + count:INTEGER;
+    
+    `char nom[64];
+    gethostname(nom, 64);
+    `;
+    to_lisaac:=`nom`:NATIVE_ARRAY(CHARACTER);		
+    count:=`strlen(@to_lisaac)`:INTEGER;
+    res:=STRING.create count;
+    res.resize count;
+    res.set_storage to_lisaac;
+    res
+  );
+	
+  - get_param_string param:OBJECT :STRING <-
+  (
+    + res:STRING;
+    + to_lisaac:NATIVE_ARRAY(CHARACTER);
+    + count:INTEGER;
+    to_lisaac:=`*(char **)@param`:NATIVE_ARRAY(CHARACTER);
+    count:=`strlen(@to_lisaac)`:INTEGER;
+    res:=STRING.create count;
+    res.resize count;
+    res.set_storage to_lisaac;
+    res
+  );
+	
+  - return_string_result string:STRING :POINTER <- 
+  (
+    + res:NATIVE_ARRAY(CHARACTER);
+    res:=string.to_external;
+
+    //":::::RPC :::STRING::\n".print;
+    //string.print;
+    //"\n".print;
+    `string_result = @res`;
+    //":::::RPC :::CHAR*::\n".print;
+    //`printf("%s",@res);`;
+    //"\n".print;
+    `string_result = @res`;
+    `(void *)&string_result`:POINTER	
+  );
+  
+  - first_call <-
+  (
+    + res:STRING;
+    + success:BOOLEAN;
+    (res,success):=li_callrpc_string "" prog 00 proc 1 param "***********";
+    res.append "";
+  );
+	

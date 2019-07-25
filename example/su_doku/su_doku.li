@@ -1,49 +1,29 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name := SU_DOKU;
-  
+
   - comment := "Du_doku Solver.";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
-  
+
 Section Private
-  
+
   //
   // Data.
   //
-  
+
   - array  :FAST_ARRAY2(INTEGER) := FAST_ARRAY2(INTEGER).create (9,9);
-      
+
   //
   // Example.
   //
-  
+
   - load_example <-
   (
     array.set_all_with 0;
-    array.put 9 to (1,0); array.put 7 to (2,0); array.put 8 to (3,0); 
+    array.put 9 to (1,0); array.put 7 to (2,0); array.put 8 to (3,0);
     array.put 1 to (5,0); array.put 5 to (6,0);
     array.put 4 to (1,1);
     array.put 1 to (2,2); array.put 2 to (4,2); array.put 9 to (8,2);
@@ -52,18 +32,18 @@ Section Private
     array.put 5 to (1,5); array.put 2 to (2,5);
     array.put 7 to (0,6); array.put 6 to (4,6); array.put 3 to (6,6);
     array.put 6 to (7,7);
-    array.put 5 to (2,8); array.put 2 to (3,8); array.put 3 to (5,8); 
+    array.put 5 to (2,8); array.put 2 to (3,8); array.put 3 to (5,8);
     array.put 8 to (6,8); array.put 1 to (7,8);
   );
-  
+
   //
   // Display.
   //
-  
+
   - display <-
   ( + v:INTEGER;
-    
-    
+
+
     0.to 8 do { y:INTEGER;
       ((y % 3) = 0).if {
         "#####################################\n".print;
@@ -77,7 +57,7 @@ Section Private
         "| ".print;
       };
       v := array.item (x,y);
-      (v = 0).if { 
+      (v = 0).if {
         ' '.print;
       } else {
         v.print;
@@ -88,7 +68,7 @@ Section Private
     };
     "#####################################\n".print;
   );
-  
+
   //
   // Solver.
   //
@@ -104,7 +84,7 @@ Section Private
     };
     (result).if {
       // Block test.
-      by := y / 3 * 3;      
+      by := y / 3 * 3;
       bx := x / 3 * 3;
       j := 0;
       {(j < 3) && {result}}.while_do {
@@ -114,17 +94,17 @@ Section Private
           k := k + 1;
         };
         j := j + 1;
-      };      
+      };
     };
     result
   );
-  
+
   - solver (x,y:INTEGER) :BOOLEAN <-
   ( + px,py:INTEGER;
     + v:INTEGER;
     + is_found:BOOLEAN;
-    
-    px := x; 
+
+    px := x;
     py := y;
     {(py<9) && {array.item (px,py) != 0}}.while_do {
       px := px + 1;
@@ -136,9 +116,9 @@ Section Private
     (py = 9).if {
       is_found := TRUE;
     } else {
-      v := 1;  
+      v := 1;
       {
-        (is_good v to (px,py)).if { 
+        (is_good v to (px,py)).if {
           // I love English Girls (2005)
           array.put v to (px,py);
           is_found := solver (px,py);
@@ -151,9 +131,9 @@ Section Private
     };
     is_found
   );
-  
+
   - graph_table:FAST_ARRAY2(G_IN);
-  
+
   - array_to_graph <-
   ( + val:INTEGER;
     + in:G_IN;
@@ -169,12 +149,12 @@ Section Private
       };
     };
   );
-  
+
   - graph_to_array <-
   ( + val:INTEGER;
     + in:G_IN;
     0.to 8 do { x:INTEGER;
-      0.to 8 do { y:INTEGER;        
+      0.to 8 do { y:INTEGER;
         in  := graph_table.item (x,y);
         (in.text.is_empty).if {
           val := 0;
@@ -185,16 +165,16 @@ Section Private
       };
     };
   );
-  
+
   - message:G_OUT;
-  
+
 Section Public
-  
-  - run:G_WIN_OUT <- 
+
+  - run:G_WIN_OUT <-
   ( + c1,l1,c2,l2,r:G_EXPR;
     + g:G_IN;
-    
-    graph_table := FAST_ARRAY2(G_IN).create (9,9); 
+
+    graph_table := FAST_ARRAY2(G_IN).create (9,9);
     0.to 2 do { xx:INTEGER;
       c2 := NULL;
       0.to 2 do { yy:INTEGER;
@@ -206,9 +186,9 @@ Section Public
               in.text.remove_last 1;
               ((in.text.count > 1) || {! in.text.first.in_range '1' to '9'}).if {
                 in.text.clear;
-                message.text.copy " Error: Between 1 and 9";                
+                message.text.copy " Error: Between 1 and 9";
               } else {
-                message.text.copy " Ok.";                
+                message.text.copy " Ok.";
               };
               message.refresh;
             };
@@ -225,7 +205,7 @@ Section Public
           } else {
             l1 := l1 | c1;
           };
-        };                
+        };
         r := G_RAW.create l1;
         (c2 = NULL).if {
           c2 := r;
@@ -241,8 +221,8 @@ Section Public
     };
     G_WIN_OUT.create "Sudoku Solver" with (
       (
-        G_BUTTON.create (G_OUT.create "Clear" justify (G_OUT.center)) 
-        action { b:G_BUTTON; 
+        G_BUTTON.create (G_OUT.create "Clear" justify (G_OUT.center))
+        action { b:G_BUTTON;
           + in:G_IN;
           0.to 8 do { x:INTEGER;
             0.to 8 do { y:INTEGER;
@@ -252,7 +232,7 @@ Section Public
             };
           };
         } |
-        G_BUTTON.create (G_OUT.create "Load"  justify (G_OUT.center)) 
+        G_BUTTON.create (G_OUT.create "Load"  justify (G_OUT.center))
         action { b:G_BUTTON;
           load_example;
           array_to_graph;
@@ -268,19 +248,19 @@ Section Public
           message.refresh;
           array_to_graph;
         }
-      ).fix_height / 
-      l2 / 
+      ).fix_height /
+      l2 /
       (G_RAW.create (message := G_OUT.create " ")).fix_height
     )
   );
-      
+
   - main <-
   ( + choice:CHARACTER;
-        
+
     "====================================================\n\
     \Welcome the SU DOKU solver (V.1.0 by Sonntag Benoit)\n\
     \====================================================\n\n".print;
-    
+
     {
       "[a]:Load example. [b]:Display. [c]:New. [d]:Solve! [e]:Exit\n\
       \Choice ?\n".print;
@@ -288,7 +268,7 @@ Section Public
         choice := IO.read_character;
       }.do_until {choice.in_range 'a' to 'e'};
       IO.read_character;
-      
+
       choice
       .when 'a' then {
         load_example;

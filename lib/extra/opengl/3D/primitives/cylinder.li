@@ -1,0 +1,52 @@
+Section Header
+
+  + name     := CYLINDER;
+
+  - comment  := "glu quadric cylinder";
+
+Section Inherit
+
+  - parent_framework:FRAMEWORK_ANY := FRAMEWORK_ANY;
+
+Section Public
+
+  + radius_top:REAL_32;
+  + radius_base:REAL_32;
+
+  + cylinder_height:REAL_32;
+
+  + slices:REAL_32;
+  + stacks:REAL_32;
+
+  + position:VECTOR3(REAL_32);
+
+
+  - create (p:VECTOR3(REAL_32),r1,r2,h,sl,st:REAL_32) :SELF <-
+  (
+    + result:SELF;
+    result := SELF.clone;
+    result.make (p,r1,r2,h,sl,st);
+    result
+  );
+
+  - make (p:VECTOR3(REAL_32),r1,r2,h,sl,st:REAL_32) <-
+  (
+    radius_top := r1;
+    radius_base := r2;
+    cylinder_height := h;
+    slices := sl;
+    stacks := st;
+    position := p;
+  );
+
+  - render <-
+  (
+    renderer.transform.push_matrix;
+
+    renderer.transform.translatef (position.x, position.y, position.z);
+
+    renderer.quadrics.new_quadric {
+      renderer.quadrics.draw_cylinder (radius_base,radius_top,cylinder_height,slices,stacks);
+    };
+    renderer.transform.pop_matrix;
+  );

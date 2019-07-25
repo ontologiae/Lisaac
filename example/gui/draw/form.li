@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := FORM;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -31,16 +11,16 @@ Section Inherit
   + parent_graph:Expanded GRAPH;
 
 Section Public
-  
+
   + color_border:UINTEGER_32;
-  
+
   + color_fill:UINTEGER_32;
-  
+
   - is_fill:BOOLEAN   <- (color_fill   & 0FF_00_00_00h) = 0;
   - is_border:BOOLEAN <- (color_border & 0FF_00_00_00h) = 0;
-  
+
   + points:LINKED_LIST(POINT);
-  
+
   - set_color_fill c:UINTEGER_32 <-
   (
     color_fill := c;
@@ -50,34 +30,34 @@ Section Public
   (
     color_border := c;
   );
-  
+
   //
   // Creation.
   //
-  
+
   - create:SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make;
     result
   );
-  
+
   - make <-
   (
     points := LINKED_LIST(POINT).create;
   );
-  
+
   //
   // File.
   //
-  
+
   - create_with buf:FAST_ARRAY(UINTEGER_8) at ps:INTEGER :(SELF,INTEGER) <-
   ( + f:SELF;
     f := clone;
     f,f.make_with buf at ps
-  );    
-  
+  );
+
   - make_with buf:FAST_ARRAY(UINTEGER_8) at ps:INTEGER :INTEGER <-
   ( + pos:INTEGER;
     + typ:UINTEGER_8;
@@ -85,12 +65,12 @@ Section Public
     + x,y,p1x,p1y,p2x,p2y:INTEGER_32;
     + point:POINT;
     + t:CHARACTER;
-    
+
     points := LINKED_LIST(POINT).create;
-    pos := ps; 
+    pos := ps;
     //
     typ := buf.item pos; // Type contour
-    pos := pos + 1;        
+    pos := pos + 1;
     (typ != 0).if { // Read color.
       "WARNING !!!\n".print;
       color := buf.item pos;
@@ -98,63 +78,63 @@ Section Public
       color := (color << 8) | buf.item pos;
       pos := pos + 1;
       color := (color << 8) | buf.item pos;
-      pos := pos + 1;      
+      pos := pos + 1;
     } else {
       color := 0; //0FF_00_00_00h;
     };
     color_border := color;
     //
     typ := buf.item pos; // Type fill.
-    pos := pos + 1;        
+    pos := pos + 1;
     (typ != 0).if { // Read color.
       color := buf.item pos;
       pos := pos + 1;
       color := (color << 8) | buf.item pos;
       pos := pos + 1;
       color := (color << 8) | buf.item pos;
-      pos := pos + 1;      
+      pos := pos + 1;
     } else {
       color := 0FF_00_00_00h;
     };
     color_fill := color;
     {buf.item pos != 255}.while_do {
       t := buf.item pos.to_character;
-      
+
       pos := pos + 1;
       x := read_integer_32 buf at pos;
       pos := pos + 4;
       y := read_integer_32 buf at pos;
-      pos := pos + 4;      
-                        
+      pos := pos + 4;
+
       (t)
       .when 'm' then {
-        point := MOVE.create (x,y);        
+        point := MOVE.create (x,y);
       }
       .when 'l' then {
         point := LINE_TO.create (x,y);
       }
       .when '0' then {
         p1x := x;
-        p1y := y;                
+        p1y := y;
         ? {buf.item pos.to_character = '1'};
         pos := pos + 1;
         p2x := read_integer_32 buf at pos;
         pos := pos + 4;
         p2y := read_integer_32 buf at pos;
-        pos := pos + 4;              
+        pos := pos + 4;
         ? {buf.item pos.to_character = 'c'};
         pos := pos + 1;
         x := read_integer_32 buf at pos;
         pos := pos + 4;
-        y := read_integer_32 buf at pos;                
-        pos := pos + 4;              
-        point := BEZIER.create (p1x,p1y) and (p2x,p2y) end (x,y);        
+        y := read_integer_32 buf at pos;
+        pos := pos + 4;
+        point := BEZIER.create (p1x,p1y) and (p2x,p2y) end (x,y);
       };
-      points.add_last point;            
+      points.add_last point;
     };
     pos + 1
   );
-    
+
   //
   // Transformation.
   //
@@ -166,25 +146,25 @@ Section Public
     + bez:BEZIER;
     x0 := y0 := 2_147_483_647;
     x1 := y1 := -2_147_483_647;
-    (points.lower).to (points.upper) do { j:INTEGER;      
+    (points.lower).to (points.upper) do { j:INTEGER;
       xe := points.item j.x;
       ye := points.item j.y;
       bez ?= points.item j;
       (bez != NULL).if {
-        xp0 := bez.p1_x; 
+        xp0 := bez.p1_x;
         yp0 := bez.p1_y;
         xp1 := bez.p2_x;
         yp1 := bez.p2_y;
-        /*                
+        /*
         x0 := x0.min xp0;
         y0 := y0.min yp0;
         x1 := x1.max xp0;
-        y1 := y1.max yp0;        
-        
+        y1 := y1.max yp0;
+
         x0 := x0.min xp1;
         y0 := y0.min yp1;
         x1 := x1.max xp1;
-        y1 := y1.max yp1;        
+        y1 := y1.max yp1;
         */
         a := ((xe-xb+(xp0-xp1)*3)*3).to_real_32;
         b := ((xb-xp0*2+xp1)*6).to_real_32;
@@ -203,7 +183,7 @@ Section Public
                x1 := x1.max xc;
              };
            };
-         } else {           
+         } else {
            delta := b*b - a*c*4;
 	   a := a * 2;
 	   (delta >= 0).if {
@@ -232,10 +212,10 @@ Section Public
                };
              };
            };
-         };         
+         };
          a := 3*(ye-yb+3*(yp0-yp1));
 	 b := 6*(yb-2*yp0+yp1);
-         c := 3*(yp0-yb);         
+         c := 3*(yp0-yb);
 	 (a = 0).if {
 	   (b != 0).if {
 	     t := -c / b;
@@ -247,7 +227,7 @@ Section Public
                       t *     t *     t * ye.to_real_32
                ).to_integer_32;
                y0 := y0.min yc;
-               y1 := y1.max yc;        
+               y1 := y1.max yc;
              };
            };
          } else {
@@ -263,7 +243,7 @@ Section Public
                       t *     t *     t * ye.to_real_32
                ).to_integer_32;
                y0 := y0.min yc;
-               y1 := y1.max yc;        
+               y1 := y1.max yc;
 	     };
 	     (delta > 0).if {
                t := - (b - delta.sqrt) / a;
@@ -275,40 +255,40 @@ Section Public
                         t *     t *     t * ye.to_real_32
                  ).to_integer_32;
                  y0 := y0.min yc;
-                 y1 := y1.max yc;        
+                 y1 := y1.max yc;
                };
              };
            };
          };
-         
+
       };
       x0 := x0.min xe;
       y0 := y0.min ye;
       x1 := x1.max xe;
-      y1 := y1.max ye;        
+      y1 := y1.max ye;
       //
       xb := xe;
       yb := ye;
     };
     select.set_rectangle (x0,y0) to (x1,y1);
   );
-  
+
   - move (dx,dy:INTEGER_32) <-
-  ( 
+  (
     parent_graph.move (dx,dy);
     (points.lower).to (points.upper) do { j:INTEGER;
       points.item j.move (dx,dy);
     };
   );
-  
+
   //
   // Display
   //
-  
+
 Section GRAPH
-  
+
   - direct_draw_in bmp:ABSTRACT_BITMAP <-
-  ( 
+  (
     (is_fill).if {
       bmp.color color_fill;
       (points.lower).to (points.upper) do { j:INTEGER;

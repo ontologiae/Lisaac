@@ -1,90 +1,71 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := LOOP;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Loop (call tail recursive).";
-  
+
 Section Inherit
-  
+
   + parent_instr:Expanded INSTR;
-  
+
 Section Public
-  
+
   + link_count:INTEGER;
-  
+
   + body:LIST;
-  
+
   + name:STRING_CONSTANT;
-  
+
   - set_link <-
   (
     link_count := link_count + 1;
   );
-  
+
   - unset_link <-
   (
     link_count := link_count - 1;
     ? {link_count >= 0};
   );
-  
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION name lab:STRING_CONSTANT body lst:LIST :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name lab body lst;
     result
   );
-  
+
   - make p:POSITION name lab:STRING_CONSTANT body lst:LIST <-
-  (     
-    position := p;    
+  (
+    position := p;
     name := lab;
     body := lst;
   );
-  
+
   - my_copy:SELF <-
   ( + result:SELF;
     + new_body:LIST;
     + switch:SWITCH;
     + case:LIST;
     + loop_end:LOOP_END;
-        
+
     new_body := body.my_copy;
-    result := LOOP.create position name (ALIAS_STR.get_intern name) body new_body;
+    //result :=   LOOP.create position name (ALIAS_STR.get_intern name) body new_body;
+    result :=  Strict LOOP.create position name (ALIAS_STR.get_intern name) body new_body;
     //
-    switch ?= new_body.last; 
+    switch ?= new_body.last;
     (switch.list.lower).to (switch.list.upper) do { k:INTEGER;
       case := switch.list.item k.code;
       (! case.is_empty).if {
 	loop_end ?= case.last;
-	(loop_end != NULL).if {	  
+	(loop_end != NULL).if {
 	  ? {loop_end.loop = Self};
 	  (loop_end.loop != Self).if {
 	    semantic_error (position,"LOOP.my_copy BUG!!!");
@@ -94,20 +75,20 @@ Section Public
 	};
       };
     };
-    
-    (result.link_count != link_count).if {      
+
+    (result.link_count != link_count).if {
       name.print;
       " Origin:".print;
       link_count.print;
       " copy:".print;
       result.link_count.print;
       '\n'.print;
-      
+
       body.debug_display;
-      
+
       semantic_error (position,"LOOP: Bug in copy.");
     };
-    
+
     ? {result.link_count = link_count};
     result
   );
@@ -117,21 +98,21 @@ Section Public
   //
 
   - remove <-
-  ( 
-    body.remove;    
+  (
+    body.remove;
     ? {link_count = 0};
   );
-  
+
   - execute:INSTR <-
-  ( + result:INSTR;     
+  ( + result:INSTR;
     + cur_seq_call_local_and_loop:INTEGER;
     + cur_seq_call_and_loop:INTEGER;
-    
+
     (link_count = 0).if {
       result := body.execute;
       new_execute_pass;
-    } else {      
-      cur_seq_call_local_and_loop := 
+    } else {
+      cur_seq_call_local_and_loop :=
       seq_call_local_and_loop     := seq_call_local_and_loop + link_count;
       //
       cur_seq_call_and_loop :=
@@ -140,7 +121,7 @@ Section Public
       seq_inline := seq_inline + 1;
       //
       result := Self;
-      body.execute_case;      
+      body.execute_case;
       (loop_invariant = Self).if {
 	loop_list := list_current;
 	loop_seq_index := Old seq_index;
@@ -150,19 +131,19 @@ Section Public
 	//
 	seq_call_local_and_loop := seq_call_local_and_loop + link_count;
 	seq_call_and_loop       := seq_call_and_loop + link_count;
-	body.execute_case;      
+	body.execute_case;
 	loop_invariant := NULL;
       };
     };
     result
   );
-  
+
   //
   // Display.
   //
-  
+
   - display buffer:STRING <-
-  (    
+  (
     buffer.append name;
     display_ref buffer;
     buffer.append ":\n";
@@ -173,13 +154,13 @@ Section Public
   //
   // Generation.
   //
-  
+
   - genere buffer:STRING <-
-  (         
+  (
     (! genere_while buffer).if {
-      
-      current_list_level := current_list_level + link_count;        
-      
+
+      current_list_level := current_list_level + link_count;
+
       buffer.append name;
       buffer.append ":\n";
       buffer.append indent;
@@ -192,15 +173,15 @@ Section Public
     + lst_true,lst_false,lst:LIST;
     + inverse:BOOLEAN;
     + result:BOOLEAN;
-    
-    (body.is_empty).if {        
+
+    (body.is_empty).if {
       semantic_error (position,"LOOP BUG: Body loop empty !");
     };
     switch ?= body.last;
     (
-      (switch != NULL) && 
+      (switch != NULL) &&
       {switch.list.count = 2} &&
-      {switch.list.first.id = type_true } && 
+      {switch.list.first.id = type_true } &&
       {switch.list.second.id = type_false}
     ).if {
       lst_true  := switch.list.first.code;
@@ -212,23 +193,23 @@ Section Public
 	  lst_true := lst_false;
 	  lst_false := lst;
         };
-        
-        current_list_level := current_list_level + 1;        
-        
+
+        current_list_level := current_list_level + 1;
+
 	(body.count = 1).if {
 	  //
 	  // While (...) do {...}.
 	  //
 	  result := TRUE;
 	  inverse.if {
-	    buffer.append "while (!";	    
+	    buffer.append "while (!";
 	  } else {
-	    buffer.append "while (";	    
+	    buffer.append "while (";
 	  };
 	  switch.expr.genere buffer;
 	  //
 	  buffer.append ") ";
-	  lst_true.remove_last; 
+	  lst_true.remove_last;
 	  lst_true.genere buffer;
 	}.elseif {lst_true.count = 1} then {
 	  //
@@ -239,19 +220,20 @@ Section Public
 	  body.remove_last;
 	  body.genere buffer;
 	  inverse.if {
-	    buffer.append " while (!";	    
+	    buffer.append " while (!";
 	  } else {
-	    buffer.append " while (";	    
-	  };	  
+	    buffer.append " while (";
+	  };
 	  //
 	  switch.expr.genere buffer;
 	  buffer.add_last ')';
-        };	
-        
-        current_list_level := current_list_level - 1;        
-        
+        };
+
+        current_list_level := current_list_level - 1;
+
       };
     };
     result
   );
   
+

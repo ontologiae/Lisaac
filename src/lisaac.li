@@ -1,168 +1,74 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := LISAAC;
 
-  - copyright := "2003-2007 Benoit Sonntag";
-  
-  - author   := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - author   := "Sonntag Benoit";
   - comment  := "The main prototype";
-  
-  - external := `#include "path.h"`;
-  
-  // Top 5 memory record :
-  // 1 - LOCAL         (>20MB) (il fo Aliaser les tmp !)
-  // 2 - READ_LOCAL    (15MB)
-  // 3 - LIST          (13MB) (En baisse => a retester.)
-  // 4 - PROTOTYPE_CST (10MB)
-  // 5 - WRITE_LOCAL   (10MB)
-  
+
 Section Inherit
-  
+
   - parent_any:ANY := ANY;
-  
+
 Section Public
-  
-  - print_help <-
+
+  - show_help <-
   (
-    begin_usage1.print;
-    version.print;
-    (15- version.count).times { 
-      ' '.print;
-    };
-    begin_usage2.print;
+    COMMON.command_line_header "Compiler".print;
+    begin_usage.print;
     LIP_CODE.print_usage;
-    end_usage.print;    
+    COMMON.command_line_footer.print;
   );
-  
-  - print_version <-
+
+  - show_version <-
   (
-    "Compiler version: ".print;
-    version.print; '\n'.print;
-    //
-    "Built on:         ".print;    
-    compiler_built_on.print;
-    '\n'.print;
-    //
-    "Debug level:      ".print; 
-    (debug_level = 0).if {
-      "No debug.".print;
-    } else {
-      debug_level.print;
-    }; 
-    '\n'.print;
-    //
-    "Inlining level:   ".print;
-    compiler_inlining_level.print;
-    '\n'.print;
-    //
-    "Optimization:     ".print;
-    compiler_optimization.print;
-    '\n'.print;
+    COMMON.command_line_header "Compiler".print;
+    COMMON.print_info;
+    COMMON.command_line_footer.print;
   );
-  
+
 Section Private
-  
-  - version:STRING_CONSTANT := "0.39 beta";
-  
-  //
-  //
-  //
-  
-  - output_name:STRING_CONSTANT;
-  
+
+  - output_name     :STRING_CONSTANT;
+  - output_extension:STRING_CONSTANT;
+
   - input_name:STRING_CONSTANT;
-  
-  - path_lisaac:STRING_CONSTANT <-
-  ( + path:NATIVE_ARRAY(CHARACTER);
-    + path_str :STRING;
-    + j:INTEGER;
-    //COMMAND_LINE.executable_name.print; '\n'.print;
-    // Load LISAAC_DIRECTORY.
-    path_str := ENVIRONMENT.get_environment_variable "LISAAC_DIRECTORY";
-    (path_str != NULL).if {
-      string_tmp.copy path_str;
-    } else {
-      path := `LISAAC_DIRECTORY`:NATIVE_ARRAY(CHARACTER);
-      string_tmp.clear;
-      j := 0;
-      {path.item j != '\0'}.while_do {
-	string_tmp.add_last (path.item j);
-	j := j + 1;
-      };
-    };
-    ((string_tmp.last != '/') && {string_tmp.last != '\\'}).if {
-      string_tmp.add_last '/';
-    };
-    path_lisaac := ALIAS_STR.get string_tmp
-  );
-  
+
   //
   // Command.
   //
 
-  - begin_usage1: STRING_CONSTANT :=
-  "----------------------------------------------------------------\n\
-  \--            Lisaac IS An Advanced Compiler V.";
-
-  - begin_usage2: STRING_CONSTANT :=
-  "--\n\
-  \--            LORIA - LSIIT - ULP - CNRS - FRANCE             --\n\
-  \--         Benoit SONNTAG - sonntag@icps.u-strasbg.fr         --\n\
-  \--                   http://www.lisaac.org                    --\n\
-  \----------------------------------------------------------------\n\
-  \Usage:                                                          \n\
+  - begin_usage: STRING_CONSTANT :=
+  "Usage:                                                          \n\
   \  lisaac [<lip_file.lip>] [<input_file[.li]>] {<Options>}       \n\
   \                                                                \n\
-  \  Note: without <lip_file> or <input_file>,                     \n\
-  \        the nearest `make.lip' file is interpreted.             \n\
+  \  Note: without <lip_file> the nearest `make.lip' file is       \n\
+  \        interpreted.                                            \n\
   \                                                                \n\
   \Options:                                                        \n";
-  
-  - end_usage:STRING_CONSTANT :=
-  "                                                                \n\
-  \Bug report:                                                     \n\
-  \\t post in: https://alioth.debian.org/projects/lisaac/         \n";
+
 
   - display_usage <-
-  (    
-    print_help;
+  (
+    show_help;
     die_with_code exit_failure_code;
   );
-  
+
   //
   // Options.
   //
-  
+
   - read_options <-
   ( + cmd:STRING;
-    + j,i:INTEGER;  
+    + j,i,k:INTEGER;
     + f:POINTER;
     + lip_ok:BOOLEAN;
     + s:LIP_SLOT_CODE;
     + t:STRING_CONSTANT;
     + arg:LIP_CONSTANT;
     + is_path_list:BOOLEAN;
-    + dir:STRING_CONSTANT;
+    + hook_after_load_lip :{};
+
+    hook_after_load_lip := {};
 
     // Default value.
     is_ansi := TRUE;
@@ -170,7 +76,7 @@ Section Private
     j := 1;
     {j > COMMAND_LINE.upper}.until_do {
       cmd := COMMAND_LINE.item j;
-      (cmd.item 1='-').if {        
+      (cmd.item 1='-').if {
 	//
 	// Lecture des options :
         //
@@ -187,14 +93,18 @@ Section Private
           }
           .when 'g' then {
             is_readable := is_graph := TRUE;
+          }
+          .when 's' then {
+            is_speed_push := TRUE;
           };
         } else {
           (lip_ok).if_false {
             load_lip "make.lip";
+            hook_after_load_lip.value;
             lip_ok := TRUE;
           };
           string_tmp.copy cmd;
-          string_tmp.remove_first 1;          
+          string_tmp.remove_first 1;
           string_tmp.replace_all '-' with '_';
           s := LIP_CODE.get_method (ALIAS_STR.get string_tmp);
           ((s = NULL) || {s.section != ALIAS_STR.section_public}).if {
@@ -213,7 +123,7 @@ Section Private
             };
             cmd := COMMAND_LINE.item j;
             t := s.argument.value.name;
-            arg := NULL;            
+            arg := NULL;
             (t = ALIAS_STR.prototype_boolean).if {
               cmd.to_upper;
               (cmd ~= "TRUE").if {
@@ -221,8 +131,8 @@ Section Private
               }.elseif {cmd ~= "FALSE"} then {
                 arg := LIP_BOOLEAN.get FALSE;
               };
-            }.elseif {t = ALIAS_STR.prototype_integer} then {              
-              (cmd.is_integer).if {                
+            }.elseif {t = ALIAS_STR.prototype_integer} then {
+              (cmd.is_integer).if {
                 arg := LIP_INTEGER.get (cmd.to_integer);
               };
             } else {
@@ -233,7 +143,7 @@ Section Private
               cmd.print;
               "' argument.\n".print;
               display_usage;
-            };            
+            };
           } else {
             arg := NULL;
           };
@@ -245,9 +155,9 @@ Section Private
       } else {
 	//
 	// Input name & Current Directory.
-        //        
+        //
         (cmd.has_suffix ".lip").if {
-          // .lip 
+          // .lip
           (lip_ok).if {
             "ERROR: Put options after `".print;
             cmd.print;
@@ -255,50 +165,45 @@ Section Private
             display_usage;
           };
           load_lip cmd;
+          hook_after_load_lip.value;
           lip_ok := TRUE;
         } else {
           // .li
-          (lip_ok).if_false {
-            load_lip "make.lip";
-            lip_ok := TRUE;
-          };
           (input_name != NULL).if {
             display_usage;
           };
+          // Remove extension and replace '\'
           string_tmp.copy (COMMAND_LINE.item j);
-          string_tmp2.copy string_tmp;
           string_tmp.replace_all '\\' with '/';
+          k := last_index_str (string_tmp,'/');
+          i := last_index_str (string_tmp,'.');
+          ((i > string_tmp.lower) && {i > k}).if {
+            string_tmp.remove_last (string_tmp.upper-i+1);
+          };
+          input_name := ALIAS_STR.get (string_tmp);
+          hook_after_load_lip := {
+            LIP_CODE.put_string input_name to (ALIAS_STR.slot_input_file);
+            LIP_CODE.put_string input_name to (ALIAS_STR.slot_output_file);
+          };
+          // get dirname
           i := last_index_str (string_tmp,'/');
           (i < string_tmp.lower).if {
             string_tmp.copy "./";
           } else {
             string_tmp.remove_last (string_tmp.upper-i);
-            string_tmp2.remove_first i;
           };
-          i := last_index_str (string_tmp2,'.');
-          (i > string_tmp2.lower).if {
-            string_tmp2.remove_last (string_tmp2.upper-i+1);
-          };
-          dir := ALIAS_STR.get string_tmp;
-          LIP_CALL.load_directory dir is_recursive FALSE;          
-          input_name := ALIAS_STR.get string_tmp2;
-          LIP_CODE.put_string input_name to (ALIAS_STR.slot_input_file);
+          input_path := ALIAS_STR.get (string_tmp);
         };
       };
       j := j+1;
-    };            
+    };
     (lip_ok).if_false {
-      load_lip "make.lip";
+      load_lip "make.lip" in input_path;
+      hook_after_load_lip.value;
     };
-    
-    // Executing `front_end':
-    s := LIP_CODE.get_method (ALIAS_STR.slot_front_end);
-    (s = NULL).if {
-      "Slot `front_end' not found in *.lip file.\n".print;
-      die_with_code exit_failure_code;
-    };
-    s.run_with NULL;
-    
+
+    LIP_CODE.call_front_end;
+
     (is_path_list).if {
       string_tmp.clear;
       (path_file.lower).to (path_file.upper) do { n:INTEGER;
@@ -309,308 +214,446 @@ Section Private
         STD_ERROR.put_string "Error: File `current_path.txt' is not created !\n";
         die_with_code exit_failure_code;
       };
-      f := FS_MIN.open_write "current_path.txt";    
-      FS_MIN.write f with string_tmp size (string_tmp.count);    
-      FS_MIN.close f;      
+      f := FS_MIN.open_write "current_path.txt";
+      FS_MIN.write f with string_tmp size (string_tmp.count);
+      FS_MIN.close f;
       die_with_code 0;
     };
-    
+
     // Loading variable.
     input_name         := LIP_CODE.get_string  (ALIAS_STR.slot_input_file);
     output_name        := LIP_CODE.get_string  (ALIAS_STR.slot_output_file);
+    output_extension   := LIP_CODE.get_string  (ALIAS_STR.slot_output_extension);
     debug_level_option := LIP_CODE.get_integer (ALIAS_STR.slot_debug_level);
     debug_with_code    := LIP_CODE.get_boolean (ALIAS_STR.slot_debug_with_code);
     is_all_warning     := LIP_CODE.get_boolean (ALIAS_STR.slot_is_all_warning);
-    is_optimization    := LIP_CODE.get_boolean (ALIAS_STR.slot_is_optimization);
+    is_optimization    := LIP_CODE.get_boolean (ALIAS_STR.slot_is_optimization);    
     inline_level       := LIP_CODE.get_integer (ALIAS_STR.slot_inline_level);
     is_statistic       := LIP_CODE.get_boolean (ALIAS_STR.slot_is_statistic);
-    is_quiet           := LIP_CODE.get_boolean (ALIAS_STR.slot_is_quiet);
+    is_quiet           := LIP_CODE.get_boolean (ALIAS_STR.slot_is_quiet);    
+    is_library         := LIP_CODE.get_boolean (ALIAS_STR.slot_is_library);
     //
-    ((input_name = NULL) || {input_name.is_empty}).if {      
+    ((input_name = NULL) || {input_name.is_empty}).if {
       "ERROR: `input_file' is empty.\n".print;
       display_usage;
-    };        
+    };
+    // Separate path (string_tmp) and file (string_tmp2)
+    string_tmp.copy input_name;
+    string_tmp2.copy string_tmp;
+    i := last_index_str (string_tmp,'/');
+    (i < string_tmp.lower).if {
+      string_tmp.copy "./";
+    } else {
+      string_tmp.remove_last (string_tmp.upper-i);
+      string_tmp2.remove_first i;
+    };
+    LIP_CALL.load_directory (ALIAS_STR.get string_tmp) is_recursive FALSE;
+    //
+    string_tmp.copy (path_file.last);
+    i := last_index_str (string_tmp,'/');
+    string_tmp.remove_last (string_tmp.upper-i);
+    input_path := ALIAS_STR.get string_tmp;
+    input_name := ALIAS_STR.get string_tmp2;
+    //
     ((output_name = NULL) || {output_name.is_empty}).if {
-      (dir = NULL).if {
+      (input_path = NULL).if {
         string_tmp.clear;
       } else {
-        string_tmp.copy dir;
+        string_tmp.copy input_path;
       };
-      string_tmp.append input_name;    
-      output_name := ALIAS_STR.get string_tmp;    
-      LIP_CODE.put_string output_name to (ALIAS_STR.slot_output_file);    
+      string_tmp.append input_name;
+      output_name := ALIAS_STR.get string_tmp;
+      LIP_CODE.put_string output_name to (ALIAS_STR.slot_output_file);
     };
-  );
-    
-  - load_lip file_lip:ABSTRACT_STRING <-
-  ( + path_lip:STRING_CONSTANT;
-    + is_good:BOOLEAN;
-    + count:INTEGER;
-
-    string_tmp.clear;
-    {      
-      string_tmp.append file_lip;
-      path_lip := ALIAS_STR.get string_tmp;      
-      (is_good := PARSER.read_lip path_lip).if_false {      
-        string_tmp.copy path_lip;
-        string_tmp.remove_last (file_lip.count);
-        string_tmp.append "../";
-        count := count + 1;
-      };
-    }.do_while {(count < 5) && {! is_good}};
-    (is_good).if_false {
-      string_tmp.copy path_lisaac;
-      string_tmp.append "make.lip";
-      path_lip := ALIAS_STR.get string_tmp;
-      (is_good := PARSER.read_lip path_lip).if_false {      
-        "File `".print;
-        path_lip.print;
-        "' not found !\nIncorrect installation.\n".print;
-        die_with_code exit_failure_code;
-      };      
-    };            
-    {LIP_CODE.list_parent.is_empty}.until_do {
-      path_lip := LIP_CODE.list_parent.first;
-      LIP_CODE.list_parent.remove_first;      
-      (path_lip.is_empty).if {
-        string_tmp.copy path_lisaac;
-        string_tmp.append "make.lip";
-        path_lip := ALIAS_STR.get string_tmp;
-      };
-      (PARSER.read_lip path_lip).if_false {      
-        "File `".print;
-        path_lip.print;
-        "' not found ! (see `*.lip')\n".print;          
-        die_with_code exit_failure_code;
-      };
+    ((output_extension = NULL) || {output_extension.is_empty}).if {
+      output_extension := ALIAS_STR.extension_c;
+      LIP_CODE.put_string output_extension to (ALIAS_STR.slot_output_extension);
     };
-    // Auto-load 'lisaac' variable.
-    LIP_CODE.put_string path_lisaac to (ALIAS_STR.variable_lisaac);    
+    LIP_CODE.init_path_file FALSE;
   );
 
   - put_trace_code buf:STRING <-
   ( + proto:PROTOTYPE;
-    
+
     ((debug_level_option != 0) || {CALL_NULL.is_necessary}).if {
       title "DEBUG MANAGER" in buf;
-      
-      (is_java).if {
-        buf.append 
-        "private static void print_string(String str) \n\
-        \{ \n\
-        \  System.out.print(str);\n\
-        \}\n\
-        \\n";
-      } else {
-        buf.append 
-        "int print_string(char *str) \n\
-        \{ \n\
-        \  while (*str!=0) {\n\
-        \    print_char(*str); \n\
-        \    str++; \n\
-        \  };\n\
-        \  return(0);\n\
-        \}\n\
-        \\n";
-      };
+           
+      buf.append
+      "int print_string(char *str) \n\
+      \{ \n\
+      \  while (*str!=0) {\n\
+      \    print_char(*str); \n\
+      \    str++; \n\
+      \  };\n\
+      \  return(0);\n\
+      \}\n\
+      \\n";
     };
 
-    (debug_level_option != 0).if {
+    (debug_level_option != 0).if {            
       buf.append "char *trace[";
       buf.append (PROTOTYPE.prototype_list.count.to_string);
       buf.append "]={\n";
-      (PROTOTYPE.prototype_list.lower).to (PROTOTYPE.prototype_list.upper-1) do { 
+      (PROTOTYPE.prototype_list.lower).to (PROTOTYPE.prototype_list.upper-1) do {
 	j:INTEGER;
 	proto := PROTOTYPE.prototype_list.item j;
 	buf.append "  \"";
 	buf.append (proto.name);
-	buf.append " (";
-	buf.append (proto.filename);
+        buf.append " (";
+        proto.append_filename buf;
 	buf.append ")\",\n";
       };
       proto := PROTOTYPE.prototype_list.last;
       buf.append "  \"";
       buf.append (proto.name);
       buf.append " (";
-      buf.append (proto.filename);
+      proto.append_filename buf;
       buf.append ")\"\n};\n\n";
 
       //
       // Source Code.
       //
-            
+
       (debug_with_code).if {
-	+ src:HASHED_DICTIONARY(STRING,UINTEGER_32);
-	+ key:UINTEGER_32;
-        
+	+ src:FAST_ARRAY(POSITION);
+
         title "SOURCE LINE REFERENCE" in output_decl;
-	
-	buf.append 
+
+	buf.append
 	"struct __source {\n\
 	\  unsigned int pos;\n\
 	\  char *line;\n\
-	\} __src[";
+        \} __src[";
 	src := PUSH.source_line;
 	src.count.append_in buf;
-	buf.append "]={\n";		
-	(src.lower).to (src.upper) do { j:INTEGER;
-	  key := src.key j;
-	  output_decl.append "#define L";
-	  key.append_in output_decl;
-	  output_decl.add_last ' ';
-	  (j-1).append_in output_decl;
-	  output_decl.add_last '\n';
-	  //
-	  buf.append "  {";	 
-	  key.append_in buf;
+	buf.append "]={\n";
+	(src.lower).to (src.upper) do { j:INTEGER;	  
+	  buf.append "  {";
+	  src.item j.code.append_in buf;
 	  buf.append ",\"";
-	  buf.append (src.item j);
+	  src.item j.extract_line_in buf;
 	  buf.append "\"},\n";
 	};
 	buf.remove (buf.upper - 1);
 	buf.append "};\n\n";
       };
-      
+
       //
       // Signal manager.
-      // 
-      
+      //
+            
       (is_ansi).if {
-	buf.append 
+	buf.append
 	"/* Unix Signal manager: */\n\
 	\void interrupt_signal(int sig)  \n\
 	\{                               \n\
-	\  lisaac_stack_print(top_context);     \n\
+	\  lisaac_stack_print(0);     \n\
 	\  print_string(\"User interrupt.\\n\"); \n\
 	\  die_with_code(1);                     \n\
 	\}                                       \n\n";
       };
-	
+
       //
       // Stack manager.
-      //
+      //      
       
-      buf.append 	
-      "void lisaac_push_first(_____CONTEXT *path,unsigned long code)\n\
-      \{ \n";
-      (debug_level_option = 20).if {
-	buf.append 
-	"  _____CONTEXT *cur,loop;\n\
-	\  cur = top_context; \n\
-	\  while ((cur != (void *)0) && (cur != path)) cur = cur->back; \n\
-	\  if (cur == path) {\n\
-	\    loop.back = top_context;\n\	
-	\    loop.code = code; \n\
-	\    lisaac_stack_print(&loop);\n\
-	\    print_string(\"COMPILER: Debug context looping detected !\\n\");\n\
-	\    die_with_code(1);\n\
-	\  };\n";
+      (is_speed_push).if {
+        buf.append
+        "void _li_swap(long a,long b)                                      \n\
+        \{ long i,tmp;                                                     \n\ /* } */
+        \  for (i=3;i<__li_mountain[1];i+=3) {                             \n\ /* } */
+        \    if (__li_mountain[i+2] == a*3) __li_mountain[i+2] = b*3; else \n\
+        \    if (__li_mountain[i+2] == b*3) __li_mountain[i+2] = a*3;      \n\ /* { */
+        \  }                                                               \n\
+        \  for (i=0;i<3;i++) {                                             \n\ /* } */
+        \    tmp = __li_mountain[a * 3 + i];                               \n\
+        \    __li_mountain[a * 3 + i] = __li_mountain[b * 3 + i];          \n\
+        \    __li_mountain[b * 3 + i] = tmp;                               \n\ /* { */
+        \  };                                                              \n\ /* { */
+        \};                                                                \n\
+        \ \n\
+        \void _li_quicksort(long low,long up)                              \n\
+        \{ long i,j,pivot,tmp;                                             \n\ /* } */
+        \  if (low < up) {                                                 \n\ /* } */
+        \    pivot = __li_mountain[low*3];                                 \n\
+        \    i = low;                                                      \n\ 
+        \    j = up + 1;                                                   \n\
+        \    do {                                                          \n\ 
+        \      do ++i; while ((__li_mountain[i*3] <= pivot) && (i <= up)); \n\
+        \      do --j; while (__li_mountain[j*3] > pivot);                 \n\
+        \      if (i < j) _li_swap(i,j);                                   \n\ /* { */
+        \    } while (i < j);                                              \n\ 
+        \    _li_swap(low,j);                                              \n\
+        \    _li_quicksort(low,j-1);                                       \n\
+        \    _li_quicksort(j+1,up);                                        \n\ /* { */
+        \  };                                                              \n\ /* { */
+        \}                                                                 \n\
+        \ \n\
+        \void __li_fix_order_mountain()                           \n\
+        \{ int j,i;                                               \n\ /* }*/
+        \  long index,prev,cur;                                   \n\
+        \  prev = -1;                                             \n\
+        \  for (j=0;j<__li_mountain[1];j+=3) {                    \n\ /* } */
+        \    cur = __li_mountain[j];                              \n\
+        \    if (cur == prev) {                                   \n\ /* } */
+        \      __li_mountain[j] = __li_mountain[j-3]+1;           \n\ /* { */
+        \    } else {                                             \n\ /* } */
+        \      __li_mountain[j] = __li_mountain[j] << 16;         \n\ /* { */
+        \    }                                                    \n\
+        \    prev = cur;                                          \n\ /* { */
+        \  }                                                      \n\ /* { */
+        \}                                                        \n\
+        \ \n\
+        \void __li_display_mountain()                 \n\
+        \{ int i;                                     \n\ /* } */
+        \  for (i=3;i<__li_mountain[1];i+=3) {        \n\ /* } */
+        \    print_integer(i);                        \n\
+        \    print_string(\": \");                    \n\ /* { */
+        \    print_integer_h(__li_mountain[i]);       \n\
+        \    print_string(\", \");                    \n\ /* { */
+        \    print_integer_h(__li_mountain[i+1]);     \n\
+        \    print_string(\", \");                    \n\ /* { */
+        \    print_integer(__li_mountain[i+2]);       \n\
+        \    print_string(\"\\n\");                   \n\ /* { */
+        \  };                                         \n\ /* { */
+        \}                                            \n\ 
+        \ \n\
+        \void _li_display_stack(long top)        \n\
+        \{ long j;                               \n\ /* } */
+        \  long *stack;                          \n\
+        \  print_string(\"Stack:\");             \n\
+        \  print_integer_h(top);                 \n\
+        \  print_string(\"\\n\");                \n\
+        \  for (j=0;j<20;j++) {                  \n\ /* } */
+        \    print_integer_h(stack[(top>>3)+j]); \n\
+        \    print_string(\"\\n\");              \n\ /* { */
+        \  }                                     \n\
+        \  print_string(\"- End -\\n\");         \n\ /* { */
+        \}                                       \n\
+        \ \n\
+        \long __li_get_top()                          \n\
+        \{ long result;                               \n\
+        \  asm(\"movq %%rsp,%0\": \"=r\" (result) : );\n\ /* } */
+        \  return result;                             \n\ /* { */
+        \}                                            \n\ 
+        \ \n\
+        \long tmp_rsp; \n\
+        \long __li_get_back_index(long idx,long rsp_current)                                    \n\
+        \{ long result,rip,i,beg,end;                                                           \n\ /* } */
+        \  long *stack = NULL;                                                                  \n\
+        \  result = __li_mountain[idx+2];                                                       \n\ 
+        \  if (result == -1) {                                                                  \n\ /* } */        
+        \    tmp_rsp = rsp_current;                                                             \n\
+        \    result = 0;                                                                        \n\
+        \    do {                                                                               \n\ /* } */
+        \      rip = stack[tmp_rsp >> 3];                                                       \n\
+        \      if ((rip>(__li_mountain[3]>>16)) && (rip<(__li_mountain[0]>>16))) {              \n\ /* } */
+        \        i = 3;                                                                         \n\ 
+        \        do {                                                                           \n\ /* } */
+        \          beg = __li_mountain[i]>>16;                                                  \n\
+        \          end = __li_mountain[i+1];                                                    \n\        
+        \          do {                                                                         \n\ /* } */
+        \            i += 3;                                                                    \n\ /* { */
+        \          } while ((rip<end) && (rip>(__li_mountain[i]>>16)));                         \n\
+        \          if (rip < end) {                                                             \n\ /* } */
+        \            result = i-3;                                                              \n\ /* { */
+        \          }                                                                            \n\ /* { */
+        \        } while ((result == 0) && (i < __li_mountain[1]));                             \n\ /* { */
+        \      }                                                                                \n\
+        \      tmp_rsp += 8;                                                                    \n\ /* { */          
+        \    } while (result == 0);                                                             \n\ /* { */          
+        \  }                                                                                    \n\  
+        \  return result;                                                                       \n\  /* { */
+        \}                                                                                      \n\ 
+        \ \n\
+        \void __li_sub_stack_print(long idx_mount,long up)            \n\
+        \{ long idx_new,up_new,code,j;                                \n\ /* } */
+        \  if (idx_mount > 0) {                                       \n\ /* } */
+        \    idx_new = __li_get_back_index(idx_mount,up);             \n\  
+        \    up_new = tmp_rsp;                                        \n\
+        \    __li_sub_stack_print(idx_new,up_new);                    \n\
+        \    code = __li_mountain[idx_mount+1];                       \n";
+        (debug_with_code).if {                                             /* }}(  */
+          buf.append
+          "    print_string(\"Line #\");                             \n\
+          \    print_integer(__src[code].pos >> 17);                 \n\
+          \    print_string(\" Column #\");                          \n\
+          \    print_integer((__src[code].pos >> 9) & 0xFF);         \n\
+          \    print_string(\" in \");                               \n\
+          \    print_string(trace[__src[code].pos & 0x1FF]);         \n\
+          \    print_string(\".\\n\");                               \n\
+          \    print_string(__src[code].line);                       \n\ /* } */
+          \    print_char('\\n');                                    \n\
+          \    for (j=0;j < ((__src[code].pos >> 9) & 0xFF);j++) {   \n\
+          \      if (__src[code].line[j]=='\\t') print_char('\\t');  \n\ /* } */
+          \      else print_char(' ');                               \n\ /* ( */
+          \    };                                                    \n\
+          \    print_char('^');                                      \n\
+          \    print_char('\\n');                                    \n"; 
+        } else {                                                            /* }}{ */
+          buf.append 
+          "    print_string(\"Line #\");                                \n\               
+          \    print_integer(code >> 17);                               \n\
+          \    print_string(\" Column #\");                             \n\
+          \    print_integer((code >> 9) & 0xFF);                       \n\
+          \    print_string(\" in \");                                  \n\
+          \    print_string(trace[code & 0x1FF]);                       \n\
+          \    print_string(\".\\n\");                                  \n"; 
+        };
+        buf.append /* { */
+        "  };                                                         \n\ /* } */
+        \};                                                           \n\ /* { */
+        \ \n\ /* } */
+        \void lisaac_stack_print(long up)                             \n\  
+        \{ long idx_mount,top;                                        \n\ /* } */       
+        \  __li_fix_order_mountain();                                 \n\
+        \  _li_quicksort(1,(__li_mountain[1]/3)-1);                   \n\
+        \  print_string(\"\\n============== BOTTOM ==============\\n\"); \n\
+        \  asm(\"movq %%rsp,%0\": \"=r\" (tmp_rsp) : );               \n\
+        \  idx_mount = __li_get_back_index(0,tmp_rsp);                \n\
+        \  __li_sub_stack_print(idx_mount,tmp_rsp);                   \n\
+        \  print_string(\"================ TOP ===============\\n\"); \n\  /* { */
+        \}                                            \n\ /* { */
+        \ \n";                  
+      } else {
+        buf.append
+        "void lisaac_push_first(_____CONTEXT *path,unsigned long code)\n\
+        \{ \n";                                                            /* } */
+        (debug_level_option = 20).if {                                     /* }}( */    
+          buf.append
+          "  _____CONTEXT *cur,loop;\n\
+          \  cur = top_context; \n\
+          \  while ((cur != (void *)0) && (cur != path)) cur = cur->back; \n\
+          \  if (cur == path) {\n\
+          \    loop.back = top_context;\n\                                 /* } */
+          \    loop.code = code; \n\
+          \    lisaac_stack_print((long)&loop);\n\
+          \    print_string(\"COMPILER: Debug context looping detected !\\n\");\n\
+          \    die_with_code(1);\n\
+          \  };\n";
+        };
+        buf.append
+        "  path->back  = top_context;\n\
+        \  path->code  = code;\n\
+        \  top_context = path;\n\                                          /* ( */
+        \} \n\      
+        \  \n\
+        \void lisaac_push(_____CONTEXT *path,unsigned long code)\n\
+        \{ \n\
+        \  path->code  = code;\n\                                          /* } */
+        \  top_context = path;\n\                                          /* ( */
+        \} \n\
+        \  \n\
+        \  \n\
+        \void lisaac_stack_print(long step)           \n\
+        \{ _____CONTEXT *back,*next,*up;              \n\
+        \  int j;	                              \n\                  /* } */
+        \  up = top_context;                          \n\
+        \  for (j=0;j<step;j++) up = up->back;        \n\
+        \  next = (void *)0;                          \n\
+        \  while (up != (void *)0) {                  \n\
+        \    back = up -> back;                       \n\                  /* } */
+        \    up -> back = next;                       \n\
+        \    next = up;                               \n\
+        \    up = back;                               \n\                  /* ( */
+        \  };                                         \n\            
+        \  print_string(\"\\n============== BOTTOM ==============\\n\"); \n\
+        \  while (next != (void *)0) {                \n";                 
+        (debug_with_code).if {                                             /* }}(  */
+          buf.append
+          "    print_string(\"Line #\");                           \n\
+          \    print_integer(__src[next->code].pos >> 17);         \n\
+          \    print_string(\" Column #\");                        \n\
+          \    print_integer((__src[next->code].pos >> 9) & 0xFF); \n\
+          \    print_string(\" in \");                             \n\
+          \    print_string(trace[__src[next->code].pos & 0x1FF]); \n\
+          \    print_string(\".\\n\");                             \n\
+          \    print_string(__src[next->code].line);               \n\     /* } */
+          \    print_char('\\n');                                  \n\
+          \    for (j=0;j < ((__src[next->code].pos >> 9) & 0xFF);j++) {\n\
+          \      if (__src[next->code].line[j]=='\\t') print_char('\\t');\n\   /* } */
+          \      else print_char(' ');\n\                                  /* ( */
+          \    };                                                  \n\
+          \    print_char('^');                                    \n\
+          \    print_char('\\n');                                  \n";          
+        } else {                                                           /* }( */
+          buf.append
+          "    print_string(\"Line #\");                \n\
+          \    print_integer(next->code >> 17);         \n\
+          \    print_string(\" Column #\");             \n\
+          \    print_integer((next->code >> 9) & 0xFF); \n\
+          \    print_string(\" in \");                  \n\
+          \    print_string(trace[next->code & 0x1FF]); \n\
+          \    print_string(\".\\n\");                  \n";
+        };
+        buf.append
+        "    next = next -> back;                     \n\               
+        \  };                                         \n\                  /* { */
+        \  print_string(\"================ TOP ===============\\n\"); \n\  /* ) */
+        \  top_context = (void *)0;                   \n\                  /* { */
+        \}                                            \n\ 
+        \ \n";
       };
       buf.append
-      "  path->back  = top_context;\n\
-      \  path->code  = code;\n\
-      \  top_context = path;\n\
-      \} \n\
-      \  \n\
-      \void lisaac_push(_____CONTEXT *path,unsigned long code)\n\
-      \{ \n\      	
-      \  path->code  = code;\n\
-      \  top_context = path;\n\  
-      \} \n\
-      \  \n\
-      \void lisaac_stack_print(_____CONTEXT *up)      \n\
-      \{ _____CONTEXT *back,*next;             \n\
-      \  int j;	                              \n\
-      \  next = (void *)0;                          \n\  
-      \  while (up != (void *)0) {                  \n\
-      \    back = up -> back;                       \n\
-      \    up -> back = next;                       \n\  
-      \    next = up;                               \n\
-      \    up = back;                               \n\
-      \  };                                         \n\
-      \  print_string(\"\\n============== BOTTOM ==============\\n\"); \n\
-      \  while (next != (void *)0) {                \n";
-      (debug_with_code).if {
-	buf.append
-	"    print_string(\"Line #\");                           \n\
-	\    print_integer(__src[next->code].pos >> 17);         \n\ 
-	\    print_string(\" Column #\");                        \n\
-	\    print_integer((__src[next->code].pos >> 9) & 0xFF); \n\ 
-	\    print_string(\" in \");                             \n\
-	\    print_string(trace[__src[next->code].pos & 0x1FF]); \n\
-	\    print_string(\".\\n\");                             \n\
-\ if ((__src[next->code].pos & 0x1FF) != 0) { \n\
-        \    print_string(__src[next->code].line);               \n\
-	\    print_char('\\n');                                  \n\
-	\    for (j=0;j < ((__src[next->code].pos >> 9) & 0xFF);j++) {\n\
-	\      if (__src[next->code].line[j]=='\\t') print_char('\\t');\n\
-        \      else print_char(' ');\n\
-        \    };                                                  \n\
-        \    print_char('^');    \n\
-	\    print_char('\\n');   \n\
-\ }; \n";	
-	
-      } else {    
-	buf.append
-	"    print_string(\"Line #\");                \n\
-	\    print_integer(next->code >> 17);         \n\
-	\    print_string(\" Column #\");          \n\
-	\    print_integer((next->code >> 9) & 0xFF); \n\ 
-	\    print_string(\" in \");               \n\
-	\    print_string(trace[next->code & 0x1FF]); \n\
-	\    print_string(\".\\n\");                  \n";
-      };
-      buf.append 
-      "    next = next -> back;                     \n\
-      \  };                                         \n\
-      \  print_string(\"================ TOP ===============\\n\"); \n\
-      \  top_context = (void *)0;                   \n\
-      \}                                            \n\
-      \ \n\
-      \void print_integer(unsigned short n) \n\
-      \{ unsigned short val;                \n\
-      \  char car;                          \n\	
+      "void print_integer(long n)           \n\
+      \{ long val;                          \n\ /* } */
+      \  char car;                          \n\
+      \  if (n<0) { print_char('-'); n=-n;};\n\
       \  car = (n % 10) + '0';              \n\
       \  val = n / 10;                      \n\
       \  if (val != 0) print_integer(val);  \n\
       \  print_char(car);                   \n\
-      \} \n\n";
+      \} \n\n\
+      \void print_integer_h_2(unsigned long n,long l) \n\
+      \{ unsigned long val,v,j;            \n\ /* } */
+      \  char car;                           \n\
+      \  v = n & 0xF;                        \n\
+      \  if (v < 10) car = v + '0'; else car = (v-10) + 'A'; \n\
+      \  val = n >> 4;                       \n\
+      \  if (val != 0) print_integer_h_2(val,l-1); else \n\
+      \  for (j=0;j<l;j++) print_string(\"-\"); \n\
+      \  print_char(car);                    \n\ /* { */
+      \} \n\
+      \ \n\
+      \void print_integer_h(unsigned long n)  \n\
+      \{                                      \n\ /* } */
+      \  print_integer_h_2(n,15);             \n\ /* { */
+      \} \n\
+      \ \n\n";
     };
   );
-  
+
   - load_main_object <-
   ( + type_gen:FAST_ARRAY(ITM_TYPE_MONO);
     + itm_type_character:ITM_TYPE_MONO;
     + itm_type_n_a_character:ITM_TYPE_MONO;
-    
+
     // NULL, VOID, CONTEXT
-    TYPE_NULL.make_null;    
+    TYPE_NULL.make_null;
     TYPE_VOID.make_void;
-    TYPE_CONTEXT.make_context;    
-    TYPE_ID.make_type_id; // Pas utile !    
-    // Input.
-    string_tmp.copy input_name;
-    string_tmp.to_upper;
-    type_input   := ITM_TYPE_SIMPLE.get (ALIAS_STR.get string_tmp).to_run_for NULL.raw;
+    TYPE_CONTEXT.make_context;
+    TYPE_ID.make_type_id; // Pas utile !
     // Other prototype.
-    type_true    := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_true)      
+    type_true    := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_true)
     style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_false   := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_false)     
+    type_false   := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_false)
     style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_boolean := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_boolean)   
+    type_boolean := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_boolean)
     style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_integer := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_integer)   
+    type_integer := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_integer)
     style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_real    := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_real)   
+    type_real    := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_real)
     style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
-    type_integer_32 := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_integer_32)   
+    type_integer_32 := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_integer_32)
+    style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
+    type_uinteger_32 := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_uinteger_32)
     style (ALIAS_STR.keyword_expanded).to_run_for NULL.raw;
     type_string_constant := ITM_TYPE_SIMPLE.get (ALIAS_STR.prototype_string_constant)
     .to_run_for NULL.raw;
-    itm_type_character   := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_character) 
+    itm_type_character   := ITM_TYPE_STYLE.get (ALIAS_STR.prototype_character)
     style (ALIAS_STR.keyword_expanded);
     type_character := itm_type_character.to_run_for NULL.raw;
-    type_block     := ITM_TYPE_SIMPLE.get (ALIAS_STR.prototype_block).to_run_for NULL.raw;        
+    type_block     := ITM_TYPE_SIMPLE.get (ALIAS_STR.prototype_block).to_run_for NULL.raw;
     //
     type_pointer   := ITM_TYPE_SIMPLE.get (ALIAS_STR.prototype_pointer).to_run_for NULL.raw;
     // NATIVE_ARRAY(CHARACTER)
@@ -626,19 +669,23 @@ Section Private
     type_gen  := ALIAS_ARRAY(ITM_TYPE_MONO).alias type_gen;
     type_n_a_n_a_character := ITM_TYPE_GENERIC.get (ALIAS_STR.prototype_native_array)
     style NULL with type_gen.to_run_for NULL.raw;
-    //    
+    // Input.
+    string_tmp.copy input_name;
+    string_tmp.to_upper;
+    type_input   := ITM_TYPE_SIMPLE.get (ALIAS_STR.get string_tmp).to_run_for NULL.raw;
+    //
     (debug_level_option != 0).if {
       // Load for `print_char' and `die_with_code'
       ITM_TYPE_SIMPLE.get (ALIAS_STR.prototype_system_io).to_run_for NULL;
     };
     ? {type_input != NULL};
   );
-  
+
   - print msg:STRING_CONSTANT stat n:INTEGER for t:INTEGER <-
   ( + pour_mil:INTEGER;
-    
+
     (t != 0).if {
-      STD_ERROR.put_string msg;    
+      STD_ERROR.put_string msg;
       pour_mil := `(int)((1000./ @t * @n))`:INTEGER;
       STD_ERROR.put_integer (pour_mil/10);
       STD_ERROR.put_character '.';
@@ -650,8 +697,11 @@ Section Private
       STD_ERROR.put_string ")\n";
     };
   );
-  
-Section Public  
+
+Section Public
+
+  - tab:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create 128;
+  - tab_null:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create 128;
 
   //
   // Creation.
@@ -661,25 +711,27 @@ Section Public
   ( + file_output:POINTER;
     //+ entry:ENTRY;
     + begin_time,end_time:UINTEGER_64;
-    + time:INTEGER;    
+    + time:INTEGER;
     + txt:STRING;
     + s:LIP_SLOT_CODE;
     + f:POINTER;
+    + tmp,tmp2:INTEGER;
 
     ALIAS_STR.make;
-    
+
     begin_time := SYSTEM.get_universal_time;
-    
+
     //
-    // Load Environment. 
+    // Load Environment.
     //
     read_options;
     is_verbose.if {
       string_tmp.copy "\ninput  file: ";
-      string_tmp.append input_name;      
+      string_tmp.append input_name;
       string_tmp.append ".li\noutput file: ";
       string_tmp.append output_name;
-      string_tmp.append ".c\npath directory :\n";
+      string_tmp.append output_extension;
+      string_tmp.append "\npath directory :\n";
       path_file.lower.to (path_file.upper) do { j:INTEGER;
 	string_tmp.append "  ";
 	string_tmp.append (path_file.item j);
@@ -687,147 +739,132 @@ Section Public
       };
       string_tmp.print;
     };
-    
-    //
-    // Header C 
-    //    
-    (is_java).if {
-      output_decl.copy "// Java code generated by Lisaac compiler (www.isaacOS.com) //\n";
-      output_decl.append "class ";      
-      output_decl.append input_name;
-      output_decl.append " {\n";
-      output_decl.append "private static String arg[];\n";
-    } else {
-      output_decl.copy "/* C code generated by Lisaac compiler (www.lisaac.org) */\n";
-      
-      // Large file headers
-      output_decl.append
-      "#define _LARGE_FILE_API\n\
-      \#define _LARGEFILE_SOURCE\n\
-      \#define _LARGEFILE64_SOURCE\n";
 
-      // ANSI argument command.
-      (debug_level_option != 0).if {
-        output_decl.append "#include <signal.h>\n";
-      };
-      output_decl.append 
-      "int arg_count;\n\
-      \char **arg_vector;\n";      
-    };    
-    
+    //
+    // Header C
+    //
+    output_decl.copy "/* C code generated by Lisaac compiler (www.lisaac.org) */\n\n";
+
+    // Large file headers
+    output_decl.append
+    "#define _LARGE_FILE_API\n\
+    \#define _LARGEFILE_SOURCE\n\
+    \#define _LARGEFILE64_SOURCE\n";
+
+    // ANSI argument command.
+    (debug_level_option != 0).if {
+      output_decl.append "#include <signal.h>\n";
+    };
+    output_decl.append "int print_string(char *str);\n";
+    output_decl.append
+    "int arg_count;\n\
+    \char **arg_vector;\n";
+
     // External.
     title "EXTERNAL" in output_decl;
-        
+
     //
     // Load prototype constant.
     //
     load_main_object;
-    
-    // Compilation.    
-    type_input.prototype.depend;    
-    
+
+    // Compilation.
+    type_input.prototype.depend;
+
     // Type / Struct.
     title "TYPE" in output_decl;
     
-    (is_java).if {
-      output_decl.append 
-      "/* Generic Object */\n\
-      \class ___OBJ {\n\
-      \  int __id;\n\
-      \};\n\n";          
-    } else {
-      output_decl.append 
-      "/* Generic Object */\n\
-      \struct ___OBJ {\n\
-      \  unsigned int __id;\n\
-      \};\n\n";          
-    };
+    
+    output_decl.append
+    "/* Generic Object */\n\
+    \struct ___OBJ {\n\
+    \  unsigned int __id;\n\
+    \};\n\n";
     title "GLOBAL" in output_glob;
-        
+
     // Function header.
     title "FUNCTION HEADER" in output_code;
-    
+
     // Debug source code.
-    (is_java).if_false {
-      (debug_level_option != 0).if {      
-        output_code.append "/* Debug Manager */\n"; 
-        (is_ansi).if {
-          output_code.append "void interrupt_signal(int sig);\n";
-        };
-        output_code.append 
-        "void lisaac_stack_print(_____CONTEXT *up);\n\
-        \void lisaac_push_first(_____CONTEXT *path,unsigned long code);\n\
-        \void lisaac_push(_____CONTEXT *path,unsigned long code);\n\
-        \void print_integer(unsigned short n);\n";
+    (debug_level_option != 0).if {
+      output_code.append "/* Debug Manager */\n";
+      (is_ansi).if {
+        output_code.append "void interrupt_signal(int sig);\n";
+      };
+      output_code.append
+      "void lisaac_stack_print(long);        \n\
+      \void print_integer_h(unsigned long n);\n\
+      \void print_integer(long n);           \n";
+      (is_speed_push).if {
+        output_code.append        
+        "long __li_get_ret(long current);    \n\
+        \long __li_get_back(long current);   \n\        
+        \extern long __li_mountain[];        \n";
+      } else {
+        output_code.append        
+        "void lisaac_push_first(_____CONTEXT *path,unsigned long code); \n\
+        \void lisaac_push(_____CONTEXT *path,unsigned long code);       \n";
       };
     };
-    
+
     // Extern source code.
     output_code.append "/* Source code */\n";
     PROFIL_LIST.genere_handler output_code;
-    
+
     // Source code.
-    title "SOURCE CODE" in output_code;        
-    
-    (is_java).if {
-      output_code.append "public static void main(String parg[])\n";
+    title "SOURCE CODE" in output_code;
+
+    (is_library).if {
+      output_code.append "int init(int argc,char **argv)\n";
     } else {
       output_code.append "int main(int argc,char **argv)\n";
     };
     output_code.append "{\n";
     indent.append "  ";
-    
-    profil_current := NULL;
-    list_main.genere_extern output_code;    
-        
-    (is_java).if_false {
-      output_code.append "  return(0);\n";
-    };
-    indent.remove_last 2;    
-    output_code.append indent;
-    output_code.append "}\n\n"; 
-        
-    PROFIL_LIST.genere output_code;
-        
-    TYPE.genere_all_struct;        
-    (is_java).if_false {
-      output_decl.append "\nvoid *table_type[";
-      TYPE.id_counter_without_type.append_in output_decl;
-      output_decl.append "];\n";
-    };
-        
-    // String Constant.
 
-    // Trace code.    
+    profil_current := NULL;
+    list_main.genere_extern output_code result NULL;
+
+    output_code.append "  return(0);\n";
+    indent.remove_last 2;
+    output_code.append indent;
+    output_code.append "}\n\n";
+
+    PROFIL_LIST.genere output_code;
+
+    TYPE.genere_all_struct;
+    output_decl.append "\nvoid *table_type[";
+    TYPE.id_counter_without_type.append_in output_decl;
+    output_decl.append "];\n";
+
+    // String Constant.
+    
+    // Trace code.
     put_trace_code output_code;
-    
-    (is_java).if {
-      output_code.append "\n} // End class MAIN\n";
-    };
-    
+
     //
     // Saving File Output.
-    //    
+    //
     string_tmp.copy output_name;
-    string_tmp.append ".c";
+    string_tmp.append output_extension;
     (! FS_MIN.make_file string_tmp).if {
       STD_ERROR.put_string "Error: File ";
       STD_ERROR.put_string string_tmp;
       STD_ERROR.put_string " is not created !\n";
       die_with_code exit_failure_code;
     };
-
+    
     file_output := FS_MIN.open_write string_tmp;
-    FS_MIN.write file_output with output_decl size (output_decl.count);    
+    FS_MIN.write file_output with output_decl size (output_decl.count);
     FS_MIN.write file_output with output_glob size (output_glob.count);
     (STRING_CST.output_count != 0).if {
       txt := STRING_CST.output;
       FS_MIN.write file_output with txt size (txt.count);
-    };    
+    };
     FS_MIN.write file_output with output_code size (output_code.count);
     FS_MIN.close file_output;
     //
-    (is_graph).if {      
+    (is_graph).if {
       + p:PROFIL;
       (PROFIL_LIST.profil_list.lower).to (PROFIL_LIST.profil_list.upper) do { j:INTEGER;
         p := PROFIL_LIST.profil_list.item j;
@@ -837,16 +874,16 @@ Section Public
         };
       };
       //
-      output_code.copy "digraph G {\n";      
+      output_code.copy "digraph G {\n";
       profil_main.genere_graph output_code;
       (PROFIL_LIST.profil_list.lower).to (PROFIL_LIST.profil_list.upper) do { j:INTEGER;
         PROFIL_LIST.profil_list.item j.genere_graph output_code;
       };
       output_code.append "}\n";
-      f := FS_MIN.open_write "graph.txt";    
-      FS_MIN.write f with output_code size (output_code.count);    
-      FS_MIN.close f;      
-    };    
+      f := FS_MIN.open_write "graph.txt";
+      FS_MIN.write f with output_code size (output_code.count);
+      FS_MIN.close f;
+    };
     //
     end_time := SYSTEM.get_universal_time;
     (is_quiet).if_false {
@@ -866,35 +903,227 @@ Section Public
 	STD_ERROR.put_string " warning(s).\n";
       };
     };
-    
-    (is_statistic).if {            
+    (is_statistic).if {
       STD_ERROR.put_string "  Local counter        : ";
       STD_ERROR.put_integer (LIST.local_counter);
       STD_ERROR.put_string "\n";
       STD_ERROR.put_string "  Context counter      : ";
       STD_ERROR.put_integer (LIST.context_counter);
       STD_ERROR.put_string "\n";
-      print "  Null call score      : " stat null_counter for late_binding_counter;            
+      print "  Null call score      : " stat null_counter for late_binding_counter;
       print "  Polymorphic call     : " stat polymorphic_counter for late_binding_counter;
+      print "  Call on Expanded     : " stat late_binding_expanded_counter for late_binding_counter;
+      print "  Call on Self         : " stat late_binding_self_counter     for late_binding_counter;
       //
-      print "  Recursivity function : " 
+      print "  Recursivity function : "
       stat (PROFIL.counter_recursivity_function) for (PROFIL.counter_function);
       //
       (is_optimization).if {
-	"  Invariant loop score : ".print; count_invariant.print; '\n'.print;      
+	"  Invariant loop score : ".print; count_invariant.print; '\n'.print;
+      };
+      //
+      "Type set size vs argument number:\n".print;
+      tmp2 := 0;
+      (PROFIL.nb_arg_size_type.lower).to (PROFIL.nb_arg_size_type.upper) do { i:INTEGER;
+        tmp := PROFIL.nb_arg_size_type.item i;
+        (tmp != 0).if {
+          "  For a type set of ".print;
+          i.print;
+          " types, the number's argument is ".print;
+          tmp.print;
+          tmp2 := tmp2 + tmp;
+          '\n'.print;
+        };
+      };
+      "  Total: ".print;
+      tmp2.print;
+      '\n'.print;
+      //
+      "Number's function vs polymorphic argument's number:\n".print;
+      (PROFIL.nb_func_arg.lower1).to (PROFIL.nb_func_arg.upper1) do { nb_arg:INTEGER;
+        " For a function with ".print;
+        nb_arg.print;
+        " arguments:\n".print;
+        tmp2 := 0;
+        (PROFIL.nb_func_arg.lower2).to (PROFIL.nb_func_arg.upper2) do { nb_arg_poly:INTEGER;
+          tmp := PROFIL.nb_func_arg.item (nb_arg,nb_arg_poly);
+          (tmp != 0).if {
+            "    ".print;
+            tmp.print;
+            " functions with ".print;
+            nb_arg_poly.print;
+            " arguments polymorphics.\n".print;
+            tmp2 := tmp2 + tmp;
+          };
+        };
+        "    Total: ".print;
+        tmp2.print;
+        '\n'.print;
+      };
+
+      (TYPE_GENERIC.paper_list.lower).to (TYPE_GENERIC.paper_list.upper) do { i:INTEGER;
+        + var:VARIABLE;
+        + t:TYPES;
+        + idx:INTEGER;
+        var := TYPE_GENERIC.paper_list.item i.native_array_variable;
+        t := var.type_set;
+        ((var.is_static) || {t.count = 0}).if {
+          tab.put (tab.item 0+1) to 0;
+        } else {
+          idx := t.count;
+          tab.put (tab.item idx+1) to idx;
+          (t.first = TYPE_NULL).if {
+            tab_null.put (tab_null.item idx+1) to idx;
+          };
+        };
+      };
+      "TAB:\n".print;
+      (tab.lower).to (tab.upper) do { i:INTEGER;
+        (tab.item i != 0).if {
+          i.print; '='.print; tab.item i.print; '\n'.print;
+        };
+      };
+      "TAB NULL:\n".print;
+      (tab_null.lower).to (tab_null.upper) do { i:INTEGER;
+        (tab_null.item i != 0).if {
+          i.print; '='.print; tab_null.item i.print; '\n'.print;
+        };
+      };
+
+      /*
+      // Counter on '==' and '!='
+      "\nCounter on '==' and '!=':".print;
+      "\nParser counter       : ".print;
+      count_equal_parse.print;
+      "\nLive counter         : ".print;
+      count_equal_live.print;
+      "\nCreate counter       : ".print;
+      count_equal_creat.print;
+      "\nRemove counter       : ".print;
+      count_equal_remov.print;
+      "\nGenerate counter     : ".print;
+      count_equal_gener.print;
+      '\n'.print;
+      "\nConstant counter     : ".print;
+      count_equal_const.print;
+      "\na = a counter        : ".print;
+      count_equal_ident.print;
+      "\nNULL = NULL counter  : ".print;
+      count_equal_null.print;
+      "\nIntersection counter : ".print;
+      count_equal_inter.print;
+      '\n'.print;
+      // native_array:
+      "\nNATIVE_ARRAY expanded       : ".print;
+      count_na_expanded.print;
+      "\nNATIVE_ARRAY with NULL      : ".print;
+      count_na_null.print;
+      "\nNATIVE_ARRAY without NULL   : ".print;
+      count_na_not_null.print;
+      "\nNATIVE_ARRAY with monomorph : ".print;
+      count_na_mono.print;
+      "\nNATIVE_ARRAY allways NULL   : ".print;
+      count_na_always_null.print;
+      '\n'.print;
+      // local:
+      "\nLocal expanded       : ".print;
+      count_local_expanded.print;
+      "\nLocal with NULL      : ".print;
+      count_local_null.print;
+      "\nLocal without NULL   : ".print;
+      count_local_not_null.print;
+      "\nLocal with monomorph : ".print;
+      count_local_mono.print;
+      "\nLocal allways NULL   : ".print;
+      count_local_always_null.print;
+      '\n'.print;
+      */
+      // switch:
+      "\nswitch          : ".print;
+      count_switch.print;
+      "\nswitch merging  : ".print;
+      count_switch_merging.print;
+      '\n'.print;
+      
+    };
+
+    // MHMH : Stat taille mémoire
+    /*
+    "\n Taille mémoire : ".print;
+    OBJECT.clone_total_size.print;
+    " --> ".print;
+    (OBJECT.clone_total_size/(1024*1024)).print;
+    " Mo\n".print;
+    */
+    
+    /*
+    PROFIL.list_cpa.lower.to (PROFIL.list_cpa.upper) do { i:INTEGER;
+      PROFIL.list_cpa.item i.print;
+      '\n'.print;
+    };
+    */
+    /*
+    "LOCAL : type set size\n".print;
+    (LIST.stat_local.lower).to (LIST.stat_local.upper) do { i:INTEGER;
+      (LIST.stat_local.item i != 0).if {
+        i.print; '='.print;
+        LIST.stat_local.item i.print;
+        '\n'.print;
       };
     };
-        
+    "LOCAL : type set size with NULL\n".print;
+    (LIST.stat_local_null.lower).to (LIST.stat_local_null.upper) do { i:INTEGER;
+      (LIST.stat_local_null.item i != 0).if {
+        i.print; '='.print;
+        LIST.stat_local_null.item i.print;
+        '\n'.print;
+      };
+    };
+    "GLOBAL : type set size\n".print;
+    (TYPE.stat_global.lower).to (TYPE.stat_global.upper) do { i:INTEGER;
+      (TYPE.stat_global.item i != 0).if {
+        i.print; '='.print;
+        TYPE.stat_global.item i.print;
+        '\n'.print;
+      };
+    };
+    "GLOBAL : type set size with NULL\n".print;
+    (TYPE.stat_global_null.lower).to (TYPE.stat_global_null.upper) do { i:INTEGER;
+      (TYPE.stat_global_null.item i != 0).if {
+        i.print; '='.print;
+        TYPE.stat_global_null.item i.print;
+        '\n'.print;
+      };
+    };
+    "SLOT : type set size\n".print;
+    (TYPE.stat_slot.lower).to (TYPE.stat_slot.upper) do { i:INTEGER;
+      (TYPE.stat_slot.item i != 0).if {
+        i.print; '='.print;
+        TYPE.stat_slot.item i.print;
+        '\n'.print;
+      };
+    };
+    "SLOT : type set size with NULL\n".print;
+    (TYPE.stat_slot_null.lower).to (TYPE.stat_slot_null.upper) do { i:INTEGER;
+      (TYPE.stat_slot_null.item i != 0).if {
+        i.print; '='.print;
+        TYPE.stat_slot_null.item i.print;
+        '\n'.print;
+      };
+    };
+    */
+
     //
     // Execute finality command (front end).
     //
-    // Executing `front_end':
+    // Executing `front_end':    
     LIP_CODE.put_boolean is_cop to (ALIAS_STR.slot_is_cop);
+    LIP_CODE.put_boolean is_speed_push to (ALIAS_STR.slot_is_speed_push);
     s := LIP_CODE.get_method (ALIAS_STR.slot_back_end);
     (s = NULL).if {
-      "Warning: Slot `back_end' not found in *.lip file.\n".print;      
+      "Warning: Slot `back_end' not found in *.lip file.\n".print;
     } else {
       s.run_with NULL;
-    };    
+    };
   );
 

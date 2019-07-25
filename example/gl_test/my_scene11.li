@@ -1,0 +1,153 @@
+Section Header
+  
+  + name     := MY_SCENE11;
+  
+  - comment   := "first program";
+  
+Section Inherit
+  
+  - parent_framework:FRAMEWORK := FRAMEWORK;
+  
+  + parent_scene:Expanded SCENE;
+  
+  - parent_key_listener:EVENT_LISTENER := EVENT_LISTENER;
+  
+Section Public  
+  
+  - main <-
+  (
+    "Key:\n\
+    \  - Up, Down, Left, Right: Move.\n\
+    \  - l: Light On/Off.\n\
+    \  - w: Wireframe On/Off.\n".print;
+    // create OpenGL device
+    OPENGL.make (800,600) title "GL demo test";
+    
+    // set up framework
+    FRAMEWORK.make OPENGL;
+    
+    attach_scene Self;
+    add_key_listener Self;
+    add_mouse_listener MY_EVENT_LISTENER;
+    
+    // start it all
+    run;
+  );
+  
+Section Public
+  
+  //
+  // Height Map test
+  //
+  
+  + height_map:IMAGE;
+  
+  + terrain:TERRAIN;
+  
+  + light:LIGHT;
+  + light_pos:VECTOR3(REAL_32);
+  + material:MATERIAL;
+  
+  + test:TEXTURE;
+  
+  - initialize:BOOLEAN <-
+  ( 
+    + ambient,diffuse,specular,emission:COLOR;
+    + shine:REAL_32;
+    + tex:TEXTURE;
+    
+    ambient := RGBA.create (0.04, 0.04, 0.04, 0);
+    diffuse := RGBA.create (0.9, 0.9, 0.9, 0);
+    specular := RGBA.create (1.0, 1.0, 1.0, 0.0);
+    
+    light_pos := VECTOR3(REAL_32).create (0, 1, 0);
+    
+    light := renderer.light.create (ambient,diffuse,specular) at light_pos;
+    light.set_directional;
+    
+    ambient := RGBA.create (0.2, 0.2, 0.2, 1.0);
+    emission := RGBA.create (0, 0, 0, 1);
+    diffuse := RGBA.create (1, 1, 1, 1);
+    specular := RGBA.create (0, 0, 0, 0);
+    shine := 128;
+    
+    material := renderer.material.create (ambient,diffuse,specular,emission,shine);
+     
+    height_map := IMAGE.create "data/heightmap.bmp";   
+    tex := renderer.texture2d.create_from (IMAGE.create "data/terrain-texture.bmp");
+    
+    test := renderer.texture2d.create_from (height_map.to_greyscale);
+    terrain := TERRAIN.create height_map texture tex;
+    
+    terrain.rescale (0,70);
+    xpos := (-terrain.width/2).to_real * terrain.w_step;
+    zpos := (-terrain.height/2).to_real * terrain.h_step;
+    
+    light.enable;
+    renderer.enable_lighting;
+    
+    renderer.disable_shading; 
+    
+    renderer.culling.enable;
+    renderer.culling.apply_front;
+    // renderer.light.set_model_local_viewer TRUE;
+    
+    camera := CAMERA.create;
+    
+    camera.position.make (0,100,50);
+    camera.view.make (0,-20,-50);
+    camera.view.normalize;
+    TRUE
+  );
+  + camera:CAMERA;
+  
+  + xpos:REAL_32;
+  + zpos:REAL_32; 
+  
+  - render t:REAL_32 <-
+  (          
+    renderer.font.print_zone {
+      out.print "Height Map test" at (30,40);
+    };
+    
+    camera.look;
+    
+    // render terrain
+    renderer.transform.new_matrix {
+      material.apply_front;
+      terrain.render (renderer.vb) at (xpos, 0, zpos);
+    };
+    
+    // draw height map
+    renderer.light.push_attrib;
+    renderer.transform.ortho_mode (renderer.width,renderer.height) do {
+      test.draw_strech (650,450,100,100);
+    };
+    renderer.light.pop_attrib;
+  );
+  
+  - keydown k:INTEGER <-
+  (
+    + char:CHARACTER;
+    
+    char := k.to_character.to_upper;
+    k
+    .when (KEYCODE.k_escape) then {
+      FRAMEWORK.stop;	 
+    }.when (KEYCODE.k_up) then {
+      zpos := zpos + 2;
+    }.when (KEYCODE.k_down) then { 
+      zpos := zpos - 2; 
+    }.when (KEYCODE.k_left) then { 
+      xpos := xpos + 2;
+    }.when (KEYCODE.k_right) then { 
+      xpos := xpos - 2;
+    };
+    
+    char
+    .when 'L' then {
+      toggle_lighting; 
+    }.when 'W' then {
+      toggle_wireframe;  
+    };
+  );

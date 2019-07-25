@@ -1,33 +1,13 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name         := TOWER;
-   
+
   - bibliography := "http://IsaacOS.com";
   - author       := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment      := "The classic Tower of Hanoi game.";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
 
 Section Private
@@ -37,35 +17,35 @@ Section Private
   + top:INTEGER;
 
 Section Public
-  
+
   - full n:INTEGER :SELF <-
   ( + result:SELF;
     result := clone;
     result.full_make n;
     result
   );
-  
+
   - full_make n:INTEGER <-
   ( ? {n >= 1};
-    
-    t := ARRAY(INTEGER).create 1 to n;        
+
+    t := ARRAY(INTEGER).create 1 to n;
     n.downto 1 do { i:INTEGER;
       t.put (n-i+1) to i;
     };
     top := n;
-    
+
     ? {nb = n};
     ? {top = nb};
     ? {t.item top = 1};
   );
-  
+
   - empty n:INTEGER :SELF <-
   ( + result:SELF;
     result := clone;
     result.empty_make n;
-    result    
+    result
   );
-  
+
   - empty_make n:INTEGER <-
   ( ? {n >= 1};
     t := ARRAY(INTEGER).create 1 to n;
@@ -100,7 +80,7 @@ Section HANOI
 
   - remove_discus:INTEGER <-
   ( + result:INTEGER;
-    
+
     result := t.item top;
     t.put 0 to top;
     (top > 1).if {

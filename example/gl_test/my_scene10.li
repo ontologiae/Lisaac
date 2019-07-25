@@ -1,0 +1,222 @@
+Section Header
+  
+  + name     := MY_SCENE10;
+  
+  - comment   := "first program";
+  
+Section Inherit
+  
+  + parent_scene:Expanded SCENE;
+  
+  - parent_reshape:RESHAPE := RESHAPE;
+  
+  - parent_test_any:TEST_ANY := TEST_ANY;
+  
+Section Public  
+  
+  - main <-
+  (
+    OPENGL.set_reshape Self;
+    start_test Self using CAPABILITIES;
+  );
+  
+Section Public
+  
+  //
+  //  NURBS test
+  //
+  
+  + curve:EVALUATOR1D;
+  + resolution:INTEGER := 30;
+  
+  + points:FAST_ARRAY(VERTEX);
+  
+  
+  + surface:EVALUATOR2D;
+  + u_res:INTEGER := 8;
+  + v_res:INTEGER := 30;
+  
+  - initialize:BOOLEAN <-
+  ( + ratio:REAL_32;
+
+    //
+    // Create Bezier Curve
+    //
+    
+    // create control points
+    points := FAST_ARRAY(VERTEX).create_with_capacity 4;
+    points.add_last (VERTEX.create (-4,-4,0));
+    points.add_last (VERTEX.create (-2,4,0));
+    points.add_last (VERTEX.create (2,-4,0));
+    points.add_last (VERTEX.create (4,4,0));
+    
+    // create evaluator of 3d vertex
+    curve := renderer.evaluator1d.create_for_vertex3 12;
+    
+    // give the control point to the evaluator
+    curve.new_control_points {
+      0.to 3 do { i:INTEGER;
+        curve.add_point3f (points.item i.x, points.item i.y, points.item i.z);
+      };
+    };
+    // make evaluator spline function for 4 points of size 3 with t in [0,1]
+    curve.map (4,3) range (0,1);
+    
+    // enable the evaluator in the graphic pipeline
+    curve.enable;
+    
+    // 
+    // Create Bezier Surface
+    //
+    
+    // create 2D evaluator
+    surface := renderer.evaluator2d.create_for_vertex3 (4*4*3);
+    
+    // create surface control point
+    surface.new_control_points {
+      
+      // first line
+      surface.add_point3f (-1.5, -1.5, 4);
+      surface.add_point3f (-0.5, -1.5, 2);
+      surface.add_point3f (0.5, -1.5, -1);
+      surface.add_point3f (1.5, -1.5, 2);
+      
+      // line 2
+      surface.add_point3f (-1.5, -0.5, 1);
+      surface.add_point3f (-0.5, -0.5, 3);
+      surface.add_point3f (0.5, 0.5, 0);
+      surface.add_point3f (1.5, -0.5, -1);
+      
+      // line 3
+      surface.add_point3f (-1.5, 0.5, 4);
+      surface.add_point3f (-0.5, 0.5, 0);
+      surface.add_point3f (0.5, 0.5, 3);
+      surface.add_point3f (1.5, 0.5, 0);
+      
+      // line 4
+      surface.add_point3f (-1.5, 1.5, -2);
+      surface.add_point3f (-0.5, 1.5, -2);
+      surface.add_point3f (0.5, 1.5, 0);
+      surface.add_point3f (1.5, 1.5, -1);
+    };
+    // create a 4x4 patch
+    surface.map (4,3) and (4,12) range (0,0) to (1,1);
+    surface.enable;
+    
+    renderer.disable_shading;
+    renderer.enable_auto_normal; // generate normals for the surface
+    renderer.set_point_size 5.0;
+    renderer.light.enable_default_light;
+    
+    ratio := renderer.width / renderer.height;      
+    renderer.transform.new_projection {
+      renderer.transform.load_identity;
+      renderer.transform.orthographic (-5.0*ratio,5.0*ratio,-5,5,-5,5);
+    };
+    
+    TRUE
+  );
+  
+  + rot:REAL_32 := 0.3;
+  
+  
+  - render t:REAL_32 <-
+  (      
+    //
+    // 4 control points Bezier Curve
+    //
+    
+    // middle left - in white
+    renderer.transform.set_viewport4i (50,200,200,200);
+    renderer.color_buffer.set_color3f(1,1,1);
+    
+    // draw curve
+    renderer.vb.new_line_strip {
+      0.to resolution do { i:INTEGER;
+        curve.evaluate (i.to_real / resolution.to_real);
+      };
+    };
+    
+    // draw control points
+    renderer.vb.new_points {
+      0.to 3 do { i:INTEGER;
+        renderer.vb.add_vertex (points.item i);
+      };
+    };
+    
+    //
+    // same curve - other way to draw it
+    //
+    
+    // middle right
+    renderer.transform.set_viewport4i (600,200,200,200);
+    renderer.color_buffer.set_color3f(1,1,1);
+    
+    // draw curve
+    curve.generate_grid resolution between (0,1);
+    curve.evaluate_mesh (curve.point) from 0 to resolution;
+    
+    
+    //
+    // Bezier Surface
+    //
+    
+    renderer.transform.set_viewport4i (300,400,200,200);
+    renderer.color_buffer.set_color3f(1,1,1);
+    
+    renderer.transform.new_matrix {
+      renderer.transform.rotatef (rot, 1, 1, 1);
+      rot := rot + 0.7;
+      
+      0.to u_res do { u:INTEGER;
+        
+        // horizontal lines
+        renderer.vb.new_line_strip {
+          0.to v_res do { v:INTEGER;
+            surface.evaluate (v.to_real / v_res, u.to_real / u_res);
+          };
+        };
+        // vertical lines
+        renderer.vb.new_line_strip {
+          0.to v_res do { v:INTEGER;
+            surface.evaluate (u.to_real / u_res, v.to_real / v_res);
+          };
+        };
+      };
+    };
+    
+    //
+    // Filled Bezier surface
+    //
+    
+    renderer.enable_lighting;
+    
+    renderer.transform.set_viewport4i (300,100,300,300);
+    renderer.color_buffer.set_color3f(1,1,1);
+    
+    renderer.transform.new_matrix {
+      renderer.transform.rotatef (rot, 1, 1, 1);
+      rot := rot + 0.2;
+      renderer.transform.scalef (1.5,1.5,1.5);
+      
+      surface.generate_grid (8,8) between (0,1) and (0,1);
+      surface.evaluate_mesh (surface.fill) from (0,0) to (8,8);
+    };
+    
+    renderer.disable_lighting;    
+  );
+  
+  - on_resize (w,h:INTEGER) <-
+  // orthographic projection (viewing volume is a cube)
+  (
+    + ratio:REAL_32;
+    
+    (renderer != NULL).if {
+      ratio := renderer.width / renderer.height;
+      
+      renderer.transform.new_projection {
+        renderer.transform.load_identity;
+        renderer.transform.orthographic (-5.0*ratio,5.0*ratio,-5,5,-5,5);
+      };
+    };
+  );

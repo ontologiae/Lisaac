@@ -1,32 +1,12 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ABSTRACT_BITMAP;
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
-  
+
   - comment     := "Generic Bitmap.";
-    
+
   - external    := `
 //
 // Font System 1250 bytes.
@@ -98,58 +78,58 @@ unsigned short __graph_font[0x211]={
 `;
 
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
-  
+
 Section Public
-  
+
   - get_abstract_bitmap:ABSTRACT_BITMAP <- Self;
-  
+
   - get_y_line y:INTEGER :ABSTRACT_BMP_LINE <-
   (
     deferred;
     NULL
   );
-  
+
   //
   // Data.
   //
-  
+
   // Image size.
-  + height:INTEGER;       
-  + width:INTEGER;        
-  
+  + height:INTEGER;
+  + width:INTEGER;
+
   - x_max:INTEGER <- width  - 1;
   - y_max:INTEGER <- height - 1;
-    
+
   // Clipping :
-  + clip_x0:INTEGER; 
+  + clip_x0:INTEGER;
   + clip_y0:INTEGER;
   + clip_x1:INTEGER;
   + clip_y1:INTEGER;
-  
+
   // Current position.
-  + spot_x:INTEGER;  
+  + spot_x:INTEGER;
   + spot_y:INTEGER;
-  
+
   // Current color.
   + rgbcolor    :UINTEGER_32; // Format: RRGGBB in hexadecimal
   + rgbbackcolor:UINTEGER_32;
   + transparent :BOOLEAN;
-  
-  + mode:UINTEGER_8 := mode_copy; // Set mode. 
-  
+
+  + mode:UINTEGER_8 := mode_copy; // Set mode.
+
   // Ref. `X.h'
   - mode_copy:UINTEGER_8 := 03h;
   - mode_xor :UINTEGER_8 := 06h;
-  
+
   - set_mode m:UINTEGER_8 <-
   (
     mode := m;
   );
-  
+
   // Macro colors
-  
+
   - black:UINTEGER_32 := 0000000h;
   - white:UINTEGER_32 := 0FFFFFFh;
   - red:UINTEGER_32   := 0FF0000h;
@@ -159,62 +139,62 @@ Section Public
   - purple:UINTEGER_32:= 0FF00FFh;
   - cyan:UINTEGER_32  := 000FFFFh;
   - gray:UINTEGER_32  := 0808080h;
-  - brown:UINTEGER_32 := 0400000h;  
-  
-  
+  - brown:UINTEGER_32 := 0400000h;
+
+
   - pixel_geometry:PIXEL <- (deferred; NULL);
-  
+
   //
-  // Creation. 
+  // Creation.
   //
 
   - create_size (w,h:INTEGER) :SELF <-
   ( + result:SELF;
-        
+
     result:=clone;
     result.make_size (w,h);
     result
   );
-  
+
   - make_size (w,h:INTEGER) <-
   (
     deferred;
   );
-  
-  - create (w,h:INTEGER) at offset_begin:UINTEGER_32 bytes_per_line lx:INTEGER :SELF <-   
+
+  - create (w,h:INTEGER) at offset_begin:UINTEGER_32 bytes_per_line lx:INTEGER :SELF <-
   ( + result:SELF;
-        
+
     result:=clone;
     result.make (w,h) at offset_begin bytes_per_line lx;
     result
   );
-  
+
   - make (w,h:INTEGER) at offset_begin:UINTEGER_32 bytes_per_line lx:INTEGER <-
-  ( 
+  (
     deferred;
   );
 
 Section Public
-  
+
   //
   // Low level.
-  //   
-    
+  //
+
   - pixel_hard (x,y:INTEGER) color col:UINTEGER_32 <-
-  ( 
+  (
     deferred;
   );
-  
+
   - line_h_hard (x0,y0:INTEGER) until x1:INTEGER color col:UINTEGER_32 <-
-  ( 
+  (
     deferred;
   );
-    
+
   - line_h_hard (x0,y0:INTEGER) until x1:INTEGER image line:ABSTRACT_BMP_LINE offset ofs:INTEGER <-
-  (     
+  (
     deferred;
   );
-  
+
   - get_pixel_hard (x,y:INTEGER) :PIXEL <-
   (
     deferred;
@@ -224,9 +204,9 @@ Section Public
   (
     deferred;
   );
-  
-Section Public  
-  
+
+Section Public
+
   - color col:UINTEGER_32 <-
   (
     rgbcolor := col;
@@ -236,20 +216,20 @@ Section Public
   (
     rgbbackcolor := col;
   );
-  
+
   - transparent_on <-
   (
     transparent := TRUE;
   );
-  
+
   - transparent_off <-
   (
     transparent := FALSE;
   );
-  
+
   - clipping (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
   ( + lx,ly:INTEGER;
-    
+
     lx := width - 1;
     ly := height - 1;
     clip_x0 := x0.max 0.min lx;
@@ -257,7 +237,7 @@ Section Public
     clip_y0 := y0.max 0.min ly;
     clip_y1 := y1.max 0.min ly;
   );
-  
+
   - clipping_off <-
   (
     clip_x0 := 0;
@@ -265,22 +245,22 @@ Section Public
     clip_y0 := 0;
     clip_y1 := height - 1;
   );
-  
+
   - move_to (pos_x,pos_y:INTEGER) <-
   (
     spot_x := pos_x;
     spot_y := pos_y;
   );
-  
+
   //
   // GetPixel
   //
-  
+
   - get_pixel:BOOLEAN <-
   // Load Spot pixel.
   ( + result:BOOLEAN;
     + pix:PIXEL;
-    
+
     ((spot_x.in_range clip_x0 to clip_x1) && {spot_y.in_range clip_y0 to clip_y1}).if {
       result:=TRUE;
       pix:=get_pixel_hard (spot_x,spot_y);
@@ -297,53 +277,53 @@ Section Public
       rgbcolor := black;
       transparent := FALSE;
     };
-    
+
     result
   );
-  
+
   - get_pixel_to (x,y:INTEGER) :BOOLEAN<-
   (
     move_to (x,y);
     get_pixel
   );
-  
+
   //
   // PutPixel
   //
-  
+
   - pixel:BOOLEAN <-
   ( + result:BOOLEAN;
-   
+
     // Test Clipping;
     ((spot_x.in_range clip_x0 to clip_x1) && {spot_y.in_range clip_y0 to clip_y1 }).if {
       result:=TRUE;
       pixel_hard (spot_x,spot_y) color rgbcolor;
-    };  
+    };
     result
   );
-  
+
   - pixel_to (x,y:INTEGER) :BOOLEAN <-
   (
     move_to (x,y);
     pixel
   );
-  
+
   - pixel_color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     pixel
   );
-  
+
   - pixel_to (x,y:INTEGER) color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     pixel_to (x,y)
   );
-  
+
   //
   // Line
   //
-  
+
   - line_h (x,y:INTEGER) until x_end:INTEGER image line:ABSTRACT_BMP_LINE :BOOLEAN <-
   (
     + result:BOOLEAN;
@@ -352,10 +332,10 @@ Section Public
     ? {y >= 0};
     ? {x_end >= 0};
     ? {line != NULL};
-    
+
     x0 := x;
     x1 := x_end;
-    spot_x := x1;        
+    spot_x := x1;
     (y.in_range clip_y0 to clip_y1).if {
       result := TRUE;
       ( x0 > x1 ).if {
@@ -367,21 +347,21 @@ Section Public
 	x1 := clip_x1;
 	result := FALSE;
       };
-      
+
       ( clip_x0 > x0 ).if {
 	x02 := clip_x0;
 	result := FALSE;
       } else {
 	x02 := x0;
       };
-      
+
       ( x0 <= x1 ).if {
 	line_h_hard (x02,y) until x1 image line offset (x02-x0);
       };
     };
     result
   );
-  
+
   - line_h_until x:INTEGER :BOOLEAN <-
   ( + result:BOOLEAN;
     + x0,x1:INTEGER;
@@ -389,119 +369,119 @@ Section Public
     x0 := spot_x;
     x1 := x;
     spot_x := x1;
-    
+
     (spot_y.in_range clip_y0 to clip_y1).if {
       result := TRUE;
-      
+
       ( x0 > x1).if {
 	+ swap:INTEGER;
 	swap := x0;
 	x0 := x1;
 	x1 := swap;
       };
-      
+
       ( clip_x1 < x1 ).if {
 	x1 := clip_x1;
 	result := FALSE;
       };
-      
+
       ( clip_x0 > x0 ).if {
 	x0 := clip_x0;
 	result := FALSE;
       };
-      
+
       (x0 <= x1).if {
 	line_h_hard (x0,spot_y) until x1 color rgbcolor;
       };
     };
     result
   );
-    
+
   - line_h_until x1:INTEGER color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     line_h_until x1
   );
-  
+
   - line_h (x0,y0:INTEGER) until x1:INTEGER :BOOLEAN <-
   (
     move_to (x0,y0);
     line_h_until x1
   );
-  
-  
+
+
   - line_h (x0,y0:INTEGER) until x1:INTEGER color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     line_h (x0,y0) until x1
   );
-  
+
   - line_v_until y:INTEGER :BOOLEAN <-
   ( + y0,y1:INTEGER;
     + result:BOOLEAN;
-    
+
     y0 := spot_y;
     y1 := y;
     spot_y := y1;
-    
+
     (spot_x.in_range clip_x0 to clip_x1).if {
       result := TRUE;
-      
+
       ( y0 > y1 ).if {
 	+ swap:INTEGER;
 	swap := y0;
 	y0 := y1;
 	y1 := swap;
       };
-      
+
       ( clip_y1 < y1).if {
 	y1 := clip_y1;
 	result := FALSE;
       };
-      
+
       ( clip_y0 > y0 ).if {
 	y0 := clip_y0;
 	result := FALSE;
       };
-      
+
       ( y0 <=y1 ).if {
 	y0.to y1 do { j:INTEGER;
 	  pixel_hard (spot_x,j) color rgbcolor;
 	};
       };
-    };    
-    
+    };
+
     result
   );
-  
+
   - line_v_until y1:INTEGER color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     line_v_until y1
   );
-  
+
   - line_v (x0,y0:INTEGER) until y1:INTEGER :BOOLEAN <-
   (
     move_to (x0,y0);
     line_v_until y1
   );
-  
+
   - line_v (x0,y0:INTEGER) until y1:INTEGER color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     line_v (x0,y0) until y1
   );
-  
-  
+
+
   //:UINTEGER_8 CalculCode(:INTEGER_64 X,:INTEGER_64 Y,:INTEGER_64 Xmin,:INTEGER_64 Ymin,:INTEGER_64 Xmax,:INTEGER_64 Ymax)
   //{ return( (X<Xmin)|((X>Xmax)<<1)|((Y<Ymin)<<2)|((Y>Ymax)<<3) );
   //};
-  
+
   //************************
   //* CLIPPING DE LINE BUGGE -> Blocage !!!
   //************************
-  
-/*  
+
+/*
   char ClipLine(:INTEGER_64 x0,:INTEGER_64 y0,:INTEGER_64 x1,:INTEGER_64 y1,:INTEGER_64 Xmin,:INTEGER_64 Ymin,:INTEGER_64 Xmax,:INTEGER_64 Ymax)
   { :UINTEGER_8 Bool=0; // Accepte=Faux , Fin=Vrai
     :UINTEGER_8 cod0,cod1,codExt;
@@ -542,7 +522,7 @@ Section Public
     if (Bool&1) TraceLine(x0,y0,x1,y1);
     return(tst);
   };*/
-    
+
   - line_to (x2,y2:INTEGER) :BOOLEAN <-
   (
     + result:BOOLEAN;
@@ -551,12 +531,12 @@ Section Public
     + i1,i2:INTEGER;
     + x,y:INTEGER;
     + dd:INTEGER;
-    
+
     x1 := spot_x;
     y1 := spot_y;
     dx := x2 - x1;
     dy := y2 - y1;
-    
+
     ( dy = 0).if {
       result := line_h_until x2;
     }.elseif {dx = 0} then {
@@ -564,178 +544,178 @@ Section Public
     } else {
       spot_x := x2;
       spot_y := y2;
-      
-      (dx >= 0).if {
-	(dy >= 0).if {
-	  (dx >= dy).if {	    	    	    
+
+      (dx >= 0).if { // right
+	(dy >= 0).if { // down
+	  (dx >= dy).if { // Horizontal (right, down)
 	    i1 := 2 * dy;
 	    dd := i1 - dx;
 	    i2 := dd - dx;
-	    x := x1; 
+	    x := x1;
 	    y := y1;
 	    {x <= x2}.while_do {
 	      pixel_to (x,y);
-	      (dd >= 0).if { 
-		y := y+1; 
-		dd := dd+i2; 
-	      } else {
-		dd := dd+i1;
-	      };
-	      x := x+1;
-	    };	    
-	  } else {
-	    i1 := 2 * dx;
-	    dd := i1 - dy;
-	    i2 := dd - dy;
-	    x := x1; 
-	    y := y1;
-	    {y <= y2}.while_do {
-	      pixel_to (x,y);
-	      (dd >= 0).if { 
-		x := x+1; 
-		dd := dd+i2; 
-	      } else {
-		dd := dd+i1;
-	      };
-	      y := y+1;
-	    };	    
-	  };
-	} else {
-	  (dx >= -dy).if {	    
-	    i1 := 2 * dy;
-	    dd := i1 + dx;
-	    i2 := dd + dx;
-	    x := x1; 
-	    y := y1;
-	    {x <= x2}.while_do {
-	      pixel_to (x,y);
-	      (dd <= 0).if { 
-		y := y - 1; 
-		dd := dd+i2; 
+	      (dd >= 0).if {
+		y := y+1;
+		dd := dd+i2;
 	      } else {
 		dd := dd+i1;
 	      };
 	      x := x+1;
 	    };
-	  } else {
+          } else { // Vertical (right, down)            
+	    i1 := 2 * dx;
+	    dd := i1 - dy;
+            i2 := dd - dy;            
+	    x := x1;
+	    y := y1;
+            {y <= y2}.while_do {
+              pixel_to (x,y);              
+	      (dd >= 0).if {
+		x := x+1;
+		dd := dd+i2; // -
+	      } else {
+		dd := dd+i1; // +
+              };              
+	      y := y+1;
+            };
+	  };
+	} else { // Up
+	  (dx >= -dy).if { // Horizontal (up, Right)
+	    i1 := 2 * dy;
+	    dd := i1 + dx;
+	    i2 := dd + dx;
+	    x := x1;
+	    y := y1;
+	    {x <= x2}.while_do {
+	      pixel_to (x,y);
+	      (dd <= 0).if {
+		y := y - 1;
+		dd := dd+i2;
+	      } else {
+		dd := dd+i1;
+	      };
+	      x := x+1;
+	    };
+	  } else { // Vertical (up, Right)
 	    i1 := 2 * dx;
 	    dd := i1 + dy;
 	    i2 := dd + dy;
-	    x := x1; 
+	    x := x1;
 	    y := y1;
 	    {y >= y2}.while_do {
 	      pixel_to (x,y);
-	      (dd >= 0).if { 
-		x := x+1; 
-		dd := dd+i2; 
+	      (dd >= 0).if {
+		x := x+1;
+		dd := dd+i2;
 	      } else {
 		dd := dd+i1;
 	      };
 	      y := y-1;
-	    };	    
-	  };	 
+	    };
+	  };
 	};
-      } else {
-	(dy >= 0).if {
-	  (-dx >= dy).if {
+      } else { // Left
+	(dy >= 0).if { // Down
+	  (-dx >= dy).if { // Horizontal (Left, down)
 	    i1 := 2 * dy;
 	    dd := i1 + dx;
 	    i2 := dd + dx;
-	    x := x1; 
+	    x := x1;
 	    y := y1;
 	    {x >= x2}.while_do {
 	      pixel_to (x,y);
-	      (dd >= 0).if { 
-		y := y + 1; 
-		dd := dd+i2; 
+	      (dd >= 0).if {
+		y := y + 1;
+		dd := dd+i2;
 	      } else {
 		dd := dd+i1;
 	      };
 	      x := x - 1;
 	    };
-	  } else {
+	  } else { // Vertical (Left, down)
 	    i1 := 2 * dx;
 	    dd := i1 + dy;
 	    i2 := dd + dy;
-	    x := x1; 
+	    x := x1;
 	    y := y1;
 	    {y <= y2}.while_do {
 	      pixel_to (x,y);
-	      (dd <= 0).if { 
-		x := x - 1; 
-		dd := dd+i2; 
+	      (dd <= 0).if {
+		x := x - 1;
+		dd := dd+i2;
 	      } else {
 		dd := dd+i1;
 	      };
 	      y := y + 1;
 	    };
 	  };
-	} else {
-	  (-dx >= -dy).if {
+	} else { // Up
+	  (-dx >= -dy).if { // Horizontal (left, up)
 	    i1 := 2 * dy;
 	    dd := i1 - dx;
 	    i2 := dd - dx;
-	    x := x1; 
+	    x := x1;
 	    y := y1;
 	    {x >= x2}.while_do {
 	      pixel_to (x,y);
-	      (dd <= 0).if { 
-		y := y-1; 
-		dd := dd+i2; 
+	      (dd <= 0).if {
+		y := y-1;
+		dd := dd+i2;
 	      } else {
 		dd := dd+i1;
 	      };
 	      x := x-1;
 	    };
-	  } else {
+	  } else { // Vertical (up, left)
 	    i1 := 2 * dx;
 	    dd := i1 - dy;
 	    i2 := dd - dy;
-	    x := x1; 
+	    x := x1;
 	    y := y1;
 	    {y >= y2}.while_do {
 	      pixel_to (x,y);
-	      (dd <= 0).if { 
-		x := x-1; 
-		dd := dd+i2; 
+	      (dd <= 0).if {
+		x := x-1;
+		dd := dd+i2;
 	      } else {
 		dd := dd+i1;
 	      };
 	      y := y - 1;
 	    };
 	  };
-	};	 
-      };      
+	};
+      };
       result:=TRUE;
     };
-    
+
     result
   );
-  
+
   - line_to (x1,y1:INTEGER) color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     line_to (x1,y1)
   );
-  
-  
+
+
   - line (x1,y1:INTEGER) to (x2,y2:INTEGER) :BOOLEAN <-
   (
     move_to (x1,y1);
     line_to (x2,y2)
   );
-  
-  
+
+
   - line (x1,y1:INTEGER) to (x2,y2:INTEGER) color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     line (x1,y1) to (x2,y2)
   );
-      
+
   //
   // Rectangle
   //
-  
+
   - rectangle_to (x1,y1:INTEGER) :BOOLEAN <-
   (
     + result:BOOLEAN;
@@ -756,30 +736,30 @@ Section Public
     };
     result
   );
-    
+
   - rectangle_to (x1,y1:INTEGER) color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     rectangle_to (x1,y1)
   );
-  
+
   - rectangle (x0,y0:INTEGER) to (x1,y1:INTEGER) :BOOLEAN <-
   (
     move_to (x0,y0);
     rectangle_to (x1,y1)
   );
-  
+
   - rectangle (x0,y0:INTEGER) to (x1,y1:INTEGER) color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     rectangle (x0,y0) to (x1,y1)
   );
-  
+
   - rectangle_fill_to (x,y:INTEGER) :BOOLEAN <-
   ( + x0,y0,x1,y1,tmp:INTEGER;
     + col:UINTEGER_32;
     + result:BOOLEAN;
-    
+
     x0 := spot_x;
     y0 := spot_y;
     x1 := x;
@@ -789,23 +769,23 @@ Section Public
       x0 := x1;
       x1 := tmp;
     };
-    
+
     ( y0 > y1).if {
       tmp := y0;
       y0 := y1;
       y1 := tmp;
     };
-    
+
     (( x0 > clip_x1 ) || { x1 < clip_x0 } || { y0 > clip_y1 } || { y1 < clip_y0 }).if {
       result := FALSE;
     } else {
       result := TRUE;
-      
+
       (clip_x0 > x0).if {
 	x0 := clip_x0;
 	result := FALSE;
       };
-      (clip_y0 > y0).if { 
+      (clip_y0 > y0).if {
 	y0 := clip_y0;
 	result := FALSE;
       };
@@ -816,7 +796,7 @@ Section Public
       (clip_y1 < y1).if {
 	y1 := clip_y1;
 	result := FALSE;
-      };            
+      };
       col := rgbcolor;
       y0.to y1 do { j:INTEGER;
 	line_h_hard (x0,j) until x1 color col;
@@ -824,27 +804,32 @@ Section Public
     };
     result
   );
-    
+
   - rectangle_fill (x0,y0:INTEGER) to (x1,y1:INTEGER) :BOOLEAN <-
   (
     move_to (x0,y0);
     rectangle_fill_to (x1,y1)
   );
-  
+
   - rectangle_fill (x0,y0:INTEGER) to (x1,y1:INTEGER) color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     rectangle_fill (x0,y0) to (x1,y1)
   );
   
+  - clean <- 
+  (
+    rectangle_fill (0,0) to (x_max,y_max) color white;
+  );
+  
   //
   // Circle
   //
-  
-Section Private  
-  
+
+Section Private
+
   - circle_points (x,y:INTEGER) centre (cx,cy:INTEGER) <-
-  (     
+  (
     pixel_to ((cx+x),(cy+y));
     pixel_to ((cx+x),(cy-y));
     pixel_to ((cx+y),(cy+x));
@@ -854,19 +839,19 @@ Section Private
     pixel_to ((cx-y),(cy+x));
     pixel_to ((cx-y),(cy-x));
   );
-  
-Section Public  
-  
+
+Section Public
+
   - circle_fill_rayon r:INTEGER <-
   ( + cx,cy,x,y,d,de,dse:INTEGER;
-    
+
     cx := spot_x;
     cy := spot_y;
     x   := 0;
     y   := r;
     d   := 1 - r;
     de  := 3;
-    dse := 5 - (r << 1);    
+    dse := 5 - (r << 1);
     line_h ((cx-y),cy) until (cx+y);
     {y > x}.while_do {
       (d < 0).if {
@@ -874,7 +859,7 @@ Section Public
 	de  := de  + 2;
 	dse := dse + 2;
 	x   := x   + 1;
-	
+
 	line_h ((cx-y),(cy+x)) until (cx+y);
 	line_h ((cx-y),(cy-x)) until (cx+y);
       } else {
@@ -885,19 +870,19 @@ Section Public
 	y   := y   - 1;
 	line_h ((cx-x),(cy+y)) until (cx+x);
 	line_h ((cx-x),(cy-y)) until (cx+x);
-	
+
 	line_h ((cx-y),(cy+x)) until (cx+y);
 	line_h ((cx-y),(cy-x)) until (cx+y);
-      };      
+      };
     };
   );
-  
+
   - circle_fill (x,y:INTEGER) rayon r:INTEGER <-
   (
     move_to (x,y);
     circle_fill_rayon r;
   );
-  
+
   - circle_fill (x,y:INTEGER) rayon r:INTEGER color col:UINTEGER_32 <-
   (
     color col;
@@ -906,7 +891,7 @@ Section Public
 
   - circle_rayon r:INTEGER <-
   ( + cx,cy,x,y,d,de,dse:INTEGER;
-    
+
     cx := spot_x;
     cy := spot_y;
     x   := 0;
@@ -931,91 +916,91 @@ Section Public
       circle_points (x,y) centre (cx,cy);
     };
   );
-  
+
   - circle (x,y:INTEGER) rayon r:INTEGER <-
   (
     move_to (x,y);
     circle_rayon r;
   );
-  
+
   - circle (x,y:INTEGER) rayon r:INTEGER color col:UINTEGER_32 <-
   (
     color col;
     circle (x,y) rayon r;
   );
-  
+
   //
   // Spline
   //
-  
-Section Private  
-  
+
+Section Private
+
   - delta_spline:REAL_16_16 := 32768.to_raw_real_16_16;
-  
-Section Public  
-  
+
+Section Public
+
   - spline_w1 (px0,py0:INTEGER) w2 (px1,py1:INTEGER) to (x1,y1:INTEGER) :BOOLEAN <-
   ( + result:BOOLEAN;
     + x0,y0,d_x,d_y:INTEGER;
     + num_points:INTEGER;
     // Derivatives of x(t) and y(t).
-    + x, dx, ddx, dddx:REAL_16_16; 
+    + x, dx, ddx, dddx:REAL_16_16;
     + y, dy, ddy, dddy:REAL_16_16;
     // Temp variables used in the setup.
     + dt, dt2, dt3:REAL_16_16;
     + xdt2_term, xdt3_term:REAL_16_16;
     + ydt2_term, ydt3_term:REAL_16_16;
-    
+
     x0 := spot_x;
     y0 := spot_y;
-        
+
     d_x := px0 - x0;
     d_y := py0 - y0;
-    num_points := (d_x*d_x + d_y*d_y).sqrt;      
-    
+    num_points := (d_x*d_x + d_y*d_y).sqrt;
+
     d_x := px1 - px0;
     d_y := py1 - py0;
-    num_points := num_points + (d_x*d_x + d_y*d_y).sqrt; 
-    
+    num_points := num_points + (d_x*d_x + d_y*d_y).sqrt;
+
     d_x := x1 - px1;
     d_y := y1 - py1;
     num_points := (num_points + (d_x*d_x + d_y*d_y).sqrt).sqrt;
     num_points := num_points + (num_points >> 2); // * 1.25 .sqrt
-    
-    
+
+
     (num_points > 128).if {
       num_points := 128; // Max points
     };
-    
+
     (num_points < 2).if {
       num_points := 2;   // Min points
     };
-    
+
     dt := 1.to_real_16_16 /# (num_points - 1);
     dt2 := dt * dt;
     dt3 := dt2 * dt;
-    
+
     // x coordinates.
     xdt2_term := dt2 *# ((px1 - px0 * 2 + x0) * 3);
     xdt3_term := dt3 *# (x1 + ((px0 - px1) * 3) -x0);
-    
+
     dddx := xdt3_term *# 6;
     ddx  := xdt3_term *# -6 + xdt2_term *# 2;
-    dx   := xdt3_term - xdt2_term + dt *# ((px0 - x0)*3);  
+    dx   := xdt3_term - xdt2_term + dt *# ((px0 - x0)*3);
     x    := x0.to_real_16_16;
-    
+
     // y coordinates.
     ydt2_term := dt2 *# ((py1 - py0 * 2 + y0) * 3);
     ydt3_term := dt3 *# (y1 + ((py0 - py1) * 3) - y0);
-    
+
     dddy := ydt3_term *# 6;
     ddy  := ydt3_term *# -6 + ydt2_term *# 2;
-    dy   := ydt3_term - ydt2_term + dt *# ((py0 - y0)*3); 
+    dy   := ydt3_term - ydt2_term + dt *# ((py0 - y0)*3);
     y    := y0.to_real_16_16;
-        
+
     x := x + delta_spline;
     y := y + delta_spline;
-    
+
     1.to (num_points - 1) do { i:INTEGER;
       ddx := ddx + dddx;
       dx := dx + ddx;
@@ -1023,31 +1008,31 @@ Section Public
       ddy := ddy + dddy;
       dy := dy + ddy;
       y := y + dy;
-      result:= result | line_to ((x.to_integer),(y.to_integer)); 
-    };    
-    result    
+      result:= result | line_to ((x.to_integer),(y.to_integer));
+    };
+    result
   );
-  
+
   - spline_w1 (px0,py0:INTEGER) w2 (px1,py1:INTEGER) to (x1,y1:INTEGER) color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     spline_w1 (px0,py0) w2 (px1,py1) to (x1,y1)
   );
-  
-  
+
+
   - spline (x0,y0:INTEGER) w1 (px0,py0:INTEGER) w2 (px1,py1:INTEGER) to (x1,y1:INTEGER) :BOOLEAN <-
   (
     move_to (x0,y0);
     spline_w1 (px0,py0) w2 (px1,py1) to (x1,y1)
   );
-  
-  
+
+
   - spline (x0,y0:INTEGER) w1 (px0,py0:INTEGER) w2 (px1,py1:INTEGER) to (x1,y1:INTEGER) color col:UINTEGER_32 :BOOLEAN <-
   (
     color col;
     spline (x0,y0) w1 (px0,py0) w2 (px1,py1) to (x1,y1)
   );
-  
+
   //*****************************************************************************
   //*                         POLYGONE COMPLEXE                                 *
   //* V.4.0 : Il n'y a plus de contrainte de sens comme dans la version 3.0     *
@@ -1060,30 +1045,30 @@ Section Public
   //*                                                                           *
   //*                                                           BeN inside      *
   //*****************************************************************************
-  
-Section Private  
-  
+
+Section Private
+
   + edges:FAST_ARRAY(EDGE); // BSBS: A optimiser avec un MAP_FAST_ARRAY ... quand il y aura add_last, resize...
 
   + edges_upper:INTEGER;
   + poly_ymax:INTEGER := INTEGER.minimum.to_integer;
-  
+
   + poly_list_y:FAST_ARRAY(EDGE);
-    
-  + begin_y:EDGE;  
+
+  + begin_y:EDGE;
   + begin_idx:INTEGER;
-  
-  + last_y:EDGE;  
+
+  + last_y:EDGE;
   + last_idx:INTEGER;
-  
+
   + x_origin:INTEGER;
   + y_origin:INTEGER;
-  
-Section Private  
-  
+
+Section Private
+
   - display_poly <-
   ( + edge:EDGE;
-    
+
     0.to (poly_list_y.upper) do { i:INTEGER;
       edge := poly_list_y.item i;
       {edge != NULL}.while_do {
@@ -1094,17 +1079,17 @@ Section Private
       '\n'.print;
     };
   );
-  
-Section Private  
-  
+
+Section Private
+
   - connect_first <-
   (
     poly_line_to (x_origin,y_origin);
     ((begin_y!=NULL) && {begin_y.is_down = last_y.is_down}).if {
       // Connecting.
       (begin_y.is_down).if {
-	// Add first list. 
-	last_y.set_next_y begin_y;	
+	// Add first list.
+	last_y.set_next_y begin_y;
 	poly_list_y.put (poly_list_y.item last_idx) to begin_idx;
       } else {
 	// Add last list.
@@ -1112,88 +1097,88 @@ Section Private
       };
       poly_list_y.remove last_idx;
     };
-  );    
-  
+  );
+
   - sort_list_y <-
   // Bubble sort :-( => BSBS: Optmize with Quick sort...
   ( + low,up,idx,upper:INTEGER;
     + swap:BOOLEAN;
-    
+
     upper := poly_list_y.upper-1;
-    
+
     low := 0;
     up  := upper;
     {
       swap:=FALSE;
-      low.to up do { i:INTEGER;	
+      low.to up do { i:INTEGER;
 	(poly_list_y.item i.y0 > poly_list_y.item (i+1).y0).if {
 	  poly_list_y.swap i with (i+1);
 	  swap := TRUE;
 	};
-	
+
 	idx := upper - i;
 	(poly_list_y.item idx.y0 > poly_list_y.item (idx+1).y0).if {
 	  poly_list_y.swap idx with (idx+1);
 	  swap := TRUE;
-	};		
+	};
       };
       up  := up - 1;
       low := low + 1;
     }.do_while {swap};
   );
 
-Section Public  
-  
+Section Public
+
   - poly_move_to (x,y:INTEGER) <-
-  (     
-    
+  (
+
     (edges = NULL).if {
       poly_list_y := FAST_ARRAY(EDGE).create_with_capacity 16;
-      edges := FAST_ARRAY(EDGE).create 64;      
+      edges := FAST_ARRAY(EDGE).create 64;
       0.to 63 do { n:INTEGER;
 	edges.put (EDGE.clone) to n;
       };
     };
-  
-    (edges_upper != 0).if {      
+
+    (edges_upper != 0).if {
       connect_first;
     };
-    move_to (x,y); 
+    move_to (x,y);
     x_origin := x;
     y_origin := y;
     begin_y  := NULL;
     last_y   := NULL;
-    
+
     poly_ymax := poly_ymax.max y;
   );
-  
+
   - poly_line_to (x1,y1:INTEGER) <-
   ( + edge,edge2:EDGE;
     + x0,y0:INTEGER;
-    
-    x0:=spot_x; 
-    y0:=spot_y; 
-    
+
+    x0:=spot_x;
+    y0:=spot_y;
+
     ((x0!=x1) || {y0!=y1}).if {
-      
-      move_to (x1,y1); 
-            
+
+      move_to (x1,y1);
+
       (edges_upper >= (edges.upper-4)).if { // BSBS: A optimiser avec MAP_ARRAY ...
-	// Append 16 Edges.	
+	// Append 16 Edges.
 	0.to 15 do { j:INTEGER;
 	  edges.add_last (EDGE.clone);
 	};
       };
-            
-      (y0=y1).if { 
+
+      (y0=y1).if {
 	// Flat.
-	edge  := edges.item edges_upper;	
+	edge  := edges.item edges_upper;
 	edges_upper := edges_upper + 1;
 	poly_list_y.add_last edge;
 	edge2 := edges.item edges_upper;
 	edges_upper := edges_upper + 1;
 	poly_list_y.add_last edge2;
-	
+
 	(x0 < x1).if {
 	  edge .make (x0,y0) add 1;
 	  edge2.make (x1,y1) add (-1);
@@ -1201,17 +1186,17 @@ Section Public
 	  edge .make (x0,y0) add (-1);
 	  edge2.make (x1,y1) add 1;
 	};
-      } else { 
-	// Line.	
+      } else {
+	// Line.
 	edge  := edges.item edges_upper;
 	edges_upper := edges_upper + 1;
 	edge.make (x0,y0) to (x1,y1);
-	
+
 	(begin_y=NULL).if {
 	  begin_idx := poly_list_y.count;
 	  begin_y   := edge;
 	};
-	
+
 	((last_y=NULL) || {last_y.is_down != edge.is_down}).if {
 	  // New line_y.
 	  poly_list_y.add_last edge;
@@ -1227,14 +1212,14 @@ Section Public
 	  } else {
 	    // Add first.
 	    poly_list_y.put edge to last_idx;
-	    edge.set_next_y last_y;	    
+	    edge.set_next_y last_y;
 	  };
 	  last_y := edge;
 	};
       };
-    };    
+    };
   );
-  
+
   - poly_rectangle (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
   (
     poly_move_to (x0,y0);
@@ -1248,56 +1233,56 @@ Section Public
   ( + x0,y0,d_x,d_y:INTEGER;
     + num_points:INTEGER;
     // Derivatives of x(t) and y(t).
-    + x, dx, ddx, dddx:REAL_16_16; 
+    + x, dx, ddx, dddx:REAL_16_16;
     + y, dy, ddy, dddy:REAL_16_16;
     // Temp variables used in the setup.
     + dt, dt2, dt3:REAL_16_16;
     + xdt2_term, xdt3_term:REAL_16_16;
     + ydt2_term, ydt3_term:REAL_16_16;
-    
+
     x0 := spot_x;
     y0 := spot_y;
-    
+
     d_x := px0 - x0;
     d_y := py0 - y0;
-    num_points := (d_x*d_x + d_y*d_y).sqrt;  
-    
+    num_points := (d_x*d_x + d_y*d_y).sqrt;
+
     d_x := px1 - px0;
     d_y := py1 - py0;
-    num_points := num_points + (d_x*d_x + d_y*d_y).sqrt; 
-    
+    num_points := num_points + (d_x*d_x + d_y*d_y).sqrt;
+
     d_x := x1 - px1;
     d_y := y1 - py1;
     num_points := (num_points + (d_x*d_x + d_y*d_y).sqrt).sqrt;
     num_points := num_points + (num_points >> 2); // * 1.25 .sqrt
-    
+
     num_points := num_points.min 128.max 2;
-    
+
     dt := 1.to_real_16_16 /# (num_points - 1);
     dt2 := dt * dt;
     dt3 := dt2 * dt;
-    
+
     // x coordinates.
     xdt2_term := dt2 *# ((px1 - px0 * 2 + x0) * 3);
     xdt3_term := dt3 *# (x1 + ((px0 - px1) * 3) -x0);
-    
+
     dddx := xdt3_term *# 6;
     ddx  := xdt3_term *# -6 + xdt2_term *# 2;
-    dx   := xdt3_term - xdt2_term + dt *# ((px0 - x0)*3);  
+    dx   := xdt3_term - xdt2_term + dt *# ((px0 - x0)*3);
     x    := x0.to_real_16_16;
-    
+
     // y coordinates.
     ydt2_term := dt2 *# ((py1 - py0 * 2 + y0) * 3);
     ydt3_term := dt3 *# (y1 + ((py0 - py1) * 3) - y0);
-    
+
     dddy := ydt3_term *# 6;
     ddy  := ydt3_term *# -6 + ydt2_term *# 2;
-    dy   := ydt3_term - ydt2_term + dt *# ((py0 - y0)*3); 
+    dy   := ydt3_term - ydt2_term + dt *# ((py0 - y0)*3);
     y    := y0.to_real_16_16;
-        
+
     x := x + delta_spline;
     y := y + delta_spline;
-    
+
     1.to (num_points - 1) do { i:INTEGER;
       ddx := ddx + dddx;
       dx  := dx + ddx;
@@ -1305,10 +1290,10 @@ Section Public
       ddy := ddy + dddy;
       dy  := dy + ddy;
       y   := y + dy;
-      poly_line_to (x.to_integer,y.to_integer); 
-    };    
+      poly_line_to (x.to_integer,y.to_integer);
+    };
   );
-  
+
   - poly_ellipse (x,y:INTEGER) rays (ray_x,ray_y:INTEGER) <-
   ( + x0,y0,x1,y1,dx,dy:INTEGER;
     x0 := x - ray_x;
@@ -1317,27 +1302,27 @@ Section Public
     y1 := y + ray_y;
     dx := (ray_x * 5) / 9;
     dy := (ray_y * 5) / 9;
-    
-    poly_move_to (x,y0);    
+
+    poly_move_to (x,y0);
     poly_spline_w1 (x+dx,y0) w2 (x1,y-dy) to (x1,y) ;
     poly_spline_w1 (x1,y+dy) w2 (x+dx,y1) to (x ,y1);
     poly_spline_w1 (x-dx,y1) w2 (x0,y+dy) to (x0,y) ;
-    poly_spline_w1 (x0,y-dy) w2 (x-dx,y0) to (x ,y0);     
+    poly_spline_w1 (x0,y-dy) w2 (x-dx,y0) to (x ,y0);
   );
-  
+
   - poly_trace <-
   ( + edge,next_edge,edgep:EDGE;
     + x_edges:EDGE;
     + x0,x1,new_x:INTEGER;
     + idx_y:INTEGER;
     + trace:INTEGER;
-    + line :INTEGER;    
-    
+    + line :INTEGER;
+
     (edges_upper != 0).if {
       (poly_ymax >= clip_y0).if {
-        // Connexion with first point.    
+        // Connexion with first point.
         connect_first;
-        
+
         // Optimize clip_y0
         (poly_list_y.upper).downto 0 do { j:INTEGER;
           edge := poly_list_y.item j;
@@ -1345,15 +1330,15 @@ Section Public
             edge := edge.next_y;
           };
           (edge = NULL).if {
-            poly_list_y.remove j;	  
+            poly_list_y.remove j;
           } else {
-            poly_list_y.put edge to j;	  
+            poly_list_y.put edge to j;
           };
         };
-        
-        // Sort on Y.    
+
+        // Sort on Y.
         sort_list_y;
-        
+
         poly_ymax := poly_ymax.min clip_y1;
         line := 1;
         // for each scanline in the polygon.
@@ -1363,45 +1348,45 @@ Section Public
             x_edges := poly_list_y.item idx_y.add x_edges;
             idx_y   := idx_y + 1;
           };
-          
-          // Draw horizontal line. 
+
+          // Draw horizontal line.
           x1:=INTEGER.minimum.to_integer;
           edge:=x_edges;
           {edge!=NULL}.while_do {
-            next_edge:=edge.next_x;	
+            next_edge:=edge.next_x;
             // Trace.
-            (y >= clip_y0).if { 
-              
+            (y >= clip_y0).if {
+
               (trace = 0).if {
-                // Begin point.    
-                new_x := (edge.x+127)>>8;
+                // Begin point.
+                new_x := (edge.x+16383)>>16;
                 ((new_x != x1) && {new_x != (x1 + 1)}).if {
-                  ((x0 <= clip_x1) && {x1 >= clip_x0}).if { 
+                  ((x0 <= clip_x1) && {x1 >= clip_x0}).if {
                     x0:=x0.max clip_x0;
                     x1:=x1.min clip_x1;
-                    line_h_hard (x0,y) until x1 color rgbcolor; 
-                  };  
+                    line_h_hard (x0,y) until x1 color rgbcolor;                    
+                  };
                   x0 := new_x;
                 };
               };
-              
+
               (edge.is_point).if {
-                trace := trace + edge.dx; 
+                trace := trace + edge.dx;
               } else {
                 trace := trace + line;
                 line  := - line;
               };
-              
+
               (trace = 0).if {
                 // End point.
-                x1 := (edge.x+128)>>8;	    
-              };	  
+                x1 := (edge.x+16384)>>16;
+              };
             };
-            
-            // Inc edges.	  
-            (edge.width!=0).if { 	    
+
+            // Inc edges.
+            (edge.width!=0).if {
               edge.new_step;
-              
+
               // Sort with X :
               edgep:=edge.prev_x;
               {(edgep!=NULL) && {edge.x<edgep.x}}.while_do {
@@ -1426,14 +1411,242 @@ Section Public
               };
             } else {
               // Next line.
-              x_edges:=edge.next_line x_edges; 
+              x_edges:=edge.next_line x_edges;
             };
             edge := next_edge;
           };
-          ((x0 <= clip_x1) && {x1 >= clip_x0}).if { 
+          ((x0 <= clip_x1) && {x1 >= clip_x0}).if {
             x0:=x0.max clip_x0;
             x1:=x1.min clip_x1;
-            line_h_hard (x0,y) until x1 color rgbcolor; 
+            line_h_hard (x0,y) until x1 color rgbcolor;            
+          };
+        };
+      };
+    };
+    // Init structure for next.
+    edges_upper:=0;
+    poly_list_y.clear;
+    begin_y:=NULL;
+    poly_ymax:=INTEGER.minimum.to_integer;
+  );
+
+  - poly_trace_color col:UINTEGER_32 <-
+  (
+    color col;
+    poly_trace;
+  );
+  
+  // Aliaser. //////////////////////////////////////////
+Section Private
+  
+  - extract c:INTEGER_32 :(INTEGER_32,INTEGER_32,INTEGER_32) <- ( c >> 16, (c >> 8) & 0FFh, c & 0FFh );  
+  - compact (r,g,b:INTEGER_32) :INTEGER_32                   <- ( r<<16 | g<<8 | b );
+   
+  - medium (x,y:INTEGER_32) :INTEGER_32 <-
+  ( + xr,xg,xb, yr,yg,yb:INTEGER_32;        
+    (xr,xg,xb) := extract x;    
+    (yr,yg,yb) := extract y;
+    compact ((xr+yr)>>1, (xg+yg)>>1, (xb+yb)>>1)    
+  );
+  
+  - a0:{ (INTEGER_32,INTEGER_32); INTEGER_32,INTEGER_32 } := 
+  { (xx,yy:INTEGER_32);
+    + t:INTEGER_32;
+    t := (xx-yy) >> 4;
+    t + (xx+yy) >> 1,
+    t + yy
+  };
+  
+  - a1:{ (INTEGER_32,INTEGER_32); INTEGER_32,INTEGER_32 } := 
+  { (xx,yy:INTEGER_32);
+    + t:INTEGER_32;
+    t := xx+yy;
+    (xx+t )>>2 + t>>3,
+    (xx-yy)>>3 + yy
+  };
+  
+  - a2:{ (INTEGER_32,INTEGER_32); INTEGER_32,INTEGER_32 } := 
+  { (xx,yy:INTEGER_32);
+    + t,tt:INTEGER_32;
+    t  := xx-yy; 
+    tt := t>>4;
+    
+    xx-tt-t>>2,
+    t>>3 + tt + yy
+  };
+  
+  - a3:{ (INTEGER_32,INTEGER_32); INTEGER_32,INTEGER_32 } := 
+  { (xx,yy:INTEGER_32);
+    + t:INTEGER_32;
+    t := (xx+yy)>>2; 
+    
+    t + xx>>1,
+    t + yy>>1
+  };
+    
+  - alias (x,y:INTEGER_32) with cal:{ (INTEGER_32,INTEGER_32); INTEGER_32,INTEGER_32 } :(INTEGER_32,INTEGER_32) <-
+  ( + xr,xg,xb, yr,yg,yb, p1r,p1g,p1b, p2r,p2g,p2b:INTEGER_32;
+        
+    (xr,xg,xb) := extract x;
+    (yr,yg,yb) := extract y;
+    //
+    (p1r,p2r) := cal.value (xr,yr);
+    (p1g,p2g) := cal.value (xg,yg);
+    (p1b,p2b) := cal.value (xb,yb);
+    compact (p1r,p1g,p1b),
+    compact (p2r,p2g,p2b)
+  );
+  
+  - pattern (x,y:INTEGER) with (ax,ay:INTEGER) select s:INTEGER <-
+  [ ? {(s&111b) = s}; ]
+  ( + p1,p2,c_r,c_l:INTEGER_32;
+    
+    c_l := rgbcolor.to_integer_32;
+    c_r := get_color_hard (x+ax,y+ay).to_integer_32;
+    (s = 000b).if { 
+      pixel_hard (x,y) color (medium (c_l,c_r).to_uinteger_32);
+    } else {
+      s
+      .when 001b then { (p1,p2) := alias (c_l,c_r) with a0; }
+      .when 010b then { (p1,p2) := alias (c_l,c_r) with a1; }
+      .when 011b then { (p1,p2) := alias (c_l,c_r) with a2; }      
+      .when 100b then { (p1,p2) := alias (c_l,c_r) with a3; }
+      .when 101b then { (p2,p1) := alias (c_r,c_l) with a2; }
+      .when 110b then { (p2,p1) := alias (c_r,c_l) with a1; }
+      .when 111b then { (p2,p1) := alias (c_r,c_l) with a0; };      
+      pixel_hard (x  ,y) color (p1.to_uinteger_32); 
+      pixel_hard (x+ax,y+ay) color (p2.to_uinteger_32);      
+    };
+  );
+  
+Section Public
+  
+  - poly_trace_alias <-
+  ( + edge,next_edge,edgep:EDGE;
+    + x_edges:EDGE;
+    + x0,x1,new_x,ax1,ax0,tmp:INTEGER;
+    + idx_y:INTEGER;
+    + trace:INTEGER;
+    + line :INTEGER;
+    + is_av0,is_av1:BOOLEAN;
+
+    (edges_upper != 0).if {
+      (poly_ymax >= clip_y0).if {
+        // Connexion with first point.
+        connect_first;
+
+        // Optimize clip_y0
+        (poly_list_y.upper).downto 0 do { j:INTEGER;
+          edge := poly_list_y.item j;
+          {(edge != NULL) && {edge.y1 < clip_y0}}.while_do {
+            edge := edge.next_y;
+          };
+          (edge = NULL).if {
+            poly_list_y.remove j;
+          } else {
+            poly_list_y.put edge to j;
+          };
+        };
+
+        // Sort on Y.
+        sort_list_y;
+
+        poly_ymax := poly_ymax.min clip_y1;
+        line := 1;
+        // for each scanline in the polygon.
+        (poly_list_y.first.y0).to poly_ymax do { y:INTEGER;
+          // Active edges.
+          {(idx_y <= poly_list_y.upper) && {poly_list_y.item idx_y.y0 = y}}.while_do {
+            x_edges := poly_list_y.item idx_y.add x_edges;
+            idx_y   := idx_y + 1;
+          };
+
+          // Draw horizontal line.
+          x1:=INTEGER.minimum.to_integer;
+          edge:=x_edges;
+          {edge!=NULL}.while_do {
+            next_edge:=edge.next_x;
+            // Trace.
+            (y >= clip_y0).if {
+
+              (trace = 0).if {
+                // Begin point.
+                tmp := edge.x+16383;
+                new_x := tmp>>16;
+                ax0 := 111b - (tmp>>13)&111b;
+                is_av0 := (edge.dx + 1_00_00h).to_raw_uinteger_32 <= 2_00_00h;
+                //
+                ((new_x != x1) && {new_x != (x1 + 1)}).if {
+                  ((x0 <= clip_x1) && {x1 >= clip_x0}).if {
+                    x0:=x0.max clip_x0;
+                    x1:=x1.min clip_x1;
+                    
+                    (x1-x0 > 1).if { line_h_hard (x0+1,y) until (x1-1) color rgbcolor; };
+                    (is_av0).if { pattern (x0,y) with (-1,0) select ax0; } else { };
+                    (is_av0).if { pattern (x1,y) with (+1,0) select ax1; } else { };
+                    //line_h_hard (x0,y) until x1 color rgbcolor;
+                  };
+                  x0 := new_x;
+                };
+              };
+
+              (edge.is_point).if {
+                trace := trace + edge.dx;
+              } else {
+                trace := trace + line;
+                line  := - line;
+              };
+
+              (trace = 0).if {
+                // End point.
+                tmp := edge.x+16384; 
+                x1 := tmp>>16;
+                ax1:= (tmp>>13)&111b;
+                is_av1 := (edge.dx + 1_00_00h).to_raw_uinteger_32 <= 2_00_00h;
+              };
+            };
+
+            // Inc edges.
+            (edge.width!=0).if {
+              edge.new_step;
+
+              // Sort with X :
+              edgep:=edge.prev_x;
+              {(edgep!=NULL) && {edge.x<edgep.x}}.while_do {
+                edgep:=edgep.prev_x;
+              };
+              (edgep!=edge.prev_x).if {
+                edge.prev_x.set_next_x (edge.next_x);
+                (edge.next_x!=NULL).if {
+                  edge.next_x.set_prev_x (edge.prev_x);
+                };
+                edge.set_prev_x edgep;
+                (edgep!=NULL).if {
+                  edge.set_next_x (edgep.next_x);
+                  edgep.set_next_x edge;
+                } else {
+                  edge.set_next_x x_edges;
+                  x_edges:=edge;
+                };
+                (edge.next_x!=NULL).if {
+                  edge.next_x.set_prev_x edge;
+                };
+              };
+            } else {
+              // Next line.
+              x_edges:=edge.next_line x_edges;
+            };
+            edge := next_edge;
+          };
+          ((x0 <= clip_x1) && {x1 >= clip_x0}).if {
+            x0:=x0.max clip_x0;
+            x1:=x1.min clip_x1;
+            
+            (x1-x0 > 1).if { line_h_hard (x0+1,y) until (x1-1) color rgbcolor; };
+            (is_av0).if { pattern (x0,y) with (-1,0) select ax0; } else { };
+            (is_av0).if { pattern (x1,y) with (+1,0) select ax1; } else { };
+                        
+            //line_h_hard (x0,y) until x1 color rgbcolor;
           };
         };
       };
@@ -1445,31 +1658,712 @@ Section Public
     poly_ymax:=INTEGER.minimum.to_integer;
   );
   
-  - poly_trace_color col:UINTEGER_32 <-
-  ( 
-    color col;
-    poly_trace;
+  // Mapping. //////////////////////////////////////////
+Section Private
+
+  + edges_map:FAST_ARRAY(EDGE_MAP); // BSBS: A optimiser avec un MAP_FAST_ARRAY ... quand il y aura add_last, resize...
+  + poly_list_y_map:FAST_ARRAY(EDGE_MAP);
+
+  + begin_y_map:EDGE_MAP;
+  + last_y_map:EDGE_MAP;
+
+  + x_origin_map:INTEGER;
+  + y_origin_map:INTEGER;
+  + spot_x_map:INTEGER;
+  + spot_y_map:INTEGER;
+  - display_poly_map <-
+  ( + edge:EDGE_MAP;
+
+    0.to (poly_list_y_map.upper) do { i:INTEGER;
+      edge := poly_list_y_map.item i;
+      {edge != NULL}.while_do {
+	edge.display;
+	';'.print;
+	edge := edge.next_y;
+      };
+      '\n'.print;
+    };
   );
+
+Section Private
+
+  - connect_first_map <-
+  (
+    map_line_to (x_origin,y_origin) on (x_origin_map,y_origin_map);
+    ((begin_y_map!=NULL) && {begin_y_map.is_down = last_y_map.is_down}).if {
+      // Connecting.
+      (begin_y_map.is_down).if {
+	// Add first list.
+	last_y_map.set_next_y begin_y_map;
+	poly_list_y_map.put (poly_list_y_map.item last_idx) to begin_idx;
+      } else {
+	// Add last list.
+	begin_y_map.set_next_y last_y_map;
+      };
+      poly_list_y_map.remove last_idx;
+    };
+  );
+
+  - sort_list_y_map <-
+  // Bubble sort :-( => BSBS: Optmize with Quick sort...
+  ( + low,up,idx,upper:INTEGER;
+    + swap:BOOLEAN;
+
+    upper := poly_list_y_map.upper-1;
+
+    low := 0;
+    up  := upper;
+    {
+      swap:=FALSE;
+      low.to up do { i:INTEGER;
+	(poly_list_y_map.item i.y0 > poly_list_y_map.item (i+1).y0).if {
+	  poly_list_y_map.swap i with (i+1);
+	  swap := TRUE;
+	};
+
+	idx := upper - i;
+	(poly_list_y_map.item idx.y0 > poly_list_y_map.item (idx+1).y0).if {
+	  poly_list_y_map.swap idx with (idx+1);
+	  swap := TRUE;
+	};
+      };
+      up  := up - 1;
+      low := low + 1;
+    }.do_while {swap};
+  );
+
+Section Public
+
+  - map_move_to (x,y:INTEGER) on (xb,yb:INTEGER) <-
+  (
+    (edges_map = NULL).if {
+      poly_list_y_map := FAST_ARRAY(EDGE_MAP).create_with_capacity 16;
+      edges_map := FAST_ARRAY(EDGE_MAP).create 64;
+      0.to 63 do { n:INTEGER;
+	edges_map.put (EDGE_MAP.clone) to n;
+      };
+    };
+
+    (edges_upper != 0).if {
+      connect_first_map;
+    };
+    move_to (x,y);
+    x_origin_map := spot_x_map := xb;
+    y_origin_map := spot_y_map := yb;
+    x_origin := x;
+    y_origin := y;
+    begin_y_map  := NULL;
+    last_y_map   := NULL;
+
+    poly_ymax := poly_ymax.max y;
+  );
+
+  - map_line_to (x1,y1:INTEGER) on (x1b,y1b:INTEGER) <-
+  ( + edge,edge2:EDGE_MAP;
+    + x0,y0,x0b,y0b:INTEGER;
+
+    x0:=spot_x;
+    y0:=spot_y;
+
+    ((x0!=x1) || {y0!=y1}).if {
+      x0b := spot_x_map;
+      y0b := spot_y_map;
+      move_to (x1,y1);
+      spot_x_map := x1b;
+      spot_y_map := y1b;
+
+      (edges_upper >= (edges_map.upper-4)).if { // BSBS: A optimiser avec MAP_ARRAY ...
+	// Append 16 Edges.
+	0.to 15 do { j:INTEGER;
+	  edges_map.add_last (EDGE_MAP.clone);
+	};
+      };
+
+      (y0=y1).if {
+	// Flat.
+	edge  := edges_map.item edges_upper;
+	edges_upper := edges_upper + 1;
+	poly_list_y_map.add_last edge;
+	edge2 := edges_map.item edges_upper;
+	edges_upper := edges_upper + 1;
+	poly_list_y_map.add_last edge2;
+
+	(x0 < x1).if {
+	  edge .make (x0,y0) add 1    on (x0b,y0b);
+	  edge2.make (x1,y1) add (-1) on (x1b,y1b);
+	} else {
+	  edge .make (x0,y0) add (-1) on (x0b,y0b);
+	  edge2.make (x1,y1) add 1    on (x1b,y1b);
+	};
+      } else {
+	// Line.
+	edge  := edges_map.item edges_upper;
+	edges_upper := edges_upper + 1;
+	edge.make (x0,y0) to (x1,y1) on (x0b,y0b) to (x1b,y1b);
+
+	(begin_y_map=NULL).if {
+	  begin_idx := poly_list_y_map.count;
+	  begin_y_map   := edge;
+	};
+
+	((last_y_map=NULL) || {last_y_map.is_down != edge.is_down}).if {
+	  // New line_y.
+	  poly_list_y_map.add_last edge;
+	  last_idx := poly_list_y_map.upper;
+	  last_y_map   := edge;
+	  poly_ymax := poly_ymax.max y1;
+	} else {
+	  // Continue line_y.
+	  (edge.is_down).if {
+	    // Add last.
+	    last_y_map.set_next_y edge;
+	    poly_ymax := poly_ymax.max y1;
+	  } else {
+	    // Add first.
+	    poly_list_y_map.put edge to last_idx;
+	    edge.set_next_y last_y_map;
+	  };
+	  last_y_map := edge;
+	};
+      };
+    };
+  );
+
+  - map_trace_with bmp:ABSTRACT_BITMAP
+  //  edge_color  edge_col:{(INTEGER,INTEGER,INTEGER,INTEGER); }
+  line_color  line_col:{(INTEGER,INTEGER,INTEGER,INTEGER); }
+  pixel_color pixel_col:{(INTEGER,INTEGER,INTEGER,INTEGER,UINTEGER_32); UINTEGER_32} <-
+  ( + edge,next_edge,edgep:EDGE_MAP;
+    + x_edges:EDGE_MAP;
+    + x0,x1,x0b,y0b,x1b,y1b,new_x:INTEGER;
+    + idx_y:INTEGER;
+    + trace:INTEGER;
+    + line :INTEGER;
+
+    (edges_upper != 0).if {
+      (poly_ymax >= clip_y0).if {
+        // Connexion with first point.
+        connect_first_map;
+
+        // Optimize clip_y0
+        (poly_list_y_map.upper).downto 0 do { j:INTEGER;
+          edge := poly_list_y_map.item j;
+          {(edge != NULL) && {edge.y1 < clip_y0}}.while_do {
+            edge := edge.next_y;
+          };
+          (edge = NULL).if {
+            poly_list_y_map.remove j;
+          } else {
+            poly_list_y_map.put edge to j;
+          };
+        };
+
+        // Sort on Y.
+        sort_list_y_map;
+
+        poly_ymax := poly_ymax.min clip_y1;
+        line := 1;
+        // for each scanline in the polygon.
+        (poly_list_y_map.first.y0).to poly_ymax do { y:INTEGER;
+          // Active edges.
+          {(idx_y <= poly_list_y_map.upper) && {poly_list_y_map.item idx_y.y0 = y}}.while_do {
+            x_edges := poly_list_y_map.item idx_y.add x_edges;
+            idx_y   := idx_y + 1;
+          };
+
+          // Draw horizontal line.
+          x1:=INTEGER.minimum.to_integer;
+          edge:=x_edges;
+          {edge!=NULL}.while_do {
+            next_edge:=edge.next_x;
+            // Trace.
+            (y >= clip_y0).if {
+              (trace = 0).if {
+                // Begin point.
+                new_x := (edge.x+16383)>>16;
+                ((new_x != x1) && {new_x != (x1 + 1)}).if {
+                  ((x0 <= clip_x1) && {x1 >= clip_x0}).if {
+                    line_h_hard (x0,y) until x1 with bmp
+                    on (x0b,y0b) to (x1b,y1b)
+                    line_color  line_col
+                    pixel_color pixel_col;
+                  };
+                  x0  := new_x;
+                  x0b := edge.xb;
+                  y0b := edge.yb;
+                };
+              };
+
+              (edge.is_point).if {
+                trace := trace + edge.dx;
+              } else {
+                trace := trace + line;
+                line  := - line;
+              };
+
+              (trace = 0).if {
+                // End point.
+                x1  := (edge.x +16384)>>16;
+                x1b := edge.xb;
+                y1b := edge.yb;
+              };
+            };
+
+            // Inc edges.
+            (edge.width!=0).if {
+              edge.new_step;
+
+              // Sort with X :
+              edgep:=edge.prev_x;
+              {(edgep!=NULL) && {edge.x<edgep.x}}.while_do {
+                edgep:=edgep.prev_x;
+              };
+              (edgep!=edge.prev_x).if {
+                edge.prev_x.set_next_x (edge.next_x);
+                (edge.next_x!=NULL).if {
+                  edge.next_x.set_prev_x (edge.prev_x);
+                };
+                edge.set_prev_x edgep;
+                (edgep!=NULL).if {
+                  edge.set_next_x (edgep.next_x);
+                  edgep.set_next_x edge;
+                } else {
+                  edge.set_next_x x_edges;
+                  x_edges:=edge;
+                };
+                (edge.next_x!=NULL).if {
+                  edge.next_x.set_prev_x edge;
+                };
+              };
+            } else {
+              // Next line.
+              x_edges:=edge.next_line x_edges;
+            };
+            edge := next_edge;
+          };
+          ((x0 <= clip_x1) && {x1 >= clip_x0}).if {
+            line_h_hard (x0,y) until x1 with bmp
+            on (x0b,y0b) to (x1b,y1b)
+            line_color  line_col
+            pixel_color pixel_col;
+          };
+        };
+      };
+    };
+    // Init structure for next.
+    edges_upper:=0;
+    poly_list_y_map.clear;
+    begin_y_map:=NULL;
+    poly_ymax:=INTEGER.minimum.to_integer;
+  );
+
+  - line_h_hard (xx0,y:INTEGER) until x1:INTEGER with bmp:ABSTRACT_BITMAP
+  on (x0b,y0b:INTEGER) to (x1b,y1b:INTEGER)
+  line_color  line_col:{(INTEGER,INTEGER,INTEGER,INTEGER); }
+  pixel_color pixel_col:{(INTEGER,INTEGER,INTEGER,INTEGER,UINTEGER_32); UINTEGER_32} <-
+  ( + dx,dy,px,py,x0,pxi,pyi:INTEGER;
+    + l:INTEGER;
+    + col:UINTEGER_32;
+
+    l := x1 - xx0 + 1;
+    dx := (x1b-x0b+1) / l;
+    dy := (y1b-y0b+1) / l;
+    l := clip_x0 - xx0;
+    (l > 0).if {
+      px := x0b + dx * l;
+      py := y0b + dy * l;
+      x0 := clip_x0;
+    } else {
+      px := x0b;
+      py := y0b;
+      x0 := xx0;
+    };
+    //
+    line_col.value (x0,y,px>>16,py>>16);
+    //
+    x0.to (x1.min clip_x1) do { x:INTEGER;
+      pxi := px >> 16;
+      pyi := py >> 16;
+      ? {(pxi.in_range 0 to (bmp.width-1)) && {pyi.in_range 0 to (bmp.height-1)}};
+      col := bmp.get_color_hard (pxi,pyi);
+      col := pixel_col.value (x,y,pxi,pyi,col);
+      pixel_hard (x,y) color col;
+      px := px + dx;
+      py := py + dy;
+    };
+  );
+
+  ///////////////////////////////////////////////////////////
   
+  
+  // Mapping + Z-buffer. //////////////////////////////////////////
+Section Private
+
+  + edges_map_z:FAST_ARRAY(EDGE_MAP_Z); // BSBS: A optimiser avec un MAP_FAST_ARRAY ... quand il y aura add_last, resize...
+  + poly_list_y_map_z:FAST_ARRAY(EDGE_MAP_Z);
+
+  + begin_y_map_z:EDGE_MAP_Z;
+  + last_y_map_z:EDGE_MAP_Z;
+
+  //+ x_origin_map_z:INTEGER;
+  //+ y_origin_map_z:INTEGER;
+  + z_origin:INTEGER;
+  + spot_z:INTEGER;
+  //+ spot_x_map_z:INTEGER;
+  //+ spot_y_map_z:INTEGER;
+  - display_poly_map_z <-
+  ( + edge:EDGE_MAP_Z;
+
+    0.to (poly_list_y_map_z.upper) do { i:INTEGER;
+      edge := poly_list_y_map_z.item i;
+      {edge != NULL}.while_do {
+	edge.display;
+	';'.print;
+	edge := edge.next_y;
+      };
+      '\n'.print;
+    };
+  );
+
+Section Private
+
+  - connect_first_map_z <-
+  (
+    map_line_to (x_origin,y_origin) with_z z_origin on (x_origin_map,y_origin_map);
+    ((begin_y_map_z!=NULL) && {begin_y_map_z.is_down = last_y_map_z.is_down}).if {
+      // Connecting.
+      (begin_y_map_z.is_down).if {
+	// Add first list.
+	last_y_map_z.set_next_y begin_y_map_z;
+	poly_list_y_map_z.put (poly_list_y_map_z.item last_idx) to begin_idx;
+      } else {
+	// Add last list.
+	begin_y_map_z.set_next_y last_y_map_z;
+      };
+      poly_list_y_map_z.remove last_idx;
+    };
+  );
+
+  - sort_list_y_map_z <-
+  // Bubble sort :-( => BSBS: Optmize with Quick sort...
+  ( + low,up,idx,upper:INTEGER;
+    + swap:BOOLEAN;
+
+    upper := poly_list_y_map_z.upper-1;
+
+    low := 0;
+    up  := upper;
+    {
+      swap:=FALSE;
+      low.to up do { i:INTEGER;
+	(poly_list_y_map_z.item i.y0 > poly_list_y_map_z.item (i+1).y0).if {
+	  poly_list_y_map_z.swap i with (i+1);
+	  swap := TRUE;
+	};
+
+	idx := upper - i;
+	(poly_list_y_map_z.item idx.y0 > poly_list_y_map_z.item (idx+1).y0).if {
+	  poly_list_y_map_z.swap idx with (idx+1);
+	  swap := TRUE;
+	};
+      };
+      up  := up - 1;
+      low := low + 1;
+    }.do_while {swap};
+  );
+
+Section Public
+
+  - map_move_to (x,y:INTEGER) with_z z:INTEGER on (xb,yb:INTEGER) <-
+  (
+    (edges_map_z = NULL).if {
+      poly_list_y_map_z := FAST_ARRAY(EDGE_MAP_Z).create_with_capacity 16;
+      edges_map_z := FAST_ARRAY(EDGE_MAP_Z).create 64;
+      0.to 63 do { n:INTEGER;
+	edges_map_z.put (EDGE_MAP_Z.clone) to n;
+      };
+    };
+
+    (edges_upper != 0).if {
+      connect_first_map_z;
+    };
+    move_to (x,y);
+    x_origin_map := spot_x_map := xb;
+    y_origin_map := spot_y_map := yb;
+    x_origin := x;
+    y_origin := y;
+    z_origin := spot_z := z;
+    begin_y_map_z := NULL;
+    last_y_map_z  := NULL;
+
+    poly_ymax := poly_ymax.max y;
+  );
+
+  - map_line_to (x1,y1:INTEGER) with_z z1:INTEGER on (x1b,y1b:INTEGER) <-
+  ( + edge,edge2:EDGE_MAP_Z;
+    + x0,y0,x0b,y0b,z0:INTEGER;
+
+    x0:=spot_x;
+    y0:=spot_y;
+
+    ((x0!=x1) || {y0!=y1}).if {
+      x0b := spot_x_map;
+      y0b := spot_y_map;
+      z0  := spot_z;
+      move_to (x1,y1);
+      spot_x_map := x1b;
+      spot_y_map := y1b;
+      spot_z     := z1;
+
+      (edges_upper >= (edges_map_z.upper-4)).if { // BSBS: A optimiser avec MAP_ARRAY ...
+	// Append 16 Edges.
+	0.to 15 do { j:INTEGER;
+	  edges_map_z.add_last (EDGE_MAP_Z.clone);
+	};
+      };
+
+      (y0=y1).if {
+	// Flat.
+	edge  := edges_map_z.item edges_upper;
+	edges_upper := edges_upper + 1;
+	poly_list_y_map_z.add_last edge;
+	edge2 := edges_map_z.item edges_upper;
+	edges_upper := edges_upper + 1;
+	poly_list_y_map_z.add_last edge2;
+
+	(x0 < x1).if {
+	  edge .make (x0,y0,z0) add 1    on (x0b,y0b);
+	  edge2.make (x1,y1,z1) add (-1) on (x1b,y1b);
+	} else {
+	  edge .make (x0,y0,z0) add (-1) on (x0b,y0b);
+	  edge2.make (x1,y1,z1) add 1    on (x1b,y1b);
+	};
+      } else {
+	// Line.
+	edge  := edges_map_z.item edges_upper;
+	edges_upper := edges_upper + 1;
+	edge.make (x0,y0,z0) to (x1,y1,z1) on (x0b,y0b) to (x1b,y1b);
+
+	(begin_y_map_z=NULL).if {
+	  begin_idx := poly_list_y_map_z.count;
+	  begin_y_map_z := edge;
+	};
+
+	((last_y_map_z=NULL) || {last_y_map_z.is_down != edge.is_down}).if {
+	  // New line_y.
+	  poly_list_y_map_z.add_last edge;
+	  last_idx := poly_list_y_map_z.upper;
+	  last_y_map_z   := edge;
+	  poly_ymax := poly_ymax.max y1;
+	} else {
+	  // Continue line_y.
+	  (edge.is_down).if {
+	    // Add last.
+	    last_y_map_z.set_next_y edge;
+	    poly_ymax := poly_ymax.max y1;
+	  } else {
+	    // Add first.
+	    poly_list_y_map_z.put edge to last_idx;
+	    edge.set_next_y last_y_map_z;
+	  };
+	  last_y_map_z := edge;
+	};
+      };
+    };
+  );
+
+  - map_trace_with bmp:ABSTRACT_BITMAP and_for_z z_buffer:NATIVE_ARRAY(UINTEGER_32) 
+    pixel_color pixel_col:{(INTEGER,INTEGER,INTEGER,INTEGER,INTEGER,UINTEGER_32); UINTEGER_32} <-
+  ( + edge,next_edge,edgep:EDGE_MAP_Z;
+    + x_edges:EDGE_MAP_Z;
+    + x0,x1,x0b,y0b,x1b,y1b,z0,z1,new_x:INTEGER;
+    + idx_y:INTEGER;
+    + trace:INTEGER;
+    + line :INTEGER;
+
+    (edges_upper != 0).if {
+      (poly_ymax >= clip_y0).if {
+        // Connexion with first point.
+        connect_first_map_z;
+
+        // Optimize clip_y0
+        (poly_list_y_map_z.upper).downto 0 do { j:INTEGER;
+          edge := poly_list_y_map_z.item j;
+          {(edge != NULL) && {edge.y1 < clip_y0}}.while_do {
+            edge := edge.next_y;
+          };
+          (edge = NULL).if {
+            poly_list_y_map_z.remove j;
+          } else {
+            poly_list_y_map_z.put edge to j;
+          };
+        };
+
+        // Sort on Y.
+        sort_list_y_map_z;
+
+        poly_ymax := poly_ymax.min clip_y1;
+        line := 1;
+        // for each scanline in the polygon.
+        (poly_list_y_map_z.first.y0).to poly_ymax do { y:INTEGER;
+          // Active edges.
+          {(idx_y <= poly_list_y_map_z.upper) && {poly_list_y_map_z.item idx_y.y0 = y}}.while_do {
+            x_edges := poly_list_y_map_z.item idx_y.add x_edges;
+            idx_y   := idx_y + 1;
+          };
+
+          // Draw horizontal line.
+          x1:=INTEGER.minimum.to_integer;
+          edge:=x_edges;
+          {edge!=NULL}.while_do {
+            next_edge:=edge.next_x;
+            // Trace.
+            (y >= clip_y0).if {
+              (trace = 0).if {
+                // Begin point.
+                new_x := (edge.x+16383)>>16;
+                ((new_x != x1) && {new_x != (x1 + 1)}).if {
+                  ((x0 <= clip_x1) && {x1 >= clip_x0}).if {
+                    line_h_hard (x0,y) until x1 with bmp
+                    on (x0b,y0b) to (x1b,y1b)
+                    and_z z0 to z1 with z_buffer
+                    pixel_color pixel_col;
+                  };
+                  x0  := new_x;
+                  x0b := edge.xb;
+                  y0b := edge.yb;
+                  z0  := edge.z;
+                };
+              };
+
+              (edge.is_point).if {
+                trace := trace + edge.dx;
+              } else {
+                trace := trace + line;
+                line  := - line;
+              };
+
+              (trace = 0).if {
+                // End point.
+                x1  := (edge.x +16384)>>16;
+                x1b := edge.xb;
+                y1b := edge.yb;
+                z1  := edge.z;
+              };
+            };
+
+            // Inc edges.
+            (edge.width!=0).if {
+              edge.new_step;
+
+              // Sort with X :
+              edgep:=edge.prev_x;
+              {(edgep!=NULL) && {edge.x<edgep.x}}.while_do {
+                edgep:=edgep.prev_x;
+              };
+              (edgep!=edge.prev_x).if {
+                edge.prev_x.set_next_x (edge.next_x);
+                (edge.next_x!=NULL).if {
+                  edge.next_x.set_prev_x (edge.prev_x);
+                };
+                edge.set_prev_x edgep;
+                (edgep!=NULL).if {
+                  edge.set_next_x (edgep.next_x);
+                  edgep.set_next_x edge;
+                } else {
+                  edge.set_next_x x_edges;
+                  x_edges:=edge;
+                };
+                (edge.next_x!=NULL).if {
+                  edge.next_x.set_prev_x edge;
+                };
+              };
+            } else {
+              // Next line.
+              x_edges:=edge.next_line x_edges;
+            };
+            edge := next_edge;
+          };
+          ((x0 <= clip_x1) && {x1 >= clip_x0}).if {
+            line_h_hard (x0,y) until x1 with bmp
+            on (x0b,y0b) to (x1b,y1b)
+            and_z z0 to z1 with z_buffer
+            pixel_color pixel_col;
+          };
+        };
+      };
+    };
+    // Init structure for next.
+    edges_upper:=0;
+    poly_list_y_map_z.clear;
+    begin_y_map_z:=NULL;
+    poly_ymax:=INTEGER.minimum.to_integer;
+  );
+
+  - line_h_hard (xx0,y:INTEGER) until x1:INTEGER with bmp:ABSTRACT_BITMAP
+  on (x0b,y0b:INTEGER) to (x1b,y1b:INTEGER) and_z z0:INTEGER to z1:INTEGER with z_buffer:NATIVE_ARRAY(UINTEGER_32) 
+  pixel_color pixel_col:{(INTEGER,INTEGER,INTEGER,INTEGER,INTEGER,UINTEGER_32); UINTEGER_32} <-
+  ( + dx,dy,dz,px,py,pz,x0,pxi,pyi,pzi,ofs_z:INTEGER;
+    + l:INTEGER;
+    + col:UINTEGER_32;
+
+    l := x1 - xx0 + 1;
+    dx := (x1b-x0b+1) / l;
+    dy := (y1b-y0b+1) / l;
+    dz := (z1 - z0+1) / l;
+    l := clip_x0 - xx0;
+    (l > 0).if {
+      px := x0b + dx * l;
+      py := y0b + dy * l;
+      pz := z0  + dz * l;
+      x0 := clip_x0;
+    } else {
+      px := x0b;
+      py := y0b;
+      pz := z0;
+      x0 := xx0;
+    };
+    ofs_z := y * width + x0;
+    //
+    x0.to (x1.min clip_x1) do { x:INTEGER;
+      pxi := px >> 16;
+      pyi := py >> 16;
+      pzi := pz >> 16;
+      ? {(pxi.in_range 0 to (bmp.width-1)) && {pyi.in_range 0 to (bmp.height-1)}};
+      (z_buffer.item ofs_z < pzi).if {
+        col := bmp.get_color_hard (pxi,pyi);
+        col := pixel_col.value (x,y,pzi,pxi,pyi,col);
+        pixel_hard (x,y) color col;
+        z_buffer.put pzi to ofs_z;
+      };
+      px := px + dx;
+      py := py + dy;
+      pz := pz + dz;
+      ofs_z := ofs_z + 1;
+    };
+  );
+
+  ///////////////////////////////////////////////////////////
+
   - put_bitmap bmp:ABSTRACT_BITMAP to (x,y:INTEGER) <-
   (
     deferred;
   );
 
-  - put_bitmap bmp:ABSTRACT_BITMAP to (x,y:INTEGER) scale (scale_x,scale_y:REAL_16_16) <-  
+  - put_bitmap bmp:ABSTRACT_BITMAP to (x,y:INTEGER) scale (scale_x,scale_y:REAL_16_16) <-
   (
     deferred;
   );
-  
+
 Section Public
-  
+
   // For demo ... :-)
-  
+
   - font_width string:ABSTRACT_STRING :INTEGER <-
-  ( 
+  (
     font_width string size (string.upper)
   );
-  
+
   - font_width_letter char:CHARACTER :INTEGER <-
   ( + offset_begin,offset_end:INTEGER;
     + car:INTEGER;
@@ -1486,10 +2380,10 @@ Section Public
   );
 
   - font_width string:ABSTRACT_STRING size n:INTEGER :INTEGER <-
-  (     
+  (
     font_width string at (string.lower) to n
   );
-  
+
   - font_width string:ABSTRACT_STRING at beg:INTEGER to end:INTEGER :INTEGER <-
   ( + result:INTEGER;
 
@@ -1498,16 +2392,16 @@ Section Public
     };
     result
   );
-  
+
   - print_char c:CHARACTER to (x,y:INTEGER) :INTEGER <-
   ( + pix_x,pix_y,offset_begin,offset_end:INTEGER;
     + bit_count:UINTEGER_16;
     + sz_letter:INTEGER;
     + car:UINTEGER_8;
-    
+
     car := c.to_uinteger_8;
     ((y <= clip_y1) && {(y+15) >= clip_y0} && {x <= clip_x1}).if {
-      pix_x:=x;      	
+      pix_x:=x;
       ((car<32) || {car>=127}).if {
 	car:=0;
       } else {
@@ -1525,7 +2419,7 @@ Section Public
 	      (pix_y.in_range clip_y0 to clip_y1).if {
 		((`__graph_font[@offset_begin]`:UINTEGER_16 & bit_count)!=0).if {
 		  pixel_hard (pix_x,pix_y) color rgbcolor;
-		};		
+		};
 	      };
 	      pix_y:=pix_y+1;
 	      bit_count:=bit_count << 1;
@@ -1537,16 +2431,16 @@ Section Public
 	pix_x := pix_x + 1;
       } else {
 	pix_x := pix_x + sz_letter;
-      };    
-    };    
+      };
+    };
     pix_x
   );
-  
+
   - print string:ABSTRACT_STRING at b:INTEGER to e:INTEGER to (x,y:INTEGER) :INTEGER <-
   ( + pix_x,pix_y,offset_begin,offset_end:INTEGER;
     + bit_count:UINTEGER_16;
     + car,sz_letter:INTEGER;
-    
+
     ((y <= clip_y1) && {(y+15) >= clip_y0} && {x <= clip_x1}).if {
       pix_x:=x;
       b.to e do { j:INTEGER;
@@ -1568,7 +2462,7 @@ Section Public
 		(pix_y.in_range clip_y0 to clip_y1).if {
 		  ((`__graph_font[@offset_begin]`:UINTEGER_16 & bit_count)!=0).if {
 		    pixel_hard (pix_x,pix_y) color rgbcolor;
-		  };		
+		  };
 		};
 		pix_y:=pix_y+1;
 		bit_count:=bit_count << 1;
@@ -1580,13 +2474,13 @@ Section Public
 	  pix_x := pix_x + 1;
 	} else {
 	  pix_x := pix_x + sz_letter;
-	};	
+	};
       };
     };
     pix_x
   );
 
   - print string:ABSTRACT_STRING to (x,y:INTEGER) :INTEGER <-
-  ( 
+  (
     print string at (string.lower) to (string.upper) to (x,y)
   );

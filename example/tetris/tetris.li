@@ -1,48 +1,28 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name     := TETRIS;
-  
+
   - comment  := "The TETRIS game";
-  
+
   - author   := "Benoit Sonntag (bsonntag@loria.fr)";
 
   - version  := 1;
-  
-Section Inherit  
-  
+
+Section Inherit
+
   + parent_area:Expanded AREA;
-  
+
   + parent_g_expr:Expanded G_EXPR;
-  
+
 Section Private
-  
+
   - level:UINTEGER_8;
   - line_count:UINTEGER_32;
-  
+
   - face:FAST_ARRAY3(INTEGER);
-  
+
   - screen:FAST_ARRAY2(UINTEGER_8);
-  
+
   - face_to_color n:UINTEGER_8 :UINTEGER_32 <-
   ( + result:UINTEGER_32;
 
@@ -56,7 +36,7 @@ Section Private
     .when 7 then { result := 020E020h; }; // Green.
     result
   );
-  
+
   - case_busy (x,y:INTEGER) face n:UINTEGER_8 <-
   ( + x0,y0:INTEGER;
     + col:UINTEGER_32;
@@ -64,18 +44,18 @@ Section Private
     y0 := y * 25;
     col := face_to_color n;
     // Fill.
-    rectangle_fill (x0+1,y0+1) to (x0+23,y0+23) color col;    
+    rectangle_fill (x0+1,y0+1) to (x0+23,y0+23) color col;
     // More light.
     line_v (x0,y0+23) until y0 color (col + 1F1F1Fh);
     line_h_until (x0+24);
     // More dark.
     line_v_until (y0+24) color (col - 1F1F1Fh);
-    line_h_until x0;    
+    line_h_until x0;
   );
-    
+
   - delete_line <-
   ( + x,y:INTEGER;
-    
+
     y := 18;
     {
       x := 0;
@@ -98,7 +78,7 @@ Section Private
       };
     }.do_while {y != 0};
   );
-  
+
   - load_face p:INTEGER <-
   //  0 |  1  |  2  |  3  |  4  |  5  |  6  |
   //----|-----|-----|-----|-----|-----|-----|
@@ -108,42 +88,42 @@ Section Private
   //  3 | 2   | 3   | 2 1 | 3   | 2 3 |   3 |
   ( + tmp:BOOLEAN;
     + tmp1,tmp2:INTEGER;
-    
+
     // First graph.
     face.put ((p!=0).to_integer)      to (0,1,0);
     face.put ((p-2)*(p<4).to_integer) to (0,1,1);
     tmp1:=((p&1)<<1)-1;
     face.put ((p=4).to_integer) to (0,2,0);
-    face.put tmp1               to (0,2,1);    
+    face.put tmp1               to (0,2,1);
     tmp:=(p>4);
     tmp2:=tmp.to_integer;
     face.put tmp2                           to (0,3,0);
     face.put (-tmp1*(!tmp).to_integer+tmp2) to (0,3,1);
-    
+
     // 3 rotation (+pi/2).
-    1.to 3 do { r:INTEGER;      
+    1.to 3 do { r:INTEGER;
       0.to 3 do { c:INTEGER;
         tmp1 := r - 1;
         face.put (-face.item (tmp1,c,1)) to (r,c,0);  // x' = -y
         face.put (+face.item (tmp1,c,0)) to (r,c,1);  // y' = +x
-      };      
-    };    
+      };
+    };
   );
 
   - pos_r:INTEGER;
-  
+
   - pos_x:INTEGER;
-  
+
   - pos_y:INTEGER;
-  
+
   - n_face:UINTEGER_8;
-  
+
   - move (x,y:INTEGER) rotation r:INTEGER :BOOLEAN <-
   ( + j,px,py:INTEGER;
-    
+
     j:=0;
     {
-      (j < 4) && 
+      (j < 4) &&
       {(px:=x + face.item (r,j,0)).in_range 0 to 9}  &&
       {(py:=y + face.item (r,j,1)).in_range 0 to 18} &&
       {screen.item (px,py) = 0}
@@ -156,7 +136,7 @@ Section Private
       pos_r := r;
     }
   );
-  
+
   - put_face <-
   ( + x,y:INTEGER;
     0.to 3 do { j:INTEGER;
@@ -168,74 +148,74 @@ Section Private
 
   - remove_face <-
   ( + x,y:INTEGER;
-    
+
     0.to 3 do { j:INTEGER;
       x := pos_x + face.item (pos_r,j,0);
       y := pos_y + face.item (pos_r,j,1);
-      screen.put 0 to (x,y);    
+      screen.put 0 to (x,y);
     };
   );
-  
-Section Public  
-  
+
+Section Public
+
   //
   // Width / Height
   //
-  
+
   - width_min:INTEGER  := 25 * 10;
-  
+
   - height_min:INTEGER := 25 * 19 + 14;
-  
+
   //
   // Creation.
-  //  
-  
+  //
+
   - init:G_EXPR <-
   (
     // Initialization.
     face  :=FAST_ARRAY3(INTEGER)  .create (4,4,2);
     screen:=FAST_ARRAY2(UINTEGER_8).create (10,19);
-    tmp_string:=STRING.create 80;    
+    tmp_string:=STRING.create 80;
     stat  := 2;
     random := 015AAC005h;
     G_RAW.create (Self.fix_height.fix_width)
   );
-  
+
   - run:G_WIN_OUT <-
-  ( 
+  (
     G_WIN_OUT.create "Tetris" with init
   );
-  
+
   - main <-
-  (     
+  (
     // Init window.
     VIDEO.make_size (300,520);
     DESK.make VIDEO with (
-      G_OUT.create "Tetris" justify (G_OUT.center) / init      
-    );        
+      G_OUT.create "Tetris" justify (G_OUT.center) / init
+    );
   );
-  
+
   //
   // Update position.
   //
-  
+
   - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
-  ( 
+  (
     update rac from (x,y) size (w,h);
   );
-  
+
   //
   // Display.
   //
-  
+
   - tmp_string:STRING;
-  
-  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-  
+
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
   ( + n:UINTEGER_8;
     + xx,yy:INTEGER;
-    
+
     clipping (x0,y0) to (x1,y1);
-    
+
     // Game array.
     0.to 18 do { y:INTEGER;
       0.to 9 do { x:INTEGER;
@@ -243,7 +223,7 @@ Section Public
         (n = 0).if {
           xx := x * 25;
           yy := y * 25;
-          rectangle_fill (xx,yy) to (xx+24,yy+24) color black;	  
+          rectangle_fill (xx,yy) to (xx+24,yy+24) color black;
         } else {
           case_busy (x,y) face n;
         };
@@ -251,14 +231,14 @@ Section Public
     };
     //line (0,6*25) to (x_max,6*25) color red;
     //line (0,9*25) to (x_max,9*25) color blue;
-    
+
     // Game info.
     rectangle_fill (0,475) to (249,475+13) color gray;
     color black;
-    tmp_string.copy "Level:";    
+    tmp_string.copy "Level:";
     level.append_in tmp_string format 2 with '0';
     tmp_string.append " Lines:";
-    line_count.append_in tmp_string format 4 with '0';    
+    line_count.append_in tmp_string format 4 with '0';
     stat
     .when 0 to 1 then { tmp_string.append " Play"; }
     .when 2 then { tmp_string.append " Stop";  }
@@ -268,51 +248,51 @@ Section Public
 
   - display_face <-
   ( + x0,y0,x1,y1:INTEGER;
-    
+
     x0:=((pos_x - 3).max  0) * 25;
     x1:=(((pos_x + 3).min  9) * 25) + 24;
     y0:=((pos_y - 3).max  0) * 25;
     y1:=(((pos_y + 3).min 18) *25) + 24;
     draw (x0,y0) to (x1,y1);
   );
-  
+
   //
   // Events.
   //
-  
+
   - receive msg:EVENT <-
   ( + evt_keyboard:EVENT_KEYBOARD;
     + evt_time:EVENT_TIMER;
     + evt_mouse:EVENT_MOUSE;
-    
-    evt_keyboard ?= msg;    
+
+    evt_keyboard ?= msg;
     (evt_keyboard != NULL).if {
       keyboard_event (evt_keyboard.key);
     };
-    
+
     evt_mouse ?= msg;
     (evt_mouse != NULL).if {
       mouse_event evt_mouse;
     };
-    
-    evt_time ?= msg;    
+
+    evt_time ?= msg;
     (evt_time != NULL).if {
       timer_event evt_time;
-    };    
+    };
   );
-  
+
   - delay:UINTEGER_32;
   - stat:UINTEGER_8;
   - old_stat:UINTEGER_8;
   - random:UINTEGER_32;
-  
+
   - timer_event evt:EVENT_TIMER <-
-  ( + speed:UINTEGER_32;    
-    
-//    ia;
-    
+  ( + speed:UINTEGER_32;
+
+    ia;
+
     delay := delay + evt.delay;
-    speed := 10 - (level >> 1); 
+    speed := 10 - (level >> 1);
     (delay > speed).if {
       delay := delay - speed;
       stat
@@ -320,8 +300,8 @@ Section Public
         // Stat #0 : Load new face.
         random := 6.random_upper; //random * random; // + evt.count;
         //random := random + 1;
-        
-        n_face := /*`(4)`:INTEGER;*/ (random % 7).to_uinteger_8; 
+
+        n_face := /*`(4)`:INTEGER;*/ (random % 7).to_uinteger_8;
         load_face n_face;
         n_face := n_face + 1;
         (move (4,2) rotation 0).if {
@@ -342,15 +322,15 @@ Section Public
           display_face;
         } else {
           stat := 0;
-          put_face;	  
+          put_face;
           delete_line;
         };
-      }.when 2 to 3 then {	
-        // Stat #2, #3 : Nothing (Stop or Pause game).	
+      }.when 2 to 3 then {
+        // Stat #2, #3 : Nothing (Stop or Pause game).
       };
     };
   );
-  
+
   - keyboard_event key:UINTEGER_16 <-
   (
     (((key & 0800h) != 0) && {stat=1}).if {
@@ -400,13 +380,13 @@ Section Public
 
   - mouse_event evt:EVENT_MOUSE <-
   ( + win:AREA;
-    
+
     win := DESK.get_object (evt.x_current,evt.y_current);
     (win != Self).if {
       // Pause.
       (stat < 2).if {
-        old_stat := stat;      
-        stat := 3;	
+        old_stat := stat;
+        stat := 3;
         refresh;
       };
       DESK.receive evt;
@@ -416,7 +396,7 @@ Section Public
           // New game.
           screen.clear_all;
           line_count := stat := 0;
-          level := 0; //19;
+          level := 19; //19;
         }.elseif {stat = 3} then {
           // Restart (after pause).
           stat := old_stat;
@@ -429,25 +409,25 @@ Section Public
       };
     };
   );
-  
+
   //
   // IA
   //
-  
+
   - form:FAST_ARRAY3(INTEGER) := FAST_ARRAY3(INTEGER).create (4,4,2);
-  
+
   - screen_ia:FAST_ARRAY2(UINTEGER_8) := FAST_ARRAY2(UINTEGER_8).create (10,19);
-  
+
   - stat_ia:INTEGER;
-  
+
   - ia <-
   ( + cnt,dx,dy,tmp,px,py,max,x,y:INTEGER;
     + first,is_ok:BOOLEAN;
     - px_max,pr_max:INTEGER;
-        
+
     // Copy game.
-    0.to 18 do { cy:INTEGER; 
-      0.to 9 do { cx:INTEGER;          
+    0.to 18 do { cy:INTEGER;
+      0.to 9 do { cx:INTEGER;
         (screen.item (cx,cy) != 0).if {
           screen_ia.put 1 to (cx,cy);
         } else {
@@ -455,15 +435,15 @@ Section Public
         };
       };
     };
-    
-    (stat_ia = 0).if {          
-      // Detect face.      
+
+    (stat_ia = 0).if {
+      // Detect face.
       dx := dy := 10;
       y := 0;
       {(cnt != 4) && {y < 4}}.while_do {
         x := 3;
         {(cnt != 4) && {x < 7}}.while_do {
-          (screen_ia.item (x,y) != 0).if {          
+          (screen_ia.item (x,y) != 0).if {
             dx := dx.min x;
             dy := dy.min y;
             form.put x to (0,cnt,0);
@@ -482,7 +462,7 @@ Section Public
           form.put (form.item (0,i,1)-dy) to (0,i,1);
         };
         // 3 rotation (+pi/2).
-        1.to 3 do { r:INTEGER;      
+        1.to 3 do { r:INTEGER;
           dx := dy := 10;
           px_max := pr_max := 10;
           0.to 3 do { c:INTEGER;
@@ -494,11 +474,11 @@ Section Public
             ((py < pr_max) || {(py = pr_max) && {px < px_max}}).if {
               pr_max := py;
               px_max := px;
-              max := c;              
-            };              
+              max := c;
+            };
             form.put px to (r,c,0);  // x' = -y
             form.put py to (r,c,1);  // y' = +x
-          };      
+          };
           (max != 0).if {
             // Swap for 0 is always first point.
             tmp := form.item (r,0,0);
@@ -513,16 +493,16 @@ Section Public
             form.put (form.item (r,i,0)-dx) to (r,i,0);
             form.put (form.item (r,i,1)-dy) to (r,i,1);
           };
-        };    
+        };
         //print_form;
         // Evaluation.
         abyss_list.clear;
-        result_list.clear;        
+        result_list.clear;
         mesure_abyss screen_ia in abyss_list;
         0.to 3 do { pr:INTEGER;
           px := 0;
           {
-            is_ok := mesure pr pos px;            
+            is_ok := mesure pr pos px;
             px := px + 1;
           }.do_while {is_ok};
         };
@@ -534,16 +514,16 @@ Section Public
         px_max.print; '\n'.print;
         */
         //IO.read_character;
-        
+
         1.to pr_max do { i:INTEGER;
           keyboard_event (0800h | 'U'.to_integer);
         };
-        
+
         stat_ia := 1;
         //"Position...\n".print;
-      };      
+      };
     }.elseif {stat_ia = 1} then {
-      // Game.      
+      // Game.
       y := 0;
       {(!first) && {y < 19}}.while_do {
         x := 0;
@@ -551,34 +531,34 @@ Section Public
           (screen_ia.item (x,y) != 0).if {
             px := x - form.item (pr_max,0,0);
             (px = px_max).if {
-              
+
               //(line_count < 34).if {
               //  keyboard_event (0800h | 'D'.to_integer);
               //};
-              
+
               stat_ia := 2;
-              //"Wait...\n".print;      
+              //"Wait...\n".print;
             } else {
-              1.to (px - px_max) do { t:INTEGER;               
+              1.to (px - px_max) do { t:INTEGER;
                 keyboard_event (0800h | 'L'.to_integer);
               };
-              1.to (px_max - px) do { t:INTEGER;               
+              1.to (px_max - px) do { t:INTEGER;
                 keyboard_event (0800h | 'R'.to_integer);
               };
             };
             first := TRUE;
-          };          
+          };
           x := x + 1;
         };
         y := y + 1;
       };
     }.elseif {stat_ia = 2} then {
-      // Wait other face.      
+      // Wait other face.
       y := 0;
       {(cnt != 4) && {y < 4}}.while_do {
         x := 3;
         {(cnt != 4) && {x < 7}}.while_do {
-          (screen_ia.item (x,y) != 0).if {                      
+          (screen_ia.item (x,y) != 0).if {
             cnt := cnt + 1;
           };
           x := x + 1;
@@ -591,41 +571,41 @@ Section Public
       };
     };
   );
-  
+
   - screen_after:FAST_ARRAY2(UINTEGER_8) := FAST_ARRAY2(UINTEGER_8).create (10,19);
-  
+
   - result_list:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create_with_capacity (40*7);
-    
+
   - mesure pr:INTEGER pos px:INTEGER :BOOLEAN <-
-  ( + py:INTEGER;    
+  ( + py:INTEGER;
     + m1,m2,m3,m4,m5:INTEGER;
     + result:BOOLEAN;
-    
+
     screen_after.copy_collection screen_ia;
     py := put_ia pr pos px;
     (py != -1).if {
-      // Evaluation.      
-      m1 := mesure_link screen_after;      
+      // Evaluation.
+      m1 := mesure_link screen_after;
       m3 := mesure_subhole screen_after * -3;
       m5 := mesure_line screen_after;
-      m2 := mesure_ymax screen_after detect 2;      
-      
+      m2 := mesure_ymax screen_after detect 2;
+
       abyss_list_after.clear;
       mesure_abyss screen_after in abyss_list_after;
       (m5 >= 2).if {
         // Si tu gagnes 2 lignes, tu acceptes deux abyss.
         m4 := ((abyss_list_after.count/2)-1).max 0 * -100;
-      } else {        
+      } else {
         m4 := (abyss_list_after.count/2) * -100;
       };
       (abyss_list_after.count < abyss_list.count).if {
         m2 := m2 + 4;
       };
-      (m2 <= 9).if {        
+      (m2 <= 9).if {
         (m2 <= 4).if {
           m2 := m2 - 1000;
         } else {
-          m2 := m2 - 100; //25 * (13 - m2);        
+          m2 := m2 - 100; //25 * (13 - m2);
         };
       };
       (mesure_ymax screen_ia detect 1 <= 7).if {
@@ -633,7 +613,7 @@ Section Public
           m2 := m2 + 1000;
         };
       };
-      
+
       /*
       (m4 = 1).if {
         (abyss_list_after.lower).to (abyss_list_after.upper) by 2 do { i:INTEGER;
@@ -646,7 +626,7 @@ Section Public
         print_screen screen_after;
       };
       */
-                  
+
       result_list.add_last m1;
       result_list.add_last m2;
       result_list.add_last m3;
@@ -655,24 +635,24 @@ Section Public
       //
       result_list.add_last pr;
       result_list.add_last px;
-      // Remove.      
+      // Remove.
       result := TRUE;
-    };                        
+    };
     result
   );
-  
+
   - choice_best:(INTEGER,INTEGER) <-
   ( + idx_global,idx:INTEGER;
     + idx_left,idx_right:INTEGER;
-        
-    print_result;    
-        
+
+    print_result;
+
     idx_global := best_in_range 0 to 9;
-    
-    (abyss_list.is_empty).if { 
+
+    (abyss_list.is_empty).if {
       // Pas d'abyss.
       idx := idx_global;
-    } else {            
+    } else {
       idx := -1;
       idx_left   := best_in_range 0 to (abyss_list.first - 1);
       idx_right  := best_in_range (abyss_list.first - 1) to 9;
@@ -690,11 +670,11 @@ Section Public
         };
       };
     };
-        
+
     "Best : ".print; (idx/7).print; '\n'.print;
     result_list.item (idx+5),result_list.item (idx+6)
-  );  
-  
+  );
+
   - score i:INTEGER :INTEGER <-
   (
     result_list.item (i+0) +
@@ -703,13 +683,13 @@ Section Public
     result_list.item (i+3) +
     result_list.item (i+4)
   );
-  
+
   - best_in_range low:INTEGER to up:INTEGER :INTEGER <-
   ( + idx:INTEGER;
     + max,tmp:INTEGER;
-    
+
     idx := -1;
-    (low <= up).if {    
+    (low <= up).if {
       max := -1000_000;
       0.to (result_list.upper) by 7 do { i:INTEGER;
         (result_list.item (i+6).in_range low to up).if {
@@ -719,32 +699,32 @@ Section Public
             max := tmp;
           };
         };
-      };    
+      };
     };
     idx
   );
-  
+
 
   - put_ia r:INTEGER pos x:INTEGER :INTEGER <-
   ( + j,px,py,y:INTEGER;
     + in:BOOLEAN;
-    
+
     y := 3;
     {
       j := 0;
       y := y + 1;
       {
-        (j < 4) && 
+        (j < 4) &&
         {in := ((px:=x + form.item (r,j,0)).in_range 0 to 9)}  &&
         {(py:=y + form.item (r,j,1)).in_range 0 to 18} &&
         {screen_after.item (px,py) = 0}
       }.while_do {
         j := j + 1;
-      };      
+      };
     }.do_while {j = 4};
-    (! in).if {      
+    (! in).if {
       y := -1;
-    } else {      
+    } else {
       y := y - 1;
       0.to 3 do { i:INTEGER;
         px := x + form.item (r,i,0);
@@ -754,18 +734,18 @@ Section Public
     };
     y
   );
-    
+
   //
   // Sub-routine mesure.
   //
-  
+
   - abyss_list:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create_with_capacity 5;
-  
+
   - abyss_list_after:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create_with_capacity 5;
-  
+
   - mesure_abyss tab:FAST_ARRAY2(UINTEGER_8) in ab:FAST_ARRAY(INTEGER) <-
   ( + y,yl,yr,ymax,depth,i:INTEGER;
-            
+
     0.to 9 do { x:INTEGER;
       y := 4;
       yl := yr := -1;
@@ -775,36 +755,36 @@ Section Public
         };
         ((x != 9) && {yr = -1} && {tab.item (x+1,y) != 0}).if {
           yr := y;
-        };        
+        };
         y := y + 1;
       };
       (x = 0).if {
         ymax := yr;
       }.elseif {x = 9} then {
         ymax := yl;
-      }.elseif {(yl != -1) && {yr != -1}} then {        
+      }.elseif {(yl != -1) && {yr != -1}} then {
         ymax := yl.max yr;
       } else {
         ymax := -1;
       };
-      
+
       (ymax != -1).if {
         depth := y-ymax;
-        (depth >= 3).if {        
+        (depth >= 3).if {
           i := ab.lower;
           {(i <= ab.upper) && {depth < ab.item i}}.while_do {
             i := i + 1;
           };
           ab.add x to i;
           ab.add depth to (i+1);
-        };      
+        };
       };
     };
   );
-    
+
   - mesure_ymax tab:FAST_ARRAY2(UINTEGER_8) detect n:INTEGER :INTEGER <-
   ( + result,x:INTEGER;
-    
+
     result := 4;
     {
       x := 0;
@@ -815,11 +795,11 @@ Section Public
     }.do_while {(result < 19) && {x = 10}};
     result - 1
   );
-    
+
   - mesure_line tab:FAST_ARRAY2(UINTEGER_8) :INTEGER <-
   ( + result:INTEGER;
     + y,x:INTEGER;
-    
+
     y := 18;
     {
       x := 0;
@@ -839,11 +819,11 @@ Section Public
     }.do_while {y != 4};
     result
   );
-  
+
   - mesure_link tab:FAST_ARRAY2(UINTEGER_8) :INTEGER <-
   ( + y,yb:INTEGER;
     + result:INTEGER;
-    
+
     0.to 9 do { x:INTEGER;
       y := 4;
       {(y < 19) && {tab.item (x,y) != 2}}.while_do {
@@ -861,61 +841,61 @@ Section Public
         // Bottom.
         ((y = 18) || {tab.item (x,y+1) = 1}).if {
           result := result + 1;
-        };        
+        };
         ((y != 18) && {tab.item (x,y+1) = 0}).if {
-          result := result-100; 
+          result := result-100;
           yb := y+2;
           {(yb < 19) && {tab.item (x,yb) = 0}}.while_do {
             result := result - 50;
             yb := yb + 1;
           };
-        };        
+        };
         y := y + 1;
       };
     };
-    
+
     (result = 4).if {
       print_screen tab;
     };
-    
-    result 
+
+    result
   );
-  
+
   - mesure_subhole tab:FAST_ARRAY2(UINTEGER_8) :INTEGER <-
   ( + y,y_max:INTEGER;
     + result:INTEGER;
-    
+
     0.to 9 do { x:INTEGER;
       y := 4;
       {(y < 19) && {tab.item (x,y) != 2}}.while_do {
         y := y + 1;
       };
       (y < 19).if {
-        {(y < 19) && {tab.item (x,y) = 2}}.while_do {          
+        {(y < 19) && {tab.item (x,y) = 2}}.while_do {
           y := y + 1;
         };
         y_max := 19.min (y+4);
-        {y < y_max}.while_do {          
+        {y < y_max}.while_do {
           (tab.item (x,y) = 0).if {
             result := result + 1;
           };
           y := y + 1;
-        };        
+        };
       };
-    };        
-    result 
+    };
+    result
   );
 
   //
   // Debug.
   //
-  
+
   - screen_txt:FAST_ARRAY2(CHARACTER) := FAST_ARRAY2(CHARACTER).create (4*5*2,4);
-  
+
   - print_form <-
   ( + px,py:INTEGER;
     screen_txt.set_all_with '-';
-    0.to 3 do { r:INTEGER;      
+    0.to 3 do { r:INTEGER;
       px := (r*5+form.item (r,0,0)) * 2;
       py := form.item (r,0,1);
       screen_txt.put '(' to (px,py);
@@ -925,13 +905,13 @@ Section Public
         py := form.item (r,p,1);
         screen_txt.put '[' to (px,py);
         screen_txt.put ']' to (px+1,py);
-      };            
+      };
       0.to 3 do { y:INTEGER;
         px := (r*5+4)*2;
         screen_txt.put ' ' to (px,y);
         screen_txt.put ' ' to (px+1,y);
       };
-    };    
+    };
     0.to 3 do { y:INTEGER;
       0.to 39 do { x:INTEGER;
         screen_txt.item (x,y).print;
@@ -939,7 +919,7 @@ Section Public
       '\n'.print;
     };
   );
-  
+
   - print_screen tab:FAST_ARRAY2(UINTEGER_8) <-
   (
     0.to 18 do { y:INTEGER;
@@ -948,7 +928,7 @@ Section Public
         .when 0 then {
           "--".print;
         }
-        .when 1 then {          
+        .when 1 then {
           "[]".print;
         }
         .when 2 then {
@@ -956,14 +936,14 @@ Section Public
         };
       };
       '\n'.print;
-    };    
+    };
     0.to 9 do { x:INTEGER;
       x.print;
       ' '.print;
     };
     '\n'.print;
   );
-  
+
   - print_result <-
   ( + tmp:INTEGER;
     "|N \t||Link\t|Ymax\t|Hole\t|Abys\t|Line\t||Rot.\t|X   \t||Value\n".print;
@@ -973,7 +953,7 @@ Section Public
       0.to 4 do { j:INTEGER;
         result_list.item (i+j).print;
         "\t|".print;
-      };      
+      };
       '|'.print;
       result_list.item (i+5).print;
       "\t|".print;
@@ -986,12 +966,12 @@ Section Public
       '\n'.print;
     };
     (abyss_list.lower).to (abyss_list.upper) by 2 do { i:INTEGER;
-      "Abyss : x=".print;       
+      "Abyss : x=".print;
       abyss_list.item i.print;
       " depth=".print;
       abyss_list.item (i+1).print;
       '\n'.print;
     };
   );
-  
+
 

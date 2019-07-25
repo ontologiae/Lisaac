@@ -1,50 +1,30 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_EXTERNAL;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "External C without type result";
-  
+
 Section Inherit
-  
+
   + parent_itm_extern:Expanded ITM_EXTERN;
-  
+
 Section Public
 
   //
   // Constructor
   //
-  
+
   - create p:POSITION text n:STRING_CONSTANT :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p text n;
     result
   );
-  
+
   - make p:POSITION text n:STRING_CONSTANT <-
   (
     position := p;
@@ -54,15 +34,15 @@ Section Public
   //
   // Runnable
   //
-  
-  - to_run_expr:EXPR <- 
+
+  - to_run_expr:EXPR <-
   ( + result:EXPR;
     + lst_acc:FAST_ARRAY(EXPR);
     + num:INTEGER;
     + exp1,exp2,exp3:EXPR;
     + left,right:EXPR;
     + type:TYPE_FULL;
-        
+
     extern.is_integer.if {
       num := extern.to_integer;
       (num > 31).if {
@@ -73,7 +53,7 @@ Section Public
 	exp1 := profil_slot.argument_list.first.read position;
 	result := IS_EXPANDED.create position receiver exp1;
       }
-      .when 1 then { // type_id_intern:INTEGER	
+      .when 1 then { // type_id_intern:INTEGER
         result := GET_TYPE_ID.create position receiver
         (profil_slot.argument_list.first.type);
       }
@@ -85,72 +65,90 @@ Section Public
       .when 3 then { // INTEGER - INTEGER -> INTEGER.
 	left   := profil_slot.argument_list.first .read position;
 	right  := profil_slot.argument_list.item 1.read position;
-	result := EXPR_SUB.create position with left and right;	
+	result := EXPR_SUB.create position with left and right;
       }
       .when 4 then { // INTEGER * INTEGER -> INTEGER.
 	left   := profil_slot.argument_list.first .read position;
 	right  := profil_slot.argument_list.item 1.read position;
-	result := EXPR_MUL.create position with left and right;		
+	result := EXPR_MUL.create position with left and right;
       }
-      .when 5 then { // INTEGER / INTEGER -> INTEGER.	
+      .when 5 then { // INTEGER / INTEGER -> INTEGER.
 	left   := profil_slot.argument_list.first .read position;
 	right  := profil_slot.argument_list.item 1.read position;
-	result := EXPR_DIV.create position with left and right;		
+	result := EXPR_DIV.create position with left and right;
       }
       .when 6 then { // INTEGER & INTEGER -> INTEGER.
 	left   := profil_slot.argument_list.first .read position;
 	right  := profil_slot.argument_list.item 1.read position;
-	result := EXPR_AND.create position with left and right;		
+	result := EXPR_AND.create position with left and right;
       }
       .when 7 then { // INTEGER >> INTEGER -> INTEGER.
 	left   := profil_slot.argument_list.first .read position;
 	right  := profil_slot.argument_list.item 1.read position;
-	result := EXPR_SHIFT_R.create position with left and right;		
+	result := EXPR_SHIFT_R.create position with left and right;
       }
       .when 8 then { // INTEGER << INTEGER -> INTEGER.
 	left   := profil_slot.argument_list.first .read position;
 	right  := profil_slot.argument_list.item 1.read position;
-	result := EXPR_SHIFT_L.create position with left and right;		
+	result := EXPR_SHIFT_L.create position with left and right;
       }
       .when 9 then { // put OBJECT to INTEGER.
 	exp1 := profil_slot.argument_list.first .read position;
-	exp2 := profil_slot.argument_list.item 1.read position; 
-	exp3 := profil_slot.argument_list.item 2.read position; 
+	exp2 := profil_slot.argument_list.item 1.read position;
+	exp3 := profil_slot.argument_list.item 2.read position;
 	result := PUT_TO.create position base exp1 index exp3 value exp2;
       }
       .when 10 then { // item INTEGER -> OBJECT.
 	exp1 := profil_slot.argument_list.first .read position;
-	exp2 := profil_slot.argument_list.item 1.read position; 
+	exp2 := profil_slot.argument_list.item 1.read position;
 	result := ITEM.create position base exp1 index exp2;
-      }      
+      }
       .when 11 then { // debug_level -> INTEGER.
 	result := INTEGER_CST.create position value debug_level_option type (type_integer.default);
       }
-      .when 12 then { // object_size -> INTEGER.	
-        result := SIZE_OF.create position receiver 
+      .when 12 then { // object_size -> INTEGER.
+        result := SIZE_OF.create position receiver
         (profil_slot.argument_list.first.type);
       }
       .when 13 then { // CONVERT SRC TO DST.on src:SRC :DST.
-        type := profil_slot.result_list.first.type;        
-	exp2 := profil_slot.argument_list.second.read position;
-	result := CAST.create type value exp2;
+        type := profil_slot.result_list.first.type;
+        exp2 := profil_slot.argument_list.second.read position;
+        result := CAST.create type value exp2;
+        
+        //(type.is_scalar).if {        
+        /*
+        (type.raw.name == "STRING").if_false {
+          result := CAST.create type value exp2;
+        } else {
+          warning_error (position,"cast creation.");
+          result := CAST_CREATION.create type value exp2;
+        };
+        */
       }
-      .when 14 then { // top_runtime_stack -> POINTER.
+      .when 14 then { // top_runtime_stack -> POINTER. BSBS : OBSOLETE !!!!!
+        crash_with_message "Primitive 14: Obsolete !";
+        /*
 	(debug_level_option = 0).if {
 	  result := PROTOTYPE_CST.create position type (TYPE_NULL.default);
-	} else {
-	  result := EXTERNAL_C.create position text "top_context->back->back"
-	  access NULL persistant FALSE type (type_pointer.default);
-	};
+        } else {
+          (is_speed_push).if {
+            result := EXTERNAL_C.create position text "NULL /* itm_external (14) */" 
+            access NULL persistant FALSE type (type_pointer.default);
+          } else {
+            result := EXTERNAL_C.create position text "top_context"
+            access NULL persistant FALSE type (type_pointer.default);
+          };
+        };
+        */
       }
       .when 15 then { // is_cop_type:BOOLEAN
-        type := profil_slot.argument_list.first.type;        
-        (type.prototype.style = '-').if {          
-          result := PROTOTYPE_CST.create position type (type_true.default);	
+        type := profil_slot.argument_list.first.type;
+        (type.prototype.style = '-').if {
+          result := PROTOTYPE_CST.create position type (type_true.default);
         } else {
-          result := PROTOTYPE_CST.create position type (type_false.default);	
+          result := PROTOTYPE_CST.create position type (type_false.default);
         };
-      }     
+      }
       .when 16 then { // LIST.upper:INTEGER
         not_yet_implemented;
       }
@@ -161,41 +159,110 @@ Section Public
 	result := INTEGER_CST.create position value inline_level type (type_integer.default);
       }
       .when 19 then { // compiler_optimization -> BOOLEAN.
-        (is_optimization).if {          
-          result := PROTOTYPE_CST.create position type (type_true.default);	
+        (is_optimization).if {
+          result := PROTOTYPE_CST.create position type (type_true.default);
         } else {
-          result := PROTOTYPE_CST.create position type (type_false.default);	
-        };	
+          result := PROTOTYPE_CST.create position type (type_false.default);
+        };
       }
-      .when 20 then { // compiler_built_on -> STRING_CONSTANT.        
+      .when 20 then { // compiler_built_on -> STRING_CONSTANT.
         string_tmp.clear;
         SYSTEM.get_current_date.append_in string_tmp;
         string_tmp.add_last ' ';
         SYSTEM.get_current_time.append_in string_tmp;
-	result := STRING_CST.create position text (ALIAS_STR.get string_tmp) length (string_tmp.count);
+        result := STRING_CST.create position text (ALIAS_STR.get string_tmp) length (string_tmp.count);
       }
-      .when 21 then { // forall_data action:{ E; } 
-        //result := forall_data_product;
+      .when 21 then { // debug_with_code -> BOOLEAN.
+        (debug_with_code).if {
+          result := PROTOTYPE_CST.create position type (type_true.default);
+        } else {
+          result := PROTOTYPE_CST.create position type (type_false.default);
+        };
       }
-      .when 22 to 31 then { // FREE
+      .when 22 then { // compile_time -> INTEGER.
+        result := INTEGER_CST.create position value (SYSTEM.get_current_time.to_csecond) type (type_integer.default);
+      }
+      .when 23 then { // compile_date -> UINTEGER_32.
+        result := INTEGER_CST.create position value (SYSTEM.get_current_date.encode) type (type_uinteger_32.default);
+      }
+      .when 24 then { // OBJECT.type_name -> STRING_CONSTANT
+        type := profil_slot.argument_list.first.type;
+        string_tmp.clear;
+        type.raw.append_name_in string_tmp;
+        result := STRING_CST.create position text (ALIAS_STR.get string_tmp)
+        length (string_tmp.count);
+      }
+      .when 25 then { // OBJECT.foreach_intern_data action:{ (STRING_CONSTANT,STRING_CONSTANT,T,E); }
+        forall_data_product;
+        result := PROTOTYPE_CST.create position type (TYPE_VOID.default);
+      }
+      .when 26 to 31 then { // FREE
         syntax_error (position,"Free external lisaac code.");
       };
     } else {
       lst_acc := get_access;
-      result  := EXTERNAL_C.create position text last_code 
+      result  := EXTERNAL_C.create position text last_code
       access lst_acc persistant TRUE type (TYPE_VOID.default);
     };
     result
   );
-  
+
 Section Private
-  
+
   //
   // Reflexivity
   //
-  
-  - forall_data_product:EXPR <-
+
+  - forall_data_product <-
   ( + type:TYPE_FULL;
+    + slot:SLOT;
+    + sl_dta:SLOT_DATA;
     type := profil_slot.argument_list.first.type;
-    
+    (type.raw.prototype.is_mapping).if_false {
+      semantic_error (position,"Sorry, not yet implemented.");
+    };
+    (type.slot_run.lower).to (type.slot_run.upper) do { i:INTEGER;
+      slot := type.slot_run.item i;
+      sl_dta := slot.slot_data_intern;
+      (sl_dta != NULL).if {
+        product_access sl_dta;
+        (slot.slot_data_list != NULL).if {
+          (slot.slot_data_list.lower).to (slot.slot_data_list.upper) do { j:INTEGER;
+            product_access (slot.slot_data_list.item j);
+          };
+        };
+      };
+    };
+  );
+
+  - product_access slot:SLOT_DATA <-
+  ( + arg_sec,arg_nam,arg_typ,arg_val,rec:EXPR;
+    + args:FAST_ARRAY(EXPR);
+
+    (slot.style = '+').if {
+      // Section name.
+      string_tmp.clear;
+      slot.id_section.append_in string_tmp;
+      arg_sec := STRING_CST.create position text (ALIAS_STR.get string_tmp)
+      length (string_tmp.count);
+      // Name slot.
+      arg_nam := STRING_CST.create position text (slot.name)
+      length (slot.name.count);
+      // Type.
+      arg_typ := PROTOTYPE_CST.create position type (slot.type);
+      // Value.
+      arg_val := slot.read position with
+      (profil_slot.argument_list.first.read position);
+      // {}.value.
+      rec := (profil_slot.argument_list.second.read position);
+      args := FAST_ARRAY(EXPR).create_with_capacity 5;
+      args.add_last (rec.my_copy);
+      args.add_last arg_sec;
+      args.add_last arg_nam;
+      args.add_last arg_typ;
+      args.add_last arg_val;
+      list_current.add_last (
+        NODE.new_block position receiver rec with args
+      );
+    };
   );

@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := SELECT_BOX;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -27,43 +7,43 @@ Section Header
   - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
 
 Section Inherit
-  
+
   + parent_area:Expanded AREA;
-  
+
   - parent_any:ANY := ANY;
-  
+
 Section Public
-  
+
   + id:INTEGER_8;
-  
+
   - create:SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make page from (-50,-50) size (7,7);
     result
   );
-  
+
   - set_position (x,y:INTEGER) id s:INTEGER_8 <-
   (
     id := s;
     set_position (x,y);
   );
-  
+
   - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
   ( + x,y:INTEGER;
-    clipping (x0,y0) to (x1,y1); 
-    
+    clipping (x0,y0) to (x1,y1);
+
     x := x_max / 2;
     y := y_max / 2;
     color black;
     (id = 4).if {
       // Center X
-      line (x-3,y-3) to (x+3,y+3); 
-      line (x-3,y-2) to (x+2,y+3); 
+      line (x-3,y-3) to (x+3,y+3);
+      line (x-3,y-2) to (x+2,y+3);
       line (x-2,y-3) to (x+3,y+2);
-      line (x-3,y+3) to (x+3,y-3); 
-      line (x-3,y+2) to (x+2,y-3); 
+      line (x-3,y+3) to (x+3,y-3);
+      line (x-3,y+2) to (x+2,y-3);
       line (x-2,y+3) to (x+3,y-2);
     }.elseif {id < 9} then {
       // Rectangle
@@ -71,7 +51,7 @@ Section Public
     }.elseif {id = 13} then {
       // Center O
       circle (x,y) rayon (width/2);
-    } else {      
+    } else {
       // Circle.
       1.to 3 do { k:INTEGER;
         line (x+1-k,y-3+k) to (x-1+k,y-3+k);

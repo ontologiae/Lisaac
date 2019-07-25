@@ -1,0 +1,29 @@
+Section Header
+  
+  + name     := ROOK;
+  
+  - comment   := "3D Chess Game";
+  
+  - author    := "Damien Bouvarel (dams.bouvarel@wanadoo.fr)";
+  
+Section Inherit
+  
+  + parent_piece:Expanded PIECE;
+  
+Section Public
+  
+  - name:STRING_CONSTANT := "rook";
+  
+  - model:MODEL; // shared model
+  
+  - check_move orig:SQUARE to dest:SQUARE :BOOLEAN <-
+  // is legal move?
+  ( + result:BOOLEAN;   
+    
+    ((dest.piece = NULL) || {player != dest.piece.player}).if {
+      ((orig.x = dest.x) || {orig.y = dest.y}).if {
+        result := check_path_between orig and dest;
+      };    
+    };
+    result
+  );

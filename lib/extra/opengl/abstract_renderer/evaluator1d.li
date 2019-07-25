@@ -1,0 +1,28 @@
+Section Header
+
+  + name     := EVALUATOR1D;
+
+  - comment  := "Maps a curve line";
+
+Section Inherit
+
+  + parent_abstract_evaluator:Expanded ABSTRACT_EVALUATOR;
+
+Section Public
+
+  // mesh drawing modes
+  - line:INTEGER <- 1;
+  - point:INTEGER <- 2;
+
+
+  // load the map function
+  - map (n_points,point_size:INTEGER) range (t1,t2:REAL_32) <- deferred;
+
+  // generate a point for the parametric value 'val'
+  - evaluate val:REAL_32 <- deferred;
+
+  // auto generate n points evenly spaced between (t1,t2)
+  - generate_grid  nb_points:INTEGER between (t1,t2:REAL_32) <- deferred;
+
+  // Warning: mode is defined in the vertex buffer prototype
+  - evaluate_mesh mode:INTEGER from start:INTEGER to end:INTEGER <- deferred;

@@ -1,0 +1,45 @@
+Section Header
+
+  + name     := FRAMEWORK_ANY;
+
+Section Inherit
+
+  - parent_platform:PLATFORM := PLATFORM;
+
+Section Public
+
+  //
+  // Framework modules.
+  //
+
+  - event:FRAMEWORK_EVENT <- FRAMEWORK_EVENT;
+
+
+  - renderer:RENDERER; // current renderer
+
+  - log:LOG; // current log file
+
+  - report_error:BOOLEAN; // debug mode
+
+
+  - width:INTEGER <- renderer.width;
+  - height:INTEGER <- renderer.height;
+
+  - screen_width:INTEGER <- width;
+  - screen_height:INTEGER <- height;
+
+  - track_errors <- report_error := TRUE;
+
+
+  - error msg:ABSTRACT_STRING <-
+  (
+    log.append "==== GL Framework Error ====";
+    log.append msg;
+    log.append "============================";
+  );
+
+  - fatal_error msg:ABSTRACT_STRING <-
+  (
+    error msg;
+    renderer.fatal_error msg;
+  );

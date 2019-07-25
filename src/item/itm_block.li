@@ -1,83 +1,63 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_BLOCK;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Instruction block";
-  
+
   // BSBS: Memory : Faire la version sans argument (très courant)
-  
+
 Section Inherit
-  
+
   - parent_itm_code:ITM_CODE := ITM_CODE;
-  
+
 Section Public
-  
+
   - position:POSITION <- list.position;
-  
+
   + list:ITM_LIST;
-  
+
   + argument:ITM_ARGUMENT;
-  
+
   //
   // Creation.
   //
-  
+
   - create lst:ITM_LIST argument arg:ITM_ARGUMENT :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make lst argument arg;
     result
   );
-  
+
   - make lst:ITM_LIST argument arg:ITM_ARGUMENT <-
   (
     list     := lst;
     argument := arg;
   );
-  
+
   //
   // Runnable.
   //
-  
+
   - to_run_expr:EXPR <-
-  ( + tb:PROFIL_BLOCK;   
-    + t:TYPE_FULL;    
-    + loc,my_self:LOCAL;    
+  ( + tb:PROFIL_BLOCK;
+    + t:TYPE_FULL;
+    + loc,my_self:LOCAL;
     + val,rec:EXPR;
     + wrt:WRITE;
-        
+
     tb := PROFIL_BLOCK.create Self;
     t := tb.default;
     //
-    loc := t.get_temporary position;	
+    loc := t.get_temporary position;
     // tmp.id := id_block;
     rec := loc.read position;
-    val := PROTOTYPE_CST.create position type t;      
+    val := PROTOTYPE_CST.create position type t;
     wrt := tb.slot_value.write position with rec value val;
     list_current.add_last wrt;
     // tmp.self := Self;
@@ -89,13 +69,13 @@ Section Public
     // tmp
     loc.read position
   );
-  
-  // 
+
+  //
   // Display.
   //
-  
+
   - print <-
   (
     "{BLOCK}".print;
   );
-  
+

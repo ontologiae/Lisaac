@@ -1,166 +1,153 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := PROFIL_LIST;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Profil list manager.";
-  
+
 Section Inherit
-  
-  + parent_any:Expanded ANY; 
-  
+
+  + parent_any:Expanded ANY;
+
 Section LISAAC
-  
-  - profil_list:FAST_ARRAY(PROFIL) := FAST_ARRAY(PROFIL).create_with_capacity 65536;  
-  
+
+  - profil_list:FAST_ARRAY(PROFIL) := FAST_ARRAY(PROFIL).create_with_capacity 65536;
+
   - life_limit:INTEGER;
-  
+
+  - life_limit_base:INTEGER;
+
   - current:INTEGER;
-  
+
   - swap i1:INTEGER with i2:INTEGER <-
   (
     profil_list.item i2.set_life_index i1;
     profil_list.item i1.set_life_index i2;
-    profil_list.swap i1 with i2;            
+    profil_list.swap i1 with i2;
   );
 
   - clean <-
   (
     reduce_profil := profil_list.upper >= life_limit;
     {profil_list.upper >= life_limit}.while_do {
-      profil_list.last.remove;	             
-      ! {profil_list.last.set_life_index (-1)};
+      profil_list.last.remove;
       profil_list.remove_last;
     };
   );
-  
+
 Section Public
-  
+
   - reduce_profil:BOOLEAN := TRUE;
-  
+
   - add p:PROFIL <-
-  ( 
-    profil_list.add_last p;
-    p.set_life_index (profil_list.upper);
-  );
-  
-  - set_life p:PROFIL <-
-  [ 
-    (p.life_index = -1).if {
-      p.name.print;
-      semantic_error (p.slot.position,"LA");
+  (
+    (p.is_external).if {
+      profil_list.add_first p;
+      life_limit_base := life_limit_base + 1;
+      p.set_life_index (profil_list.lower);
+      (profil_list.lower+1).to (profil_list.upper) do { i:INTEGER;
+        profil_list.item i.set_life_index i;
+      };
+    } else {
+      profil_list.add_last p;
+      p.set_life_index (profil_list.upper);
     };
+  );
+
+  - set_life p:PROFIL <-
+  [
     -? { p.life_index != -1 };
     -? { profil_list.item (p.life_index) = p };
   ]
   ( + idx:INTEGER;
-    
+
     idx := p.life_index;
     (idx = life_limit).if {
       life_limit := life_limit + 1;
-    }.elseif {idx > life_limit} then {      
-      swap idx with life_limit;      
+    }.elseif {idx > life_limit} then {
+      swap idx with life_limit;
       life_limit := life_limit + 1;
     };
   )
-  [ 
+  [
     +? { profil_list.item (p.life_index) = p };
     +? { p.life_index < life_limit };
   ];
-  
+
   - unset_life p:PROFIL <-
   [
     -? { p.life_index != -1 };
   ]
   ( + idx:INTEGER;
-    
+
     idx := p.life_index;
     (idx < life_limit).if {
-      life_limit := life_limit - 1;	
+      life_limit := life_limit - 1;
       (idx < life_limit).if {
 	(idx > current).if {
-	  swap idx with life_limit;	
-	} else {	  
+	  swap idx with life_limit;
+	} else {
 	  swap idx with current;
-	  swap current with life_limit; 
+	  swap current with life_limit;
 	  current := current - 1;
 	};
       };
-    };    
+    };
   );
-  
+
   - remove p:PROFIL <-
   [
     -? { p.life_index != -1 };
   ]
   ( + idx:INTEGER;
-    
+
     unset_life p;
     idx := p.life_index;
     (idx != profil_list.upper).if {
       swap idx with (profil_list.upper);
     };
     profil_list.remove_last;
-    // Debug.    
+    // Debug.
     ! {p.set_life_index (-1)};
   );
-    
+
   - execute_pass_recursive <-
   (
     (profil_list.lower).to (profil_list.upper) do { i:INTEGER;
       profil_list.item i.reset_recursive;
     };
     VARIABLE.update;
-    life_limit := 0;
+    life_limit := life_limit_base;
     PROFIL.set_mode_recursive TRUE;
     profil_current := profil_slot := NULL;
-    list_current   := NULL;          
+    list_current   := NULL;
+    POSITION.clean_context;
     list_main.execute;    
     PROFIL.set_mode_recursive FALSE;
     clean;
     reduce_profil := TRUE;
   );
-  
+
   - inline_level_current:INTEGER := 3;
-  
+
   - execute_pass <-
-  (     
+  (
     VARIABLE.update;
-    life_limit := 0;
+    life_limit := life_limit_base;
     profil_slot := NULL;
-    list_current   := NULL; 
-    list_main.execute;      
+    list_current   := NULL;
+    list_main.execute;
     current := profil_list.lower;
-    {current < life_limit}.while_do {			            
+    {current < life_limit}.while_do {
       profil_current := profil_list.item current;
       profil_current.execute inline_level_current;
       current := current + 1;
-    };      
+    };
     current := 0;
-    clean;    
+    clean;
     ((! reduce_profil) && {inline_level_current < inline_level}).if {
       inline_level_current := inline_level_current + 3;
       new_execute_pass;
@@ -170,35 +157,36 @@ Section Public
       TYPE_GENERIC.detect_alias;
     };
   );
-  
+
   //
   // Genere.
   //
-  
+
   - genere_handler buffer:STRING <-
   (
     (profil_list.lower).to (profil_list.upper) do { j:INTEGER;
-      profil_list.item j.genere_handler buffer;            
-    };
-  );
-  
-  - genere buffer:STRING <-
-  (
-    (profil_list.lower).to (profil_list.upper) do { j:INTEGER;
-      profil_list.item j.genere buffer;            
+      profil_list.item j.genere_handler buffer;
     };
   );
 
+  - genere buffer:STRING <-
+  (
+    (profil_list.lower).to (profil_list.upper) do { j:INTEGER;
+      profil_list.item j.genere buffer;
+    };
+  );
+    
   //
   // Display.
   //
-  
+
   - display <-
-  (    
+  (
     string_tmp.clear;
+    list_main.display string_tmp;
+    string_tmp.append "\n------ FUNCTIONS ------\n";
     (profil_list.upper).downto (profil_list.lower) do { j:INTEGER;
       profil_list.item j.display_all string_tmp;
     };
     string_tmp.print;
   );
-  

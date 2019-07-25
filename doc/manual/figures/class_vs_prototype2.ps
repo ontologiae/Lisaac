@@ -1,0 +1,739 @@
+%!PS-Adobe-3.0
+%%BoundingBox: 15 598 440 835
+%%Title: class_vs_prototype2
+%%CreationDate: Thu Jul 15 14:17:54 2004
+%%Creator: Tgif-4.1.43-QPL written by William Chia-Wei Cheng (bill.cheng@acm.org)
+%%ProducedBy: (unknown)
+%%Orientation: Portrait
+%%Pages: 1
+%%DocumentFonts: (atend)
+%%EndComments
+%%BeginProlog
+
+/tgifdict 91 dict def
+tgifdict begin
+
+/tgifellipsedict 6 dict def
+tgifellipsedict /mtrx matrix put
+
+/TGEL % tgifellipse
+ { tgifellipsedict begin
+      /yrad exch def
+      /xrad exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      xrad yrad scale
+      0 0 1 0 360 arc
+      savematrix setmatrix
+   end
+ } def
+
+/tgifarrowtipdict 8 dict def
+tgifarrowtipdict /mtrx matrix put
+
+/TGAT % tgifarrowtip
+ { tgifarrowtipdict begin
+      /dy exch def
+      /dx exch def
+      /h exch def
+      /w exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      dy dx atan rotate
+      0 0 moveto
+      w neg h lineto
+      w neg h neg lineto
+      savematrix setmatrix
+   end
+ } def
+
+/tgifarcdict 8 dict def
+tgifarcdict /mtrx matrix put
+
+/TGAN % tgifarcn
+ { tgifarcdict begin
+      /endangle exch def
+      /startangle exch def
+      /yrad exch def
+      /xrad exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      xrad yrad scale
+      0 0 1 startangle endangle arc
+      savematrix setmatrix
+   end
+ } def
+
+/TGAR % tgifarc
+ { tgifarcdict begin
+      /endangle exch def
+      /startangle exch def
+      /yrad exch def
+      /xrad exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      xrad yrad scale
+      0 0 1 startangle endangle arcn
+      savematrix setmatrix
+   end
+ } def
+
+/tgifpatdict 10 dict def
+
+/tgifpatbyte
+ { currentdict /retstr get exch
+   pat i cellsz mod get put
+ } def
+
+/tgifpatproc
+ { 0 1 widthlim {tgifpatbyte} for retstr
+   /i i 1 add def
+ } def
+
+/TGPF % tgifpatfill
+ { tgifpatdict begin
+      /h exch def
+      /w exch def
+      /lty exch def
+      /ltx exch def
+      /cellsz exch def
+      /pat exch def
+
+      /widthlim w cellsz div cvi 1 sub def
+      /retstr widthlim 1 add string def
+      /i 0 def
+
+      tgiforigctm setmatrix
+      ltx lty translate
+      w h true [1 0 0 1 0 0] {tgifpatproc} imagemask
+      ltx neg lty neg translate
+   end
+ } def
+
+/pat3 <8000000008000000> def
+/pat4 <8800000022000000> def
+/pat5 <8800220088002200> def
+/pat6 <8822882288228822> def
+/pat7 <aa55aa55aa55aa55> def
+/pat8 <77dd77dd77dd77dd> def
+/pat9 <77ffddff77ffddff> def
+/pat10 <77ffffff77ffffff> def
+/pat11 <7fffffff7fffffff> def
+/pat12 <8040200002040800> def
+/pat13 <40a00000040a0000> def
+/pat14 <ff888888ff888888> def
+/pat15 <ff808080ff080808> def
+/pat16 <f87422478f172271> def
+/pat17 <038448300c020101> def
+/pat18 <081c22c180010204> def
+/pat19 <8080413e080814e3> def
+/pat20 <8040201008040201> def
+/pat21 <8844221188442211> def
+/pat22 <77bbddee77bbddee> def
+/pat23 <c1e070381c0e0783> def
+/pat24 <7fbfdfeff7fbfdfe> def
+/pat25 <3e1f8fc7e3f1f87c> def
+/pat26 <0102040810204080> def
+/pat27 <1122448811224488> def
+/pat28 <eeddbb77eeddbb77> def
+/pat29 <83070e1c3870e0c1> def
+/pat30 <fefdfbf7efdfbf7f> def
+/pat31 <7cf8f1e3c78f1f3e> def
+
+/TGMAX
+ { exch dup 3 1 roll exch dup 3 1 roll gt { pop } { exch pop } ifelse
+ } def
+/TGMIN
+ { exch dup 3 1 roll exch dup 3 1 roll lt { pop } { exch pop } ifelse
+ } def
+/TGSW { stringwidth pop } def
+
+/bd { bind def } bind def
+
+/GS { gsave } bd
+/GR { grestore } bd
+/NP { newpath } bd
+/CP { closepath } bd
+/CHP { charpath } bd
+/CT { curveto } bd
+/L { lineto } bd
+/RL { rlineto } bd
+/M { moveto } bd
+/RM { rmoveto } bd
+/S { stroke } bd
+/F { fill } bd
+/TR { translate } bd
+/RO { rotate } bd
+/SC { scale } bd
+/MU { mul } bd
+/DI { div } bd
+/DU { dup } bd
+/NE { neg } bd
+/AD { add } bd
+/SU { sub } bd
+/PO { pop } bd
+/EX { exch } bd
+/CO { concat } bd
+/CL { clip } bd
+/EC { eoclip } bd
+/EF { eofill } bd
+/IM { image } bd
+/IMM { imagemask } bd
+/ARY { array } bd
+/SG { setgray } bd
+/RG { setrgbcolor } bd
+/SD { setdash } bd
+/W { setlinewidth } bd
+/SM { setmiterlimit } bd
+/SLC { setlinecap } bd
+/SLJ { setlinejoin } bd
+/SH { show } bd
+/FF { findfont } bd
+/MS { makefont setfont } bd
+/AR { arcto 4 {pop} repeat } bd
+/CURP { currentpoint } bd
+/FLAT { flattenpath strokepath clip newpath } bd
+/TGSM { tgiforigctm setmatrix } def
+/TGRM { savematrix setmatrix } def
+
+end
+
+%%EndProlog
+%%Page: 1 1
+
+%%PageBoundingBox: 15 598 440 835
+tgifdict begin
+/tgifsavedpage save def
+
+1 SM
+1 W
+
+0 SG
+
+72 0 MU 72 11.602 MU TR
+72 128 DI 100.000 MU 100 DI DU NE SC
+
+GS
+
+/tgiforigctm matrix currentmatrix def
+
+% OVAL
+0 SG
+GS
+   NP 500 100 45 45 TGEL
+   CP 1 SG F
+   0 SG
+   NP 500 100 45 45 TGEL
+   CP EC NP
+   pat3 8 448 48 104 104 TGPF
+GR
+GS
+   GS
+      NP 500 100 45 45 TGEL
+      S
+   GR
+GR
+
+% RCBOX
+0 SG
+GS
+   NP
+      134 35 M
+      150 35 150 150 16 AR
+      150 134 L
+      150 150 45 150 16 AR
+      61 150 L
+      45 150 45 35 16 AR
+      45 51 L
+      45 35 150 35 16 AR
+   CP 1 SG F
+   0 SG
+   NP
+      134 35 M
+      150 35 150 150 16 AR
+      150 134 L
+      150 150 45 150 16 AR
+      61 150 L
+      45 150 45 35 16 AR
+      45 51 L
+      45 35 150 35 16 AR
+   CP EC NP
+   pat3 8 40 32 112 120 TGPF
+GR
+GS
+   GS
+      NP
+         134 35 M
+         150 35 150 150 16 AR
+         150 134 L
+         150 150 45 150 16 AR
+         61 150 L
+         45 150 45 35 16 AR
+         45 51 L
+         45 35 150 35 16 AR
+      CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 59 82 M 141 82 L 141 99 L 59 99 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      60 95 M
+      GS
+            0 SG
+            /Courier-BoldOblique FF [14 0 0 -14 0 0] MS
+            ( CLASS A ) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      175 300 M
+      0 100 atan DU cos 22.000 MU 275 exch SU
+      exch sin 22.000 MU 300 exch SU L
+   TGSM
+   7 W
+   S
+   1 W
+GR
+GS
+   TGSM
+   NP
+      275 300 22.000 9.000 100 0 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      275 300 22.000 9.000 100 0 TGAT
+   CP F
+GR
+
+% TEXT
+NP
+0 SG
+NP 179 276 M 252 276 L 252 293 L 179 293 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      180 290 M
+      GS
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Instance) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 199 1 M 245 1 L 245 18 L 199 18 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      200 15 M
+      GS
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Class) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 549 1 M 631 1 L 631 18 L 549 18 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      550 15 M
+      GS
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Prototype) SH
+      GR
+   GR
+
+% RCBOX
+0 SG
+GS
+   NP
+      134 245 M
+      150 245 150 360 16 AR
+      150 344 L
+      150 360 45 360 16 AR
+      61 360 L
+      45 360 45 245 16 AR
+      45 261 L
+      45 245 150 245 16 AR
+   CP 1 SG F
+   0 SG
+   NP
+      134 245 M
+      150 245 150 360 16 AR
+      150 344 L
+      150 360 45 360 16 AR
+      61 360 L
+      45 360 45 245 16 AR
+      45 261 L
+      45 245 150 245 16 AR
+   CP EC NP
+   pat26 8 40 240 112 128 TGPF
+GR
+GS
+   GS
+      NP
+         134 245 M
+         150 245 150 360 16 AR
+         150 344 L
+         150 360 45 360 16 AR
+         61 360 L
+         45 360 45 245 16 AR
+         45 261 L
+         45 245 150 245 16 AR
+      CP
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 59 287 M 141 287 L 141 304 L 59 304 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      60 300 M
+      GS
+            0 SG
+            /Courier-BoldOblique FF [14 0 0 -14 0 0] MS
+            ( CLASS B ) SH
+      GR
+   GR
+
+% ARC
+0 SG
+GS
+   NP
+      340 300 M
+      340 300 45 45 180 0 TGAR
+      340 300 L
+   CP 1 SG F
+   0 SG
+   NP
+      340 300 M
+      340 300 45 45 180 0 TGAR
+      340 300 L
+   CP CL NP
+   pat26 8 288 296 104 56 TGPF
+GR
+GS
+   GS
+      NP
+         340 300 45 45 180 0 TGAR
+      S
+   GR
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      400 5 M
+      400 420 L
+   TGSM
+   1 W
+   S
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      100 240 M
+      -80 0 atan DU cos 22.000 MU 100 exch SU
+      exch sin 22.000 MU 160 exch SU L
+   TGSM
+   7 W
+   S
+   1 W
+GR
+GS
+   TGSM
+   NP
+      100 160 22.000 9.000 0 -80 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      100 160 22.000 9.000 0 -80 TGAT
+   CP F
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      30 205 M
+      GS
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Inherit) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+NP 494 87 M 507 87 L 507 111 L 494 111 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      495 105 M
+      GS
+            0 SG
+            /Courier-Bold FF [20 0 0 -20 0 0] MS
+            (A) SH
+      GR
+   GR
+
+% OVAL
+0 SG
+GS
+   NP 500 300 45 45 TGEL
+   CP 1 SG F
+   0 SG
+   NP 500 300 45 45 TGEL
+   CP EC NP
+   pat26 8 448 248 104 104 TGPF
+GR
+GS
+   GS
+      NP 500 300 45 45 TGEL
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 494 287 M 507 287 L 507 311 L 494 311 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      495 305 M
+      GS
+            0 SG
+            /Courier-Bold FF [20 0 0 -20 0 0] MS
+            (B) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      500 240 M
+      -80 0 atan DU cos 22.000 MU 500 exch SU
+      exch sin 22.000 MU 160 exch SU L
+   TGSM
+   7 W
+   S
+   1 W
+GR
+GS
+   TGSM
+   NP
+      500 160 22.000 9.000 0 -80 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      500 160 22.000 9.000 0 -80 TGAT
+   CP F
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      430 205 M
+      GS
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Inherit) SH
+      GR
+   GR
+
+% OVAL
+0 SG
+GS
+   NP 735 300 45 45 TGEL
+   CP 1 SG F
+   0 SG
+   NP 735 300 45 45 TGEL
+   CP EC NP
+   pat26 8 688 248 96 104 TGPF
+GR
+GS
+   GS
+      NP 735 300 45 45 TGEL
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 699 287 M 775 287 L 775 311 L 699 311 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      700 305 M
+      GS
+            0 SG
+            /Courier-Bold FF [20 0 0 -20 0 0] MS
+            (B.) SH
+            0 SG
+            /Courier-Bold FF [17 0 0 -17 0 0] MS
+            (clone) SH
+      GR
+   GR
+
+% ARC
+0 SG
+GS
+   NP
+      340 300 M
+      340 300 45 45 0 -180 TGAR
+      340 300 L
+   CP 1 SG F
+   0 SG
+   NP
+      340 300 M
+      340 300 45 45 0 -180 TGAR
+      340 300 L
+   CP CL NP
+   pat3 8 288 248 104 56 TGPF
+GR
+GS
+   GS
+      NP
+         340 300 45 45 0 -180 TGAR
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+NP 334 287 M 347 287 L 347 311 L 334 311 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      335 305 M
+      GS
+            0 SG
+            /Courier-Bold FF [20 0 0 -20 0 0] MS
+            (B) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      570 300 M
+      0 100 atan DU cos 22.000 MU 670 exch SU
+      exch sin 22.000 MU 300 exch SU L
+   TGSM
+   7 W
+   S
+   1 W
+GR
+GS
+   TGSM
+   NP
+      670 300 22.000 9.000 100 0 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      670 300 22.000 9.000 100 0 TGAT
+   CP F
+GR
+
+% TEXT
+NP
+0 SG
+NP 589 276 M 635 276 L 635 293 L 589 293 L CP 1 SG F
+0 SG
+   GS
+      1 W
+      590 290 M
+      GS
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (clone) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      700 250 M
+      -110 -160 atan DU cos 22.000 MU 540 exch SU
+      exch sin 22.000 MU 140 exch SU L
+   TGSM
+   7 W
+   S
+   1 W
+GR
+GS
+   TGSM
+   NP
+      540 140 22.000 9.000 -160 -110 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      540 140 22.000 9.000 -160 -110 TGAT
+   CP F
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      650 205 M
+      GS
+            0 SG
+            /Courier-Oblique FF [14 0 0 -14 0 0] MS
+            (Inherit) SH
+      GR
+   GR
+
+GR
+tgifsavedpage restore
+end
+showpage
+
+%%Trailer
+%MatchingCreationDate: Thu Jul 15 14:17:54 2004
+%%DocumentFonts: Courier-Bold
+%%+ Courier-Oblique
+%%+ Courier-BoldOblique
+%%EOF

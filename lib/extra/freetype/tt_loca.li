@@ -1,0 +1,33 @@
+Section Header
+
+  + name        := TT_LOCA;
+  - comment     :=" loca: Index Of Location.";
+
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+
+Section Inherit
+
+  - parent:OBJECT := OBJECT;
+
+Section Public
+
+  + max_loca:UINTEGER_16;
+
+  - create nglyph:UINTEGER_16 my_file f:FILE :SELF<-
+  // nglyph: number of glyph (maxp table)
+  ( + result:SELF;
+
+    result := clone;
+    result.make nglyph my_file f;
+    result
+  );
+
+  - make nglyph:UINTEGER_16 my_file f:FILE <- deferred;
+
+  - value index:UINTEGER_16 :UINTEGER_32 <- deferred;
+
+  - print <- deferred;
+
+
+

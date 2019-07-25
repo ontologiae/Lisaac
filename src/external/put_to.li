@@ -1,159 +1,131 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := PUT_TO;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-    
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Put for NATIVE_ARRAY(E) (see ITEM)";
-  
+
 Section Inherit
-  
-  + parent_expr:Expanded EXPR; // BSBS: C'est une INSTR, mais pb dans ITM_EXTERNAL 
-  
-Section Public 
-  
-  - is_invariant:BOOLEAN <- 
-  receiver.is_invariant && {index.is_invariant} && {value.is_invariant};  
-  
+
+  + parent_write:Expanded WRITE;
+
+  + parent_expr:Expanded EXPR; // Note: C'est une INSTR, mais pb dans ITM_EXTERNAL
+
+Section Public
+
+  - is_invariant:BOOLEAN <-
+  receiver.is_invariant && {index.is_invariant} && {value.is_invariant};
+
   + receiver:EXPR;
-  
+
   + index:EXPR;
-  
-  + value:EXPR;
-    
+
   - static_type:TYPE_FULL <- TYPE_VOID.default;
-  
-  - get_type t:TYPES_TMP <-
-  ( 
-    t.add TYPE_VOID;
+
+  - variable:VARIABLE <-
+  ( + typ_gen:TYPE_GENERIC;
+
+    typ_gen ?= receiver.static_type.raw;
+    typ_gen.native_array_variable
   );
-  
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION base rec:EXPR index idx:EXPR value v:EXPR :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make p base rec index idx value v;
     result
   );
-  
+
   - make p:POSITION base rec:EXPR index idx:EXPR value v:EXPR <-
-  ( + type_generic:TYPE_GENERIC;
-    + first_type:TYPE_FULL;
-    
-    position := p;            
+  (
+    position := p;
     receiver := rec;
     index    := idx;
     value    := v;
     //
-    type_generic ?= receiver.static_type.raw;
-    first_type := type_generic.generic_list.first;
-    (
-      (! first_type.is_expanded) || 
-      {first_type.raw = type_boolean}
-    ).if {
-      type_generic.add_put_to Self;
-    };
+    variable.add_write Self;
   );
-  
-  - my_copy:SELF <- 
+
+  - my_copy:SELF <-
   SELF.create position base (receiver.my_copy) index (index.my_copy) value (value.my_copy);
-  
+
   //
   // Remove
   //
-  
+
   - remove <-
-  ( + type_generic:TYPE_GENERIC;
-    + first_type:TYPE_FULL;
-    
-    type_generic ?= receiver.static_type.raw;
-    first_type := type_generic.generic_list.first;
-    (
-      (! first_type.is_expanded) || 
-      {first_type.raw = type_boolean}
-    ).if {
-      type_generic.remove_put_to Self;
-    };
+  (
+    variable.unwrite Self;
     //
     receiver.remove;
     index.remove;
-    value.remove;    
+    value.remove;
   );
-  
+
   //
   // Execute
   //
-  
+
+  - execute:INSTR <- execute_unlink;
+
   - execute_unlink:INSTR <-
-  (     
+  (
     execute_link
   );
-  
+
   - execute_link:EXPR <-
-  (   
+  (
     receiver := receiver.execute_link;
-    index    := index.execute_link;    
+    index    := index.execute_link;
     value    := value.execute_link;
+    //variable.set_write Self;
     Self
   );
-    
+
   //
   // Genere.
   //
-  
+
   - genere buffer:STRING <-
   ( + type_generic:TYPE_GENERIC;
     + first_type:TYPE_FULL;
-    
+
     receiver.genere buffer;
     buffer.add_last '[';
     index.genere buffer;
-    buffer.append "]=";    
+    buffer.add_last ']';
     type_generic ?= receiver.static_type.raw;
     first_type := type_generic.generic_list.first;
-    ((first_type.is_expanded) && {! first_type.is_expanded_c}).if {
-      (value.static_type.is_expanded_ref).if {
-	buffer.append "*(";
-	value.genere buffer;
-	buffer.add_last ')';
-      } else {
-	value.genere buffer;    
-      };
+    ((first_type.raw.is_block) && {value.static_type.raw = TYPE_NULL}).if {
+      buffer.append ".__id=0";
     } else {
-      value.genere buffer;
+      buffer.add_last '=';
+      ((first_type.is_expanded) && {! first_type.is_expanded_c}).if {
+        (value.static_type.is_expanded_ref).if {
+          buffer.append "*(";
+          value.genere buffer;
+          buffer.add_last ')';
+        } else {
+          value.genere buffer;
+        };
+      } else {
+        value.genere buffer;
+      };
     };
   );
   
   //
   // Display.
   //
-  
+
   - display buffer:STRING <-
   (
     receiver.display buffer;

@@ -1,62 +1,42 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := EXPR_SUB;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Add Binary Expression.";
-  
+
 Section Inherit
-  
+
   + parent_expr_binary:Expanded EXPR_BINARY;
-  
-Section Public  
-  
+
+Section Public
+
   - symbol:STRING_CONSTANT := "-";
-  
+
   //
   // Execute.
   //
-  
-  - exec_conservator:EXPR <-  
+
+  - exec_conservator:EXPR <-
   //-- E1 - - E2 -> E1 + E2
   ( + neg:EXPR_NEG;
     + result:EXPR;
-    
-    neg ?= right;    
+
+    neg ?= right;
     (neg != NULL).if {
       result := EXPR_ADD.create position with left and (neg.right);
     };
     result
   );
-  
-  - exec_conservator_left  left_cst :INTEGER_CST :EXPR <- 
+
+  - exec_conservator_left  left_cst :INTEGER_CST :EXPR <-
   //-- 0  - E   -> - E
-  //-- -1 - E   -> ~ E  
+  //-- -1 - E   -> ~ E
   ( + result:EXPR;
-        
+
     (left_cst.value = 0).if {
       left_cst.remove;
       result := EXPR_NEG.create position with right;
@@ -64,16 +44,16 @@ Section Public
       left_cst.remove;
       result := EXPR_NOT.create position with right;
     };
-    result    
+    result
   );
-  
+
   - exec_conservator_right right_cst:INTEGER_CST :EXPR <-
   //-- E  - 0   -> E
   //-- -E - 1   -> ~ E
   //-- E - -C   -> E + C
   ( + result:EXPR;
     + neg:EXPR_NEG;
-    
+
     (right_cst.value = 0).if {
       right_cst.remove;
       result := left;
@@ -88,23 +68,23 @@ Section Public
       result := EXPR_ADD.create position with left and right_cst;
     };
     result
-  );  
-  
+  );
+
   - exec left_cst:INTEGER_CST and right_cst:INTEGER_CST :EXPR <-
   //-- C1 - C2 -> C3
   (
-    left_cst.set_value (left_cst.value - right_cst.value); 
+    left_cst.set_value (left_cst.value - right_cst.value);
     right_cst.remove;
     left_cst
   );
-  
+
   - exec:EXPR <-
   //-- E  -  E  -> 0
-  //-- E1 - ((E1 / E2) * E2) -> E1 % E2 
+  //-- E1 - ((E1 / E2) * E2) -> E1 % E2
   ( + result:EXPR;
     + mul:EXPR_MUL;
     + div:EXPR_DIV;
-    
+
     (left ~= right).if {
       left.remove;
       right.remove;
@@ -124,5 +104,4 @@ Section Public
 
     result
   );
- 
-    
+

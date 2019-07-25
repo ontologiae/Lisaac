@@ -1,0 +1,56 @@
+Section Header
+
+  + name     := GL_BLENDING;
+
+  - comment  := "Opengl Blending Mode";
+
+Section Inherit
+
+  - parent_blending:BLENDING := BLENDING;
+
+Section Public
+
+  // factors values
+  - zero:INTEGER <- `GL_ZERO`:INTEGER;
+  - one:INTEGER <- `GL_ONE`:INTEGER;
+  - dst_color:INTEGER <- `GL_DST_COLOR`:INTEGER;
+  - one_minus_dst_color:INTEGER <- `GL_ONE_MINUS_DST_COLOR`:INTEGER;
+  - src_color:INTEGER <- `GL_SRC_COLOR`:INTEGER;
+  - one_minus_src_color:INTEGER <- `GL_ONE_MINUS_SRC_COLOR`:INTEGER;
+  - src_alpha:INTEGER <- `GL_SRC_ALPHA`:INTEGER;
+  - one_minus_src_alpha:INTEGER <- `GL_ONE_MINUS_SRC_ALPHA`:INTEGER;
+  - dst_alpha:INTEGER <- `GL_DST_ALPHA`:INTEGER;
+  - one_minus_dst_alpha:INTEGER <- `GL_ONE_MINUS_DST_ALPHA`:INTEGER;
+  - src_alpha_saturate:INTEGER <- `GL_SRC_ALPHA_SATURATE`:INTEGER;
+
+  - enable <-
+  (
+    parent_state.enable;
+    `glEnable(GL_BLEND)`;
+  );
+
+  - disable <-
+  (
+    parent_state.disable;
+    `glDisable(GL_BLEND)`;
+  );
+
+  - push_attrib <-
+  (
+    `glPushAttrib(GL_ENABLE_BIT)`;
+  );
+
+  - pop_attrib <-
+  (
+    `glPopAttrib()`;
+  );
+
+  - apply (src_factor,dst_factor:INTEGER) <-
+  (
+    `glBlendFunc(@src_factor, @dst_factor)`;
+  );
+
+  - set_alpha_value alpha:REAL_32 <-
+  (
+    `glColor4f(1.0f, 1.0f, 1.0f, @alpha)`;
+  );

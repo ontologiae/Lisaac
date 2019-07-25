@@ -1,0 +1,59 @@
+Section Header
+
+  + name        := PUSH_STANDARD;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Push context for debug mode";
+
+Section Inherit
+
+  + parent_push:Expanded PUSH;
+  
+Section Public
+  
+  //
+  // Genere
+  //
+
+  - genere buffer:STRING <-
+  ( + id:INTEGER;
+    + idf:STRING_CONSTANT;
+
+    idf := ALIASER_LOCAL.push Self;
+    
+    (is_first).if {
+      buffer.append "lisaac_push_first(&";
+    } else {
+      buffer.append "lisaac_push(&";
+    };
+    buffer.append idf;
+    buffer.add_last ',';
+    
+    (debug_with_code).if {
+      id := source_line.fast_last_index_of position;
+      (id < 0).if {
+        source_line.add_last position;
+        id := source_line.upper;
+      };      
+      id.append_in buffer;      
+    } else { 
+      position.code.append_in buffer;
+    };
+    buffer.add_last ')';
+
+    buffer.append "; /* L";
+    position.line.append_in buffer;
+    buffer.add_last ' ';
+    buffer.append (position.prototype.name);
+    buffer.append "*/";
+  );
+  
+
+
+
+
+
+

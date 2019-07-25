@@ -1,5 +1,5 @@
 Section Header
-  
+
   + name := DESKTOP;
 
 Section Inherit
@@ -7,14 +7,14 @@ Section Inherit
   - parent_object:OBJECT := OBJECT;
 
 Section Public
-	
-  
+
+
   - main <-
-  ( 
+  (
     VIDEO.auto_make;
 
     // Screen definition.
-    DESK.make VIDEO scale (2,1) with (                  
+    DESK.make VIDEO scale (2,1) with (
       DESK_BOARD.create_with "./".fix_height / G_RAW.create (G_IMG.create "isaac.ai")
-    );    
+    );
   );

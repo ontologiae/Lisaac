@@ -1,36 +1,21 @@
-   -------------------------------------------------
-        Mode Eclipse for LISAAC language     
    ------------------------------------------------
-
- LICENSE
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.;
-   
+        Mode Eclipse for LISAAC language     
+   ------------------------------------------------   
    
 How to get started?
 ===================
    
-  - Install lastest Lisaac Compiler 0.14.
+  - Install lastest Lisaac Compiler.
     
-  * Plugin Installation :
-     -------------------
+  * Plugin Installation:
+  ----------------------
  
-    - Use the Eclipse Update Manager to install the Lisaac plugin.  Add the http://isaacproject.u-strasbg.fr/eclipse/update/  site in the manager, select Lisaac feature and click 'Install'.
-       or
-    - Open the Eclisaac project as described below, export it into a .jar file, copy the jar into your 'eclipse/plugins' directory.
+    - Use the Eclipse Update Manager to install the Lisaac plugin.  
+    - Open the Eclisaac project as described below, 
+      export it into a .jar file, copy the jar into your 'eclipse/plugins' directory.
     
-   * Plugin Development and Bug Report :
-   ------------------------------------------------
+   * Plugin Development and Bug Report:
+   ------------------------------------
    
     - Install latest Eclipse SDK (3.5 Galileo)  see http://www.eclipse.org/downloads.
     
@@ -49,10 +34,10 @@ How to get started?
   
   
 Quick Start into the Lisaac Mode.
-===================
+=================================
  
    * General overview:
-      -----------------------
+   -------------------
  
    The Lisaac plugin define features for the user:
      - Open a Lisaac perspective. 
@@ -66,14 +51,12 @@ Quick Start into the Lisaac Mode.
      - [NEW] Slot & section folding at the left of editor.
      - [NEW] Run the compiler & the program with the 'Run' menu.
      - [NEW] Section Header refactor & rename prototype refactor ('Refactor' menu).
-      
-      
-       
+             
 Quick Start into Source Code.
-===================
+=============================
  
    * General overview:
-      -----------------------
+   -------------------
       
    - META-INF/MANIFEST.MF               Main file for Plugin general settings -  edit within eclipse only.
    - plugin.xml                         Define Extensions Points that the plugin implements - edit within eclipse only.
@@ -87,7 +70,7 @@ Quick Start into Source Code.
    - bin/                               Java binary files (removed in git repository) This is automatically placed in jar file while releasing.
    
    * Java Packages overview
-     -------------------------------
+   ------------------------
      
      - lisaac/                          Main package, contain plugin activator, LisaacPlugin.java, this object follows plugin lifecycle.
      - lisaac/actions                   Plugin menus actions, which implements IActionDelegate interface.

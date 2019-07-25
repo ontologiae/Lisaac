@@ -1,80 +1,60 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
 
   + name    := G_IN;
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
-      
+
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Output text for GUI.";
 
-Section Inherit  
+Section Inherit
 
   + parent_area:Expanded AREA;
-  
+
   + parent_g_expr:Expanded G_EXPR;
-          
+
 Section Public
-  
-  + action:{G_IN; } := 
-  { in:G_IN; 
+
+  + action:{G_IN; } :=
+  { in:G_IN;
     // Nothing.
   };
-  
+
   + stat:INTEGER_8;
-  
+
   + text:STRING;
-  
+
   + justify:UINTEGER_8;
-  
+
   + cursor:INTEGER;
-  
+
   - left  :UINTEGER_8 := 0;
   - right :UINTEGER_8 := 1;
   - center:UINTEGER_8 := 2;
-  
+
   //
   // Width / Height
   //
-  
+
   - predict_size (car,line:INTEGER) :(INTEGER,INTEGER) <-
   (
     car * 8, line * 16
-  );  
-  
+  );
+
   + width_min:INTEGER;
-  
-  + height_min:INTEGER;  
-  
+
+  + height_min:INTEGER;
+
   - height_max:INTEGER <- height_min;
-  
+
   //
   // Creation.
   //
-  
+
   - create (car,line:INTEGER) :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make (car,line) justify 0 action NULL;
     result
@@ -82,18 +62,18 @@ Section Public
 
   - create (car,line:INTEGER) action a:{G_IN; } :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make (car,line) justify 0 action a;
     result
   );
-  
+
   - create (car,line:INTEGER) justify j:UINTEGER_8 :SELF <-
   [
     -? {j.in_range 0 to 2};
   ]
   ( + result:SELF;
-        
+
     result := clone;
     result.make (car,line) justify j action NULL;
     result
@@ -104,15 +84,15 @@ Section Public
     -? {j.in_range 0 to 2};
   ]
   ( + result:SELF;
-        
+
     result := clone;
     result.make (car,line) justify j action a;
     result
   );
-  
+
   - make (car,line:INTEGER) justify j:UINTEGER_8 action a:{G_IN; } <-
   [
-    -? {car > 1}; 
+    -? {car > 1};
     -? {line > 0};
   ]
   (
@@ -121,28 +101,28 @@ Section Public
     height_min := line * 16;
     justify := j;
     action  := a;
-  ); 
+  );
 
   //
   // Update position.
   //
-  
+
   - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
-  ( 
+  (
     update rac from (x,y) size (w,h);
   );
-  
+
   //
   // Display.
   //
-    
+
   - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
   ( + beg,idx,siz,px,py,idx2:INTEGER;
-        
-    clipping (x0,y0) to (x1,y1);    
-    //    
+
+    clipping (x0,y0) to (x1,y1);
+    //
     rectangle_fill (x_min,y_min) to (x_max,y_max) color white;
-    //    
+    //
     ((stat & 11b) = 2).if {
       (cursor > text.upper).if {
         cursor := text.upper;
@@ -151,7 +131,7 @@ Section Public
     };
     ((stat & 11b) = 0).if {
       color black;
-    } else {    
+    } else {
       color red;
     };
     beg := text.lower;
@@ -160,7 +140,7 @@ Section Public
       idx := text.index_of '\n' since beg;
       {
 	siz := font_width text at beg to (idx-1);
-	(siz > width).if {	
+	(siz > width).if {
 	  idx2 := text.last_index_of ' ' since (idx-1);
 	  (idx2 > beg).if {
 	    idx := idx2;
@@ -168,8 +148,8 @@ Section Public
 	    idx := idx - 1;
 	  };
 	};
-      }.do_while {siz > width};      
-      (justify != left).if {	
+      }.do_while {siz > width};
+      (justify != left).if {
 	(justify = right).if {
 	  // Right
 	  px := width - siz;
@@ -178,10 +158,10 @@ Section Public
 	  px := (width - siz) >> 1;
 	};
       };
-      print text at beg to (idx-1) to (px,py); 
+      print text at beg to (idx-1) to (px,py);
       py  := py + 16;
-      beg := idx + 1;      
-    }.do_until {(idx > text.count) || {py > height}};    
+      beg := idx + 1;
+    }.do_until {(idx > text.count) || {py > height}};
     ((stat & 11b) = 2).if {
       text.remove (cursor+1);
     };
@@ -192,11 +172,11 @@ Section Public
     //};
     //
   );
-  
+
   //
   // Event manager.
   //
-  
+
   - receive msg:EVENT <-
   // 0 : Out
   // 1 : in
@@ -204,10 +184,10 @@ Section Public
   // 4 : End of buffer.
   ( + mouse:EVENT_MOUSE;
     + keyb:EVENT_KEYBOARD;
-    + win:AREA;    
+    + win:AREA;
     + cmd:UINTEGER_8;
     + key:CHARACTER;
-        
+
     mouse ?= msg;
     (mouse != NULL).if {
       win := DESK.get_object (mouse.x_current,mouse.y_current);
@@ -239,7 +219,7 @@ Section Public
 	}
 	.when 2 then {
 	  ((win != Self) && {MOUSE.left}).if {
-	    stat := 0;	  
+	    stat := 0;
 	    refresh;
 	    // Action.
 	    (action != NULL).if {
@@ -253,15 +233,15 @@ Section Public
 	};
       };
     };
-    
+
     keyb ?= msg;
-    ((keyb != NULL) && {(stat & 11b) = 2}).if {      
+    ((keyb != NULL) && {(stat & 11b) = 2}).if {
       cmd := (keyb.key >> 8).to_uinteger_8;
       key := (keyb.key & 0FFh).to_character;
       ((cmd & 8) != 0).if {
 	key
 	// Enter
-	.when '\13\' or '\20h\' then {	  
+	.when '\13\' or '\20h\' then {
 	  text.add_last '\n';
 	  cursor := cursor + 1;
 	  refresh;
@@ -271,14 +251,14 @@ Section Public
 	    (cursor > text.count).if {
 	      cursor := text.count;
 	    };
-	  };	  
-	  ((stat & 100b) != 0).if {	    
+	  };
+	  ((stat & 100b) != 0).if {
 	    stat := 0;
 	    DESK.receive msg;
 	  };
 	}
-	// Move cursor.	
-	.when 'L' then { 
+	// Move cursor.
+	.when 'L' then {
 	  (cursor != 0).if {
 	    cursor := cursor - 1;
 	  };
@@ -311,28 +291,28 @@ Section Public
 	cursor := cursor + 1;
       };
       stat := stat & 11b;
-      refresh;      
+      refresh;
     };
   );
 
 Section Private
-  
+
   //
   // Obsolete (A revoir)
   //
-  
+
   - what_letter pos_x:INTEGER :INTEGER <-
   // Return cursor position under `pos_x' coord.
-  ( + result:INTEGER; 
+  ( + result:INTEGER;
     + x,x_cur:INTEGER; // la position x de la souris moins la taille du label
-    
+
     x := pos_x - (font_width name + 4); // 4 for border
-        
-    result := text.lower;    
+
+    result := text.lower;
     {(result <= text.upper) && {x_cur < x}}.while_do {
       x_cur := x_cur + font_width_letter (text.item result);
       result := result + 1;
     };
-        
+
     result-1
   );

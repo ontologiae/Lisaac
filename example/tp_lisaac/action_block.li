@@ -1,0 +1,52 @@
+Section Header
+
+  + name := ACTION_BLOCK;
+
+Section Public
+
+  - main <-
+  ( + col1:FAST_ARRAY(INTEGER);
+    + col2:LINKED_LIST(INTEGER);
+    + action1:{INTEGER;};
+    //+ action2:{INTEGER;};
+    + somme:INTEGER;
+
+    // Creation d'un tableau de 5 elements de 0 à 4 :
+    col1 := FAST_ARRAY(INTEGER).create_with_capacity 5;
+    // Création d'une liste chainee:
+    col2 := LINKED_LIST(INTEGER).create;
+
+    // Rempli la première collection.
+    1.to 10 do { j:INTEGER;
+      col1.add_last j;
+      col2.add_last (j+j);
+    };
+
+    // QUESTION 1
+
+    // Action d'afficher un élément:
+    action1 := {
+      i:INTEGER;  // argument
+
+      i.print;
+      ','.print;
+    };
+
+    // Affichage de `col1' et `col2' avec `action1':
+    col1.foreach action1;
+    col2.foreach action1;
+
+    // POINT 2
+
+    // QUESTION 3
+
+    //action2 := {
+    // ... A vous de jouer ...
+    //};
+
+    // col2.foreach action2;
+
+    "Somme : ".print;
+    somme.print;
+    '\n'.print;
+  );

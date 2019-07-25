@@ -1,38 +1,18 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name := AVL_SET(V);
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
-  
+
 Section Inherit
-  
+
   + parent_set:Expanded SET(V);
-  
+
   + parent_avl_tree:Expanded AVL_TREE(V);
-  
-Section Public 
-  
+
+Section Public
+
   - add e:V <-
   (
     item_memory := e;
@@ -58,7 +38,7 @@ Section Public
   - reference_at e:V :V <-
   ( + n:AVL_SET_NODE(V);
     + result:V;
-    
+
     (root != NULL).if {
       n := root.at e;
       (n != NULL).if {
@@ -70,18 +50,18 @@ Section Public
 
   - item index:INTEGER :V <-
   ( + result:V;
-    
+
     (map_dirty).if {
       build_map;
     };
     map.item (index - 1).item
   );
-  
+
 Section Private
-  
+
   - set_item n:AVL_SET_NODE(V) <-
   (
-    n.make item_memory;    
+    n.make item_memory;
   );
 
   - set_value n:AVL_SET_NODE(V);
@@ -97,7 +77,7 @@ Section Private
 
   - discard_node n:AVL_SET_NODE(V) <-
   ( //+ i:V;
-    
+
     //n.make i;
     //n.set_left (lost_nodes.item);
     //lost_nodes.set_item n;
@@ -108,16 +88,16 @@ Section Private
     AVL_SET_NODE(V).create
   );
 
-Section Public  
-  
+Section Public
+
   - create:SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make;
     result
   );
-  
+
   - make <-
   (
     //(lost_nodes != NULL).if {
@@ -131,11 +111,11 @@ Section Public
 //      };
 //    };
   );
-  
+
   //
   // Invariant.
   //
-  
+
 //  [
 //    -? {lost_nodes != NULL};
 //    -? {lost_nodes = common_lost_nodes.at generating_type};

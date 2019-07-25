@@ -1,0 +1,28 @@
+Section Header
+  
+  + name         := OK_PIECES;
+  
+  - author       := "Benoit Sonntag";
+  - comment      := "Language shootout - Meteor contest (based on the C++ version)"; 
+  
+Section Inherit
+  
+  - parent_any:OBJECT := OBJECT;
+
+Section Public
+  
+  + n_pieces:FAST_ARRAY(INTEGER_8);
+  
+  + piece_vec:FAST_ARRAY2(UINTEGER_32);
+  
+  - create:SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make;
+  );
+  
+  - make <-
+  (  
+    n_pieces := FAST_ARRAY(INTEGER_8).create n_piece_type;
+    piece_vec := FAST_ARRAY2(UINTEGER_32).create (n_piece_type,PIECE.n_orient);
+  );

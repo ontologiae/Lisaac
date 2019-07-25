@@ -1,40 +1,20 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := PARSE_EXPR;
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Parse arithmetic expression.";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
-  
+
 Section Private
-  
+
   //
   // Service and terminal parsing.
   //
-  
+
   - index:INTEGER;
   - source:ABSTRACT_STRING;
 
@@ -75,19 +55,19 @@ Section Private
     1.to (index-1) do { j:INTEGER;
       ' '.print;
     };
-    "^\n".print;    
+    "^\n".print;
     die_with_code exit_failure_code;
-  ); 
-  
+  );
+
   //
   // Grammar parsing.
   //
-  
+
   - read_expr:EXPR <-
   // EXPR <- EXPR_MUL { ( '+' | '-') EXPR_MUL }
   ( + result,right:EXPR;
     + oper:CHARACTER;
-    
+
     result := read_expr_mul;
     (result != NULL).if {
       {(read_character '+') || {read_character '-'}}.while_do {
@@ -110,7 +90,7 @@ Section Private
   // EXPR_MUL <- EXPR_UNARY { ( '*' | '/') EXPR_UNARY }
   ( + result,right:EXPR;
     + oper:CHARACTER;
-    
+
     result := read_expr_unary;
     (result != NULL).if {
       {(read_character '*') || {read_character '/'}}.while_do {
@@ -119,9 +99,9 @@ Section Private
         (right = NULL).if {
           error;
         };
-        (oper = '*').if {	  
+        (oper = '*').if {
           result := EXPR_MUL.create result and right;
-        } else {	  
+        } else {
           result := EXPR_DIV.create result and right;
         };
       };
@@ -134,14 +114,14 @@ Section Private
   //             |  EXPR_CST
   ( + result:EXPR;
     + oper:CHARACTER;
-    
+
     ((read_character '+') || {read_character '-'}).if {
       oper   := last_character;
       result := read_expr_unary;
       (result = NULL).if {
         error;
       };
-      (oper = '-').if {      	
+      (oper = '-').if {
         result := EXPR_NEG.create result;
       };
     } else {
@@ -154,7 +134,7 @@ Section Private
   // EXPR_CST <- '(' EXPR ')'
   //           |  constant
   ( + result:EXPR;
-    
+
     (read_character '(').if {
       result := read_expr;
       (result = NULL).if {

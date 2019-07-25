@@ -1,82 +1,46 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := SHORTER;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - bibliography:= "http://IsaacOS.com";
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Shorter source code.";
-  
-  - external := `#include "path.h"`;
-    
+
 Section Inherit
-  
+
   - parent_any:ANY := ANY;
-  
+
 Section Private
 
-  - last_index (n:STRING,c:CHARACTER) :INTEGER <-
-  // BSBS: A Mettre dans STRING.
-  ( + result:INTEGER;
-    result := n.upper;
-    {(result<n.lower) || {n.item result = c}}.until_do {
-      result := result-1;
-    };
-    result
-  );
+  - is_lip:BOOLEAN;
 
   - output_name : STRING_CONSTANT;
-  
+
   - input_name  : STRING_CONSTANT;
-  
+
   - format_name : STRING_CONSTANT;
-  
+
   - proto_input:PROTOTYPE;
-  
+
   //
   // Buffer.
   //
-  
+
   - directory_list:STRING;
-  
+
   - file_list:STRING;
-  
+
   - current_list:STRING;
-  
+
   //
   // Command.
   //
 
   - usage:STRING_CONSTANT :=
-  "----------------------------------------------------------------\n\
-  \--                   Lisaac source Shorter                    --\n\
-  \--            LORIA - LSIIT - ULP - CNRS - FRANCE             --\n\
-  \--         Benoit SONNTAG - sonntag@icps.u-strasbg.fr         --\n\
-  \--                   http://www.IsaacOS.com                   --\n\
-  \----------------------------------------------------------------\n\
-  \Usage:                                                      \n\
+  "Usage:                                                      \n\
   \  shorter <input_file[.li]> [Options]                       \n\
   \                                                            \n\
   \Options:                                                    \n\
@@ -88,37 +52,49 @@ Section Private
   \  -f <format_file> : formatting description file            \n\
   \                     (see `/lisaac/shorter/')               \n\
   \  -d               : Lisaac doc style (no -c, -r)           \n\
+  \  -h               : Help                                   \n\
+  \  -version         : Show version information               \n\
   \                                                            \n\
   \Examples:                                                   \n\
   \  * Output format file:                                     \n\
-  \    shorter -c -p -f latex hello_world.li                   \n\ 
+  \      shorter -c -p -f latex hello_world.li                 \n\
   \                                                            \n\
   \  * Build html documentation:                               \n\
-  \    shorter -r -f html ~/lisaac/lib                         \n\
+  \      shorter -r -f html ~/lisaac/lib                       \n\
   \                                                            \n\
   \  * Build html documentation style JavaDoc:                 \n\
-  \    shorter -d -f belinda ~/lisaac/lib                      \n\
-  \                                                            \n\
-  \Bug report:                                                 \n\
-  \            post in : https://gna.org/bugs/?group=isaac     \n\
-  \            mail to : sonntag@icps.u-strasbg.fr             \n";
+  \   - With directory:                                        \n\
+  \      shorter -d -f belinda ~/lisaac/lib                    \n\
+  \   - With current `make.lip'                                \n\
+  \      shorter -d -f belinda                                 \n\
+  \   - With specific `make.lip'                               \n\
+  \      shorter -d -f belinda ../make.lip                     \n";
 
   - display_usage <-
   (
+    COMMON.command_line_header "Shorter".print;
     usage.print;
+    COMMON.command_line_footer.print;
     die_with_code exit_failure_code;
   );
-  
+
+  - display_version <-
+  (
+    COMMON.command_line_header "Shorter".print;
+    COMMON.print_info;
+    COMMON.command_line_footer.print;
+    die_with_code exit_failure_code;
+  );
+
   //
   // Options.
   //
-  
+
   - read_options <-
   ( + cmd:STRING;
     + j:INTEGER;
     + var_lisaac:STRING_CONSTANT;
-    + path:NATIVE_ARRAY(CHARACTER);
-    
+
     // Read argument.
     is_shorter := TRUE;
     j := 1;
@@ -133,13 +109,13 @@ Section Private
 	  j := j+1;
 	  (j > COMMAND_LINE.count).if {
 	    display_usage;
-	  };	  
+	  };
 	  output_name := ALIAS_STR.get (COMMAND_LINE.item j);
 	}.elseif {cmd.item 2 = 'f'} then {
 	  j := j+1;
 	  (j > COMMAND_LINE.count).if {
 	    display_usage;
-	  };	  
+	  };
 	  format_name := ALIAS_STR.get (COMMAND_LINE.item j);
 	}.elseif {cmd.item 2 = 'c'} then {
 	  is_short_code := TRUE;
@@ -148,9 +124,11 @@ Section Private
 	}.elseif {cmd.item 2 = 'r'} then {
           is_short_recursive := TRUE;
         }.elseif {cmd.item 2 = 'd'} then {
-          is_shorter  := FALSE;          
+          is_shorter  := FALSE;
           is_shorter2 := TRUE;
           is_short_recursive := TRUE;
+        }.elseif {cmd ~= "-version"} then {
+          display_version;
 	} else {
 	  display_usage;
 	};
@@ -162,29 +140,25 @@ Section Private
 	  display_usage;
 	};
 	string_tmp.copy (COMMAND_LINE.item j);
-	input_name := ALIAS_STR.get string_tmp;	
+	input_name := ALIAS_STR.get string_tmp;
       };
       j := j+1;
     };
-    
+
     (input_name = NULL).if {
-      display_usage;
+      (is_shorter2).if {
+        load_lip "make.lip";
+        is_lip := TRUE;
+      } else {
+        display_usage;
+      };
+    }.elseif {input_name.has_suffix ".lip"} then {
+      load_lip input_name;
+      is_lip := TRUE;
     };
-    
+
     (format_name != NULL).if {
-      path := `LISAAC_DIRECTORY`:NATIVE_ARRAY(CHARACTER);
-      var_lisaac := STRING_CONSTANT.new_intern path
-      count (path.fast_first_index_of '\0' until 1024);
-      //var_lisaac := ENVIRONMENT.get_environment_variable "LISAAC";
-      //(var_lisaac = NULL).if {
-	//STD_ERROR.put_string "Unable to find `LISAAC' environment variable.\n";
-	//STD_ERROR.put_string "Please, set the environment variable `LISAAC'\n";
-	//STD_ERROR.put_string "with the appropriate absolute path to lisaac \
-	//\root directory.\n";
-	//STD_ERROR.put_string "Example: 'set LISAAC=/lisaac/'\n";
-	//die_with_code exit_failure_code;
-      //};
-      //
+      var_lisaac := COMMON.path_lisaac;
       string_tmp.copy var_lisaac;
       ((var_lisaac.last != '/') &&
       {var_lisaac.last != '\\'}).if {
@@ -196,26 +170,26 @@ Section Private
       PARSER.parse_format (ALIAS_STR.get string_tmp);
     };
   );
-  
+
   - extract_proto_name st:ABSTRACT_STRING :STRING_CONSTANT <-
   ( + i:INTEGER;
-    
+
     string_tmp.copy st;
     string_tmp.replace_all '\\' with '/';
-    i := last_index (string_tmp,'/');
-    (i >= string_tmp.lower).if {            
+    i := last_index_str (string_tmp,'/');
+    (i >= string_tmp.lower).if {
       string_tmp.remove_first i;
     };
-    i := last_index (string_tmp,'.');
-    ? {i > string_tmp.lower}; 
-    string_tmp.remove_last (string_tmp.upper-i+1);        
+    i := last_index_str (string_tmp,'.');
+    ? {i > string_tmp.lower};
+    string_tmp.remove_last (string_tmp.upper-i+1);
     string_tmp.to_upper;
     ALIAS_STR.get string_tmp
   );
-  
+
   - add_ext n:STRING_CONSTANT :STRING_CONSTANT <-
   ( + txt:STRING_CONSTANT;
-    string_tmp.copy n;    
+    string_tmp.copy n;
     (PARSER.short_dico.fast_has (ALIAS_STR.short_type_file)).if {
       txt := PARSER.short_dico.fast_at (ALIAS_STR.short_type_file).first;
       string_tmp.append txt;
@@ -224,11 +198,11 @@ Section Private
     };
     ALIAS_STR.get string_tmp
   );
-  
+
   - save_file n:STRING_CONSTANT with buf:STRING <-
   ( + file:FILE;
     + entry:ENTRY;
-    
+
     (is_short_recursive).if {
       (output_name != NULL).if {
         string_tmp.copy output_name;
@@ -259,18 +233,104 @@ Section Private
     file.write buf from (buf.lower) size (buf.count);
     file.close;
   );
-  
+
+  - build_with_path_file <-
+  ( + tok:STRING_CONSTANT;
+    + tok_lst:LINKED_LIST(STRING_CONSTANT);
+    + idx:INTEGER;
+
+    (path_file.lower).to (path_file.upper) do { i:INTEGER;
+      string_tmp.copy (path_file.item i);
+      idx := last_index_str (string_tmp,'/');
+      (idx >= string_tmp.lower).if {
+        string_tmp.remove_first idx;
+      };
+      string_tmp.remove_last 3;
+      string_tmp.to_upper;
+      tok := ALIAS_STR.get string_tmp;
+      (PARSER.short_dico.fast_has (ALIAS_STR.short_file_list_item)).if {
+        tok_lst := PARSER.short_dico.fast_at (ALIAS_STR.short_file_list_item);
+        (tok_lst.lower).to (tok_lst.upper) do { j:INTEGER;
+          (tok_lst.item j = NULL).if {
+            current_list.append tok;
+            file_list.append tok;
+          } else {
+            current_list.append (tok_lst.item j);
+            file_list.append (tok_lst.item j);
+          };
+        };
+      } else {
+        current_list.append tok;
+        current_list.add_last '\n';
+        file_list.append tok;
+        file_list.add_last '\n';
+      };
+      // Creation prototype file.
+      (PROTOTYPE.prototype_dico.fast_has tok).if {
+        "Error: Double definition prototype:\n".print;
+        PROTOTYPE.prototype_dico.fast_at tok.filename.print; '\n'.print;
+        path_file.item i.print; '\n'.print;
+        die_with_code exit_failure_code;
+      };
+      proto_input := PROTOTYPE.create (path_file.item i) name tok generic_count 0;
+      //
+      PARSER.go_on proto_input;
+      (is_shorter).if {
+        save_file (add_ext tok) with output_code;
+      };
+      (
+        (i = path_file.upper) ||
+        {path_file.item (i+1).first_difference_index (path_file.item i) < idx} ||
+        {last_index_str (path_file.item (i+1),'/') != idx}
+      ).if {
+        // Detect new directory.
+        current_list.is_empty.if_false {
+          (PARSER.short_dico.fast_has (ALIAS_STR.short_file_list_begin)).if {
+            tok := PARSER.short_dico.fast_at (ALIAS_STR.short_file_list_begin).first;
+            current_list.prepend tok;
+          };
+          (PARSER.short_dico.fast_has (ALIAS_STR.short_file_list_end)).if {
+            tok := PARSER.short_dico.fast_at (ALIAS_STR.short_file_list_end).first;
+            current_list.append tok;
+          };
+          string_tmp.copy (path_file.item i);
+          string_tmp.remove_last (string_tmp.upper-idx+1);
+          string_tmp.remove_first path_begin;
+          string_tmp.is_empty.if_false {
+            string_tmp.replace_all '/' with '-';
+            tok := ALIAS_STR.get string_tmp;
+
+            (PARSER.short_dico.fast_has (ALIAS_STR.short_directory_list_item)).if {
+              tok_lst := PARSER.short_dico.fast_at (ALIAS_STR.short_directory_list_item);
+              (tok_lst.lower).to (tok_lst.upper) do { j:INTEGER;
+                (tok_lst.item j = NULL).if {
+                  directory_list.append tok;
+                } else {
+                  directory_list.append (tok_lst.item j);
+                };
+              };
+            } else {
+              directory_list.append tok;
+              directory_list.add_last '\n';
+            };
+
+            save_file (add_ext tok) with current_list;
+            current_list.clear;
+          };
+        };
+      };
+    };
+  );
+
   - check_in entry:ENTRY begin n:INTEGER <-
   ( + name:STRING_CONSTANT;
-    + tok:STRING_CONSTANT;
-    + tok_lst:LINKED_LIST(STRING_CONSTANT);
-    + dir:DIRECTORY;    
+    + dir:DIRECTORY;
 
     (! entry.open).if {
       "Warning: directory `".print;
       entry.path.print;
       "\' not open.\n".print;
-    } else {            
+    } else {
       dir ?= entry;
       // Directory
       (dir.lower).to (dir.upper) do { i:INTEGER;
@@ -282,125 +342,65 @@ Section Private
       (dir.lower).to (dir.upper) do { i:INTEGER;
 	(! dir.item i.is_directory).if {
 	  name := dir.item i.name;
-	  (name.has_suffix ".li").if {
-	    string_tmp.copy name;
-	    string_tmp.remove_last 3;
-	    string_tmp.to_upper;
-	    tok := ALIAS_STR.get string_tmp;
-	    (PARSER.short_dico.fast_has (ALIAS_STR.short_file_list_item)).if {
-	      tok_lst := PARSER.short_dico.fast_at (ALIAS_STR.short_file_list_item);
-	      (tok_lst.lower).to (tok_lst.upper) do { j:INTEGER;
-		(tok_lst.item j = NULL).if {
-		  current_list.append tok;
-		  file_list.append tok;
-		} else {
-		  current_list.append (tok_lst.item j);
-		  file_list.append (tok_lst.item j);
-		};
-	      };
-	    } else {
-	      current_list.append tok;	      
-	      current_list.add_last '\n';
-	      file_list.append tok;
-	      file_list.add_last '\n';
-	    };	
-	    // Creation prototype file.
-	    (PROTOTYPE.prototype_dico.fast_has tok).if {
-	      "Error: Double definition prototype:\n".print;
-	      PROTOTYPE.prototype_dico.fast_at tok.filename.print; '\n'.print;
-	      dir.item i.path.print; '\n'.print;
-	      die_with_code exit_failure_code;
-	    };
-	    proto_input := PROTOTYPE.create (dir.item i.path) name tok generic_count 0;
-	    //
-            PARSER.go_on proto_input;
-            (is_shorter).if {
-              save_file (add_ext tok) with output_code;	    
-            };
+          (name.has_suffix ".li").if {
+            path_file.add_last (dir.item i.path);
 	  };
 	}; // Lisaac file `.li'
-      };     
-      current_list.is_empty.if_false {      
-	(PARSER.short_dico.fast_has (ALIAS_STR.short_file_list_begin)).if {
-	  tok := PARSER.short_dico.fast_at (ALIAS_STR.short_file_list_begin).first;
-	  current_list.prepend tok;
-	};
-	(PARSER.short_dico.fast_has (ALIAS_STR.short_file_list_end)).if {
-	  tok := PARSER.short_dico.fast_at (ALIAS_STR.short_file_list_end).first;
-	  current_list.append tok;
-	};
-	string_tmp.copy (dir.path);
-	string_tmp.remove_first n;
-	string_tmp.is_empty.if_false {
-	  string_tmp.replace_all '/' with '-';      
-	  	  
-	  tok := ALIAS_STR.get string_tmp;            
-	  
-	  (PARSER.short_dico.fast_has (ALIAS_STR.short_directory_list_item)).if {
-	    tok_lst := PARSER.short_dico.fast_at (ALIAS_STR.short_directory_list_item);
-	    (tok_lst.lower).to (tok_lst.upper) do { j:INTEGER;
-	      (tok_lst.item j = NULL).if {
-		directory_list.append tok;
-	      } else {
-		directory_list.append (tok_lst.item j);
-	      };
-	    };
-	  } else {
-	    directory_list.append tok;	      
-	    directory_list.add_last '\n';
-	  };
-	
-	  save_file (add_ext tok) with current_list;
-	  current_list.clear;
-	};
       };
     };
   );
-  
-Section Public  
-  
+
+Section Public
+
   //
   // Creation.
   //
 
   - main <-
-  ( + txt:STRING_CONSTANT;    
+  ( + txt:STRING_CONSTANT;
     + p:PROTOTYPE;
-    
+
     ALIAS_STR.make;
-    
+
     //
     read_options;
-        
+
     // SELF, NULL, VOID, CONTEXT
-    TYPE_NULL.make_null;    
+    TYPE_NULL.make_null;
     TYPE_VOID.make_void;
     TYPE_CONTEXT.make_context;
     TYPE_ID.make_type_id; // Pas utile !
-        
+
     (is_short_recursive).if {
       + dir:DIRECTORY;
       + ent:ENTRY;
-      
+
       directory_list := STRING.create 100;
       file_list      := STRING.create 100;
       current_list   := STRING.create 100;
-      
-      ent := FILE_SYSTEM.get_entry input_name;
-      ((ent = NULL) || {! ent.is_directory}).if {
-	"Error: directory `".print;
-	input_name.print;
-	"\' not found.\n".print;
-	die_with_code exit_failure_code;
+
+      (is_lip).if {
+        LIP_CODE.call_front_end;
+        LIP_CODE.init_path_file TRUE;
+      } else {
+        ent := FILE_SYSTEM.get_entry input_name;
+        ((ent = NULL) || {! ent.is_directory}).if {
+          "Error: directory `".print;
+          input_name.print;
+          "\' not found.\n".print;
+          die_with_code exit_failure_code;
+        };
+        (! ent.open).if {
+          "Error: directory `".print;
+          input_name.print;
+          "\' not open.\n".print;
+          die_with_code exit_failure_code;
+        };
+        dir ?= ent;
+        path_begin := dir.path.count + 1;
+        check_in dir begin path_begin;
       };
-      (! ent.open).if {
-        "Error: directory `".print;
-	input_name.print;
-	"\' not open.\n".print;
-	die_with_code exit_failure_code;
-      };
-      dir ?= ent;
-      check_in dir begin (dir.path.count + 1);
+      build_with_path_file;
       // index file.
       (PARSER.short_dico.fast_has (ALIAS_STR.short_index)).if {
 	txt := PARSER.short_dico.fast_at (ALIAS_STR.short_index).first;
@@ -421,7 +421,7 @@ Section Public
 	directory_list.append txt;
       };
       save_file (add_ext "directory_list") with directory_list;
-      
+
       // file_list file.
       (PARSER.short_dico.fast_has (ALIAS_STR.short_file_list_begin)).if {
 	txt := PARSER.short_dico.fast_at (ALIAS_STR.short_file_list_begin).first;
@@ -431,24 +431,24 @@ Section Public
 	txt := PARSER.short_dico.fast_at (ALIAS_STR.short_file_list_end).first;
 	file_list.append txt;
       };
-      save_file (add_ext "file_list") with file_list;      
+      save_file (add_ext "file_list") with file_list;
     } else {
-      // Input.                  
+      // Input.
       (input_name.has_suffix ".li").if_false {
 	string_tmp.copy input_name;
 	string_tmp.append ".li";
 	input_name := ALIAS_STR.get string_tmp;
       };
-            
-      proto_input := PROTOTYPE.create input_name 
+
+      proto_input := PROTOTYPE.create input_name
       name (extract_proto_name input_name)
       generic_count 0;
       PARSER.go_on proto_input;
-            
+
       (output_name = NULL).if {
 	output_name := add_ext (proto_input.name);
-      };    
-      save_file output_name with output_code;	
+      };
+      save_file output_name with output_code;
     };
     (is_shorter2).if {
       (PROTOTYPE.prototype_list.lower).to (PROTOTYPE.prototype_list.upper) do { j:INTEGER;
@@ -457,7 +457,7 @@ Section Public
         put "" to output_code like (ALIAS_STR.short_begin);
         p.shorter_out output_code;
         put "" to output_code like (ALIAS_STR.short_end);
-        save_file (add_ext (p.name)) with output_code;        
+        save_file (add_ext (p.name)) with output_code;
       };
     };
   );

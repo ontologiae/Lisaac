@@ -1,40 +1,20 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_STRING;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "String constant";
-  
+
 Section Inherit
-  
+
   + parent_itm_constant:Expanded ITM_CONSTANT;
-  
+
 Section Public
-      
-  + string:STRING_CONSTANT; 
+
+  + string:STRING_CONSTANT;
 
   //
   // Constructor
@@ -46,23 +26,23 @@ Section Public
     result.make p text n;
     result
   );
-  
+
   - make p:POSITION text n:STRING_CONSTANT <-
   (
-    position := p;    
+    position := p;
     string   := n;
   );
-  
+
   //
   // Runnable
   //
 
   - to_run_expr:EXPR <-
-  ( + result:EXPR;    
+  ( + result:EXPR;
     + slt:SLOT_DATA;
     + wrt:WRITE;
     + len:INTEGER;
-    
+
     len := length;
     result := STRING_CST.create position text string length len;
     // count
@@ -75,37 +55,37 @@ Section Public
     // storage
     slt := type_string_constant.get_local_slot (ALIAS_STR.slot_storage).slot_data_intern;
     wrt := slt.write position with (result.my_copy) value (
-      NATIVE_ARRAY_CHARACTER_CST.create position text string 
+      NATIVE_ARRAY_CHARACTER_CST.create position text string
     );
     wrt.set_quiet_generation;
     list_current.add_last wrt;
     //
     result
   );
-  
-  // 
+
+  //
   // Display.
   //
-  
+
   - append_in buffer:STRING <-
   (
     buffer.add_last '\"';
     buffer.append string;
     buffer.add_last '\"';
   );
-  
+
 Section Private
-  
+
   - length:INTEGER <-
   ( + i,result:INTEGER;
     i := string.lower;
     {i <= string.upper}.while_do {
-      (string.item i = '\\').if {        
+      (string.item i = '\\').if {
         i := i + 1;
         (string.item i.is_digit).if {
           i := i + 1;
           (string.item i.is_digit).if {
-            i := i + 2;            
+            i := i + 2;
           };
         };
       };

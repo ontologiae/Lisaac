@@ -1,33 +1,13 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name := TINY_OBJECT;
-  
+
 Section Inherit
-  
+
   - parent_any:ANY := ANY;
-  
+
 Section Private
-  
+
   //
   // Command.
   //
@@ -50,55 +30,55 @@ Section Private
     usage.print;
     die_with_code exit_failure_code;
   );
-  
+
   //
   // Options.
   //
-  
+
   - read_options <-
   ( + cmd:STRING;
-    + j:INTEGER;  
-        
+    + j:INTEGER;
+
     j := 1;
     {j > COMMAND_LINE.upper}.until_do {
-      cmd := COMMAND_LINE.item j;      
+      cmd := COMMAND_LINE.item j;
       (input_name != NULL).if {
         display_usage;
-      };		
+      };
       input_name := get_alias cmd;
       j := j+1;
     };
 
     (input_name = NULL).if {
       display_usage;
-    };    
+    };
   );
 
-Section Public  
-  
+Section Public
+
   - main <-
   ( + file_input:POINTER;
     + sz:INTEGER;
     + slot_master:SLOT;
-        
+
     read_options;
-        
-    // Read file.    
+
+    // Read file.
     file_input := FS_MIN.open_read input_name;
     sz := FS_MIN.file_size file_input;
     source := STRING.create (sz+1);
     FS_MIN.read file_input in source size sz;
     FS_MIN.close file_input;
-    
+
     // Parse grammar.
-    PARSER.parse;        
+    PARSER.parse;
     /*
-    "Parsing ok\n".print;    
-    
+    "Parsing ok\n".print;
+
     "Display\n".print;
     (program.lower).to (program.upper) do { i:INTEGER;
       program.item i.print;
-    };            
+    };
     */
     // -- VFT --
     (is_vft).if {
@@ -106,15 +86,15 @@ Section Public
       CALL.compute_index;
     };
     // -- VFT --
-    
+
     "Display VFT :\n".print;
     (program.lower).to (program.upper) do { i:INTEGER;
       program.item i.print_vft;
-    };        
+    };
     "Execute...\n".print;
     (class_master = NULL).if {
       semantic_error (program.first.position) message "Slot master is needed.";
     };
-    slot_master := class_master.get_slot keyword_master;    
+    slot_master := class_master.get_slot keyword_master;
     slot_master.run (class_master);
   );

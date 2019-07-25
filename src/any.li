@@ -1,40 +1,21 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ANY;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Common parent for compiler";
-  
+
 Section Inherit
-  
+
   - parent_any_option:ANY_OPTION := ANY_OPTION;
-  
+
 Section Public
-  
-  - last_index_str (n:STRING,c:CHARACTER) :INTEGER <-
+
+
+  - last_index_str (n:ABSTRACT_STRING,c:CHARACTER) :INTEGER <-
   // BSBS: A Mettre dans STRING.
   ( + result:INTEGER;
     result := n.upper;
@@ -43,34 +24,66 @@ Section Public
     };
     result
   );
-    
+  
+  //
+  // Statistic information.
+  //
+
+  - count_equal_const:INTEGER;
+  - count_equal_ident:INTEGER;
+  - count_equal_null :INTEGER;
+  - count_equal_inter:INTEGER;
+  - count_equal_gener:INTEGER;
+
+  - count_equal_parse:INTEGER;
+  - count_equal_live :INTEGER;
+  - count_equal_creat:INTEGER;
+  - count_equal_remov:INTEGER;
+
+  - count_na_expanded:INTEGER;
+  - count_na_null:INTEGER;
+  - count_na_not_null:INTEGER;
+  - count_na_mono:INTEGER;
+  - count_na_always_null:INTEGER;
+
+  - count_local_expanded:INTEGER;
+  - count_local_null:INTEGER;
+  - count_local_not_null:INTEGER;
+  - count_local_mono:INTEGER;
+  - count_local_always_null:INTEGER;
+
+  - count_switch:INTEGER;
+  - count_switch_merging:INTEGER;
+
   //
   // Invariant loop system.
   //
   - count_invariant:INTEGER;
-  
-  - loop_list:LIST; 
+
+  - loop_list:LIST;
   - loop_seq_index:INTEGER;
   - loop_seq_call_local_and_loop:INTEGER;
   - loop_seq_call_and_loop:INTEGER;
   - loop_invariant:LOOP;
-  
+
   //
-	
+
   - late_binding_counter:INTEGER;
-  
+  - late_binding_expanded_counter:INTEGER;
+  - late_binding_self_counter:INTEGER;
+
   - null_counter:INTEGER;
-  
+
   - polymorphic_counter:INTEGER;
-  
+
   //
   // Display debug tools.
   //
-    
-  + object_id:INTEGER <- 
+
+  + object_id:INTEGER <-
   ( + result:INTEGER;
-    - object_counter:INTEGER; 
-    
+    - object_counter:INTEGER;
+
     result := object_counter;
     object_counter := object_counter + 1;
     object_id := result
@@ -79,73 +92,75 @@ Section Public
   //
   // Compiler Options.
   //
-  
-  - debug_level_option:INTEGER;  
+
+  - debug_level_option:INTEGER;
   - debug_with_code:BOOLEAN;
-  
+
   - is_all_warning:BOOLEAN;
-  
-  - is_optimization:BOOLEAN;    
+
+  - is_optimization:BOOLEAN;
+  - is_optimization_type_set:BOOLEAN;
   - inline_level:INTEGER := 17;
-  
-  - is_java:BOOLEAN; // Fuck the Java!
-  
-  - is_statistic:BOOLEAN;  
+
+  - is_statistic:BOOLEAN;
   - is_quiet:BOOLEAN;
-  
+
   //
   //
   //
-     
+
   - verbose_level:INTEGER;
   - is_verbose:BOOLEAN <- (verbose_level != 0);
-  
+
   - is_readable:BOOLEAN;
   - is_graph:BOOLEAN;
-  
+  - is_speed_push:BOOLEAN;
+
   //
   // Other flags.
   //
-  
+
   - is_cop:BOOLEAN;
-  
+
+  - is_library:BOOLEAN;
+
   - is_copy_local:BOOLEAN;
-  
+
   - pass_count:INTEGER;
-  
+
   - modify_count:INTEGER;
-  
+
   - new_depend_pass <-
-  (    
+  (
     modify_count := modify_count + 1;
-    //(pass_count > 50).if {
+    //(pass_count > 60).if {
     //  crash;
     //};
   );
-  
-  - new_execute_pass <- 
+
+  - new_execute_pass <-
   (
     new_depend_pass;
   );
-  
+
   - is_executing_pass:BOOLEAN;
-  
+
   //
   // Sequence counter.
   //
-  
+
   - seq_inline:UINTEGER_32;
-  
+
   - seq_index              :UINTEGER_32; // Global index sequence.
-  - seq_or_and             :UINTEGER_32; // || or &&  
+  - seq_or_and             :UINTEGER_32; // || or &&
   - seq_call_and_loop      :UINTEGER_32; // Call or loop (or function).
   - seq_call_local_and_loop:UINTEGER_32; // Call sensitive or loop.
   - seq_list:FAST_ARRAY(LIST) := FAST_ARRAY(LIST).create_with_capacity 64;
-  
+
   - is_seq_list l:LIST :BOOLEAN <-
   ( + result:BOOLEAN;
     + j:INTEGER;
-    
+
     j := seq_list.upper;
     {(j >= seq_list.lower) && {! result}}.while_do {
       result := seq_list.item j = l;
@@ -153,31 +168,31 @@ Section Public
     };
     result
   );
-        
+
   //
   // Runtime.
   //
-  
+
   - list_main:LIST;
   - context_main:LOCAL;
-  
+
   - profil_main:PROFIL_SLOT := // BSBS: A REVOIR (a uniformiser ((graph)))
   ( + result:PROFIL_SLOT;
-    
-    result := PROFIL_SLOT.clone; 
+
+    result := PROFIL_SLOT.clone;
     result.alloc_profil_main;
     result
-  );  
-  
+  );
+
   - list_current:LIST;
-  
+
   - current_list_level:INTEGER;
-  
-  - stack_local:FAST_ARRAY(LOCAL)  := FAST_ARRAY(LOCAL).create_with_capacity 64;  
-  
+
+  - stack_local:FAST_ARRAY(LOCAL)  := FAST_ARRAY(LOCAL).create_with_capacity 64;
+
   - profil_slot:PROFIL_SLOT; // Principal slot.
   - profil_current:PROFIL;   // Sub-profil or (profil = profil_slot)
-     
+
   - display_stack_local <-
   (
     string_tmp.clear;
@@ -187,20 +202,20 @@ Section Public
     };
     string_tmp.print;
   );
-  
+
   //
   // Output Buffer and service.
   //
-      
+
   - output_decl:STRING := STRING.create 60000;
   - output_glob:STRING := STRING.create 10000;
   - output_code:STRING := STRING.create 4_000_000;
-  
+
   - title txt:STRING_CONSTANT in buf:STRING <-
   (
     buf.append "\n/*";
     3.to 28 do { j:INTEGER;
-      buf.add_last '=';      
+      buf.add_last '=';
     };
     buf.append "*/\n/* ";
     buf.append txt;
@@ -209,12 +224,12 @@ Section Public
     };
     buf.append " */\n/*";
     3.to 28 do { j:INTEGER;
-      buf.add_last '=';      
+      buf.add_last '=';
     };
     buf.append "*/\n\n";
   );
-  
-  
+
+
   - indent:STRING := STRING.create 128;
 
   - operator typ:ABSTRACT_STRING name op:ABSTRACT_STRING :STRING_CONSTANT <-
@@ -236,7 +251,7 @@ Section Public
 	string_tmp.append "_mul";
       }.elseif { c = '^' } then {
 	string_tmp.append "_xor";
-      }.elseif { c = '%' } then { 
+      }.elseif { c = '%' } then {
 	string_tmp.append "_mod";
       }.elseif { c = '>' } then {
 	string_tmp.append "_greater";
@@ -266,7 +281,7 @@ Section Public
   //
   // Error manager.
   //
-  
+
   - syntax  :INTEGER := 0;
   - semantic:INTEGER := 1;
   - warning :INTEGER := 2;
@@ -279,17 +294,41 @@ Section Public
     POSITION.send_error;
   );
 
+  - syntax_error2 (p1:POSITION, p2:POSITION,txt:ABSTRACT_STRING) <-
+  (
+    p1.put_error syntax text txt;
+    p1.put_position;
+    p2.put_position;
+    POSITION.send_error;
+  );
+
   - semantic_error (pos:POSITION,txt:ABSTRACT_STRING) <-
-  ( 
+  (
     pos.put_error semantic text txt;
     pos.put_position;
     POSITION.send_error;
   );
-  
+
+  - semantic_error2 (p1:POSITION, p2:POSITION,txt:ABSTRACT_STRING) <-
+  (
+    p1.put_error semantic text txt;
+    p1.put_position;
+    p2.put_position;
+    POSITION.send_error;
+  );
+
   - warning_error (pos:POSITION,txt:ABSTRACT_STRING) <-
   (
     pos.put_error warning text txt;
     pos.put_position;
+    POSITION.send_error;
+  );
+
+  - warning_error2 (p1:POSITION, p2:POSITION,txt:ABSTRACT_STRING) <-
+  (
+    p1.put_error warning text txt;
+    p1.put_position;
+    p2.put_position;
     POSITION.send_error;
   );
 
@@ -306,22 +345,27 @@ Section Public
   // String temporary.
   //
 
-  - string_tmp :STRING := STRING.create 256;  
-  - string_tmp2:STRING := STRING.create 256;  
-  - string_tmp3:STRING := STRING.create 256;  
+  - string_tmp :STRING := STRING.create 256;
+  - string_tmp2:STRING := STRING.create 256;
+  - string_tmp3:STRING := STRING.create 256;
   - string_tmp4:STRING := STRING.create 256;
-  
+
   //
   // Path directory and command front end.
   //
-  
-  - path_file:FAST_ARRAY(STRING_CONSTANT) := 
+
+  - input_path:STRING_CONSTANT;
+
+  - path_file:FAST_ARRAY(STRING_CONSTANT) :=
   FAST_ARRAY(STRING_CONSTANT).create_with_capacity 3000;
+  - path_begin:INTEGER := 1;
+
+  - path_lisaac:STRING_CONSTANT <- COMMON.path_lisaac;
 
   //
   // Alias type.
   //
-  
+
   - type_input            :TYPE;
   - type_integer          :TYPE;
   - type_real             :TYPE;
@@ -331,15 +375,106 @@ Section Public
   - type_false            :TYPE;
   - type_boolean          :TYPE;
   - type_integer_32       :TYPE;
+  - type_uinteger_32      :TYPE;
   - type_pointer          :TYPE;
   - type_string_constant  :TYPE;
   - type_n_a_character    :TYPE;
   - type_n_a_n_a_character:TYPE;
-  
+
   //
   // Usage Variable.
   //
-  
+
   - last_position:POSITION;
 
+  - load_lip file_lip:ABSTRACT_STRING <-
+    load_lip file_lip in NULL;
+
+  - load_lip file_lip:ABSTRACT_STRING in lip_dir:STRING_CONSTANT <-
+  ( + path_lip:STRING_CONSTANT;
+    + is_good:BOOLEAN;
+    + count:INTEGER;
+
+    //
+    // Search in lip_dir
+    //
+    string_tmp.clear;
+    (lip_dir != NULL).if {
+      string_tmp.append lip_dir;
+      (string_tmp.last != '/').if {
+        string_tmp.add_last '/';
+      };
+      string_tmp.append file_lip;
+      path_lip := ALIAS_STR.get string_tmp;
+      (is_good := PARSER.read_lip path_lip).if_false {
+        LIP_CALL.load_directory lip_dir is_recursive FALSE;
+        string_tmp.remove_last (file_lip.count);
+      } else {
+        "Load lip file: ".print; path_lip.println;
+      };
+    };
+
+    //
+    // Search in 5 parent directories
+    //
+    {(count < 5) && {! is_good}}.while_do {
+      string_tmp.append file_lip;
+      path_lip := ALIAS_STR.get string_tmp;
+      (is_good := PARSER.read_lip path_lip).if_false {
+        string_tmp.copy path_lip;
+        string_tmp.remove_last (file_lip.count);
+        string_tmp.append "../";
+        count := count + 1;
+      } else {
+        // Display which lip file to use if we had to look parent directories
+        (count > 0).if {
+          "Load lip file: ".print; path_lip.println;
+        };
+      };
+    };
+
+    //
+    // Load default make.lip in LISAAC_DIRECTORY
+    //
+    (is_good).if_false {
+      string_tmp.copy path_lisaac;
+      string_tmp.append "make.lip";
+      path_lip := ALIAS_STR.get string_tmp;
+      (is_good := PARSER.read_lip path_lip).if_false {
+        "File `".print;
+        path_lip.print;
+        "' not found !\nIncorrect installation.\n".print;
+        die_with_code exit_failure_code;
+      };
+    };
+
+    //
+    // Load parent .lip (inheritance)
+    //
+    {LIP_CODE.list_parent.is_empty}.until_do {
+      path_lip := LIP_CODE.list_parent.first;
+      LIP_CODE.list_parent.remove_first;
+      (path_lip.is_empty).if {
+        string_tmp.copy path_lisaac;
+        string_tmp.append "make.lip";
+        path_lip := ALIAS_STR.get string_tmp;
+      };
+      (PARSER.read_lip path_lip).if_false {
+        "File `".print;
+        path_lip.print;
+        "' not found ! (see `*.lip')\n".print;
+        die_with_code exit_failure_code;
+      };
+    };
+    // Auto-load 'lisaac' variable.
+    LIP_CODE.put_string path_lisaac to (ALIAS_STR.variable_lisaac);
+  );
+
+  //
+  // Activate debug
+  //
+
+  - debug_proto_bestname :BOOLEAN <- FALSE;
+  // Debug the name of the prototypes choosen to avoid conflicts
+  // See PROTOTYPE.insert_prototype
 

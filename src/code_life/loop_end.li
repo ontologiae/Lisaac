@@ -1,61 +1,41 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := LOOP_END;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Loop end (call tail recursive).";
-  
+
 Section Inherit
-  
+
   + parent_instr:Expanded INSTR;
-  
+
 Section Public
-  
+
   + loop:LOOP;
-  
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION loop l:LOOP :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p loop l;
     result
   );
-  
+
   - make p:POSITION loop l:LOOP <-
-  (     
-    position := p;    
+  (
+    position := p;
     loop := l;
     loop.set_link;
   );
-  
+
   - my_copy:SELF <-
-  ( 
+  (
     // Warning: See LOOP.my_copy
     Self
   );
@@ -65,35 +45,35 @@ Section Public
   //
 
   - remove <-
-  ( 
-    loop.unset_link;    
+  (
+    loop.unset_link;
   );
-  
+
   - execute:INSTR <-
-  (        
+  (
     (list_current = loop.body).if {
-      POSITION.put_error semantic text "Recursivity without end (LOOP_END).";
+      POSITION.put_error warning text "Recursivity without end (LOOP_END).";
       loop.position.put_position;
       position.put_position;
       POSITION.send_error;
     };
-    
+
     ((is_optimization) && {loop_invariant = NULL} && {loop.link_count = 1}).if {
       loop_invariant := loop;
     };
-    
+
     seq_call_local_and_loop := seq_call_local_and_loop - 1;
-    seq_call_and_loop       := seq_call_and_loop - 1;        
+    seq_call_and_loop       := seq_call_and_loop - 1;
     seq_inline := seq_inline + 1;
     Self
   );
-  
+
   //
   // Display.
   //
 
   - display buffer:STRING <-
-  (    
+  (
     buffer.append "goto ";
     buffer.append (loop.name);
     display_ref buffer;
@@ -102,12 +82,12 @@ Section Public
   //
   // Generation.
   //
-  
+
   - genere buffer:STRING <-
-  (             
+  (
     buffer.append "goto ";
     buffer.append (loop.name);
-    
-    current_list_level := current_list_level - 1;        
+
+    current_list_level := current_list_level - 1;
   );
-  
+

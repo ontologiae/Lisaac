@@ -1,0 +1,48 @@
+Section Header
+
+  + name     := MD2_VERTEX;
+
+  - comment  := "Quake2' md2 model format";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public //Mapping
+
+  + vertex_index1:UINTEGER_8;
+  + vertex_index2:UINTEGER_8;
+  + vertex_index3:UINTEGER_8;
+
+  + lightnormal_index:UINTEGER_8;
+
+Section Public
+
+  - index1:REAL_32 <- vertex_index1.to_real;
+  - index2:REAL_32 <- vertex_index2.to_real;
+  - index3:REAL_32 <- vertex_index3.to_real;
+
+  - light_index:UINTEGER_8 <- lightnormal_index;
+
+  - create (v1,v2,v3:UINTEGER_8, l:UINTEGER_8) :SELF <-
+  ( + result:SELF;
+    result := SELF.clone;
+    result.make (v1,v2,v3,l);
+    result
+  );
+
+  - make (v1,v2,v3:UINTEGER_8, l:UINTEGER_8) <-
+  (
+    vertex_index1 := v1;
+    vertex_index2 := v2;
+    vertex_index3 := v3;
+    lightnormal_index := l;
+  );
+
+  - print <-
+  (
+    "\nmd2 vertex: ".print; vertex_index1.print; " , ".print;
+    vertex_index2.print; " , ".print;
+    vertex_index2.print; " => light ".print;
+    lightnormal_index.print;
+  );

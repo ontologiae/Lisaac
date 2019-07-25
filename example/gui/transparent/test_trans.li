@@ -1,48 +1,28 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := TEST_TRANS;
-    
+
   - bibliography:= "http://IsaacOS.com";
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "The first program.";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
-  
-Section Public  
-  
+
+Section Public
+
   - main <-
   ( + action_trans:{G_BUTTON;};
-    
+
     // Init window.
     VIDEO.make_size (640,480); //(640,400);
-    
+
     action_trans := { b:G_BUTTON;
       + w:G_WIN_OUT_TRANS_TEST;
       + title:STRING;
       - count:INTEGER;
-      
+
       title := STRING.create 32;
       title.copy "Essai ";
       count := count + 1;
@@ -52,8 +32,8 @@ Section Public
     };
 
     // Screen definition.
-    DESK.make VIDEO with (             
+    DESK.make VIDEO with (
       (G_BUTTON.create (G_OUT.create "New window") action action_trans.fix_height) /
       G_RAW.create (G_IMG.create "photo.bmp")
-    );                    
+    );
   );

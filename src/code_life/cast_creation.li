@@ -1,0 +1,35 @@
+Section Header
+  
+  + name      := CAST_CREATION;
+
+  - copyright := "2003-2011 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  + parent_cast:Expanded CAST;
+
+Section Public
+  
+  + type_creation:TYPE;
+  
+  //
+  // Creation.
+  //
+  
+  - make t:TYPE_FULL value v:EXPR <-
+  (
+    parent_cast.make t value v;
+    type_creation := t.raw.get_type_creation;
+  );
+
+  //
+  // Searching.
+  //
+
+  - get_type t:TYPES_TMP <-
+  (
+    t.add type_creation;
+  );

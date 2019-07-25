@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := ALIASER_LOCAL;
 
   - copyright := "2003-2009 Sonntag Benoit";
@@ -30,27 +10,27 @@ Section Header
 Section Inherit
 
   - parent_any:ANY := ANY;
-  
+
 Section ALIASER_LOCAL,LIST
-  
+
   - free_context:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 64;
-  
+
   - top_context:INTEGER;
-  
+
   - var_size:FAST_ARRAY(FAST_ARRAY(LOCAL)) :=
   ( + result:FAST_ARRAY(FAST_ARRAY(LOCAL));
-    
+
     result := FAST_ARRAY(FAST_ARRAY(LOCAL)).create_with_capacity 4;
     0.to 3 do { j:INTEGER;
       result.add_last (FAST_ARRAY(LOCAL).create_with_capacity 32);
     };
     result
   );
-    
+
 Section Public
-  
-  - is_on:BOOLEAN := TRUE; 
-  
+
+  - is_on:BOOLEAN := TRUE;
+
   - reset <-
   (
     (var_size.lower).to (var_size.upper) do { i:INTEGER;
@@ -60,35 +40,32 @@ Section Public
     top_context := -1;
     current_list_level := 0;
   );
-  
+
   - write wr:WRITE_LOCAL :STRING_CONSTANT <-
   ( + loc,loc2:LOCAL;
     + result:STRING_CONSTANT;
-    
+
     loc  := wr.local;
-    ((is_on) && {loc.style = '+'}).if {      
+    ((is_on) && {loc.style = '+'}).if {
       loc2 := loc.my_alias;
       (loc2 = NULL).if {
         loc2 := search_alias loc;
         (loc2 = loc).if {
           add_var_size loc;
         } else {
-          /*
-          loc.intern_name.print; "->".print;
-          loc2.intern_name.print; '='.print;
-          loc.ensure_count.print;
-          '\n'.print;
-          */
           loc2.set_ensure_count (loc.ensure_count);
+          loc2.set_require (loc.require_first) list (loc.require_list);
         };
-        loc2.set_list_level current_list_level;        
+        loc2.set_list_level current_list_level;
         loc.set_my_alias loc2;
       };
+      loc2.unwrite wr;
       result := loc2.intern_name;
     } else {
       (loc.style = '+').if {
         add_var_size loc;
       };
+      //loc.unwrite wr;
       result := loc.intern_name;
     };
     result
@@ -97,66 +74,57 @@ Section Public
   - read rd:READ_LOCAL :STRING_CONSTANT <-
   ( + loc,loc2:LOCAL;
     + result:STRING_CONSTANT;
-    
+
     loc := rd.local;
     loc2 := loc.my_alias;
-    loc.unread rd;        
+    loc.unread rd;
     ((loc2 = NULL) || {! is_on}).if {
       result := loc.intern_name;
-    } else {                  
-      /*
-      "----> READ ".print;
-      loc.intern_name.print; "->".print;
-      loc2.intern_name.print; '='.print;
-      loc.ensure_count.print;
-      '\n'.print;
-      */
-      loc2.set_ensure_count (loc.ensure_count);      
+    } else {
+      loc2.set_ensure_count (loc.ensure_count);
       result := loc2.intern_name;
     };
     result
   );
-  
+
   - push p:PUSH :STRING_CONSTANT <-
-  ( + loc,loc2:LOCAL;    
+  ( + loc,loc2:LOCAL;
     + result:STRING_CONSTANT;
-    
+
     loc  := p.context;
-    (is_on).if {      
-      (p.is_first).if {  
+    (is_on).if {
+      (p.is_first).if {
         top_context := top_context + 1;
-        (top_context <= free_context.upper).if {          
+        (top_context <= free_context.upper).if {
           loc2 := free_context.item top_context;
-        } else {          
+        } else {
           free_context.add_last loc;
           loc2 := loc;
           add_var_size loc;
-        };  
+        };
         loc.set_my_alias loc2;
-        loc.set_list_level top_context;        
+        loc.set_list_level top_context;
       } else {
         top_context := loc.list_level;
       };
       result := loc.my_alias.intern_name;
     } else {
-      (p.is_first).if {  
+      (p.is_first).if {
         add_var_size loc;
       };
       result := loc.intern_name;
     };
     result
   );
-    
-Section ALIASER_LOCAL, READ_LOCAL
-  
+
   - add_var_size v:LOCAL <-
   ( + tab:FAST_ARRAY(LOCAL);
     + j:INTEGER;
     + t:TYPE_FULL;
-    
-    ? {v.style = '+'};
-    
-    (v.style != '+').if {
+
+    ? {(v.style = '+') || {v.style = 'R'}};
+
+    ((v.style != '+') && {v.style != 'R'}).if {
       v.intern_name.print; " style [".print; v.style.print; "] ".print;
       '\n'.print;
       warning_error (v.position,"BUG ALIASER_LOCAL.add_var_size Error");
@@ -164,7 +132,7 @@ Section ALIASER_LOCAL, READ_LOCAL
     // BSBS: C'est pas top, avec des HASHED_SET ce serait mieux...
     t := v.type;
     tab := var_size.item (v.type.size);
-    j := tab.lower;    
+    j := tab.lower;
     {(j <= tab.upper) && {tab.item j.type != t}}.while_do {
       j := j + 1;
     };
@@ -175,40 +143,41 @@ Section ALIASER_LOCAL, READ_LOCAL
 	j := j + 1;
       };
       ((j > tab.upper) || {tab.item j != v}).if {
-	tab.add v to j;	
+	tab.add v to j;
       };
     };
   );
-  
+
 Section Private
-  
+
   - search_alias v:LOCAL :LOCAL <-
   ( + tab:FAST_ARRAY(LOCAL);
     + j:INTEGER;
     + t:TYPE_FULL;
     + result:LOCAL;
     + is_void:BOOLEAN;
-    
+
     (v.name.first = 'R').if {
       result := v;
     } else {
       t := v.type;
       is_void := (! t.is_expanded) && {! t.is_strict} && {! t.raw.is_block};
       tab := var_size.item (v.type.size);
-      j := tab.lower;    
+      j := tab.lower;
       {
-        (j <= tab.upper) && 
+        (j <= tab.upper) &&
         {
           (
-            (tab.item j.type != t) &&  
+            (tab.item j.type != t) &&
             {
               (! is_void) ||
               {tab.item j.type.is_expanded} ||
               {tab.item j.type.is_strict} ||
               {tab.item j.type.raw.is_block}
             }
-          ) || 
+          ) ||
           {tab.item j.ensure_count != 0} ||
+          {tab.item j.require_count != 0} ||
           {tab.item j.list_level < current_list_level}
         }
       }.while_do {

@@ -1,0 +1,12 @@
+Section Header
+
+  + name     := VERTEX;
+
+  - comment  := "(x,y,z) point";
+
+Section Inherit
+
+  + parent_vector:Expanded VECTOR3(REAL_32);
+
+Section Public
+

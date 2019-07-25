@@ -1,42 +1,22 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name := FACTORIAL;
-  
+
 Section Public
-  
+
   - main <-
   ( + n1:UINTEGER_32;
     + result:UINTEGER_32;
-    
-    n1 := 10; 
+
+    n1 := 10;
     "Factorial ".print;
     n1.print;
     result := n1.factorial;
     " = ".print;
-    
-    result.print;   
+
+    result.print;
     '\n'.print;
-    
+
     "Convert to 64-bits : ".print;
     (result.to_uinteger_64).print;
     '\n'.print;

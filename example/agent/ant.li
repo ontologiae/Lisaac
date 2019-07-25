@@ -1,0 +1,106 @@
+Section Header
+
+  + name      := ANT;
+
+  - copyright := "2003-2010 Sonntag Benoit; P-A";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  + parent_agent:Expanded AGENT;
+
+Section Public
+
+  + food:UINTEGER_32;
+
+  + x:INTEGER;
+  + y:INTEGER;
+
+  + dx:INTEGER;
+  + dy:INTEGER;
+
+  //
+  // Creation.
+  //
+
+  - create (px,py:INTEGER) with s:STATE :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make (px,py) with s;
+    result
+  );
+
+  - make (px,py:INTEGER) with s:STATE <-
+  (
+    make s;
+    (x,y) := (px,py);
+    EARTH.add Self;
+    EARTH.put_ant (x,y) color (EARTH.white);
+  );
+
+  - move <-
+  ( + new_x,new_y:INTEGER;
+    + is_ok:BOOLEAN;
+    + col:UINTEGER_32;
+    {
+      new_x := x + dx;
+      new_y := y + dy;
+      (
+        (! new_x.in_range 0 to (EARTH.size-1)) ||
+        {! new_y.in_range 0 to (EARTH.size-1)} ||
+        {EARTH.is_busy (new_x,new_y) != 0}     ||
+        {100.random_upper < 20}
+      ).if {
+        {
+          dx := (-1).random_to 1;
+          dy := (-1).random_to 1;
+        }.do_while {(dx = 0) && {dy = 0}};
+      } else {
+        is_ok := TRUE;
+      };
+    }.do_until {is_ok};
+    (EARTH.is_busy (x,y) = EARTH.white).if {
+      EARTH.clear (x,y);
+    };
+    (x,y) := (new_x,new_y);
+    (food = 0).if {
+      col := EARTH.white;
+    } else {
+      col := food;
+    };
+    EARTH.put_ant (x,y) color col;
+  );
+
+  - get_food:BOOLEAN <-
+  ( + col:UINTEGER_32;
+    + p:REAL_32;
+    ((y-1).max 0).to ((y+1).min (EARTH.size-1)) do { py:INTEGER;
+      ((x-1).max 0).to ((x+1).min (EARTH.size-1)) do { px:INTEGER;
+        (food = 0).if {
+          col := EARTH.is_busy (px,py);
+          ((col != 0) && {col != 0FF_FF_FFh}).if {
+            p := EARTH.get_probability (px,py) type col;
+            (1000.random_upper <= (p*1000.0).round).if {
+              EARTH.clear (px,py);
+              food := col;
+            };
+          };
+        };
+      };
+    };
+    food != 0
+  );
+
+  - put_food:BOOLEAN <-
+  ( + p:REAL_32;
+    p := EARTH.put_probability (x,y) type food;
+    (1000.random_upper <= (p*1000.0).round).if {
+      EARTH.put_food (x,y) type food;
+      food := 0;
+    };
+    food = 0
+  );
+
+

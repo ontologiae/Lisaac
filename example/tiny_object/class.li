@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Example                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := CLASS;
 
   - copyright := "2003-2008 Sonntag Benoit";
@@ -30,24 +10,24 @@ Section Header
 Section Inherit
 
   + parent_instr:Expanded INSTR;
-  
+
 Section Private
-  
-  - sources:HASHED_DICTIONARY(CLASS,STRING_CONSTANT) := 
-  HASHED_DICTIONARY(CLASS,STRING_CONSTANT).create;     
-  
+
+  - sources:HASHED_DICTIONARY(CLASS,STRING_CONSTANT) :=
+  HASHED_DICTIONARY(CLASS,STRING_CONSTANT).create;
+
 Section Public
-  
+
   + name:STRING_CONSTANT;
-  
+
   + inherit_list:LINKED_LIST(CLASS);
-  
+
   + slot_list:HASHED_DICTIONARY(SLOT,STRING_CONSTANT);
-  
+
   // -- VFT --
   + vft:FAST_ARRAY(SLOT);
   // -- VFT --
-  
+
   //
   // Creation.
   //
@@ -60,7 +40,7 @@ Section Public
   );
 
   - make p:INTEGER name n:STRING_CONSTANT <-
-  ( 
+  (
     position     := p;
     name         := n;
     inherit_list := LINKED_LIST(CLASS).create;
@@ -72,24 +52,24 @@ Section Public
     };
     // -- VFT --
   );
-  
+
   //
   // VFT.
   //
-  
+
   - compute_vft <-
   (
     (sources.lower).to (sources.upper) do { j:INTEGER;
       sources.item j.compute_vft_base 0;
     };
   );
-  
+
   - compute_vft_base base:INTEGER <-
   ( + new_base:INTEGER;
     + vft_parent:FAST_ARRAY(SLOT);
     + slot,slot_parent:SLOT;
-    (vft.is_empty).if {      
-      // -- SIMPLE -- 
+    (vft.is_empty).if {
+      // -- SIMPLE --
       /*
       (inherit_list.is_empty).if_false {
         inherit_list.first.compute_vft_base base;
@@ -97,19 +77,19 @@ Section Public
       };
       */
       // -- SIMPLE --
-      
+
       // -- Multi --
-      0.to (base-1) do { j:INTEGER; 
+      0.to (base-1) do { j:INTEGER;
         vft.add_last NULL;
-      };      
+      };
       new_base := base;
       (inherit_list.lower).to (inherit_list.upper) do { j:INTEGER;
         inherit_list.item j.compute_vft_base new_base;
         vft_parent := inherit_list.item j.vft;
-        (vft_parent.lower).to (vft_parent.upper) do { i:INTEGER;       
+        (vft_parent.lower).to (vft_parent.upper) do { i:INTEGER;
           slot := vft_parent.item i;
           (i > vft.upper).if {
-            vft.add_last slot;           
+            vft.add_last slot;
           }.elseif {vft.item i = NULL} then {
             vft.put slot to i;
           };
@@ -117,7 +97,7 @@ Section Public
         new_base := vft.count;
       };
       // -- Multi --
-      
+
       // Common.
       (slot_list.lower).to (slot_list.upper) do { j:INTEGER;
         slot := slot_list.item j;
@@ -134,84 +114,84 @@ Section Public
       };
     };
   );
-  
+
   //
   // Added.
   //
-  
+
   - add_parent c:CLASS <-
-  ( 
-    (inherit_list.fast_has c).if { 
+  (
+    (inherit_list.fast_has c).if {
       semantic_error position message "Double definition parent.";
     };
-    inherit_list.add_last c;    
+    inherit_list.add_last c;
     // -- VFT --
     sources.fast_remove (c.name);
     // -- VFT --
   );
-  
+
   - add_slot s:SLOT <-
-  ( 
+  (
     (slot_list.fast_has (s.name)).if {
       semantic_error position message "Double definition slot.";
     };
-    slot_list.add s to (s.name);    
+    slot_list.add s to (s.name);
   );
-  
+
   //
   // Run.
   //
-  
+
   - is_sub_type other:CLASS :BOOLEAN <-
   ( + result:BOOLEAN;
     + i:INTEGER;
-    
+
     result := Self = other;
     (result).if_false {
       i := inherit_list.lower;
-      {(i <= inherit_list.upper) && {! result}}.while_do {        
+      {(i <= inherit_list.upper) && {! result}}.while_do {
         result := inherit_list.item i.is_sub_type other;
         i := i + 1;
       };
     };
-    result    
+    result
   );
-  
+
   - get_slot_in_parent msg:STRING_CONSTANT :SLOT <-
   ( + result:SLOT;
     + i:INTEGER;
-        
+
     i := inherit_list.lower;
-    {(i <= inherit_list.upper) && {result = NULL}}.while_do {        
+    {(i <= inherit_list.upper) && {result = NULL}}.while_do {
       result := inherit_list.item i.get_slot msg;
       i := i + 1;
     };
     result
   );
-  
+
   - get_slot msg:STRING_CONSTANT :SLOT <-
   ( + result:SLOT;
-    
+
     result := slot_list.fast_reference_at msg;
     (result = NULL).if {
       result := get_slot_in_parent msg;
     };
     result
   );
-    
+
   //
   // Display.
   //
-  
+
   - print <-
   (
-    name.print; 
+    name.print;
     (inherit_list.is_empty).if_false {
       " Inherit ".print;
       (inherit_list.lower).to (inherit_list.upper-1) do { i:INTEGER;
         inherit_list.item i.name.print;
         ','.print;
-      };    
+      };
       inherit_list.last.name.print;
     };
     "\n(\n".print;
@@ -220,7 +200,7 @@ Section Public
     };
     ")\n".print;
   );
-  
+
   // -- VFT --
   - print_vft <-
   ( + s,sp:SLOT;
@@ -230,20 +210,20 @@ Section Public
     "---\n".print;
     (vft = NULL).if {
       "No VFT!\n".print;
-    } else {      
+    } else {
       (vft.lower).to (vft.upper) do { i:INTEGER;
-        i.print; 
+        i.print;
         ':'.print;
         s := vft.item i;
         (s = NULL).if {
           "NULL".print;
         } else {
-          s.name.print;          
+          s.name.print;
           j := inherit_list.lower;
           sp := NULL;
           {(j <= inherit_list.upper) && {sp = NULL}}.while_do {
             (
-              (inherit_list.item j.vft.upper >= i) && 
+              (inherit_list.item j.vft.upper >= i) &&
               {inherit_list.item j.vft.item i != NULL}
             ).if {
               sp := inherit_list.item j.vft.item i;
@@ -251,7 +231,7 @@ Section Public
               j := j + 1;
             };
           };
-          (sp = s).if {               
+          (sp = s).if {
             " <herit of ".print;
             inherit_list.item j.name.print;
             '>'.print;
@@ -267,4 +247,3 @@ Section Public
     '\n'.print;
   );
   // -- VFT --
-  

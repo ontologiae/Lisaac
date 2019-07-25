@@ -1,0 +1,45 @@
+Section Header
+
+  + name     := GL_FONT;
+
+  - comment  := "X11 - OpenGl rendered font";
+
+  - external := `static XFontStruct *font;`;
+
+Section Inherit
+
+  + parent_font_abstract:Expanded GL_FONT_ABSTRACT;
+
+Section Public
+
+  - default:FONT <-
+  (
+    create "-*-helvetica-bold-r-normal--24-*-*-*-p-*-iso8859-1"
+  );
+
+  - load <-
+  (
+    + fontname:NATIVE_ARRAY(CHARACTER);
+    + b:UINTEGER_32;
+    + n:INTEGER;
+
+    n := nb_chars;
+    base := `glGenLists(@n)`:UINTEGER_32;
+
+    fontname := name.to_external;
+    `font = XLoadQueryFont(win.dpy, @fontname)`;
+    (`font`:POINTER = NULL).if {
+
+      OPENGL.error.send "Error loading font, loading default...";
+
+      // last chance..
+      `font = XLoadQueryFont(win.dpy,"fixed")`;
+      (`font`:POINTER = NULL).if {
+	OPENGL.fatal_error "Can't load font";
+      };
+    };
+    b := base;
+    `glXUseXFont(font->fid, 32, @n, @b)`;// start at char 32 -> build n display lists
+    `XFreeFont(win.dpy, font)`;
+  );
+

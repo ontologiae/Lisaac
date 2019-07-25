@@ -1,50 +1,30 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := EXPR_XOR;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Xor Binary arithmetic expression.";
-  
+
 Section Inherit
-  
+
   + parent_expr_binary:Expanded EXPR_BINARY;
-  
+
 Section Public
-  
+
   + symbol:STRING_CONSTANT := "^";
-  
+
   //
   // Execute.
   //
-  
-  - exec_conservator_left  left_cst :INTEGER_CST :EXPR <- 
+
+  - exec_conservator_left  left_cst :INTEGER_CST :EXPR <-
   //-- 0  ^ E -> E
-  //-- -1 ^ E -> ~ E  
+  //-- -1 ^ E -> ~ E
   ( + result:EXPR;
-    
+
     (left_cst.value = 0).if {
       result := right;
       left_cst.remove;
@@ -59,7 +39,7 @@ Section Public
   //-- E ^ 0  -> E
   //-- E ^ -1 -> ~ E
   ( + result:EXPR;
-    
+
     (right_cst.value = 0).if {
       result := left;
       right_cst.remove;
@@ -69,23 +49,23 @@ Section Public
     };
     result
   );
-  
-  - exec left_cst:INTEGER_CST and right_cst:INTEGER_CST :EXPR <- 
+
+  - exec left_cst:INTEGER_CST and right_cst:INTEGER_CST :EXPR <-
   //-- C1 ^ C2 -> C3
   (
-    left_cst.set_value (left_cst.value ^ right_cst.value); 
+    left_cst.set_value (left_cst.value ^ right_cst.value);
     right_cst.remove;
     left_cst
   );
-  
+
   - exec:EXPR <-
   //-- E ^ E -> 0
   ( + result:EXPR;
-    
+
     (left ~= right).if {
       result := INTEGER_CST.create position value 0 type static_type;
       left .remove;
       right.remove;
     };
-    result    
+    result
   );

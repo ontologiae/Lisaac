@@ -1,0 +1,44 @@
+Section Header
+
+  + name        := TT_GLYPH_HEADER;
+  - comment     :=" .";
+
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+
+Section Inherit
+
+  - parent:OBJECT := OBJECT;
+
+Section Mapping
+
+  + number_of_contours:INTEGER_16;
+  + xmin:INTEGER_16;
+  + ymin:INTEGER_16;
+  + xmax:INTEGER_16;
+  + ymax:INTEGER_16;
+
+Section Public
+
+  - to_big_endian <-
+  (
+    number_of_contours := PROCESSOR.to_motorola_short number_of_contours;
+    xmin := PROCESSOR.to_motorola_short xmin;
+    ymin := PROCESSOR.to_motorola_short ymin;
+    xmax := PROCESSOR.to_motorola_short xmax;
+    ymax := PROCESSOR.to_motorola_short ymax;
+  );
+
+  - print <-
+  (
+    "\n     number_of_contours:".print;
+    number_of_contours.print;
+    "\n     xmin:".print;
+    xmin.print;
+    "\n     ymin:".print;
+    ymin.print;
+    "\n     xmax:".print;
+    xmax.print;
+    "\n     ymax:".print;
+    ymax.print;
+  );

@@ -22,24 +22,24 @@
 // Lisaac Path Directory System (by Benoit Sonntag).
 
 Section Inherit
-  
+
   + parent:STRING; // by default, inherite from main `make.lip'
 
 Section Private
-  
+
   - example_path <-
   // Example path.
-  ( 
-    path "*"; 
+  (
+    path "*";
   );
-    
+
   //
   // Execute function.
   //
-  
+
   - front_end <-
   (
     general_front_end;
-    example_path;    
+    example_path;
   );
-  
+

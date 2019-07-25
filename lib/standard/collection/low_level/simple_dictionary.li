@@ -1,0 +1,13 @@
+Section Header
+
+  + name := SIMPLE_DICTIONARY(V, K);
+
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  // Basic dictionaries (assymmetry value / key)
+  // (class akin to DOUBLE_DICTIONARY)
+
+Section Inherit
+
+  + parent_dictionary:Expanded DICTIONARY(V,K);

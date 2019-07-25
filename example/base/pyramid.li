@@ -1,30 +1,10 @@
-///////////////////////////////////////////////////////////////////////////////
-//                              Lisaac Example                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := PYRAMID;
 
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
 
-  - comment     := 
+  - comment     :=
    " Solving the problem of the Pyramid for small pyramid only.      \
    \ This program uses the back-tracking method.                     \
    \ Its goal is to try to fill a pyramid by making a substraction   \
@@ -37,15 +17,15 @@ Section Header
    \         4    9                                                  \
    \            5                                                    \
    \ See also pyramid2, which run faster than this first solution.";
-  
+
 Section Inherit
-  
+
   - parent_object:OBJECT := OBJECT;
 
 Section Private
-  
+
   + size:INTEGER;
-  
+
   - max:INTEGER <- (size * (size + 1)) / 2;
 
   - belongs_to nb:INTEGER :BOOLEAN <-
@@ -125,7 +105,7 @@ Section Private
   );
 
   + elem:ARRAY(INTEGER);
-  
+
   + case_empty:INTEGER;  // = 0 by default
 
   + biggest_one:INTEGER := 10;
@@ -148,9 +128,9 @@ Section Private
       elem.put case_empty to (indice (line,(col-line+1)));
     };
   ); // clear_column
-  	 
+
 Section Public
-  
+
   - print <-
   ( + line,col:INTEGER;
     line := 1;
@@ -170,9 +150,9 @@ Section Public
     };
     '\n'.print;
   );
-  
+
   - main <-
-  ( 
+  (
     // Read argument.
     (COMMAND_LINE.upper = 0).if {
       "Want to compute a small pyramid ?\n\

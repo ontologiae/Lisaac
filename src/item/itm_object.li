@@ -1,70 +1,59 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name    := ITM_OBJECT;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Parent item object";
-  
+
 Section Inherit
-  
+
   + parent_any:Expanded ANY;
-  
+
   - parent_hashable:HASHABLE := HASHABLE;
-  
+
 Section Public
-  
+
   - context_extern:LOCAL;
-  
+
   - bottom_index:INTEGER;
-  
-  - clean_bottom_index <-
+
+  - push_context:(INTEGER,INTEGER,LOCAL) <-
   (
     bottom_index := stack_local.upper + 1;
     context_extern := NULL;
-  );      
-  
+    bottom_index,Old bottom_index,Old context_extern
+  );
+
+  - pop_context (stack_top:INTEGER,old_bottom_index:INTEGER,old_context:LOCAL) <-
+  (
+    stack_local.remove_since stack_top;
+    (bottom_index >= old_bottom_index).if {
+      bottom_index   := old_bottom_index;
+      context_extern := old_context;
+    };
+  );
+
   - lookup n:STRING_CONSTANT :LOCAL <-
   ( + result:LOCAL;
     + j:INTEGER;
     ? {n = ALIAS_STR.get n};
-        
+
     j := stack_local.upper;
-    {(j < stack_local.lower) || {stack_local.item j.name = n}}.until_do {	
+    {(j < stack_local.lower) || {stack_local.item j.name = n}}.until_do {
       j := j - 1;
     };
     (j >= stack_local.lower).if {
       result := stack_local.item j;
-      
-      ((j < bottom_index) && {result.style != '-'}).if {
+      ((j < bottom_index) && {result.style != '-'} && {result.name != ALIAS_STR.variable_self}).if {
         bottom_index := j;
         context_extern := result;
       };
 
     }.elseif {profil_slot != NULL} then {
-      result := profil_slot.lookup n;            
+      result := profil_slot.lookup n;
       ((result != NULL) && {result.name != ALIAS_STR.variable_self}).if {
         bottom_index := -1;
 	context_extern := result;
@@ -72,7 +61,7 @@ Section Public
     };
     result
   );
-  
+
   //
   // Source position.
   //
@@ -83,30 +72,30 @@ Section Public
   (
     position := new_pos;
   );
-  
+
   //
   //
   //
-   
+
   - verify:BOOLEAN;
-  
+
   - set_verify v:BOOLEAN <-
   (
     verify := v;
   );
-  
+
   - pop_stack_until stack_top:INTEGER <-
   ( + var,var2:LOCAL;
     + n:STRING_CONSTANT;
-    
+
     (verify).if {
-      // Verify local.      
+      // Verify local.
       {stack_local.upper >= stack_top}.while_do {
 	var := stack_local.last;
 	stack_local.remove_last;
 	n := var.name;
 	(
-	  (n != ALIAS_STR.variable_self) && 	
+	  (n != ALIAS_STR.variable_self) &&
 	  {n != ALIAS_STR.variable_tmp}
 	).if {
 	  ((var.ensure_count = 0) && {var.style != ' '}).if {

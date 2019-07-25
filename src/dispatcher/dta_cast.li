@@ -1,55 +1,39 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := DTA_CAST;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Cast base";
-    
+
 Section Inherit
-  
+
   - parent_dta:DTA := DTA;
-  
+
 Section Public
 
+  + position:POSITION;
+
   + result_expr:EXPR;
-      
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION type t:TYPE_FULL :SELF <-
+  [ -? {p != 0}; ]
   ( + result:SELF;
-    
+
     result := clone;
     result.make p type t;
     result
   );
-  
+
   - make p:POSITION type t:TYPE_FULL <-
   (
+    position := p;
     result_expr := t.get_temporary_expr p;
     (profil_current = NULL).if {
       context := context_main;
@@ -61,24 +45,24 @@ Section Public
   //
   // Display.
   //
-  
-  - display buffer:STRING <- 
+
+  - display buffer:STRING <-
   (
     buffer.append "DTA_CAST";
   );
-  
+
   //
   // Service
   //
-  
-Section NODE_TYPE, DTA  
-  
+
+Section NODE_TYPE, DTA
+
   - product t:TYPE with e:EXPR self type_self:TYPE_FULL :LIST <-
   ( + cast:LOCAL;
     + rd:READ;
     + new_value:EXPR;
     + result:LIST;
-    
+
     result := LIST.create (e.position);
     rd   ?= result_expr;
     cast ?= rd.variable;
@@ -87,7 +71,7 @@ Section NODE_TYPE, DTA
 	(cast.type.raw = t).if {
 	  new_value := CAST.create (cast.type) value (e.my_copy);
 	};
-      }.elseif {t.is_sub_type (cast.type.raw)} then {	
+      }.elseif {t.is_sub_type (cast.type.raw)} then {
 	new_value := CAST.create (t.default) value (e.my_copy);
       };
     };
@@ -98,7 +82,7 @@ Section NODE_TYPE, DTA
     result.add_last (PROTOTYPE_CST.create (e.position) type (TYPE_VOID.default)); // BSBS : Alias.
     result
   );
-  
+
   - update_branch l:LIST self type_self:TYPE_FULL :BOOLEAN <-
   (
     TRUE

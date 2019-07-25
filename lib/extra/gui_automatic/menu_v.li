@@ -1,51 +1,31 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Library                                //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := MENU_V;
-  
+
   - copyright := "Jonathan Ponte, Maxime Audrin, Benoit Sonntag";
-  
+
   - comment   := "Vertical menu for GUII.";
-  
+
 Section Inherit
-  
+
   - parent_internal_inode:INTERNAL_INODE := INTERNAL_INODE;
-  
+
 Section Public
-  
-  
+
+
   - representation:STRING_CONSTANT := "MENU_V";
   + parent:INTERNAL_INODE;
-  
+
   - print <-
   (
     "MENU_V".print;
   );
-  
+
   - make_representation <-
   (
     list.foreach {
       i:INODE;
-      
+
       (i.priority>covering).if {
         i.make_representation;
         (content=NULL).if {
@@ -57,7 +37,7 @@ Section Public
     };
     content.fix_width.fix_height;
   );
-  
+
   //
   // Evaluation.
   //
@@ -80,7 +60,7 @@ Section Public
       };
     };
   );
-  
+
   - predict_size :INTEGER <-
   (
     +w_predict:INTEGER;
@@ -100,9 +80,9 @@ Section Public
   (
     bugw_screen:=w;
     bugh_screen:=h;
-    
+
     !list.is_empty && {operator='^'} && {
-      browse_group { 
+      browse_group {
         i:INODE;
         (i.operator != '&')
       }
@@ -175,7 +155,7 @@ Section Public
             son_height:=i.height;
           };
         };
-        
+
         (best_prc > 0).if {
           i.set_representation parent;
           i.name.print;"===========================================>".print;i.print;"\n".print;
@@ -189,11 +169,11 @@ Section Public
       nb=list.count
     }
   );
-  
+
   - space_evaluation (w,h:INTEGER) :REAL_32<-
   (
     + area,r,result:REAL_32;
-    
+
     // Space evaluation
     compute_size_from_prc 0;
     ((height >= h) || {width >= w}).if {
@@ -234,17 +214,17 @@ Section Public
     result
   )
   [ ? {Result.in_range 0 to 100}; ];
-  
-  
+
+
   /*
   // -> 1) R = Faisabilité de l'espace (% de recouvrement des items) (1:25%, 2:50%, 3:75%)
   // -> 2) A = Note de calcul d'aire. (% sur l'écran total)
-  // Result = (R*100-A)/100  
+  // Result = (R*100-A)/100
   */
   - evaluate n:INODE width w:INTEGER height h:INTEGER : REAL_32<-
   (
     + result:REAL_32;
-    
+
     n.set_representation MENU_V;
     // Semantic evaluation && Space evaluation.
     "MENU_V semantic evaluation of ".print;n.name.print;"\n".print;

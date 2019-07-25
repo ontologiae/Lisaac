@@ -1,0 +1,140 @@
+Section Header
+  
+  + name     := MY_SCENE6;
+  
+  - comment   := "first program";
+  
+Section Inherit
+  
+  + parent_scene:Expanded SCENE;
+  
+  - parent_test_any:TEST_ANY := TEST_ANY;
+  
+Section Public  
+  
+  - main <-
+  (    
+    CAPABILITIES.use_accum_buffer;
+    
+    start_test Self using CAPABILITIES;
+  );
+  
+Section Public
+  
+  //
+  //  test display list & accumulation buffer
+  //
+  
+  + list:DISPLAY_LIST;
+  
+  + light:LIGHT;
+  + m:MATERIAL;
+  
+  - initialize:BOOLEAN <-
+  (    
+    + ambient,diffuse,specular,emission:COLOR;
+    + shine:REAL_32;
+    
+    + sphere:SPHERE;
+    + sublist:DISPLAY_LIST;
+    
+    // hierarchical display lists
+    sublist := GL_DISPLAY_LIST.create {
+      renderer.color_buffer.set_color3f (0.0, 1.0, 0.0);
+      sphere := SPHERE.create (VECTOR3(REAL_32).create (-0.5,0,-1),0.06,10,10);
+      sphere.render;
+    };
+    
+    // create display list
+    list := GL_DISPLAY_LIST.create {
+      
+      renderer.transform.new_matrix {
+        renderer.transform.translatef(-0.1,0.1,0.0);
+        sublist.call;
+        renderer.transform.translatef(0.2,0.0,0.0);
+        sublist.call;
+      };      
+      renderer.color_buffer.set_color3f (1.0, 0.0, 0.0);
+      sphere := SPHERE.create (VECTOR3(REAL_32).create (-0.5,0,-1),0.1,10,10);
+      sphere.render;
+    };
+    
+    // create scene lighting
+    ambient := RGB.create (0.0, 0.0, 0.0); // full bright
+    diffuse := RGB.create (1.0, 1.0, 1.0);
+    specular := RGB.create (1.0, 1.0, 1.0);
+    
+    light := renderer.light.create (ambient,diffuse,specular) at (VECTOR3(REAL_32).create (0,0,1));
+    
+    ambient := RGB.create (0.7, 0.7, 0.7); 
+    diffuse := RGB.create (0.1, 0.5, 0.9);
+    specular := RGB.create (0.0, 1.0, 1.0); 
+    emission := RGB.create (0.3, 0.2, 0.2);
+    shine := 100.0;
+    
+    m := renderer.material.create (ambient,diffuse,specular,emission,shine); 
+    light.enable;
+    TRUE
+  );
+  
+  
+  - render t:REAL_32 <-
+  (      
+    //
+    // accumulation test (motion blur effect)
+    //
+    
+    renderer.enable_lighting;
+    
+    renderer.transform.new_matrix {
+      renderer.transform.translatef(0.4,-0.25,0.0);
+      
+      // clear accumulation buffer
+      renderer.accum_buffer.clear;
+      
+      // render scene with different point of view in accumulation buffer
+      0.to 15 do { i:INTEGER;
+        
+        // clear accumulated scene
+        renderer.clear_screen;
+        
+        //
+        // render blurred scene
+        //
+        
+        m.apply_front;
+        
+        renderer.transform.translatef (0.0004*i,0.0, 0.0);
+        list.call;
+        
+        // accumulate it
+        renderer.accum_buffer.accumulate_with (0.06); // ~ 1/16
+      };
+      // copy accumulation buffer into color buffer
+      renderer.accum_buffer.return_with 1.0;
+    };
+    
+    //
+    // display list test
+    // 
+    
+    renderer.disable_lighting;
+    
+    renderer.font.enable;
+    
+    out.print "Test display lists" at (100,50);
+    out.print "Test accumulation buffer" at (100,350);
+    
+    renderer.font.disable;
+ 
+    renderer.transform.new_matrix {
+      renderer.transform.translatef(-0.4,0.1,0.0);
+      
+      // call our list 9 times
+      1.to 10 do { i:INTEGER;
+        list.call;
+        renderer.transform.translatef(0.4,0.0,0.0);
+      };
+    };
+  );
+  

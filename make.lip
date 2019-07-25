@@ -1,0 +1,324 @@
+///////////////////////////////////////////////////////////////////////////////
+//                            Lisaac Installer                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////  
+
+// file LIP : LIsaac Path directory and make LIsaac Project system.
+
+Section Private
+  
+  //
+  // Compiler variables.
+  //
+  
+  // File information (auto-loading variables).
+  + lisaac          :STRING; // is environment variable value (auto-loading).
+  + input_file      :STRING; // is input file name value without extension.
+  + output_file     :STRING; // is output file name value without extension.
+  + output_extension:STRING; // is extension of `output_file'
+  + is_speed_push:BOOLEAN; // --s => More speed for debug mode
+  
+  // Debug information.
+  + debug_level:INTEGER := 15;
+  + debug_with_code:BOOLEAN := TRUE; 
+  + is_all_warning:BOOLEAN;
+    
+  // Optimization.
+  + is_optimization:BOOLEAN;
+  + inline_level:INTEGER := 5;
+  
+  // Generate code.
+  + is_cop:BOOLEAN;     // Correct value after compilation.
+  + is_library:BOOLEAN; // For build a lisaac library C 
+  + execute_back_end:BOOLEAN := TRUE;
+  + execute_status_code:INTEGER := 0;
+
+  // Other.
+  + is_statistic:BOOLEAN;
+  + is_quiet:BOOLEAN;
+  
+  //
+  // Other variables.
+  //
+  
+  + option_gcc:STRING;  
+  + lib_gcc:STRING;
+  + execute_file:STRING;
+  
+  + target:STRING := "unix";
+    
+  //
+  // Service
+  //
+  
+  + exit_success_code:INTEGER := 0;
+  
+  + exit_failure_code:INTEGER := 1;
+      
+  - add_lib lib:STRING <-
+  (
+    (target = "windows").if {
+      run "echo int main(){ return(1); } > __tmp__.c";    
+      (run ("gcc __tmp__.c -o __tmp__ " + lib + " > NUL") = 0).if {
+        lib_gcc := lib_gcc + " " + lib;
+        run "del __tmp__.c __tmp__.exe";
+      } else {
+        "\nERROR: `" + lib + "' library for GCC not found.\n".print;
+        run "del __tmp__.c";
+        die_with_code exit_failure_code;
+      };    
+    } else {
+      run "echo \"int main(){ return(1); }\" > __tmp__.c";
+      (run ("gcc __tmp__.c -o __tmp__ " + lib + " 2> /dev/null") = 0).if {
+        lib_gcc := lib_gcc + " " + lib;
+        run "rm __tmp__.c __tmp__";
+      } else {
+        ("\nERROR: `" + lib + "' library for GCC not found.\n").print;
+        run "rm __tmp__.c";
+        die_with_code exit_failure_code;
+      };          
+    };
+  );
+  
+  - execute cmd:STRING <-
+  (
+    (! is_quiet).if {
+      "run `".print;
+      cmd.print;
+      "'\n".print;
+    };
+    execute_status_code := run cmd;
+    (execute_status_code != 0).if {
+      (is_quiet).if {
+        "FAILURE run `".print;
+        cmd.print;
+        "' (".print;
+      } else {
+        "FAILURE (".print;
+      };
+      execute_status_code.print;
+      ")\n".print;
+    };
+  );
+
+  - execute_fail cmd:STRING <-
+  (
+    execute cmd;
+    (execute_status_code > 255).if {
+      die_with_code exit_failure_code;
+    };
+    (execute_status_code != 0).if {
+      die_with_code execute_status_code;
+    };
+  );
+
+  //
+  // Execute function.
+  //
+  
+  - general_front_end <-
+  (
+    path "lib/*";
+  );
+  
+  - general_back_end <-
+  (
+    (execute_back_end).if {
+      (is_cop).if {
+        lib_gcc := lib_gcc + " -lpthread";
+      };
+      (target = "windows").if {
+        execute_file := output_file + ".exe";
+      } else {
+        execute_file := output_file;
+      };
+      option_gcc := option_gcc + " -O3 -U_FORTIFY_SOURCE -fomit-frame-pointer ";
+      (is_library).if {
+        execute_fail ("gcc " + output_file + output_extension + " -c " + option_gcc);
+      } else {
+        (is_speed_push).if {
+          execute_fail ("gcc " + output_file + output_extension + " -S " + option_gcc + lib_gcc);
+          execute_fail ("./build_label " + output_file + ".s");
+          execute_fail ("gcc " + input_file + "_label.s -o "+ output_file + option_gcc + lib_gcc);
+        } else {
+          execute_fail ("gcc " + output_file + output_extension + " -o " + output_file + option_gcc + lib_gcc);
+        };
+      };
+    } else {
+      ("Written: " + output_file + output_extension + "\n").print;
+    };
+  );
+  
+  - front_end <-
+  // Executed by compiler, before compilation step.
+  (
+    general_front_end;
+  );
+  
+  - back_end <-
+  // Executed by compiler, after compilation step.
+  (
+    general_back_end;
+  );
+  
+Section Public
+  
+   
+  //
+  // Debug information.
+  // 
+    
+  - no_debug <-  
+  // No debug information.
+  (
+    debug_level := 0;
+    debug_with_code := FALSE;
+  );
+  
+  - debug level:INTEGER <-
+  // Fix debug level (default: 15)
+  (
+    ((level < 1) | (level > 20)).if {
+      "Incorrect debug level.\n".print;
+      die_with_code exit_failure_code;
+    };
+    debug_level := level;
+  );
+  
+  - without_source <-
+  // Debug mode without source code.
+  (
+    debug_with_code := FALSE;
+  );
+  
+  - all_warning <-
+  // All warning (deferred detect, ...).
+  (
+    is_all_warning := TRUE;
+  );
+  
+  //
+  // Optimization.
+  //
+
+  - optim <-
+  // Full Lisaac optimization.
+  (
+    no_debug;
+    is_optimization := TRUE;
+  );
+
+  - boost <-
+  // Full optimization (lisaac and gcc).
+  (
+    optim;    
+  );
+  
+  - i level:INTEGER <-
+  // Inlining level [1..5000] (default: 15)
+  (
+    ((level < 1) | (level > 5000)).if {
+      "Incorrect inlining level.\n".print;
+      exit;
+    };
+    inline_level := level;
+  );
+    
+  //
+  // Generate code.
+  //
+  
+  - o outputfile:STRING <-  
+  // Change output file (default: `input_file').
+  (
+    output_file := outputfile;
+  );
+  
+  - target idf:STRING <-
+  // Target for backend (unix,windows,dos)
+  (
+    target := idf;
+  );
+  
+  - gcc option:STRING <-
+  // Add option for GCC.
+  (
+    option_gcc := option_gcc + " " + option;
+  );
+
+  - partial <-
+  // Only generate C code and don't compile it with GCC
+  (
+    execute_back_end := FALSE;
+  );
+  
+  //
+  // Other.
+  //
+
+  - add_path str:STRING <-
+  // Add the `str' path in the current list of path.
+  (
+    path str;
+  );
+  
+  - q <-
+  // Quiet operation.
+  (
+    is_quiet := TRUE;
+  );
+  
+  - build_library <-
+  // For to build library (`main' => `init') 
+  (
+    is_library := TRUE;
+  );
+  
+  //
+  // Information.
+  //
+  
+  - s <-
+  // Statistic information.
+  (
+    is_statistic := TRUE;
+  );
+  
+  - help <-
+  // Help
+  (
+    help_command;
+    die_with_code exit_success_code;
+  );
+  
+  - version <-
+  // Version
+  (
+    compiler_version;
+    die_with_code exit_success_code;
+  );
+  
+  - go <-
+  // Search the `main' prototype in current directory
+  (
+    "List:\n\
+    \=====\n".print;
+    run "grep -l \"\\- main\" *.li";
+    die_with_code exit_success_code;
+  );

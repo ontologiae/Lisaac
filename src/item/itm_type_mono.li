@@ -1,80 +1,63 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := ITM_TYPE_MONO;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Type simple";
-  
+
 Section Inherit
-  
+
   + parent_itm_type:Expanded ITM_TYPE;
-  
+
 Section Public
-  
-  - hash_code:INTEGER <- 
+
+  - hash_code:INTEGER <-
   (
+    string_tmp.clear;
+    append_in string_tmp;
+    string_tmp.print; '\n'.print;
     deferred;
     0
   );
-        
+
   //
   // Runnable.
   //
 
   - to_run_for p:PARAMETER_TO_TYPE :TYPE_FULL <-
-  (        
+  (
     deferred;
     NULL
   );
-  
+
   - to_run_in lst:FAST_ARRAY(TYPE_FULL) for p:PARAMETER_TO_TYPE <-
   (
     lst.add_last (to_run_for p);
   );
-  
+
   - get_expr_for p:PARAMETER_TO_TYPE :EXPR <-
   ( + t:TYPE_FULL;
     + result:EXPR;
-        
-    t := to_run_for p;            
+
+    t := to_run_for p;
     result := t.get_temporary_expr (p.position);
     result
-  );  
-  
+  );
+
   //
   // Display.
   //
-  
+
   - append_in buffer:STRING <-
   (
     deferred;
   );
-  
+
   //
   // Cast.
   //
-  
+
   - append_cast_name_in buf:STRING <- deferred;

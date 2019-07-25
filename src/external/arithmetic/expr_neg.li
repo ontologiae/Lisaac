@@ -1,25 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := EXPR_NEG;
 
   - copyright   := "2003-2007 Benoit Sonntag";
@@ -27,41 +7,41 @@ Section Header
 
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Negatif unary arithmetic expression.";
-  
+
 Section Inherit
-  
+
   + parent_expr_unary:Expanded EXPR_UNARY;
-  
+
 Section Public
-  
+
   - symbol:CHARACTER <- '-';
-    
+
   //
   // Execute.
   //
-  
+
   - exec_conservator:EXPR <-
-  //-- - - E -> E 
+  //-- - - E -> E
   ( + sub:EXPR_NEG;
     + result:EXPR;
-    
+
     sub ?= right;
     (sub != NULL).if {
       result := sub.right;
     };
     result
   );
-  
+
   - exec_right right_cst:INTEGER_CST :EXPR <-
   //-- - C1 -> C2
   ( + result:EXPR;
     (right_cst.is_signed).if {
-      right_cst.set_value (- right_cst.value);    
+      right_cst.set_value (- right_cst.value);
       result := right_cst;
     };
     result
   );
-    
+
 
 
 

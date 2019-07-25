@@ -1,96 +1,76 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name      := ITM_TYPE_GENERIC_ELT;
 
   - copyright := "2003-2007 Benoit Sonntag";
-  
+
   - author    := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment   := "Virtual element for generic style type";
-  
+
 Section Inherit
-  
-  + parent_itm_type:Expanded ITM_TYPE_MONO;
-  
+
+  + parent_itm_type_mono:Expanded ITM_TYPE_MONO;
+
 Section Private
-  
-  - list:FAST_ARRAY(ITM_TYPE_GENERIC_ELT) := 
+
+  - list:FAST_ARRAY(ITM_TYPE_GENERIC_ELT) :=
   // 'A' to 'Z'
   ( + result:FAST_ARRAY(ITM_TYPE_GENERIC_ELT);
-    
-    result := FAST_ARRAY(ITM_TYPE_GENERIC_ELT).create_with_capacity 26; 
+
+    result := FAST_ARRAY(ITM_TYPE_GENERIC_ELT).create_with_capacity 26;
     'A'.to 'Z' do { c:CHARACTER;
       result.add_last (create c);
     };
     result
   );
-  
+
   - create idf:CHARACTER :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make idf;
     result
   );
-  
+
   - make idf:CHARACTER <-
   (
-    index := idf -! 'A';    
+    index := idf -! 'A';
   );
 
 Section Public
-  
+
   + index:INTEGER;
-  
+
   - hash_code:INTEGER <- index;
-     
+
   - get idf:CHARACTER :ITM_TYPE_GENERIC_ELT <-
-  (         
+  (
     list.item (idf -! 'A')
   );
-  
+
   - display buffer:STRING <-
   (
     buffer.append "Generic[";
-    buffer.add_last ('A' +# index);    
+    buffer.add_last ('A' +# index);
     buffer.add_last ']';
   );
-  
+
   - shorter_in buf:STRING <-
   (
     string_tmp.clear;
-    string_tmp.add_last ('A' +# index);    
+    string_tmp.add_last ('A' +# index);
     put string_tmp to buf like (ALIAS_STR.short_keyprototype);
-  );    
-  
+  );
+
   - string_tmp:STRING := STRING.create 100;
-  
+
   - to_run:TYPE_FULL <-
   ( + type_generic:TYPE_GENERIC;
     + result:TYPE_FULL;
     + t:CHARACTER;
-    
+
     t := 'A' +# index;
-    type_generic ?= ITM_TYPE_SELF.self_up;        
+    type_generic ?= ITM_TYPE_SELF.self_up;
     (type_generic != NULL).if {
       result := type_generic.generic_to_type t;
     };
@@ -106,8 +86,8 @@ Section Public
   //
   // Cast.
   //
-  
-  - append_cast_name_in buf:STRING <- 
+
+  - append_cast_name_in buf:STRING <-
   (
     buf.add_last ('a' +# index);
   );

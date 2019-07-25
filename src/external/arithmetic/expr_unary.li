@@ -1,118 +1,98 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := EXPR_UNARY;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Unary Expression.";
-  
+
 Section Inherit
-  
+
   + parent_expr:Expanded EXPR;
-  
-Section Public  
-  
+
+Section Public
+
   - is_invariant:BOOLEAN <- right.is_invariant;
-  
+
   + right:EXPR;
-  
-  - symbol:CHARACTER <- 
+
+  - symbol:CHARACTER <-
   (
     deferred;
     ' '
   );
-  
+
   - static_type:TYPE_FULL <- right.static_type;
-  
+
   - get_type t:TYPES_TMP <-
-  (        
+  (
     t.add (static_type.raw);
   );
-  
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION with r:EXPR :SELF <-
   ( + result:SELF;
-    
+
     result := clone;
     result.make p with r;
     result
   );
-  
+
   - make p:POSITION with r:EXPR <-
   (
     position := p;
     right := r;
   );
-  
+
   - my_copy:SELF <- SELF.create position with (right.my_copy);
-  
+
   //
   // Comparaison.
   //
-    
+
   - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-
   ( + same:SELF;
-    
+
     same ?= other;
     (same != NULL) && {right ~= same.right}
   );
-  
+
   - remove <-
-  (    
+  (
     right.remove;
   );
-  
+
   //
   // Execute.
   //
-  
+
   - execute_unlink:INSTR <-
   (
     right.execute_unlink
   );
-  
+
   - execute_link:EXPR <-
   ( + result:EXPR;
     + old_seq:UINTEGER_32;
     + right_cst:INTEGER_CST;
-    
-    old_seq := seq_call_and_loop;    
-    right := right.execute_link;     
-    //    
+
+    old_seq := seq_call_and_loop;
+    right := right.execute_link;
+    //
     right_cst ?= right;
     // Conservator transformation.
     result := exec_conservator;
-    ((result = NULL) && {right_cst != NULL}).if {      
+    ((result = NULL) && {right_cst != NULL}).if {
       result := exec_right right_cst;
     };
-    ((result = NULL) && {old_seq = seq_call_and_loop}).if {    
-      // No conservator transformation.      
-      result := exec;      
+    ((result = NULL) && {old_seq = seq_call_and_loop}).if {
+      // No conservator transformation.
+      result := exec;
     };
     (result = NULL).if {
       result := Self;
@@ -120,20 +100,20 @@ Section Public
       result.set_position position;
       new_execute_pass;
     };
-        
+
     result
   );
-  
-  - exec_conservator:EXPR <- NULL;  
-  
+
+  - exec_conservator:EXPR <- NULL;
+
   - exec_right right_cst:INTEGER_CST :EXPR <- NULL;
-    
+
   - exec:EXPR <- NULL;
-    
+
   //
   // Genere.
   //
-  
+
   - genere buffer:STRING <-
   (
     buffer.add_last '(';
@@ -145,12 +125,12 @@ Section Public
     buffer.add_last ' ';
     right.genere buffer;
     buffer.add_last ')';
-  );  
+  );
   
   //
   // Display.
   //
-  
+
   - display buffer:STRING <-
   (
     buffer.add_last '(';

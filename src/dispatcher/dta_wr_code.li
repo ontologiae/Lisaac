@@ -1,55 +1,36 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := DTA_WR_CODE;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Write site with code";
-    
+
 Section Inherit
-  
+
   + parent_dta:Expanded DTA;
-    
+
 Section Public
 
   // Add.
-    
+
   + code:ITM_CODE;
-    
+
   //
   // Creation.
   //
-  
+
   - create p:POSITION slot sl:SLOT self arg:EXPR code v:ITM_CODE :SELF <-
+  [ -? {p != 0}; ]
   ( + result:SELF;
-    
+
     result := clone;
     result.make p slot sl self arg code v;
     result
   );
-  
+
   - make p:POSITION slot sl:SLOT self arg:EXPR code v:ITM_CODE <-
   (
     position    := p;
@@ -67,23 +48,23 @@ Section Public
   //
   // Display.
   //
-  
-  - display buffer:STRING <- 
+
+  - display buffer:STRING <-
   (
     buffer.append "DTA_WR_CODE:";
-    buffer.append (slot.name);    
+    buffer.append (slot.name);
   );
-  
+
   //
   // Service
   //
-    
-Section DTA  
-  
-  - finalise typ:TYPE with (expr:EXPR,s:SLOT) in lst:LIST <- 
+
+Section DTA
+
+  - finalise typ:TYPE with (expr:EXPR,s:SLOT) in lst:LIST <-
   ( + id:PROTOTYPE_CST;
     + pos:POSITION;
-    
+
     pos := expr.position;
     id := PROTOTYPE_CST.create pos type (TYPE_ID.get_index (s.add_style code).default);
     (s.style = '+').if {
@@ -92,4 +73,4 @@ Section DTA
       lst.add_last (s.slot_id.write pos value id);
     };
   );
-  
+

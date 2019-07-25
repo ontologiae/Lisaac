@@ -1,64 +1,52 @@
-///////////////////////////////////////////////////////////////////////////////
-//                             Lisaac Compiler                               //
-//                                                                           //
-//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
-//                                                                           //
-//   This program is free software: you can redistribute it and/or modify    //
-//   it under the terms of the GNU General Public License as published by    //
-//   the Free Software Foundation, either version 3 of the License, or       //
-//   (at your option) any later version.                                     //
-//                                                                           //
-//   This program is distributed in the hope that it will be useful,         //
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
-//   GNU General Public License for more details.                            //
-//                                                                           //
-//   You should have received a copy of the GNU General Public License       //
-//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
-//                                                                           //
-//                     http://isaacproject.u-strasbg.fr/                     //
-///////////////////////////////////////////////////////////////////////////////
 Section Header
-  
+
   + name        := PROTOTYPE;
 
   - copyright   := "2003-2007 Benoit Sonntag";
 
-  
+
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Prototype source code.";
-  
+
 Section Inherit
 
   + parent_named:Expanded NAMED;
-  
+
 Section Public
-  
+
   - prototype_list:FAST_ARRAY(PROTOTYPE) :=
   FAST_ARRAY(PROTOTYPE).create_with_capacity 512;
   // BSBS: Voir si il faut le conserver !
-  
-  - prototype_dico:HASHED_DICTIONARY(PROTOTYPE,STRING_CONSTANT) := 
+
+  - prototype_dico:HASHED_DICTIONARY(PROTOTYPE,STRING_CONSTANT) :=
   HASHED_DICTIONARY(PROTOTYPE,STRING_CONSTANT).create;
-  
+  // Index by filename
+
+  - prototype_canonical_name:HASHED_DICTIONARY(PROTOTYPE,STRING_CONSTANT) :=
+  HASHED_DICTIONARY(PROTOTYPE,STRING_CONSTANT).create;
+
 Section Public
-  
+
   + index:INTEGER; // in `prototype_list', for POSITION.
-  
+
   + shortname:STRING_CONSTANT;
-  
+
+  + longname:STRING_CONSTANT;
+
+  - is_lip :BOOLEAN <- (filename.last = 'p');
+
   //
   // Slots
   //
-  
+
   + slot_list:HASHED_DICTIONARY(ITM_SLOT,STRING_CONSTANT);
-  
+
   + first_slot:ITM_SLOT;
-  
+
   + last_slot:ITM_SLOT;
-  
+
   - add_slot s:ITM_SLOT <-
-  (     
+  (
     slot_list.fast_put s to (s.name);
     (first_slot = NULL).if {
       first_slot := s;
@@ -66,68 +54,88 @@ Section Public
       last_slot.set_next s;
     };
     last_slot := s;
-  );    
-  
+  );
+
   - search_parent n:STRING_CONSTANT :BOOLEAN <-
   ( + slot:ITM_SLOT;
     + result:BOOLEAN;
-    
+
     slot := first_slot;
     {
-      (result := (slot != NULL) && {slot.id_section.is_inherit_or_insert}) 
+      (result := (slot != NULL) && {slot.id_section.is_inherit_or_insert})
       && {slot.name != n}
     }.while_do {
       slot := slot.next;
     };
     result
   );
-      
+
   //
   // Run Slot.
   //
-  
+
   - init_slot_for typ:TYPE <-
   ( + cur:ITM_SLOT;
-            
+    + slot:SLOT;
+    + slot_code:SLOT_CODE;
+    + old_profil_current:PROFIL;
+
     // Parent.
+    //last_position := position;
     cur := first_slot;
-    {(cur != NULL) && {cur.id_section.is_inherit_or_insert}}.while_do {            
+    {(cur != NULL) && {cur.id_section.is_inherit_or_insert}}.while_do {
       typ.slot_run.add_last (SLOT.create cur type typ);
       typ.verify_cyclic_inheritance typ;
       typ.verify_itm_slot_parent cur;
       cur := cur.next;
     };
     // Mapping.
-    (is_mapping).if {
+    ((is_mapping) || {is_external}).if {      
       {cur != NULL}.while_do {
-	(cur.id_section.is_mapping).if {
-          ? {cur.style = '+'};
+	((cur.id_section.is_mapping) || {cur.id_section.is_external}).if {
           typ.verify_itm_slot_parent cur;
-	  typ.slot_run.add_last (SLOT.create cur type typ);
+          slot := SLOT.create cur type typ;
+          typ.slot_run.add_last slot;
+          (cur.id_section.is_external).if {
+            slot_code ?= slot;
+            (slot_code != NULL).if {
+              old_profil_current := profil_current;
+              `/* ICI */`;
+              slot_code.get_profil NULL self (typ.default);
+              profil_current := old_profil_current;
+            };
+          };
 	};
 	cur := cur.next;
       };
-    };	  
+    };
   );
-	  
+
   //
   // Mapping / Late binding / Expanded
   //
-  
+
   + type_style:STRING_CONSTANT; // Reference / Expanded / Strict.
-  
+
   + is_mapping:BOOLEAN;
+
+  + is_external:BOOLEAN;
 
   - set_mapping <-
   (
     is_mapping := TRUE;
   );
-  
-  - set_type_style s:STRING_CONSTANT <- 
-  ( 
+
+  - set_external <-
+  (
+    is_external := TRUE;
+  );
+
+  - set_type_style s:STRING_CONSTANT <-
+  (
     type_style := s;
   );
-  
+
   //
   // Cast information.
   //
@@ -152,11 +160,21 @@ Section Public
   + filename:STRING_CONSTANT;   // Pathname of prototype.
 
   + source  : STRING;   // Text source code.
-  
+
   + generic_count:INTEGER;
-  
+
   + idf_generic_list:FAST_ARRAY(ITM_TYPE_PARAMETER);
-  
+
+  - append_filename buffer:STRING <-
+  (
+    (path_begin != 1).if {
+      buffer.append "...";
+    };
+    path_begin.to (filename.upper) do { j:INTEGER;
+      buffer.add_last (filename.item j);
+    };
+  );
+
   //
   // Default value.
   //
@@ -164,31 +182,34 @@ Section Public
   + default_value:ITM_CODE;
 
   - set_default_value v:ITM_CODE <-
-  ( 
+  (
     default_value := v; //default_value v to_slot name in Self;
   );
-  
+
   //
   // Creation.
   //
-  
+
   - create f:STRING_CONSTANT name n:STRING_CONSTANT generic_count c:INTEGER :SELF <-
   ( + result:SELF;
     result := clone;
     result.make f name n generic_count c;
     result
   );
-  
+
   - make f:STRING_CONSTANT name n:STRING_CONSTANT generic_count c:INTEGER <-
+  [
+    -? {! prototype_dico.fast_has f};
+    -? {n != NULL};
+  ]
   ( //+ file:FILE;
     //+ entry:ENTRY;
     + file:POINTER;
     + sz,idx:INTEGER;
-    ? {! prototype_dico.fast_has n};
-    ? {n != NULL};
-    
+
     filename := f;
-    name     := n;    
+    longname := protopath_from_path filename;
+    name     := n;
     idx := n.fast_last_index_of '.';
     (idx != 0).if {
       string_tmp.copy n;
@@ -199,27 +220,31 @@ Section Public
     };
     generic_count := c;
     idf_generic_list := FAST_ARRAY(ITM_TYPE_PARAMETER).create_with_capacity c;
-        
-    // Collection.    
+
+    is_lip.if_false {
+      insert_prototype;
+    };
+
+    // Collection.
     index := prototype_list.count;
     prototype_list.add_last Self;
-    prototype_dico.fast_put Self to f; 
-    
-    // Read file.            
-    //entry := FILE_SYSTEM.get f;        
+    prototype_dico.fast_put Self to f;
+
+    // Read file.
+    //entry := FILE_SYSTEM.get f;
     //file ?= entry.open_read_only;
     //source := STRING.create (file.size);
     //file.read source size (file.size);
     //file.close;
-    
+
     file := FS_MIN.open_read f;
     sz := FS_MIN.file_size file;
     source := STRING.create (sz+1);
     FS_MIN.read file in source size sz;
     FS_MIN.close file;
-    
-    // Init.    
-    slot_list := HASHED_DICTIONARY(ITM_SLOT,STRING_CONSTANT).create;        
+
+    // Init.
+    slot_list := HASHED_DICTIONARY(ITM_SLOT,STRING_CONSTANT).create;
     position  := POSITION.create Self line 1 column 0;
     //
   );
@@ -227,7 +252,7 @@ Section Public
   //
   // Execute.
   //
-            
+
   - depend <-
   ( + slot_main:SLOT;
     + self_main:EXPR;
@@ -237,40 +262,36 @@ Section Public
     + i:INSTR;
     + cmd:STRING_CONSTANT;
     + exec:{};
-    
+
     + buf:STRING;
 
     //
     // Creation list execution.
-    //    
-    list_current := LIST.create position;
+    //
+    list_main := list_current := LIST.create position;
     (debug_level_option != 0).if {
       // Debug mode : Add context local.
-      context_main := TYPE_CONTEXT.default.new_local position 
+      context_main := TYPE_CONTEXT.default.new_local position
       name (ALIAS_STR.variable_context) style '+';
-      context_main.set_ensure_count 1;      
+      context_main.set_ensure_count 1;
       list_current.add_last (PUSH.create position context context_main first TRUE);
     };
-        
+
     // Command argument.
-    (is_ansi).if {      
-      (is_java).if {
-        cmd := "arg = parg";
-      } else {
-        string_tmp.clear;
-        (debug_level_option != 0).if {
-          string_tmp.copy "signal(SIGINT,interrupt_signal);\n  ";
-        };
-        string_tmp.append
-        "arg_count  = argc;\n\
-        \  arg_vector = argv;\n\
-        \#ifdef _PTHREAD_H\n\
-        \  pthread_key_create(&current_thread, NULL);\n\
-        \  pthread_attr_init(&thread_attr);\n\
-        \  /*pthread_attr_setdetachstate(&thread_attr,PTHREAD_CREATE_DETACHED);*/\n\
-        \#endif\n  ";        
-        cmd := ALIAS_STR.get string_tmp;
+    (is_ansi).if {
+      string_tmp.clear;
+      (debug_level_option != 0).if {
+        string_tmp.copy "signal(SIGINT,interrupt_signal);\n  ";
       };
+      string_tmp.append
+      "arg_count  = argc;\n\
+      \  arg_vector = argv;\n\
+      \#ifdef _PTHREAD_H\n\
+      \  pthread_key_create(&current_thread, NULL);\n\
+      \  pthread_attr_init(&thread_attr);\n\
+      \  /*pthread_attr_setdetachstate(&thread_attr,PTHREAD_CREATE_DETACHED);*/\n\
+      \#endif\n  ";
+      cmd := ALIAS_STR.get string_tmp;
       i := EXTERNAL_C.create position text cmd
       access NULL persistant TRUE type (TYPE_VOID.default);
       list_current.add_last i;
@@ -278,20 +299,19 @@ Section Public
     // Main Call.
     slot_main := get_slot_main;
     self_main := PROTOTYPE_CST.create position type (type_input.default);
-    base := NODE.new_read (slot_main.position) slot slot_main 
-    receiver self_main self self_main intern TRUE;    
+    base := NODE.new_read (slot_main.position) slot slot_main
+    receiver self_main self self_main intern TRUE;
     list_current.add_last base;
-        
-    // Result.    
-    list_current.add_last (INTEGER_CST.create position value 0 type (type_integer.default)); 
-    list_main := list_current;
-            
+
+    // Result.
+    list_current.add_last (INTEGER_CST.create position value 0 type (type_integer.default));
+
     //
     // Detect life code.
-    //    
+    //
     pass_count := 1;
     (is_quiet).if_false {
-      STD_ERROR.put_string "Depending pass: .";   
+      STD_ERROR.put_string "Depending pass: .";
     };
     {modify_count != 0}.while_do {
       modify_count := 0;
@@ -301,92 +321,102 @@ Section Public
       pass_count := pass_count + 1;
       NODE.extend_pass;
     };
-    
+
     (is_quiet).if_false {
       STD_ERROR.put_string " (";
       STD_ERROR.put_integer pass_count;
       STD_ERROR.put_string ")\n";
     };
-    
+
     buf := STRING.create 2000;
-            
+
     (is_verbose).if {
       PROFIL_LIST.display;
     };
-    
+
     //
     // Evaluation.
     //
+    VARIABLE.check_variable_block;
     (is_quiet).if_false {
       STD_ERROR.put_string "Executing pass: ";
     };
     pass_count_depend := pass_count;
     exec := {
-      {        
+      {
         modify_count := 0;
         null_counter := 0;
         (is_quiet).if_false {
-          STD_ERROR.put_string ".";            
+          STD_ERROR.put_string ".";
         };
-        pass_count := pass_count + 1;            
-      
+        pass_count := pass_count + 1;
+
         SWITCH.reset_switch_new_pass;
-      
-        PROFIL_LIST.execute_pass;      
-      
+
+        PROFIL_LIST.execute_pass;
+        
         (SWITCH.switch_new_pass).if {
-          new_execute_pass;	
-        };                
+          new_execute_pass;
+        };
         (modify_count != 0).if {
           pass_recur := TRUE;
         };
-      }.do_while {modify_count != 0};      
+      }.do_while {modify_count != 0};
     };
-    // First pass (recursive)    
-    is_executing_pass := TRUE;            
+    // First pass (recursive)
+    is_executing_pass := TRUE;
     {
       (is_quiet).if_false {
         STD_ERROR.put_string "*";
       };
       pass_count := pass_count + 1;
       PROFIL_LIST.execute_pass_recursive;
+      (is_verbose).if {
+        "==========================================================================\n\
+        \=                                NEW PASS                                =\n\
+        \==========================================================================\n".print;
+        PROFIL_LIST.display;
+      };
       pass_recur := FALSE;
-      // End first pass.          
+      // End first pass.
       exec.value;
-      (pass_recur).if_false {      
+      (is_optimization).if {
+        is_optimization_type_set := TRUE;
+      };
+      (pass_recur).if_false {
         exec.value;
       };
     }.do_while {pass_recur};
     (is_quiet).if_false {
       STD_ERROR.put_string " (";
       STD_ERROR.put_integer (pass_count - pass_count_depend);
-      STD_ERROR.put_string ")\n";          
+      STD_ERROR.put_string ")\n";
     };
-    //    
+    //
     (is_verbose).if {
       list_main.debug_display;
       PROFIL_LIST.display;
-    };            
+    };
   );
-    
+
   //
   // Type C
   //
-    
+
   + type_c     :STRING_CONSTANT;
 
   - set_c_type n:STRING_CONSTANT <-
   (
-    type_c := n;    
+    type_c := n;
   );
-  
+
   //
   // Shorter.
   //
-  
+
   + comment_slot:STRING_CONSTANT;
   + comment_header:STRING_CONSTANT;
-  
+
   - set_comment_slot t:STRING_CONSTANT <-
   (
     comment_slot := t;
@@ -396,97 +426,97 @@ Section Public
   (
     comment_header := t;
   );
-  
+
   - shorter_out buf:STRING <-
   ( + title:STRING_CONSTANT;
     + s:ITM_SLOT;
     put name to buf like (ALIAS_STR.short_title);
-    
+
     (comment_slot != NULL).if {
       put comment_slot to buf like (ALIAS_STR.short_prototype_comment_light);
     };
     (comment_header != NULL).if {
       put comment_header to buf like (ALIAS_STR.short_prototype_comment);
     };
-    
+
     list_tmp.clear;
     shorter_get_all_slot_in list_tmp;
-    
+
     // Table.
-    shorter_table list_tmp select { sl:ITM_SLOT; 
+    shorter_table list_tmp select { sl:ITM_SLOT;
       sl.id_section.is_inherit_or_insert
     } title "Inherit/Insert Summary" in buf;
-    
-    shorter_table list_tmp select { sl:ITM_SLOT; 
+
+    shorter_table list_tmp select { sl:ITM_SLOT;
       sl.name.has_prefix "create"
-    } title "Constructor Summary" in buf;    
-    
+    } title "Constructor Summary" in buf;
+
     (list_tmp.lower).to (list_tmp.upper) do { j:INTEGER;
       s := list_tmp.item j;
       (s.stat_shorter = 0).if {
-        title := s.comment_chapter;        
-        shorter_table list_tmp select { sl:ITM_SLOT; 
+        title := s.comment_chapter;
+        shorter_table list_tmp select { sl:ITM_SLOT;
           sl.comment_chapter = title
-        } title title in buf;    
+        } title title in buf;
       };
     };
-        
+
     // Detail.
-    shorter_detail list_tmp select { sl:ITM_SLOT; 
+    shorter_detail list_tmp select { sl:ITM_SLOT;
       sl.id_section.is_inherit_or_insert
-    } title "Inherit/Insert Detail" in buf;    
-    
-    shorter_detail list_tmp select { sl:ITM_SLOT; 
+    } title "Inherit/Insert Detail" in buf;
+
+    shorter_detail list_tmp select { sl:ITM_SLOT;
       sl.name.has_prefix "create"
-    } title "Constructor Detail" in buf;    
-        
+    } title "Constructor Detail" in buf;
+
     (list_tmp.lower).to (list_tmp.upper) do { j:INTEGER;
       s := list_tmp.item j;
       (s.stat_shorter = 1).if {
-        title := s.comment_chapter;        
-        shorter_detail list_tmp select { sl:ITM_SLOT; 
+        title := s.comment_chapter;
+        shorter_detail list_tmp select { sl:ITM_SLOT;
           sl.comment_chapter = title
-        } title title in buf;    
+        } title title in buf;
       };
     };
-    
+
     (list_tmp.lower).to (list_tmp.upper) do { j:INTEGER;
       list_tmp.item j.set_stat_shorter 0;
     };
   );
-  
+
 Section PROTOTYPE
-  
+
   - get_slot_main:SLOT <-
-  ( + result:SLOT;    
-    + s:ITM_SLOT;    
-            
-    s := first_slot;    
-    {  
-      ((s.id_section.is_public) && {s.name = ALIAS_STR.slot_main}).if {	
+  ( + result:SLOT;
+    + s:ITM_SLOT;
+
+    s := first_slot;
+    {
+      ((s.id_section.is_public) && {s.name = ALIAS_STR.slot_main}).if {
 	(s.result_type != ITM_TYPE_SIMPLE.type_void).if {
 	  semantic_error (s.position,"Unix mode: Not value return.");
 	};
 	(s.argument_count != 1).if {
 	  semantic_error (s.position,"Unix mode: Not argument list.");
-	};	
+	};
 	result := type_input.get_slot (s.name);
       };
       s := s.next;
     }.do_while {(s != NULL) && {result = NULL}};
-    
+
     (result = NULL).if {
       semantic_error (position,"Entry point not found (slot `main' in `Section Public').");
-    };        
-    result     
+    };
+    result
   );
-  
+
   - shorter_get_all_slot_in lst:FAST_ARRAY(ITM_SLOT) <-
-  ( + s:ITM_SLOT; 
+  ( + s:ITM_SLOT;
     + ps:ITM_TYPE_SIMPLE;
     + p:PROTOTYPE;
     + i:INTEGER;
-    
+
     s := first_slot;
     {s != NULL}.while_do {
       (is_short_private || {! s.id_section.is_private}).if {
@@ -500,10 +530,10 @@ Section PROTOTYPE
       };
       s := s.next;
     };
-    
+
     // Parent.
     s := first_slot;
-    {(s != NULL) && {s.id_section.is_inherit_or_insert}}.while_do {      
+    {(s != NULL) && {s.id_section.is_inherit_or_insert}}.while_do {
       ps ?= s.result_type;
       ((ps != NULL) && {
           ({s.style = '+'} && {ps.style = ALIAS_STR.keyword_expanded}) ||
@@ -517,20 +547,20 @@ Section PROTOTYPE
           };
           i := i + 1;
         };
-        (p != NULL).if {            
+        (p != NULL).if {
           p.shorter_get_all_slot_in lst;
         };
-      };      
+      };
       s := s.next;
-    };    
+    };
   );
-        
+
   - shorter_table lst:FAST_ARRAY(ITM_SLOT) select sel:{ITM_SLOT; BOOLEAN}
   title t:STRING_CONSTANT in buf:STRING <-
   ( + is_first_cur:BOOLEAN;
-    + s:ITM_SLOT; 
-    
-    is_first_cur := TRUE;    
+    + s:ITM_SLOT;
+
+    is_first_cur := TRUE;
     (lst.lower).to (lst.upper) do { i:INTEGER;
       s := lst.item i;
       ((sel.value s) && {s.stat_shorter = 0}).if {
@@ -548,7 +578,7 @@ Section PROTOTYPE
         s.pretty_name_in string_tmp2;
         put string_tmp2 to string_tmp like (ALIAS_STR.short_table_slot_name);
         (
-          (s.id_section.is_inherit_or_insert) && 
+          (s.id_section.is_inherit_or_insert) &&
           {
             (
               (s.style != '+') || {
@@ -556,31 +586,31 @@ Section PROTOTYPE
                 ts ?= s.result_type;
                 (ts = NULL) || {ts.style != ALIAS_STR.keyword_expanded}
               }
-            ) && 
-            {! s.name.has_prefix "inherit"} && 
+            ) &&
+            {! s.name.has_prefix "inherit"} &&
             {! s.name.has_prefix "insert"}
           }
         ).if {
           put " No developed." to string_tmp like (ALIAS_STR.short_warning);
         };
-        string_tmp2.clear;        
+        string_tmp2.clear;
         get_all_comment_slot (s.name) in string_tmp2;
         string_tmp3.clear;
-        shorter_comment string_tmp2 in string_tmp3 light TRUE;        
+        shorter_comment string_tmp2 in string_tmp3 light TRUE;
         put string_tmp3 to string_tmp like (ALIAS_STR.short_table_slot_comment);
         put string_tmp to buf like (ALIAS_STR.short_table_item);
-      };     
-    };    
+      };
+    };
     (is_first_cur).if_false {
       put NULL to buf like (ALIAS_STR.short_table_end);
-    };    
+    };
   );
-  
+
   - shorter_detail lst:FAST_ARRAY(ITM_SLOT) select sel:{ITM_SLOT; BOOLEAN}
   title t:STRING_CONSTANT in buf:STRING <-
   ( + is_first:BOOLEAN;
     + s:ITM_SLOT;
-      
+
     is_first := TRUE;
     (lst.lower).to (lst.upper) do { i:INTEGER;
       s := lst.item i;
@@ -598,10 +628,11 @@ Section PROTOTYPE
         string_tmp2.clear;
         s.pretty_name_in string_tmp2;
         put string_tmp2 to buf like (ALIAS_STR.short_slot_title);
-        string_tmp.copy (s.position.prototype.filename);
+        string_tmp.clear;
+        s.position.prototype.append_filename string_tmp;
         string_tmp.append " line #";
         s.position.line.append_in string_tmp;
-        put string_tmp to buf like (ALIAS_STR.short_prototype_path);                
+        put string_tmp to buf like (ALIAS_STR.short_prototype_path);
         //
         put "Section:" to buf like (ALIAS_STR.short_subsub_title);
         string_tmp.clear;
@@ -610,51 +641,51 @@ Section PROTOTYPE
         //
         put "Profile:" to buf like (ALIAS_STR.short_subsub_title);
         s.shorter_profile_in buf;
-        //                
+        //
         string_tmp.clear;
-        get_all_comment_slot (s.name) in string_tmp;        
-        shorter_comment string_tmp in buf light FALSE;        
-      };      
+        get_all_comment_slot (s.name) in string_tmp;
+        shorter_comment string_tmp in buf light FALSE;
+      };
     };
   );
-  
+
   - get_all_comment_slot n:STRING_CONSTANT in buf:STRING <-
-  ( + s:ITM_SLOT; 
+  ( + s:ITM_SLOT;
     + ps:ITM_TYPE_SIMPLE;
     + p:PROTOTYPE;
     + i:INTEGER;
-        
+
     s := slot_list.fast_reference_at n;
     ((s != NULL) && {s.comment != NULL}).if {
       buf.append (s.comment);
     };
     // Parent.
     s := first_slot;
-    {(s != NULL) && {s.id_section.is_inherit_or_insert}}.while_do {      
+    {(s != NULL) && {s.id_section.is_inherit_or_insert}}.while_do {
       ps ?= s.result_type;
-      (ps != NULL).if {                
+      (ps != NULL).if {
         p := NULL;
         i := prototype_list.lower;
-        {(i <= prototype_list.upper) && {p = NULL}}.while_do {                              
+        {(i <= prototype_list.upper) && {p = NULL}}.while_do {
           (prototype_list.item i.name = ps.name).if {
             p := prototype_list.item i;
           };
           i := i + 1;
         };
-        (p != NULL).if {            
+        (p != NULL).if {
           p.get_all_comment_slot n in buf;
         };
-      };      
+      };
       s := s.next;
     };
   );
-  
+
   - list_tmp:FAST_ARRAY(ITM_SLOT) := FAST_ARRAY(ITM_SLOT).create_with_capacity 256;
-  
+
   - str_tmp:STRING := STRING.create 512;
   - str_tmp2:STRING := STRING.create 64;
   - str_tmp3:STRING := STRING.create 64;
-  
+
   - shorter_comment str:STRING in buf:STRING light is_light:BOOLEAN <-
   ( + cur:INTEGER;
     + stat,old_stat:INTEGER;
@@ -662,21 +693,21 @@ Section PROTOTYPE
     + i:INTEGER;
     + lst:LINKED_LIST(STRING_CONSTANT);
     + code_balise:STRING_CONSTANT;
-        
+
     cur := str.lower;
     str_tmp.clear;
     code_balise := ALIAS_STR.short_comment_slot_line;
-    {cur <= str.upper}.while_do {      
+    {cur <= str.upper}.while_do {
       car := str.item cur;
       (stat)
-      .when 0 then {        
+      .when 0 then {
         // Begin.
-        (car = '*').if {          
+        (car = '*').if {
           (str_tmp.count > 1).if {
             (is_light).if {
               buf.append str_tmp;
               cur := str.upper + 1;
-            } else {              
+            } else {
               put "Description:" to buf like (ALIAS_STR.short_subsub_title);
               put str_tmp to buf like code_balise;
             };
@@ -685,7 +716,7 @@ Section PROTOTYPE
           stat := 1;
         }.elseif {car = '`'} then {
           old_stat := stat;
-          stat := 2;          
+          stat := 2;
           str_tmp2.clear;
         } else {
           str_tmp.add_last car;
@@ -693,15 +724,15 @@ Section PROTOTYPE
       }
       .when 1 then {
         // Begin slot.
-        (car.to_lower.in_range 'a' to 'z').if {        
+        (car.to_lower.in_range 'a' to 'z').if {
           str_tmp.add_last (car.to_lower);
         }.elseif {(car = ' ') && {!str_tmp.is_empty}} then {
-          str_tmp.add_last '_';          
+          str_tmp.add_last '_';
         }.elseif {car = ':'} then {
-          (str_tmp.count != 0).if {            
-            code_balise := ALIAS_STR.get str_tmp;                     
+          (str_tmp.count != 0).if {
+            code_balise := ALIAS_STR.get str_tmp;
             lst := PARSER.short_dico.fast_reference_at code_balise;
-            (lst = NULL).if {                          
+            (lst = NULL).if {
               code_balise := NULL;
             } else {
               str_tmp.replace_all '_' with ' ';
@@ -733,7 +764,7 @@ Section PROTOTYPE
             } else {
               put str_tmp2 to str_tmp like (ALIAS_STR.short_identifier);
             };
-          };          
+          };
           stat := old_stat;
         } else {
           str_tmp2.add_last car;
@@ -742,22 +773,22 @@ Section PROTOTYPE
       .when 3 then {
         // Read slot.
         (car = '*').if {
-          (str_tmp.count > 1).if {            
+          (str_tmp.count > 1).if {
             put str_tmp to buf like code_balise;
           };
           str_tmp.clear;
-          stat := 1;          
+          stat := 1;
         }.elseif {car = '`'} then {
           old_stat := stat;
-          stat := 2;          
+          stat := 2;
           str_tmp2.clear;
         } else {
           str_tmp.add_last car;
-        };        
+        };
       };
       cur := cur + 1;
     };
-    (str_tmp.count > 1).if {            
+    (str_tmp.count > 1).if {
       (is_light).if {
         buf.append str_tmp;
       } else {
@@ -766,5 +797,125 @@ Section PROTOTYPE
         };
         put str_tmp to buf like code_balise;
       };
+    };
+  );
+
+Section Private
+
+  - protopath_from_path filename:ABSTRACT_STRING :STRING_CONSTANT <-
+  ( + strip_end :INTEGER;
+    is_lip.if {
+      // *.lip
+      strip_end := 4;
+    } else {
+      // *.li
+      strip_end := 3;
+    };
+
+    string_tmp.clear;
+    (filename.lower).to (filename.count - strip_end) do { i:INTEGER;
+      + c:CHARACTER;
+      c := filename.item i.to_upper;
+      c.is_upper.if {
+        string_tmp.add_last c;
+      }.elseif {c.is_digit} then {
+        string_tmp.add_last c;
+      }.elseif {c = '/'} then {
+        ((string_tmp.count >= 1) && {string_tmp.last != '.'}).if {
+          string_tmp.add_last '.';
+        };
+      } else {
+        ((string_tmp.count >= 1) && {string_tmp.last != '_'} && {string_tmp.last != '.'}).if {
+          string_tmp.add_last '_';
+        };
+      };
+    };
+    ALIAS_STR.get string_tmp
+  );
+
+  - name_last n:INTEGER :STRING_CONSTANT <-
+  [
+    -? { n > 0 };
+  ]
+  ( + j, idx :INTEGER;
+    j := 0;
+
+    idx := longname.upper;
+    {(idx >= longname.lower) && {j < n}}.while_do {
+      (longname.item idx = '.').if {
+        j := j + 1;
+      };
+      idx := idx - 1;
+    };
+    // idx contains the position of the n-th '.' from the right
+    idx := idx + 1;
+    (longname.item idx = '.').if {
+      idx := idx + 1;
+    };
+    // idx contains the position of first desired character
+
+    // Copy last n members to string_tmp
+    string_tmp.clear;
+    idx.to (longname.upper) do { k:INTEGER;
+      string_tmp.add_last (longname.item k);
+    };
+    ALIAS_STR.get string_tmp
+  )
+  [
+    +? { Result != NULL };
+    +? { (n != 1) | (Result = shortname) };
+  ];
+
+  - insert_prototype <- insert_prototype_start 1;
+
+  - insert_prototype_start start:INTEGER <-
+  ( + i:INTEGER;
+    + proto:PROTOTYPE;
+
+    // Find canonical name
+    // If we find PROTOTYPE in the dictionary, it's a marker to notify that more
+    // than one prototype matches the name. We can't take the slot and we must
+    // add more members to `name'
+    i := start;
+    (i = 1).if {
+      name := shortname;
+    } else {
+      name := name_last i;
+    };
+    proto := prototype_canonical_name.fast_reference_at name;
+    { proto = PROTOTYPE }.while_do {
+      i := i + 1;
+      name  := name_last i;
+      proto := prototype_canonical_name.fast_reference_at name;
+    };
+
+    // We find either an empty slot or a conflicting prototype
+
+    (proto = NULL).if {
+
+      ((debug_proto_bestname) && {i > 1}).if {
+        "Prototype: ".print; name.println;
+        "       is: ".print; longname.println;
+      };
+
+      prototype_canonical_name.fast_put Self to name;
+
+    } else {
+
+      // We find a conflicting prototype.
+      ? { proto != Self };
+
+      (debug_proto_bestname).if {
+        "Conflict: ".print; name.println;
+        "          ".print; longname.println;
+        "          ".print; proto.longname.println;
+      };
+
+      // Add PROTOTYPE marker and add more members to `name' of both prototypes
+      prototype_canonical_name.fast_put PROTOTYPE to name;
+      // Insert both prototypes again with another member to the name
+      i := i + 1;
+      proto.insert_prototype_start i;
+      insert_prototype_start i;
     };
   );

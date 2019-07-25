@@ -1,0 +1,246 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := TYPES_TMP;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Aliser TYPE collection.";
+  
+Section Inherit
+  
+  + parent_types:Expanded TYPES;
+  
+Section Private
+  
+  - bucket:HASHED_SET[TYPES] := HASHED_SET[TYPES].create;
+  
+  - free_list:FAST_ARRAY[TYPES_TMP] := FAST_ARRAY[TYPES_TMP].create_with_capacity 5;
+  
+  + capacity:INTEGER;
+  
+  - create_types_tmp:TYPES_TMP <-
+  ( + result:TYPES_TMP;
+    
+    result := clone;
+    result.make_types_tmp;
+    result
+  );
+  
+  - make_types_tmp <-
+  (
+    capacity := 256;
+    storage  := NATIVE_ARRAY[TYPE].calloc_intern capacity;
+  )
+  [ +? {is_empty}; ];
+  
+Section LISAAC
+    
+  - print_types <-
+  (
+    (bucket.lower).to (bucket.upper) do { j:INTEGER;
+      bucket.item j.print; '\n'.print;
+    };
+  );
+  
+Section Public
+  
+  - types_empty:TYPES := TYPES;
+  
+  //
+  // Creation.
+  //
+   
+  - new:TYPES_TMP <-
+  ( + result:TYPES_TMP;
+    
+    (free_list.is_empty).if {
+      result := create_types_tmp;
+    } else {
+      result := free_list.last;
+      free_list.remove_last;
+    };   
+    result
+  );
+  
+  - update t:TYPES :TYPES <-
+  [
+    -? { + tmp:TYPES_TMP; tmp ?= t; tmp = NULL};
+  ]
+  ( + result:TYPES;
+    
+    ((t != NULL) && {t.count = count}).if {
+      result := t;
+      free;
+    } else {
+      result := to_types;
+    };
+    result
+  );
+  
+  - to_types:TYPES <-
+  ( + result:TYPES;
+        
+    (is_empty).if {
+      result := types_empty;    
+    } else {
+      result := bucket.reference_at Self;
+      (result = NULL).if {
+	result := TYPES.create Self;
+	bucket.fast_add result;
+      };
+    };
+    20 ? {result == Self};
+        
+    free;
+    result
+  );
+  
+  - free <-
+  (
+    upper := -1;
+    free_list.add_last Self;
+  );
+  
+  //
+  // Update list.
+  //
+  
+  - remove_first <-
+  (
+    (lower + 1).to upper do { i:INTEGER;
+      storage.put (item i) to (i - 1);
+    };      
+    upper := upper - 1;
+  );
+  
+  - add t:TYPE <-
+  ( + idx:INTEGER;
+        
+    (is_empty).if {
+      add_last t;
+    } else {    
+      idx := search t from 0 to count;
+      (idx > upper).if {
+	add_last t;
+      }.elseif {item idx != t} then {
+	add t to idx;
+      };
+    };
+  )
+  [ 
+    20 ? {order_test}; 
+  ];
+
+  - union other:TYPES <-
+  ( + idx1,idx2,t2idx:INTEGER;
+    + t2:TYPE;
+            
+    {idx2 > other.upper}.until_do {
+      t2    := other.item idx2;
+      t2idx := t2.index;
+      {(idx1 <= upper) && {item idx1.index < t2idx}}.while_do {
+	idx1 := idx1 + 1;
+      };
+      ((idx1 > upper) || {item idx1 != t2}).if {	
+	add t2 to idx1;	
+      };      
+      idx1 := idx1 + 1;
+      idx2 := idx2 + 1;
+    };    
+  )
+  [ 
+    20 ? {order_test}; 
+  ];
+    
+Section Private
+  
+  - add_last t:TYPE <-
+  ( + new_capacity:INTEGER;
+        
+    (upper + 1 > capacity - 1 ).if {
+      new_capacity := capacity * 2;
+      storage := storage.realloc capacity with new_capacity;
+      capacity := new_capacity;      
+    }; 
+    upper := upper + 1;
+    storage.put t to upper;
+  );
+  
+  - add t:TYPE to index:INTEGER <-
+  ( + new_capacity:INTEGER;
+    (index = upper + 1).if {
+      add_last t;
+    } else {
+      (upper + 1 > capacity - 1 ).if {
+	new_capacity := capacity * 2;
+	storage := storage.realloc capacity with new_capacity;
+	capacity := new_capacity;      
+      }; 
+      upper := upper + 1;
+      (upper - 1).downto index do { i:INTEGER;
+	storage.put (item i) to (i + 1);
+      };      
+      storage.put t to index;
+    };
+  );
+  
+  - search t:TYPE from beg:INTEGER to end:INTEGER :INTEGER <-
+  // Dichotomic research.
+  ( + middle,result:INTEGER;
+        
+    ((end - beg) < 2).if {
+      (t.index > item beg.index).if {
+	result := end;
+      } else {
+	result := beg;
+      };
+    } else {      
+      middle := (beg + end) >> 1;
+      (t.index > item middle.index).if {
+	result := search t from middle to end; 
+      } else {
+	result := search t from beg to middle;
+      };
+    };
+    result
+  );
+
+  - order_test:BOOLEAN <-
+  ( + j:INTEGER;
+
+    {(j < upper) && {item j.index < item (j+1).index}}.while_do {
+      j := j + 1;    
+    };
+    j >= upper
+  );
+
+
+
+
+
+
+
+
+

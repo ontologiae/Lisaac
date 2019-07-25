@@ -1,23 +1,32 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                    Benoit SONNTAG - bsonntag@loria.fr                    *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//                            Lisaac OS Library                              //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := ENVIRONMENT;
 
-section HEADER
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  - name        := ENVIRONMENT;
-  
-  - category    := MICRO;
-  
-  - bibliography:= "http://IsaacOS.com";
-  - author      := "Boutet Jerome (boutet@loria.fr)";
   - comment     := "Execute system command and to get/set environment variables.";
 
-
-section PUBLIC
+Section Public
 
   - get_environment_variable variable:ABSTRACT_STRING :STRING <-
   // Try to get the value of the system environment `variable' or some
@@ -38,12 +47,12 @@ section PUBLIC
     result
   );
 
-  - set_environment_variable variable,value:ABSTRACT_STRING <-
+  - set_environment_variable (variable,value:ABSTRACT_STRING) <-
   // Try to assign the system environment `variable' with `value'.
   (
     ? { variable != NULL };
     ? { value != NULL };
-    basic_putenv variable,value;
+    basic_putenv (variable,value);
   );
   
   - execute_command system_command_line:ABSTRACT_STRING :INTEGER <-
@@ -61,7 +70,7 @@ section PUBLIC
     execute_command (system_command_line);
   );
   
-section PRIVATE
+Section Private
 
   - basic_getenv environment_variable:NATIVE_ARRAY[CHARACTER] :NATIVE_ARRAY[CHARACTER] <-
   // To implement `get_environment_variable'.
@@ -69,7 +78,7 @@ section PRIVATE
     `getenv((char*)@environment_variable)`:NATIVE_ARRAY[CHARACTER]
   );
   
-  - basic_putenv variable,value:ABSTRACT_STRING <-
+  - basic_putenv (variable,value:ABSTRACT_STRING) <-
   // To implement `set_environment_variable'.
   (
     + v:NATIVE_ARRAY[CHARACTER];
@@ -84,7 +93,7 @@ section PRIVATE
   
   - basic_system_execute_command system_command_line:NATIVE_ARRAY[CHARACTER] :INTEGER <-
   (
-    `system(((char*)(@system_command_line)))`:INTEGER
+    `system(((char*)(@system_command_line)))`:(INTEGER)
   );
 
 

@@ -1,0 +1,12 @@
+cat ./*.li
+cat ./compiler/*.li
+cat ./constant/*.li
+cat ./dispatcher/*.li
+cat ./external/*.li
+cat ./external/comparison/*.li
+cat ./external/logic/*.li
+cat ./external/arithmetic/*.li
+cat ./item/*.li
+cat ./tools/*.li
+cat ./type/*.li
+cat ./variable/*.li

@@ -1,0 +1,100 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := PROTOTYPE_CST;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Prototype constant";
+  
+Section Inherit
+  
+  + parent_constant:Expanded CONSTANT;
+  
+Section Public
+
+  //
+  // Creation.
+  //
+  
+  - create p:POSITION type t:TYPE_FULL :SELF<-
+  ( + result:SELF;
+    ? {p.code != 0};
+    ? {t != NULL};
+    
+    result := clone;
+    result.make p type t;
+    result
+  );
+  
+  - make p:POSITION type t:TYPE_FULL <-
+  (
+    position    := p;           
+    static_type := t.to_strict;    
+  );
+
+  - my_copy:SELF <- 
+  ( 
+    SELF.create position type static_type
+  );
+
+  //
+  // Comparaison.
+  //
+
+  - '==' Right 60 other:EXPR :BOOLEAN <-    
+  ( + p:PROTOTYPE_CST;
+    p ?= other;
+    (p != NULL) && {static_type = p.static_type}
+  );
+  
+  //
+  // Execute
+  //
+  
+  - execute_link:EXPR <-
+  (     
+    Self
+  );  
+  
+  //
+  // Generation.
+  //
+
+  - genere buffer:STRING <-
+  (
+    static_type.genere_value buffer;
+  );
+
+  //
+  // Display.
+  //
+
+  - display buffer:STRING <-
+  (
+    static_type.display buffer;
+    display_ref buffer;    
+  );
+  
+

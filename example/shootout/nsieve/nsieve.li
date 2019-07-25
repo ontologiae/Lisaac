@@ -1,0 +1,78 @@
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name         := NSIEVE;
+  
+  - bibliography := "http://IsaacOS.com";
+  - author       := "Pierre-Alexandre Voye (ontologiae@gmail.com)";
+  - comment      := "Language shootout - Recursive"; 
+  
+Section Inherit
+  
+  - parent_any:OBJECT := OBJECT;
+
+Section Private  
+
+  - primes n : INTEGER_64 <-
+  (
+    + size,i,j,count : INTEGER_64;
+    + flags : FAST_ARRAY[BOOLEAN];
+	
+    size := 10000 << n;
+    flags := FAST_ARRAY[BOOLEAN].create size;
+    flags.set_all_with TRUE;
+
+    count := 0;
+    i := 2;
+    {i < size}.while_do {
+      flags.item i.if {
+        count := count + 1;
+        j := i << 1;
+        {j < size}.while_do {
+          flags.put FALSE to j;
+          j := j + i;
+        };
+      };
+      i := i + 1;
+		};
+
+    "Primes up to ".print;
+    size.print;
+    ",".print;
+    count.print;
+    "\n".print;
+
+  );
+
+Section Public
+
+  + n : INTEGER;
+
+  - main <-
+  (
+    (COMMAND_LINE.count = 2).if {
+      n := COMMAND_LINE.item 1.to_integer;
+    };
+    primes n;
+    primes (n-1);
+    primes (n-2);
+  );

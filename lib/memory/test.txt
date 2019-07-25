@@ -1,0 +1,11 @@
+Size : 8
+Type : 0
+addr table : 134523036
+New lab
+new page
+Capacity : 2147483648
+begin memory: 3BD5B008
+end   memory: BBD5B008
+block : 3BD5B008
+LAB : 3FD5A008
+3FD5A00C

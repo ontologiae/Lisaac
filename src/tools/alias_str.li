@@ -1,0 +1,419 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := ALIAS_STR;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Alias string constant and keyword";
+  
+Section Inherit
+  
+  - parent_any:ANY := ANY;
+  
+Section Private
+  
+  - list:HASHED_SET[ABSTRACT_STRING];
+  
+  - free:FAST_ARRAY[STRING] := FAST_ARRAY[STRING].create_with_capacity 5;
+  
+Section Public  
+  
+  - keyword_section  :STRING_CONSTANT := "Section";
+  - keyword_right    :STRING_CONSTANT := "Right";
+  - keyword_left     :STRING_CONSTANT := "Left";
+  - keyword_ldots    :STRING_CONSTANT := "...";
+  - keyword_old      :STRING_CONSTANT := "Old";
+  - keyword_expanded :STRING_CONSTANT := "Expanded";  
+  - keyword_strict   :STRING_CONSTANT := "Strict";  
+  - keyword_result   :STRING_CONSTANT := "Result";
+  
+  - symbol_affect_immediate:STRING_CONSTANT := ":=";
+  - symbol_affect_cast     :STRING_CONSTANT := "?=";
+  - symbol_affect_code     :STRING_CONSTANT := "<-";
+  - symbol_auto_export     :STRING_CONSTANT := "->";
+  - symbol_auto_import     :STRING_CONSTANT := symbol_affect_code;
+  - symbol_equal           :STRING_CONSTANT := "=";
+  - symbol_not_equal       :STRING_CONSTANT := "!=";
+  
+  - operator_equal     :STRING_CONSTANT;
+  - operator_not_equal :STRING_CONSTANT;
+  
+  - section_header     :STRING_CONSTANT := "Header";
+  - section_inherit    :STRING_CONSTANT := "Inherit";
+  - section_insert     :STRING_CONSTANT := "Insert";
+  - section_public     :STRING_CONSTANT := "Public";
+  - section_private    :STRING_CONSTANT := "Private";
+  - section_interrupt  :STRING_CONSTANT := "Interrupt";
+  - section_mapping    :STRING_CONSTANT := "Mapping";
+  - section_directory  :STRING_CONSTANT := "Directory";
+  - section_external   :STRING_CONSTANT := "External";
+  
+  - section_default    :STRING_CONSTANT := "DEFAULT";
+  - section_common     :STRING_CONSTANT := "Common";
+  
+  - prototype_integer         :STRING_CONSTANT := "INTEGER";
+  - prototype_real            :STRING_CONSTANT := "REAL";
+  - prototype_character       :STRING_CONSTANT := "CHARACTER";
+  - prototype_string_constant :STRING_CONSTANT := "STRING_CONSTANT";  
+  - prototype_native_array    :STRING_CONSTANT := "NATIVE_ARRAY";
+  - prototype_native_array_volatile:STRING_CONSTANT := "NATIVE_ARRAY_VOLATILE";
+  - prototype_block           :STRING_CONSTANT := "BLOCK";
+  - prototype_boolean         :STRING_CONSTANT := "BOOLEAN";
+  - prototype_true            :STRING_CONSTANT := "TRUE";
+  - prototype_false           :STRING_CONSTANT := "FALSE";
+  - prototype_pointer         :STRING_CONSTANT := "POINTER";
+  - prototype_context         :STRING_CONSTANT := "___CONTEXT";
+  - prototype_generic         :STRING_CONSTANT := "___GENERIC";
+  - prototype_type_id         :STRING_CONSTANT := "___TYPE_ID";
+  - prototype_self            :STRING_CONSTANT := "SELF";
+      
+  - prototype_uinteger_64     :STRING_CONSTANT := "UINTEGER_64";
+  - prototype_uinteger_32     :STRING_CONSTANT := "UINTEGER_32";
+  - prototype_uinteger_16     :STRING_CONSTANT := "UINTEGER_16";
+  - prototype_uinteger_8      :STRING_CONSTANT := "UINTEGER_8";
+  - prototype_integer_64      :STRING_CONSTANT := "INTEGER_64";
+  - prototype_integer_32      :STRING_CONSTANT := "INTEGER_32";
+  - prototype_integer_16      :STRING_CONSTANT := "INTEGER_16";
+  - prototype_integer_8       :STRING_CONSTANT := "INTEGER_8";
+  - prototype_n_a_character   :STRING_CONSTANT := "NATIVE_ARRAY__CHARACTER";
+  - prototype_n_a_n_a_character:STRING_CONSTANT := 
+  "NATIVE_ARRAY__NATIVE_ARRAY__CHARACTER";
+  
+  - variable_self          :STRING_CONSTANT := "Self";  
+  - variable_context       :STRING_CONSTANT := "__pos";
+  - variable_null          :STRING_CONSTANT := "NULL";
+  - variable_void          :STRING_CONSTANT := "VOID";    
+  - variable_tmp           :STRING_CONSTANT := "__tmp";
+  
+  - variable_lisaac     :STRING_CONSTANT := "lisaac";
+  - variable_input_file :STRING_CONSTANT := "input_file";
+  - variable_output_file:STRING_CONSTANT := "output_file";
+  - variable_target     :STRING_CONSTANT := "target";
+    
+  - slot_name         :STRING_CONSTANT := "name";
+  - slot_category     :STRING_CONSTANT := "category";
+  - slot_external     :STRING_CONSTANT := "external";
+  - slot_default      :STRING_CONSTANT := "default";
+  - slot_type         :STRING_CONSTANT := "type";
+  - slot_version      :STRING_CONSTANT := "version";
+  - slot_date         :STRING_CONSTANT := "date";
+  - slot_comment      :STRING_CONSTANT := "comment";
+  - slot_author       :STRING_CONSTANT := "author";
+  - slot_bibliography :STRING_CONSTANT := "bibliography";
+  - slot_language     :STRING_CONSTANT := "language";
+  - slot_copyright    :STRING_CONSTANT := "copyright";
+  - slot_bug_report   :STRING_CONSTANT := "bug_report";
+  
+  - slot_value        :STRING_CONSTANT := "value";
+  - slot_self         :STRING_CONSTANT := "self";
+  - slot_id           :STRING_CONSTANT := "__id";
+  - slot_clone        :STRING_CONSTANT := "clone";
+  - slot_main         :STRING_CONSTANT := "main";
+  - slot_infix        :STRING_CONSTANT := "__infix";
+  - slot_prefix       :STRING_CONSTANT := "__prefix";
+  - slot_storage      :STRING_CONSTANT := "storage";
+  
+  - c_void           :STRING_CONSTANT := "void";
+  - c_struct         :STRING_CONSTANT := "struct __";
+  - code_empty       :STRING_CONSTANT := "/* NOTHING */";
+  - separate         :STRING_CONSTANT := "__";
+  
+  - path_lisaac      :STRING_CONSTANT := "__PATH_LISAAC_SYSTEM__";
+  - short_format     :STRING_CONSTANT := "__SHORT_LISAAC_FORMAT__";
+  
+  - short_type_file   :STRING_CONSTANT := "type_file";
+  - short_token       :STRING_CONSTANT := "token";
+  - short_begin       :STRING_CONSTANT := "begin";
+  - short_end         :STRING_CONSTANT := "end";
+  - short_keyword     :STRING_CONSTANT := "keyword";
+  - short_keyword_section:STRING_CONSTANT := "keyword_section";
+  - short_integer     :STRING_CONSTANT := "integer";
+  - short_character   :STRING_CONSTANT := "character";
+  - short_string      :STRING_CONSTANT := "string";
+  - short_operator    :STRING_CONSTANT := "operator";
+  - short_prototype   :STRING_CONSTANT := "prototype";
+  - short_keyprototype:STRING_CONSTANT := "keyprototype";
+  - short_comment_line       :STRING_CONSTANT := "comment_line";
+  - short_comment_slot_line  :STRING_CONSTANT := "comment_slot_line";
+  - short_comment_header_line:STRING_CONSTANT := "comment_header_line";
+  - short_comment     :STRING_CONSTANT := "comment";
+  - short_slot        :STRING_CONSTANT := "slot";
+  - short_slot_call   :STRING_CONSTANT := "slot_call";
+  - short_slot_style  :STRING_CONSTANT := "slot_style";
+  - short_block       :STRING_CONSTANT := "block";
+  - short_external    :STRING_CONSTANT := "external";
+  
+  - short_index       :STRING_CONSTANT := "index";
+  - short_default     :STRING_CONSTANT := "default";
+  - short_directory_list_begin:STRING_CONSTANT := "directory_list_begin";
+  - short_directory_list_item :STRING_CONSTANT := "directory_list_item";
+  - short_directory_list_end  :STRING_CONSTANT := "directory_list_end";
+  - short_file_list_begin     :STRING_CONSTANT := "file_list_begin";
+  - short_file_list_item      :STRING_CONSTANT := "file_list_item";
+  - short_file_list_end       :STRING_CONSTANT := "file_list_end";
+  
+  - is_integer n:STRING_CONSTANT :BOOLEAN <-
+  (
+    (n = prototype_uinteger_64) ||
+    {n = prototype_uinteger_32} ||
+    {n = prototype_uinteger_16} ||
+    {n = prototype_uinteger_8 } ||
+    {n = prototype_integer_64 } ||
+    {n = prototype_integer_32 } ||
+    {n = prototype_integer_16 } ||
+    {n = prototype_integer_8  }
+  );
+  
+  - is_section n:STRING_CONSTANT :BOOLEAN <-
+  (
+    (n = section_inherit)   ||
+    {n = section_insert}    ||
+    {n = section_interrupt} ||
+    {n = section_private}   ||
+    {n = section_public}    ||
+    {n = section_mapping}   ||
+    {n = section_directory} ||
+    {n = section_external}
+  );
+  
+  - get str:ABSTRACT_STRING :STRING_CONSTANT <-
+  ( + result:STRING_CONSTANT;
+    + tmp:ABSTRACT_STRING;
+    ? {str != NULL};
+    ? {list != NULL};
+   
+    tmp := list.reference_at str;
+    (tmp = NULL).if {
+      result := STRING_CONSTANT.create_copy str;
+      list.fast_add result;
+    } else {
+      result ?= tmp;      
+    };
+    ? {result == str};
+    result
+  );
+  
+  - get_intern str:STRING_CONSTANT :STRING_CONSTANT <-
+  ( + result:STRING_CONSTANT;
+    + v,m:INTEGER;
+    
+    tmp_name.copy str;    
+    tmp_name.append "__";    
+    count_variable := count_variable + 1;
+    v:=count_variable;
+    { v = 0 }.until_do {
+      m := v & 31;
+      (m < 26).if {
+	tmp_name.add_last ('A' +# m);
+      } else {
+	tmp_name.add_last ('0' +# (m-26));
+      };
+      v := v >> 5;
+    };    
+    result := STRING_CONSTANT.create_copy tmp_name;
+    list.fast_add result;
+    result
+  );
+  
+  - new:STRING <-
+  ( + result:STRING;
+    
+    (free.is_empty).if {
+      result := STRING.create 128;
+    } else {
+      result := free.last;
+      free.remove_last;
+    };
+    result
+  );
+  
+  - alias str:STRING :STRING_CONSTANT <-
+  ( + result:STRING_CONSTANT;
+    
+    result := get str;
+    free.add_last str;
+    str.clear;
+    result
+  );
+  
+  - make <-
+  (
+    tmp_name := STRING.create 255;
+    
+    list := HASHED_SET[ABSTRACT_STRING].create;
+    
+    // Keyword list :
+    list.add keyword_section;
+    list.add keyword_right;
+    list.add keyword_left;
+    list.add keyword_ldots;
+    list.add keyword_old;
+    list.add keyword_expanded;    
+    list.add keyword_strict;
+    list.add keyword_result;
+    
+    // Symbol list :
+    list.add symbol_affect_immediate;
+    list.add symbol_affect_cast;
+    list.add symbol_affect_code;
+    list.add symbol_auto_export;
+    list.add symbol_equal;
+    list.add symbol_not_equal;
+    
+    // Section name list :
+    list.add section_header;
+    list.add section_inherit;
+    list.add section_insert;
+    list.add section_interrupt;
+    list.add section_private;    
+    list.add section_public;
+    list.add section_mapping;
+    list.add section_directory;
+    list.add section_external;
+    
+    list.add section_default;
+    list.add section_common;
+    
+    // Les types de base :
+    list.add prototype_integer;
+    list.add prototype_real;
+    list.add prototype_character;
+    list.add prototype_string_constant;
+    list.add prototype_native_array;
+    list.add prototype_native_array_volatile;
+    list.add prototype_block;
+    list.add prototype_boolean;
+    list.add prototype_true;
+    list.add prototype_false;
+    list.add prototype_pointer;
+    list.add prototype_context;
+    list.add prototype_generic;
+    list.add prototype_type_id;
+    list.add prototype_self;
+        
+    // Integers :
+    list.add prototype_uinteger_64;
+    list.add prototype_uinteger_32;
+    list.add prototype_uinteger_16;
+    list.add prototype_uinteger_8;
+    list.add prototype_integer_64;
+    list.add prototype_integer_32;
+    list.add prototype_integer_16;
+    list.add prototype_integer_8;
+    list.add prototype_n_a_character;
+    list.add prototype_n_a_n_a_character;    
+    
+    // Les variables de base :
+    list.add variable_self;    
+    list.add variable_context;
+    list.add variable_null;
+    list.add variable_void;      
+    list.add variable_tmp;
+    
+    list.add variable_lisaac;     
+    list.add variable_input_file; 
+    list.add variable_output_file;
+    list.add variable_target;     
+    
+    // Slot particulier :
+    list.add slot_name;
+    list.add slot_category;
+    list.add slot_external;
+    list.add slot_default;
+    list.add slot_type;
+    list.add slot_version;
+    list.add slot_date;
+    list.add slot_comment;
+    list.add slot_author;
+    list.add slot_bibliography;
+    list.add slot_language;
+    list.add slot_copyright;
+    list.add slot_bug_report;
+
+    list.add slot_value;    
+    list.add slot_self;    
+    list.add slot_id;
+    list.add slot_clone;
+    list.add slot_main;
+    list.add slot_infix;
+    list.add slot_prefix;
+    list.add slot_storage;
+    
+    // Type C :
+    list.add c_void;
+    list.add c_struct;
+    list.add code_empty;
+    list.add separate;    
+    
+    list.add path_lisaac;
+    list.add short_format;
+    
+    // Shorter slot :
+    list.add short_token;
+    list.add short_type_file;
+    list.add short_begin;
+    list.add short_end;
+    list.add short_keyword;
+    list.add short_keyword_section;
+    list.add short_integer;
+    list.add short_character;
+    list.add short_string; 
+    list.add short_operator;
+    list.add short_prototype;
+    list.add short_keyprototype;
+    list.add short_comment_line;
+    list.add short_comment_slot_line;
+    list.add short_comment_header_line;
+    list.add short_comment;
+    list.add short_slot;
+    list.add short_slot_call;
+    list.add short_slot_style;
+    list.add short_block;
+    list.add short_external;
+
+    list.add short_index;
+    list.add short_default;
+    list.add short_directory_list_begin;
+    list.add short_directory_list_item;
+    list.add short_directory_list_end;
+    list.add short_file_list_begin;
+    list.add short_file_list_item;
+    list.add short_file_list_end; 
+
+    // Operator '=' and '!=' :
+    operator_equal     := operator_to_name ("__infix",symbol_equal);
+    operator_not_equal := operator_to_name ("__infix",symbol_not_equal);
+  );
+  
+Section Private  
+  
+  - tmp_name:STRING;
+  
+  - count_variable:INTEGER;
+  
+
+
+
+

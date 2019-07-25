@@ -1,0 +1,113 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := REAL_CST;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Real float constant";
+  
+Section Inherit
+  
+  + parent_constant:Expanded CONSTANT;
+  
+Section Public
+
+  //
+  // Value.
+  //
+
+  + value:STRING_CONSTANT;
+    
+  //
+  // Creation.
+  //
+
+  - create p:POSITION value v:STRING_CONSTANT type t:TYPE_FULL :SELF<-
+  ( + result:SELF;
+    result := clone;
+    result.make p value v type t;
+    result
+  );
+  
+  - make p:POSITION value v:STRING_CONSTANT type t:TYPE_FULL <-
+  (
+    position := p;
+    value    := v;
+    static_type := t;    
+  );
+
+  - my_copy:SELF <- SELF.create position value value type static_type;
+
+  //
+  // Comparaison.
+  //
+  
+  - '==' Right 60 other:EXPR :BOOLEAN <-
+  ( + p:REAL_CST;
+    p ?= other;
+    (p != NULL) && {value = p.value} && {static_type = p.static_type}
+  );
+
+  //
+  // Depend.
+  //
+
+  - cast_type p:TYPE_FULL <-
+  (
+    ? { p != type_real };
+    static_type := p;    
+  );
+
+  //
+  // Generation.
+  //
+
+  - genere buffer:STRING <-
+  (
+    buffer.append value;
+  );
+
+  //
+  // Display.
+  //
+
+  - display buffer:STRING <-
+  (
+    buffer.add_last '(';
+    static_type.append_name_in buffer;
+    buffer.add_last ')';
+    buffer.append value;
+    display_ref buffer;
+  );
+  
+  
+
+
+
+
+
+
+
+

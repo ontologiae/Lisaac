@@ -1,34 +1,45 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                            Lisaac OS Library                              //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
   + name        :=FILE_SYSTEM;
-  
-  - category    :=MICRO;
-  
-  - bibliography:="http://IsaacOS.com";
 
-  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";  
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
 
   - comment     :="File System manager for Unix.";
   
-section INHERIT  
+  - external := `#include <unistd.h>`; // For `getcwd'
+  
+Section Inherit  
   
   + parent_directory:DIRECTORY <-
   ( + cwd:NATIVE_ARRAY[CHARACTER];
     + root:ENTRY;
     + result:DIRECTORY;
+    
     string_tmp.clear;
     cwd := string_tmp.to_external;
     `getcwd(@cwd,255)`;
     string_tmp.from_external cwd;
+    
     ABSTRACT_ENTRY.reduce_path string_tmp;
     root := ENTRY.get_entry string_tmp;
     ? {root != NULL};
@@ -36,16 +47,17 @@ section INHERIT
     //  STD_ERROR.put_string "FATAL ERROR: root directory `";
     //  STD_ERROR.put_string string_tmp;
     //  STD_ERROR.put_string "' not found.";
-      "Error Root 1\n".print;
+      "FILE_SYSTEM : Error Root 1\n".print;
       OBJECT.die_with_code (OBJECT.exit_failure_code);
     };
     root := root.open;
+    
     ? {root != NULL};
     (root = NULL).if {
-    //  STD_ERROR.put_string "FATAL ERROR: root directory `";
-    //  STD_ERROR.put_string string_tmp;
-    //  STD_ERROR.put_string "' not open.";
-      "Error root 2\n".print;
+      //STD_ERROR.put_string "FATAL ERROR: root directory `";
+      //STD_ERROR.put_string string_tmp;
+      //STD_ERROR.put_string "' not open.";
+      "FILE_SYSTEM : Error root 2\n".print;
       OBJECT.die_with_code (OBJECT.exit_failure_code);
     };
     result ?= root;
@@ -53,11 +65,11 @@ section INHERIT
     parent_directory := result
   );
   
-section PRIVATE  
+Section Private  
   
   - string_tmp:STRING := STRING.create 255; 
   
-section ISAAC
+Section ISAAC
   
   - make <-
   // Isaac compatibility.

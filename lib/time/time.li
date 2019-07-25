@@ -1,99 +1,110 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
-  * name        := TIME;
-  
-  - category    := MICRO;
-  
-  - bibliography:= "http://IsaacOS.com";
+  + name        :=Expanded  TIME;
 
-  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";  
 
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+  
   - comment     := "Time";
   
   - type        := `unsigned long`;
   
   - default     := `0`:TIME;
-section INHERIT
+  
+Section Insert
   
   - parent_object:OBJECT := OBJECT;
   
-section PRIVATE
+Section Private
   
-  - to_raw:UINTEGER <-
+  - to_raw:UINTEGER_32 <-
   (
-    UINTEGER.force_conversion self
+    CONVERT[SELF, UINTEGER_32].on Self
   );
-section PUBLIC
+Section Public
 
-  - hour:USMALLINT <-
+  - hour:UINTEGER_8 <-
   (
-    (to_raw >> 24).to_usmallint
+    (to_raw >> 24).to_uinteger_8
   );
   
-  - minute:USMALLINT <-
+  - minute:UINTEGER_8 <-
   (
-    ((to_raw & 0FF0000h) >> 16).to_usmallint
+    ((to_raw & 0FF0000h) >> 16).to_uinteger_8
   );
   
-  - second:USMALLINT <-
+  - second:UINTEGER_8 <-
   (
-    ((to_raw & 0FF00h) >> 8).to_usmallint
+    ((to_raw & 0FF00h) >> 8).to_uinteger_8
   );
 
-  - csecond:USMALLINT <-
+  - csecond:UINTEGER_8 <-
   (
-    (to_raw & 0FFh).to_usmallint
+    (to_raw & 0FFh).to_uinteger_8
   );
   
-section PUBLIC
+Section Public
   
-  - '>' right 60 other:SELF :BOOLEAN <- to_raw > other.to_raw;
+  - '>' Right 60 other:SELF :BOOLEAN <- to_raw > other.to_raw;
   
-  - '<' right 60 other:SELF :BOOLEAN <- to_raw < other.to_raw;
+  - '<' Right 60 other:SELF :BOOLEAN <- to_raw < other.to_raw;
   
-  - '>=' right 60 other:SELF :BOOLEAN <- to_raw >= other.to_raw;
+  - '>=' Right 60 other:SELF :BOOLEAN <- to_raw >= other.to_raw;
   
-  - '<=' right 60 other:SELF :BOOLEAN <- to_raw <= other.to_raw;
+  - '<=' Right 60 other:SELF :BOOLEAN <- to_raw <= other.to_raw;
   
   - to_csecond:INTEGER <- hour.to_integer * (60*60*100) + 
   minute.to_integer * (60*100) + 
   second.to_integer * 100 + 
   csecond;
   
-  - '-' right 60 other:SELF :SELF <- 
+  - '-' Right 60 other:SELF :SELF <- 
   ( 
-    create_csecond (self -# other)
+    create_csecond (Self -# other)
   );
   
   // BSBS: A uniformiser -# +# ???
   
-  - '-#' right 60 other:SELF :INTEGER <- to_csecond - other.to_csecond;
+  - '-#' Right 60 other:SELF :INTEGER <- to_csecond - other.to_csecond;
   
-  - '+#' right 60 other:INTEGER :TIME <-
+  - '+#' Right 60 other:INTEGER :TIME <-
   ( 
     create_csecond (to_csecond + other)
   );
   
-  - create h,m,s,cs:NUMERIC :TIME <-
-  ( + t:UINTEGER;
+  - create (h,m,s,cs:INTEGER) :TIME <-
+  ( + t:UINTEGER_32;
     ? {h.in_range 0 to 23};
     ? {m.in_range 0 to 59};
     ? {s.in_range 0 to 59};
     ? {cs.in_range 0 to 99};
     
-    t := h.to_uinteger <<24;
-    t := t | (m.to_uinteger << 16);
-    t := t | (s.to_uinteger << 8);
+    t := h.to_uinteger_32 <<24;
+    t := t | (m.to_uinteger_32 << 16);
+    t := t | (s.to_uinteger_32 << 8);
     t := t | cs;
-    force_conversion t
+    CONVERT[UINTEGER_32, SELF].on t
   );
   
   - create_csecond csec:INTEGER :SELF <-
@@ -109,7 +120,7 @@ section PUBLIC
     s := diff / 100;
     cs := diff % 100;    
     
-    create h,m,s,cs
+    create (h,m,s,cs)
   );
   
   - to_string:STRING <-

@@ -1,0 +1,370 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := PROTOTYPE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Prototype source code.";
+  
+Section Inherit
+
+  + parent_named:Expanded NAMED;
+  
+Section Public
+  
+  - prototype_list:FAST_ARRAY[PROTOTYPE] :=
+  FAST_ARRAY[PROTOTYPE].create_with_capacity 512;
+  // BSBS: Voir si il faut le conserver !
+  
+  - prototype_dico:HASHED_DICTIONARY[PROTOTYPE,STRING_CONSTANT] := 
+  HASHED_DICTIONARY[PROTOTYPE,STRING_CONSTANT].create;
+  
+Section Public
+  
+  + index:INTEGER; // in `prototype_list', for POSITION.
+  
+  //
+  // Slots
+  //
+  
+  + slot_list:HASHED_DICTIONARY[ITM_SLOT,STRING_CONSTANT];
+  
+  + first_slot:ITM_SLOT;
+  
+  + last_slot:ITM_SLOT;
+  
+  - add_slot s:ITM_SLOT <-
+  (     
+    slot_list.fast_put s to (s.name);
+    (first_slot = NULL).if {
+      first_slot := s;
+    } else {
+      last_slot.set_next s;
+    };
+    last_slot := s;
+  );    
+  
+  - search_parent n:STRING_CONSTANT :BOOLEAN <-
+  ( + slot:ITM_SLOT;
+    + result:BOOLEAN;
+    
+    slot := first_slot;
+    {
+      (result := (slot != NULL) && {slot.id_section.is_inherit_or_insert}) 
+      && {slot.name != n}
+    }.while_do {
+      slot := slot.next;
+    };
+    result
+  );
+      
+  //
+  // Run Slot.
+  //
+  
+  - init_slot_for typ:TYPE <-
+  ( + cur:ITM_SLOT;
+            
+    // Parent.
+    cur := first_slot;
+    {(cur != NULL) && {cur.id_section.is_inherit_or_insert}}.while_do {      
+      typ.slot_run.add_last (SLOT.create cur type typ);
+      cur := cur.next;
+    };
+    // Mapping.
+    (is_mapping).if {
+      {cur != NULL}.while_do {
+	(cur.id_section.is_mapping).if {
+	  ? {cur.style = '+'};
+	  typ.slot_run.add_last (SLOT.create cur type typ);
+	};
+	cur := cur.next;
+      };
+    };	  
+  );
+	  
+  //
+  // Mapping / Late binding / Expanded
+  //
+  
+  + type_style:STRING_CONSTANT; // Reference / Expanded / Strict.
+  
+  + is_mapping:BOOLEAN;
+
+  - set_mapping <-
+  (
+    is_mapping := TRUE;
+  );
+  
+  - set_type_style s:STRING_CONSTANT <- 
+  ( 
+    type_style := s;
+  );
+  
+  //
+  // Cast information.
+  //
+
+  + export_list:HASHED_SET[ITM_TYPE_SIMPLE];
+  + import_list:HASHED_SET[ITM_TYPE_SIMPLE];
+
+  - set_export_list s:HASHED_SET[ITM_TYPE_SIMPLE] <-
+  (
+    export_list := s;
+  );
+
+  - set_import_list s:HASHED_SET[ITM_TYPE_SIMPLE] <-
+  (
+    import_list := s;
+  );
+
+  //
+  // Source file.
+  //
+
+  + filename:STRING_CONSTANT;   // Pathname of prototype.
+
+  + source  : STRING;   // Text source code.
+  
+  + generic_count:INTEGER;
+  
+  //
+  // Default value.
+  //
+
+  + default_value:ITM_CODE;
+
+  - set_default_value v:ITM_CODE <-
+  (
+    default_value := v;
+  );
+  
+  //
+  // Creation.
+  //
+  
+  - create f:STRING_CONSTANT name n:STRING_CONSTANT generic_count c:INTEGER :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make f name n generic_count c;
+    result
+  );
+  
+  - make f:STRING_CONSTANT name n:STRING_CONSTANT generic_count c:INTEGER <-
+  ( //+ file:STD_FILE;
+    //+ entry:ENTRY;
+    + file:POINTER;
+    + sz:INTEGER;
+    ? {! prototype_dico.fast_has n};
+    ? {n != NULL};
+    
+    filename := f;
+    name     := n;    
+    generic_count := c;
+        
+    // Collection.    
+    index := prototype_list.count;
+    prototype_list.add_last Self;
+    prototype_dico.fast_put Self to name; 
+    
+    // Read file.            
+    //entry := FILE_SYSTEM.get f;        
+    //file ?= entry.open_read_only;
+    //source := STRING.create (file.size);
+    //file.read source size (file.size);
+    //file.close;
+    
+    file := FS_MIN.open_read f;
+    sz := FS_MIN.file_size file;
+    source := STRING.create (sz+1);
+    FS_MIN.read file in source size sz;
+    FS_MIN.close file;
+    
+    // Init.    
+    slot_list := HASHED_DICTIONARY[ITM_SLOT,STRING_CONSTANT].create;        
+    position  := POSITION.create Self line 1 column 0;
+    //
+  );
+
+  //
+  // Execute.
+  //
+            
+  - depend <-
+  ( + slot_main:SLOT;
+    + self_main:EXPR;
+    + base:NODE;
+    + pass_count_depend:INTEGER;
+    + i:INSTR;
+    + cmd:STRING_CONSTANT;
+    
+    + buf:STRING;
+
+    //
+    // Creation list execution.
+    //    
+    context_main := CONTEXT.push_extern position profil NULL;
+        
+    // Command argument.
+    (is_ansi).if {      
+      (debug_level_option != 0).if {
+	cmd := 
+	"arg_count  = argc;\n\
+	\  arg_vector = argv;\n\
+	\  signal(SIGINT,interrupt_signal)";
+      } else {
+	cmd := 
+	"arg_count  = argc;\n\
+        \  arg_vector = argv";
+      };
+      i := EXTERNAL_C.create position text cmd
+      access NULL persistant TRUE type (TYPE_VOID.default);
+      list_current.add_last i;
+    };
+    // Main Call.
+    slot_main := get_slot_main;
+    self_main := PROTOTYPE_CST.create position type (type_input.default);
+    base := NODE.new_read (slot_main.position) slot slot_main 
+    receiver self_main self self_main;    
+    list_current.add_last base;
+        
+    // Result.    
+    list_current.add_last (INTEGER_CST.create position value 0 type (type_integer.default)); 
+    list_main := list_current;
+    CONTEXT.pop_extern;
+            
+    //
+    // Detect life code.
+    //    
+    pass_count := 1;
+    (is_quiet_operation).if_false {
+      STD_ERROR.put_string "Depending pass: .";   
+    };
+    {modify_count != 0}.while_do {
+      modify_count := 0;
+      (is_quiet_operation).if_false {
+	STD_ERROR.put_string ".";
+      };
+      pass_count := pass_count + 1;
+      NODE.extend_pass;
+    };
+    
+    (is_quiet_operation).if_false {
+      STD_ERROR.put_string " (";
+      STD_ERROR.put_integer pass_count;
+      STD_ERROR.put_string ")\n";
+    };
+    
+    buf := STRING.create 2000;
+            
+    (is_verbose).if {
+      PROFIL_LIST.display;
+    };
+    
+    //
+    // Evaluation.
+    //
+    (is_quiet_operation).if_false {
+      STD_ERROR.put_string "Executing pass: ";
+    };
+    pass_count_depend := pass_count;
+    
+    // First pass (recursive)    
+    is_executing_pass := TRUE;            
+    (is_quiet_operation).if_false {
+      STD_ERROR.put_string "*";
+    };
+    pass_count := pass_count + 1;
+    PROFIL_LIST.execute_pass_recursive;
+    // End first pass.    
+    {
+      modify_count := 0;
+      null_counter := 0;
+      (is_quiet_operation).if_false {
+	STD_ERROR.put_string ".";            
+      };
+      pass_count := pass_count + 1;            
+      
+      SWITCH.reset_switch_new_pass;
+      
+      PROFIL_LIST.execute_pass;      
+      
+      (SWITCH.switch_new_pass).if {
+	new_execute_pass;	
+      };
+      
+    }.do_while 
+    //{pass_count < 40};
+    {modify_count != 0};
+    
+    (is_quiet_operation).if_false {
+      STD_ERROR.put_string " (";
+      STD_ERROR.put_integer (pass_count - pass_count_depend);
+      STD_ERROR.put_string ")\n";          
+    };
+    //    
+    (is_verbose).if {
+      list_main.debug_display;
+      PROFIL_LIST.display;
+    };            
+  );
+    
+  //
+  // Type C
+  //
+    
+  + type_c     :STRING_CONSTANT;
+
+  - set_c_type n:STRING_CONSTANT <-
+  (
+    type_c := n;    
+  );
+  
+Section Private
+  
+  - get_slot_main:SLOT <-
+  ( + result:SLOT;    
+    + s:ITM_SLOT;    
+            
+    s := first_slot;    
+    {  
+      ((s.id_section.is_public) && {s.name = ALIAS_STR.slot_main}).if {	
+	(! s.result_is_void).if {
+	  semantic_error ((s.position),"Unix mode: Not value return.");
+	};
+	(s.argument_count != 1).if {
+	  semantic_error ((s.position),"Unix mode: Not argument list.");
+	};	
+	result := type_input.get_slot (s.name);
+      };
+      s := s.next;
+    }.do_while {(s != NULL) && {result = NULL}};
+    
+    (result = NULL).if {
+      semantic_error (position,"Entry point not found (slot `main' in `Section Public').");
+    };        
+    result     
+  );
+

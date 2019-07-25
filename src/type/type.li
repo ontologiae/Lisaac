@@ -1,0 +1,795 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := TYPE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Type without style";
+  
+Section Inherit
+  
+  - parent_hashable:HASHABLE := HASHABLE;
+  
+  + parent_any:Expanded ANY;
+      
+Section TYPE
+  
+  // BSBS: Vu que les ITM_TYPE sont aliaser, il n'est pas necessary d'aliaser les TYPE !
+  // Mais attention au pb des TYPE_GENERIC et de leur alias de slot_run...
+  
+  - dico_type:HASHED_DICTIONARY[TYPE,STRING_CONSTANT] := HASHED_DICTIONARY[TYPE,STRING_CONSTANT].create;
+    
+  - index_count:INTEGER;
+    
+Section Public
+  
+  + subtype_list:HASHED_SET[TYPE];
+  
+  + default:TYPE_FULL;
+  
+  + size:INTEGER;
+  
+  //
+  //
+  //
+  
+  + last_pass_binding:INTEGER;
+  
+  - is_late_binding:BOOLEAN <- pass_count = last_pass_binding;
+  
+  - set_late_binding <-
+  (    
+    last_pass_binding := pass_count;
+  );
+  
+  //
+  //
+  //
+  
+  + itm_type:ITM_TYPE_SIMPLE;
+
+  + prototype:PROTOTYPE;
+  
+  - type_c:STRING_CONSTANT <- prototype.type_c;
+  
+  + slot_run:FAST_ARRAY[SLOT];
+  
+  + index:INTEGER;
+  
+  - intern_name:STRING_CONSTANT <- name;
+    
+  - name:STRING_CONSTANT <- prototype.name;
+    
+  - hash_code:INTEGER <- intern_name.hash_code;
+  
+  //
+  // Import / Export manager.
+  //
+  
+  - is_export_to t:TYPE :BOOLEAN <-
+  ( + j:INTEGER;
+    + result:BOOLEAN;
+    (prototype.export_list != NULL).if {
+      j := prototype.export_list.lower;
+      {
+	(j <= prototype.export_list.upper) && 
+	{prototype.export_list.item j.name != t.name}
+      }.while_do {
+	j := j + 1;
+      };
+      // prototype.export_list.fast_has (t.itm_type) 
+      result := (j <= prototype.export_list.upper);
+    };
+    result
+  );
+  
+  - is_import_to t:TYPE :BOOLEAN <-
+  ( + j:INTEGER;
+    + result:BOOLEAN;
+    
+    (prototype.import_list != NULL).if {
+      j := prototype.import_list.lower;
+      {
+	(j <= prototype.import_list.upper) && 
+	{prototype.import_list.item j.name != t.name}
+      }.while_do {
+	j := j + 1;
+      };
+      // prototype.export_list.fast_has (t.itm_type) 
+      result := (j <= prototype.import_list.upper);
+    };
+    result
+  );
+      
+  //
+  // Get.
+  //
+    
+  - get itm_typ:ITM_TYPE_SIMPLE :TYPE_FULL <-  
+  ( + result:TYPE_FULL;    
+    + base:TYPE;
+    + styl:STRING_CONSTANT;    
+        
+    base := dico_type.fast_reference_at (itm_typ.name);
+    (base = NULL).if {      
+      base := TYPE.clone;
+      dico_type.fast_put base to (itm_typ.name);
+      base.make itm_typ;
+    };
+    //        
+    styl := itm_typ.style;
+    (styl = NULL).if {           
+      result := base.default;
+    } else {
+      (styl = ALIAS_STR.keyword_expanded).if {	
+	result := base.default + TYPE_FULL.expanded_bit;	
+      } else {	
+	result := base.default + TYPE_FULL.strict_bit;
+      };
+    };
+    result
+  );
+  
+  //
+  // Contract
+  //
+  
+  - last_type_contract:TYPE;
+  
+  - search_require n:STRING_CONSTANT :ITM_SLOT <-
+  ( + j:INTEGER;
+    + result:ITM_SLOT;
+    + typ:TYPE;
+        
+    j := slot_run.lower;
+    {
+      (j <= slot_run.upper) && 
+      {slot_run.item j.id_section.is_inherit_or_insert} &&
+      {result = NULL}	
+    }.while_do {
+      typ    := slot_run.item j.get_type_result.raw;
+      result := typ.prototype.slot_list.fast_reference_at n;
+      ((result = NULL) || {result.require = NULL}).if {
+	result := typ.search_require n;
+      } else {
+	last_type_contract := typ;
+      };
+      j := j + 1;
+    };
+    result
+  );
+
+  - search_ensure n:STRING_CONSTANT :ITM_SLOT <-
+  ( + j:INTEGER;
+    + result:ITM_SLOT;
+    + typ:TYPE;
+            
+    j := slot_run.lower;
+    {
+      (j <= slot_run.upper) && 
+      {slot_run.item j.id_section.is_inherit_or_insert} &&
+      {result = NULL}	
+    }.while_do {
+      typ    := slot_run.item j.get_type_result.raw;
+      result := typ.prototype.slot_list.fast_reference_at n;
+      ((result = NULL) || {result.ensure = NULL}).if {
+	result := typ.search_ensure n;
+      } else {
+	last_type_contract := typ;
+      };
+      j := j + 1;
+    };
+    result
+  );
+
+  //
+  // Searching.
+  //
+  
+  - add_subtype t:TYPE <-  
+  ( + j:INTEGER;
+    
+    (! subtype_list.fast_has t).if {    
+      subtype_list.fast_add t;
+      j := slot_run.lower;
+      {
+	(j <= slot_run.upper) && 
+	{slot_run.item j.id_section.is_inherit_or_insert}      
+      }.while_do {
+	(slot_run.item j.id_section.is_inherit).if {
+	  slot_run.item j.get_type_result.raw.add_subtype t;
+	};
+	j := j + 1;
+      };
+    };
+  );
+  
+  - get_slot n:STRING_CONSTANT :SLOT <-
+  // Static lookup algorithm.
+  ( + result:SLOT;
+    + j:INTEGER;
+        
+    result := get_local_slot n;
+    (result = NULL).if {
+      j := slot_run.lower;
+      {
+	(j <= slot_run.upper) && 
+	{slot_run.item j.id_section.is_inherit_or_insert} &&
+	{result = NULL}	
+      }.while_do {
+	result := slot_run.item j.get_type_result.get_slot n;
+	j := j + 1;
+      };
+    };
+    result
+  );
+  
+  - get_local_slot n:STRING_CONSTANT :SLOT <-
+  ( + j:INTEGER;
+    + itm_slot:ITM_SLOT;
+    + result:SLOT;
+        
+    j := slot_run.lower;
+    {(j <= slot_run.upper) && {slot_run.item j.name != n}}.while_do {
+      j := j + 1;
+    };
+    (j <= slot_run.upper).if {
+      result := slot_run.item j;
+    } else {
+      itm_slot := prototype.slot_list.fast_reference_at n;
+      (itm_slot != NULL).if {	
+	result := SLOT.create itm_slot type Self;
+	slot_run.add_last result;		
+      };
+    };
+    result
+  );  
+    
+  - get_path_slot n:STRING_CONSTANT :SLOT <-
+  ( + result:SLOT;
+    + j:INTEGER;
+    
+    j := slot_run.lower;
+    {result = NULL}.while_do {
+      ? {j <= slot_run.upper}; 
+      ? {slot_run.item j.id_section.is_inherit_or_insert};
+      result := slot_run.item j.get_type_result.get_slot n;
+      j := j + 1;
+    };
+    ? {result != NULL};
+    slot_run.item (j-1)
+  );
+              
+  //
+  // Genere.
+  //
+  
+  - genere_list:FAST_ARRAY[TYPE] := FAST_ARRAY[TYPE].create_with_capacity 128;
+  
+  - add_genere_list <-
+  ( 
+    ((slot_run != NULL) && {(slot_run.is_empty) || {slot_run.first != NULL}}).if {
+      (genere_list.fast_first_index_of Self > genere_list.upper).if { // BSBS: a revoir !!
+	genere_list.add_last Self;
+      };
+    };
+  );
+  
+  - genere_all_struct <-
+  (
+    TYPE_NULL.genere_struct;
+    (genere_list.lower).to (genere_list.upper) do { j:INTEGER;
+      genere_list.item j.genere_struct;
+    };
+    (debug_level_option != 0).if {
+      TYPE_CONTEXT.genere_struct;
+    };
+  );
+  
+  - id_counter_with_type:INTEGER    := 4;
+  - id_counter_without_type:INTEGER := 0;
+   
+  - slot_size:FAST_ARRAY[FAST_ARRAY[SLOT_DATA]] :=
+  ( + result:FAST_ARRAY[FAST_ARRAY[SLOT_DATA]];
+    
+    result := FAST_ARRAY[FAST_ARRAY[SLOT_DATA]].create_with_capacity 5;
+    0.to 4 do { j:INTEGER;
+      result.add_last (FAST_ARRAY[SLOT_DATA].create_with_capacity 8);
+    };
+    result
+  );  
+  
+  - genere_struct <-
+  ( + slot_data:SLOT_DATA;    
+    + slot:SLOT;
+    + tab:FAST_ARRAY[SLOT_DATA];
+    + action:BLOCK;
+    + tg:TYPE_GENERIC;
+   
+    ((slot_run.is_empty) || {slot_run.first != NULL}).if {            
+            
+      // Depending.
+      (slot_run.lower).to (slot_run.upper) do { j:INTEGER;
+	slot := slot_run.item j;
+	((slot.style = '+') && {slot.lower_style = 0}).if {
+	  action := { s:SLOT_DATA;
+	    (
+	      (
+		(s.ensure_count > 0) || 
+		{s.id_section.is_mapping}
+	      ) && 
+	      {s.type.raw != Self} &&
+	      {(s.type.is_expanded) || {s.type.is_strict} || {s.type.raw = type_block}}
+	    ).if {	      
+	      s.type.raw.genere_struct;
+	    };
+	  };
+	  (slot.slot_data_list != NULL).if {
+	    (slot.slot_data_list.lower).to (slot.slot_data_list.upper) do { k:INTEGER;
+	      action.value (slot.slot_data_list.item k);
+	    };
+	  };
+	  action.value (slot.slot_data);
+	};
+      };
+      // Sort slot.
+      (slot_run.lower).to (slot_run.upper) do { j:INTEGER;
+	slot := slot_run.item j;		
+	(slot.style = '+').if {
+	  // In struct.
+	  (slot.lower_style = 0).if {
+	    action := { s:SLOT_DATA;
+	      (
+		(s.id_section.is_mapping) || 
+		{s.ensure_count > 0}
+	      ).if {
+		add_slot_struct s;
+	      };
+	    };
+	    (slot.slot_data_list != NULL).if {
+	      (slot.slot_data_list.lower).to (slot.slot_data_list.upper) do { k:INTEGER;
+		action.value (slot.slot_data_list.item k);
+	      };
+	    };
+	    action.value (slot.slot_data);
+	  };
+	  slot_data := slot.slot_id;
+	  ((slot_data != NULL) && {slot_data.ensure_count > 0}).if {
+	    add_slot_struct slot_data;
+	  };
+	} else {	    
+	  // In global.
+	  (slot.lower_style = 0).if {
+	    action := { s:SLOT_DATA;
+	      (s.ensure_count > 0).if {
+		s.genere output_glob;
+	      };
+	    };
+	    (slot.slot_data_list != NULL).if {
+	      (slot.slot_data_list.lower).to (slot.slot_data_list.upper) do { k:INTEGER;
+		action.value (slot.slot_data_list.item k);
+	      };
+	    };
+	    action.value (slot.slot_data);
+	  };
+	  slot_data := slot.slot_id;
+	  ((slot_data != NULL) && {slot_data.ensure_count > 0}).if {
+	    slot_data.slot_id.genere output_glob;
+	  };
+	};
+      };
+      
+      (
+	(prototype.name = ALIAS_STR.prototype_native_array) || 
+	{prototype.name = ALIAS_STR.prototype_native_array_volatile}
+      ).if {
+	tg ?= Self;
+	tg.generic_list.first.raw.genere_struct;
+      } else {      
+	(type_c != NULL).if {
+	  0.to 4 do { j:INTEGER;
+	    tab := slot_size.item j;
+	    // BSBS: A tester sont utilité !
+	    (! tab.is_empty).if {
+	      semantic_error ((tab.first.position),"Slot is not possible with a type C");
+	    };	  
+	  };
+	  output_decl.append "// ";
+	  output_decl.append intern_name;
+	  output_decl.add_last '\n';
+	  (name = ALIAS_STR.prototype_true).if {
+	    output_decl.append "#define TRUE__ 1\n";
+	  }.elseif {name = ALIAS_STR.prototype_false} then {
+	    output_decl.append "#define FALSE__ 0\n";
+	  }.elseif {is_late_binding} then {	    
+	    semantic_error ((tab.first.position),"Late binding is not possible with a type C");
+	  } else {
+	    output_decl.append "typedef ";
+	    output_decl.append type_c;
+	    output_decl.append " __";
+	    output_decl.append intern_name;	  
+	    output_decl.append ";\n";
+	  };
+	  output_decl.add_last '\n';
+	} else {
+	  output_decl.append "// ";
+	  output_decl.append name;
+	  output_decl.append "\n#define __";
+	  output_decl.append intern_name;
+	  output_decl.append "__ ";
+	  string_tmp.clear;
+	  (is_late_binding).if {	  
+	    id_counter_with_type.append_in output_decl;	  
+	    id_counter_with_type := id_counter_with_type + 1;
+	    string_tmp.append "  unsigned long __id;\n";
+	    (prototype.is_mapping).if {	    
+	      semantic_error ((prototype.position),	    
+	      "Late binding is not possible with `mapping' object.");
+	    };
+	  } else {	  
+	    id_counter_without_type.append_in output_decl;	  
+	    id_counter_without_type := id_counter_without_type + 1;	  
+	  };
+	  output_decl.add_last '\n';	
+	  4.downto 0 do { j:INTEGER;
+	    tab := slot_size.item j;
+	    (tab.lower).to (tab.upper) do { i:INTEGER;
+	      slot_data := tab.item i;	      
+	      ((prototype.is_mapping) && {slot_data.type.is_expanded_c}).if {
+		string_tmp.append "  volatile ";
+	      } else {
+		string_tmp.append "  ";	    
+	      };
+	      slot_data.genere string_tmp;
+	    };
+	    tab.clear;
+	  };            
+	  	  
+	  (Self = type_block).if {
+	    string_tmp.append "  void *self;\n";
+	  };
+	  
+	  (string_tmp.is_empty).if {
+	    string_tmp.append "  void *Nothing;\n";
+	  };
+	  	  
+	  output_decl.append "typedef struct ";
+	  output_decl.append intern_name;
+	  output_decl.append "_struct __";
+	  output_decl.append intern_name;	    
+	  output_decl.append ";\nstruct ";
+	  output_decl.append intern_name;
+	  output_decl.append "_struct {\n";
+	  output_decl.append string_tmp;
+	  (prototype.is_mapping).if {
+	    output_decl.append "} __attribute__ ((packed));\n";
+	  } else {
+	    output_decl.append "};\n";
+	  };	    
+	  // Prototype declaration.
+	  output_decl.append "__";
+	  output_decl.append intern_name;
+	  output_decl.add_last ' ';
+	  output_decl.append intern_name;
+	  output_decl.add_last '_';
+	  (is_late_binding).if {
+	    output_decl.append "={__";
+	    output_decl.append intern_name;
+	    output_decl.append "__}";
+	  };
+	  output_decl.append ";\n"; 	  
+	  output_decl.append "#define ";
+	  output_decl.append intern_name;
+	  output_decl.append "__ (&";
+	  output_decl.append intern_name;
+	  output_decl.append "_)\n\n";	  
+	};
+      };
+      
+      // Flag on:
+      slot_run.force NULL to 0;
+    };    
+  );
+  
+Section Private  
+  
+  - add_slot_struct s:SLOT_DATA <-
+  (     
+    (prototype.is_mapping).if {
+      (s.id_section.is_mapping).if { 
+	slot_size.first.add_last s;
+      } else {
+	semantic_error (s.position,"Slot is not in `Mapping' section.");
+      };
+    } else {      
+      ((s.type.is_expanded) && {! s.type.is_default_expanded}).if {
+	slot_size.item 4.add_last s;
+      } else {
+	slot_size.item (s.type.size).add_last s;
+      };
+    };
+  );
+  
+Section Public  
+  
+  //
+  // Declaration generation.
+  //
+    
+  - put_reference_declaration buffer:STRING <-
+  (        
+    buffer.append "__";
+    buffer.append intern_name;        
+    add_genere_list;
+  );
+  
+  - put_reference_star_declaration buffer:STRING <-
+  (    
+    (Self != type_block).if {
+      buffer.add_last '*';
+    };
+  );
+  
+  - put_expanded_declaration buffer:STRING <-
+  (    
+    buffer.append "__";
+    buffer.append intern_name;    
+    add_genere_list;
+  );
+  
+  - put_generic_declaration buffer:STRING <-
+  (         
+    (Self = type_block).if {
+      put_expanded_declaration buffer;
+    } else {
+      buffer.append (ALIAS_STR.c_void);    
+    };
+  );
+  
+  //
+  // Code source generation.
+  //
+  
+  - put_id buffer:STRING <-
+  (
+    buffer.append (ALIAS_STR.separate); // <=> "__"
+    buffer.append intern_name;
+    buffer.append (ALIAS_STR.separate);
+  );
+
+  - put_access_id e:EXPR in buffer:STRING <-
+  // For switch.
+  ( + t:TYPE;
+    
+    t := e.static_type.raw;
+    (t = type_boolean).if {
+      e.genere buffer;  
+    }.elseif {t = type_block} then {
+      e.genere buffer;
+      //buffer.append ".__id";
+    } else {
+      buffer.append "((struct ___OBJ *)";
+      e.genere buffer;
+      buffer.append ")->__id";
+    };
+  );
+  
+  - put_value buffer:STRING <-
+  (
+    buffer.append intern_name;
+    buffer.append (ALIAS_STR.separate);
+    add_genere_list;
+  );
+    
+  //
+  // Display.
+  //
+  
+  - append_name_in buf:STRING <-
+  (
+    buf.append name;
+  );
+  
+  - print <-
+  (
+    string_tmp.clear;
+    append_name_in string_tmp;
+    string_tmp.print;
+  );
+  
+Section Public
+  
+  - '==' Right 60 other:TYPE :BOOLEAN <- (Self = other);
+  
+  - is_sub_type other:TYPE :BOOLEAN <-
+  ( + result:BOOLEAN;
+               
+    (Self = other).if {
+      result := TRUE;
+    }.elseif {other.subtype_list != NULL} then {
+      result := other.subtype_list.fast_has Self;
+    };
+    result
+  );
+
+  - is_sub_type_with_name n:STRING_CONSTANT :BOOLEAN <-
+  ( + result:BOOLEAN;
+    + idx:INTEGER;
+    + type_parent:TYPE;
+            
+    (n = prototype.name).if {
+      result := TRUE;
+    } else {
+      idx := slot_run.lower;
+      {
+	(idx <= slot_run.upper) && 
+	{slot_run.item idx.id_section.is_inherit_or_insert}  &&
+	{! result}
+      }.while_do {
+	(slot_run.item idx.id_section.is_inherit).if {
+	  type_parent := slot_run.item idx.get_type_result.raw;	
+	  result := type_parent.is_sub_type_with_name n;
+	};
+	idx := idx + 1;
+      };
+    };
+    result
+  );
+  
+Section TYPE
+
+  - load_prototype n:STRING_CONSTANT generic_count gen_count:INTEGER :PROTOTYPE <-
+  ( + j:INTEGER;
+    + entry:POINTER; //ENTRY;
+    + result:PROTOTYPE;
+    
+    result := PROTOTYPE.prototype_dico.fast_reference_at n;
+    (result = NULL).if {
+      // Search directory.
+      j := path_directory.lower;
+      string_tmp2.clear;
+      {(j > path_directory.upper) || {result != NULL}}.until_do {
+	string_tmp.copy (path_directory.item j);
+	(n.lower).to (n.upper) do { i:INTEGER;
+	  string_tmp.add_last (n.item i.to_lower);
+	};	
+	string_tmp.append ".li";		
+	string_tmp2.append string_tmp;
+	string_tmp2.add_last '\n';
+	
+	entry := FS_MIN.open_read string_tmp;
+	((entry != NULL) /*&& {entry.is_file}*/).if {
+	  // Load prototype.
+	  FS_MIN.close entry;
+	  result := PROTOTYPE.create (ALIAS_STR.get string_tmp) name n generic_count gen_count;	  
+	  PARSER.go_on result;
+	};
+	j := j + 1;
+      };
+      (result = NULL).if {
+	string_tmp.copy n;
+	string_tmp.append " is not found in\n";
+	string_tmp.append string_tmp2;
+	POSITION.put_error semantic text string_tmp;
+	(list_current != NULL).if {
+	  list_current.position.put_position;
+	};
+	POSITION.send_error;
+      };	
+    } else {
+      (result.generic_count != gen_count).if {
+	POSITION.put_error semantic text "Incorrect genericity definition.";
+	result.position.put_position;
+	(last_position.code != 0).if {
+	  last_position.put_position;
+	} else {
+	  ? {crash; TRUE};
+	};
+	POSITION.send_error;
+      };
+    };
+    result
+  );
+  
+  - make itm_typ:ITM_TYPE_SIMPLE <-
+  ( + mask_bit:UINTEGER_8;    
+    
+    index       := index_count;
+    index_count := index_count + 1;
+    prototype   := load_prototype (itm_typ.name) generic_count 0;
+    itm_type    := itm_typ;    
+    slot_run    := FAST_ARRAY[SLOT].create_with_capacity 10; // BSBS: A voir.    
+    (prototype.type_style = ALIAS_STR.keyword_expanded).if {
+      // Expanded.
+      mask_bit := TYPE_FULL.expanded_bit | TYPE_FULL.default_expanded_bit;
+    }.elseif {prototype.type_style = ALIAS_STR.keyword_strict} then {
+      // Strict.
+      mask_bit := TYPE_FULL.strict_bit | TYPE_FULL.default_strict_bit;
+    };
+    default := TYPE_FULL.create Self with mask_bit;
+    prototype.init_slot_for Self;    
+    //
+    subtype_list := HASHED_SET[TYPE].create;
+    subtype_list.fast_add TYPE_NULL;
+    add_subtype Self;
+    // Size.
+    (POINTER.object_size = 4).if {
+      size := 2; // 32 bits
+    } else {
+      size := 3; // 64 bits
+    };
+    name
+    .when (ALIAS_STR.prototype_integer) then {
+      size := 2; // 32 bits
+    }
+    .when (ALIAS_STR.prototype_integer_8) or (ALIAS_STR.prototype_uinteger_8) then {
+      size := 0; // 8 bits
+    }
+    .when (ALIAS_STR.prototype_character) or (ALIAS_STR.prototype_boolean) then {
+      size := 0; // 8 bits
+    }
+    .when (ALIAS_STR.prototype_integer_16) or (ALIAS_STR.prototype_uinteger_16) then {
+      size := 1; // 16 bits
+    }
+    .when (ALIAS_STR.prototype_integer_32) or (ALIAS_STR.prototype_uinteger_32) then {
+      size := 2; // 32 bits
+    }
+    .when (ALIAS_STR.prototype_integer_64) or (ALIAS_STR.prototype_uinteger_64) then {
+      size := 3; // 64 bits
+    };    
+  );
+  
+Section TYPE, TYPE_FULL
+    
+  + type_full_list:FAST_ARRAY[TYPE_FULL];
+  
+  - get_with flg:UINTEGER_8 :TYPE_FULL <-
+  ( + result:TYPE_FULL;
+    + i:INTEGER;
+        
+    (flg = default.flag).if {
+      result := default;
+    } else {
+      (type_full_list = NULL).if {
+	type_full_list := FAST_ARRAY[TYPE_FULL].create_with_capacity 2;
+	result := TYPE_FULL.create Self with flg;
+	type_full_list.add_last result;
+      } else {
+	{(i <= type_full_list.upper) && {type_full_list.item i.flag != flg}}.while_do {
+	  i := i + 1;
+	};
+	(i <= type_full_list.upper).if {
+	  result := type_full_list.item i;
+	} else {
+	  result := TYPE_FULL.create Self with flg;
+	  type_full_list.add_last result;
+	};
+      };
+    };
+    result
+  );
+  
+  
+  

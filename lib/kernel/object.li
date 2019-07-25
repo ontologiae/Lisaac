@@ -1,32 +1,49 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
-  - name        := OBJECT;
-  
-  - category    := MICRO;
-  
-  - bibliography:= "http://IsaacOS.com";
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Root object.";
+  + name    := OBJECT;
 
-section PUBLIC
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  - comment := "Root object.";
+  
+Section Insert
+  
+  - parent_bad_reflex:Expanded BAD_REFLEX;
     
+Section Public
+        
   //
   // Compiler consideration.
   //
   
-  - object_size:INTEGER <- `52`;
+  - object_size:INTEGER <- `12`;
   
-  - pointer_size:INTEGER <- POINTER.pointer_size;
+  //- pointer_size:INTEGER <- POINTER.pointer_size;
 
-  - is_debug_mode:BOOLEAN <- `50`;
-  //- is_debug_mode:BOOLEAN <- FALSE;  // For testing only call on NULL
+  - is_debug_mode:BOOLEAN <- debug_level != 0;
+    
+  - debug_level:INTEGER <- `11`;
   
   - is_ansi:BOOLEAN := SYSTEM.is_ansi;
   
@@ -34,10 +51,30 @@ section PUBLIC
   // Control Error.
   //
   
-  - is_clonable:BOOLEAN <- `0`;
+  - top_runtime_stack:POINTER <- `14`;
   
-  - print_runtime_stack <- `51`;
+  - print_runtime_stack_on ptr:POINTER <- 
+  (
+    (debug_level != 0).if {
+      `stack_print((_____CONTEXT *)@ptr)`;
+    };
+  );
   
+  - print_runtime_stack <- print_runtime_stack_on top_runtime_stack;
+  
+  - crash_on ptr:POINTER with_message msg:ABSTRACT_STRING <-
+  (
+    print_runtime_stack_on ptr;
+    msg.print;
+    '\n'.print;
+    die_with_code exit_failure_code;    
+  );
+  
+  - crash_with_message msg:ABSTRACT_STRING <-
+  ( 
+    crash_on top_runtime_stack with_message msg;
+  );
+
   - die_with_code code:INTEGER <- SYSTEM.exit code;
   // Terminate execution with exit status code `code'.
   
@@ -46,59 +83,80 @@ section PUBLIC
   - exit_failure_code:INTEGER := 1;
   
   - deferred <-
-  (
-    crash_with_message "Slot deferred.\n";
+  ( + ptr:POINTER;
+    ptr := top_runtime_stack;
+    crash_on ptr with_message "Slot deferred.";
   );
-  
-  - check_crash <-
-  (
-    print_runtime_stack;
-    die_with_code exit_failure_code;
-    //crash_with_message "Check runtime error.\n";  
-  );
-  
+    
   - crash <-
-  (
-    crash_with_message "Crash system.\n";
+  ( + ptr:POINTER;
+    ptr := top_runtime_stack;
+    crash_on ptr with_message "Crash system.";
   );
   
   - not_yet_implemented <-
-  (
-    crash_with_message "Sorry, Some Feature is Not Yet Implemented.\n";
-  );
-
-  - crash_with_message msg:ABSTRACT_STRING <-
-  (
-    print_runtime_stack;
-    msg.print;
-    die_with_code exit_failure_code;
+  ( + ptr:POINTER;
+    ptr := top_runtime_stack;
+    crash_on ptr with_message "Sorry, Some Feature is Not Yet Implemented.";
   );
   
   //
   // Common Function.
   //
   
-  - '=='  right 60 other:SELF :BOOLEAN <- deferred;
+  - '=='  Right 60 other:SELF :BOOLEAN <- ( deferred; FALSE);
   
-  - '!==' right 60 other:SELF :BOOLEAN <- (! (self == other));
+  - '!==' Right 60 other:SELF :BOOLEAN <- (! (Self == other));
+  
+  
+  - clone_allocation_size:UINTEGER_32;
   
   - clone:SELF <- 
   ( + result:SELF;
     + ptr:POINTER;
-    + sz:INTEGER;
-    ? {is_clonable};
-    sz := object_size;
-    (sz = 0).if {
-      result := self;
-    } else {
-      ptr := MEMORY.allocation sz;
-      MEMORY.copy ptr from to_pointer size sz;
-      result := force_conversion ptr;
+    + sz:UINTEGER_32;
+    + typ_id:INTEGER;
+      
+    sz := object_size.to_uinteger_32;        
+    (sz = 0).if {      
+      result := Self;
+    } else {      
+      typ_id := type_id_intern;      
+      //ptr := `malloc((@sz + 3)&0xFFFFFFFC)`:POINTER;                  
+      clone_allocation_size := clone_allocation_size + sz;                  
+      (typ_id = -1).if {
+	ptr := MEMORY.alloc_size sz;
+      } else {
+	ptr := MEMORY.alloc_type (typ_id.to_uinteger_32) size sz;
+      };                                         
+      //MEMORY.copy to_pointer to ptr size sz;
+      result := CONVERT[POINTER,SELF].on ptr;            
+      copy_intern_in result;      
     };
     result
   );
   
-  - to_pointer:POINTER <- POINTER.force_conversion self;
+  - free_allocation_memory <- 
+  // Static free, don't use with GC.
+  ( + ptr:POINTER;
+    + sz:UINTEGER_32;
+    + typ_id:INTEGER;
+      
+    sz := object_size.to_uinteger_32;        
+    (sz != 0).if {      
+      typ_id := type_id_intern;      
+      //ptr := `free(@Self)`;                  
+      clone_allocation_size := clone_allocation_size - sz;      
+      ptr := to_pointer;
+      (typ_id = -1).if {
+	MEMORY.free ptr size sz;
+      } else {
+	MEMORY.free ptr type (typ_id.to_uinteger_32);
+      };                       
+    };
+  );
+    
+  - to_pointer:POINTER <- CONVERT[SELF,POINTER].on Self;
   
   - same_dynamic_type other:OBJECT :BOOLEAN <-
   ( + convert:SELF;
@@ -106,8 +164,25 @@ section PUBLIC
     convert != NULL        
   );
   
-  //
-  // The Guru section
-  //
+  - to_self_on obj:OBJECT :SELF <-
+  [
+    -? {obj != NULL};
+  ]      
+  ( + result:SELF;
+    
+    result ?= obj;
+    result
+  )
+  [
+    +? {Result != NULL};
+  ];    
   
-  - force_conversion obj:OBJECT :SELF <- `@obj`:SELF;
+  //
+  // The Guru section (Don't touch, don't use !)
+  //
+    
+  - is_expanded_type:BOOLEAN <- `0`;
+  
+  - type_id_intern:INTEGER   <- `1`;
+    
+  - copy_intern_in other:SELF <- `*@other = *@Self`;

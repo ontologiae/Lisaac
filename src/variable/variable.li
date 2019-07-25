@@ -1,0 +1,345 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := VARIABLE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Parent for all variable";
+  
+Section Inherit
+  
+  + parent_named:Expanded NAMED;
+  
+Section Public
+
+  - is_local:BOOLEAN <- FALSE;
+      
+  //
+  //
+  //
+  
+  + intern_name:STRING_CONSTANT;
+  
+  - set_intern_name n:STRING_CONSTANT <-
+  (
+    intern_name := n;
+  );
+  
+  - is_argument:BOOLEAN <- (style = ' ');
+  
+  //
+  // Type.
+  //
+
+  + type:TYPE_FULL;
+    
+  - set_type t:TYPE_FULL <-
+  (
+    ? {t != NULL};
+    type      := t;    
+  );
+  
+  - init <- deferred;
+  
+  //
+  // Typing Context.
+  //
+  
+  - is_static:BOOLEAN <- 
+  ((type.is_expanded) && {type.raw != type_boolean}) || 
+  {name = ALIAS_STR.variable_self};
+  
+  + type_list:TYPES;
+
+  + ensure_count:INTEGER;
+
+  - set_ensure_count c:INTEGER <-
+  // Necessary for `context' local, `External' argument slot and `BLOCK' manager.
+  (
+    ensure_count := c;
+  );
+  
+  + require_list:FAST_ARRAY[WRITE];
+  + require_first:WRITE;
+  - require_count:INTEGER <- 
+  ( + result:INTEGER;
+    (require_first != NULL).if {
+      (require_list != NULL).if {
+	result := 1 + require_list.count;
+      } else {
+	result := 1;
+      };
+    };
+    result
+  );
+
+  + level_type:INTEGER;
+  - level_pass:INTEGER;
+
+  - update <- 
+  (
+    level_pass := level_pass + 1; 
+  );
+  
+  // BSBS: BIG OPTIMISATION.  
+  // Les listes de types s'auto-entretien (références cyclique)
+  // Il faut absolument régler ca !!!
+  // Nous avons le même pb avec 'item' et 'put__to'
+  // Il faudrai uniformiser la chose (item et put_to travailleraient
+  // avec une variable virtuel...)
+  // Aussi, il faut que tu profite de last_write pour optimiser...
+  - get_type t:TYPES_TMP <-
+  ( + tmp_type:TYPES_TMP;
+    + typ:TYPE;
+           
+    (level_type < level_pass).if {
+      (! is_static).if {          
+	typ := type.raw;
+	(
+	  (is_executing_pass) || {
+	    (require_first != NULL)/* && 
+	    {
+	      ((typ.subtype_list = NULL) || {typ.subtype_list.count > type_list.count}) ||
+	      {typ = type_block}
+	    }*/
+	}).if {	  
+	  level_type := level_pass;
+	  tmp_type := TYPES_TMP.new;      
+	  (require_first != NULL).if {	
+	    require_first.get_type tmp_type;		
+	    (require_list != NULL).if {
+	      (require_list.lower).to (require_list.upper) do { j:INTEGER;	    
+		require_list.item j.get_type tmp_type;
+	      };  
+	    };
+	  };	  
+	  type_list := tmp_type.update type_list;
+	};
+      };
+    };
+    t.union type_list;
+  );
+  
+  //
+  // Sequence optimizer
+  //
+
+  - reset_last_write w:WRITE <-
+  (  
+    deferred;
+  );
+  
+  - set_write w:WRITE <-
+  (                
+    deferred;
+  );
+  
+  - set_read <-
+  (
+    deferred;
+  );
+  
+  - get_last_index:INTEGER <- deferred;
+  
+  - get_last_value rec:EXPR :EXPR <-
+  ( 
+    deferred;
+    NULL
+  );
+  
+  //
+  // Writing.
+  //
+  
+  - write p:POSITION value val:EXPR :WRITE <-
+  ( 
+    write p with NULL value val
+  );
+
+  - write p:POSITION with r:EXPR value val:EXPR :WRITE <-
+  (
+    write_direct p with r value val
+  );
+    
+  - write_direct p:POSITION with r:EXPR value val:EXPR :WRITE <-
+  ( + e:WRITE;
+    + tmp_type:TYPES_TMP;    
+    
+    e := new_write p with r value val;        
+    // Update require list.
+    (require_first = NULL).if {
+      require_first := e;      
+    } else {
+      (require_list = NULL).if {
+	require_list := FAST_ARRAY[WRITE].create_with_capacity 1; 
+      };
+      require_list.add_last e;
+    };
+            
+    // Update type list.
+    ((! is_static) && {e.value != NULL} && {! is_executing_pass}).if {
+      tmp_type := TYPES_TMP.new;
+      (type_list != NULL).if {
+	tmp_type.union type_list;
+      };	
+      e.value.get_type tmp_type;       
+      type_list := tmp_type.update type_list;		
+    };         
+    
+    e.set_create;
+    e
+  );
+    
+  - unwrite e:WRITE <-
+  ( + idx:INTEGER;
+    
+    (! e.is_create).if {
+      crash;
+    };
+    
+    (e.is_delete).if {
+      crash;
+    };
+    
+    e.set_delete;    
+    
+    reset_last_write e;
+        
+    // Require list.
+    (require_first = e).if {
+      (require_list != NULL).if {
+	require_first := require_list.first;
+	require_list.remove_first;
+	(require_list.is_empty).if {
+	  require_list := NULL;
+	};
+      } else {
+	require_first := NULL;
+      };
+    } else {            
+      ? {require_list != NULL};
+      //e.debug_display;
+      (require_list = NULL).if {
+	intern_name.print; '\n'.print;
+	crash_with_message "******** VARIABLE.unwrite : BUG require_list = NULL **********\n";
+      };
+      
+      idx := require_list.fast_first_index_of e;
+      ? {idx <= require_list.upper};
+      
+      (idx > require_list.upper).if {
+	intern_name.print; '\n'.print;
+	/*
+	e.to_pointer.print; ' '.print;
+	
+	e.debug_display;
+	"\n--------\n".print;
+	require_first.debug_display;
+	(require_list.lower).to (require_list.upper) do { j:INTEGER;
+	  require_list.item j.debug_display;
+	};
+	*/
+	crash_with_message "******** VARIABLE.unwrite : BUG !!! **********\n";
+      };
+      
+      require_list.remove idx;
+      (require_list.is_empty).if {
+	require_list := NULL;
+      };
+    };
+  );
+
+  //
+  // Reading.
+  //
+  
+  - read p:POSITION :READ <-
+  ( 
+    read p with NULL
+  );
+  //[ ? {ensure_count := Old ensure_count + 1}; ];
+  
+  - read p:POSITION with r:EXPR :READ <-
+  (
+    read_direct p with r
+  );
+    
+  - read_direct p:POSITION with r:EXPR :READ <-
+  ( + result:READ;
+        
+    result := new_read position with r;   
+    ensure_count := ensure_count + 1;    
+        
+    result
+  );
+  //[ ? {ensure_count := Old ensure_count + 1}; ];
+  
+  - unread e:READ <-
+  (    
+        
+    ensure_count := ensure_count - 1;
+    (ensure_count < 0).if {
+      "C'est : ".print;
+      e.debug_display;
+      "\n dans :\n".print;
+      list_current.debug_display;
+      '\n'.print;
+      crash;
+    };
+    ? {ensure_count >= 0};
+  );
+    
+  //
+  // Display.
+  //
+
+  - display buffer:STRING <-
+  (
+    buffer.append intern_name;
+    buffer.add_last ':';
+    buffer.append (type.intern_name);
+  );
+  
+  - display_type buffer:STRING <-
+  (
+    buffer.add_last '{';
+    (type_list.is_empty).if_false {
+      (type_list.lower).to (type_list.upper - 1) do { j:INTEGER;
+	buffer.append (type_list.item j.intern_name);
+	buffer.add_last 'x';
+      };
+      buffer.append (type_list.last.intern_name);
+    };
+    buffer.add_last '}';
+  );
+  
+  
+  
+
+
+
+
+
+

@@ -1,0 +1,110 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := ITM_EXTERNAL_TYPE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "External C with type result";
+  
+Section Inherit
+  
+  + parent_itm_extern:Expanded ITM_EXTERN;
+  
+Section Public
+
+  //
+  // Data
+  //
+
+  + type:ITM_TYPE_MONO;
+
+  + type_list:FAST_ARRAY[ITM_TYPE_MONO];
+
+  + is_persistant:BOOLEAN;
+
+  //
+  // Constructor
+  //
+  
+  - create p:POSITION text n:STRING_CONSTANT persistant per:BOOLEAN :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make p text n persistant per;
+    result
+  );
+  
+  - make p:POSITION text n:STRING_CONSTANT persistant per:BOOLEAN <-
+  (
+    position      := p;
+    extern        := n;
+    is_persistant := per;
+  );
+  
+  //
+  // Added
+  //
+
+  - set_type t:ITM_TYPE_MONO <-
+  (
+    type := t;
+  );
+
+  - set_type_list t:FAST_ARRAY[ITM_TYPE_MONO] <-
+  (
+    type_list := t;
+  );
+
+  //
+  // Runnable
+  //
+    
+  - to_run_expr:EXPR <- 
+  ( + e:EXTERNAL_C;
+    + lt:TYPES_TMP;
+    + lst_acc:FAST_ARRAY[EXPR];
+    + typ:TYPE;
+    + tmp:VARIABLE;   
+
+    lst_acc := get_access;
+    e := EXTERNAL_C.create position text last_code 
+    access lst_acc persistant is_persistant type (type.to_run);
+    
+    (type_list != NULL).if {
+      lt := TYPES_TMP.new;
+      (type_list.lower).to (type_list.upper) do { j:INTEGER;
+	typ := type_list.item j.to_run.raw;	
+	lt.add typ;
+      };
+      e.set_living_type (lt.to_types);
+    };
+    // For argument.
+    tmp := e.static_type.get_temporary position;
+    list_current.add_last (tmp.write position value e);
+    tmp.read position
+  );
+
+
+
+

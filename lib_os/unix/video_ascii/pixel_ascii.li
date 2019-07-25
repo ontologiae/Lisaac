@@ -1,15 +1,28 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                             Isaac Library                                *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
-
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                            Lisaac OS Library                              //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
   + name        := PIXEL_ASCII;
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
   - comment     := "Version Generic ASCII";
   
@@ -19,18 +32,18 @@ section HEADER
   
   - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
   
-section INHERIT
+Section Inherit
   
   - parent_pixel:PIXEL := PIXEL;
   
-section MAPPING
+Section Mapping
   
   + char:CHARACTER;
   
-section PUBLIC
+Section Public
   
-  - red:USMALLINT <- 
-  ( + result:USMALLINT;
+  - red:UINTEGER_8 <- 
+  ( + result:UINTEGER_8;
     
     char
     .when ' ' then { result := 31;  }
@@ -44,12 +57,12 @@ section PUBLIC
     result
   );
   
-  - green:USMALLINT <- red;
+  - green:UINTEGER_8 <- red;
 
-  - blue:USMALLINT <- red;
+  - blue:UINTEGER_8 <- red;
  
-  - color col:UINTEGER :UINTEGER <- 
-  ( + gray:UINTEGER;
+  - color col:UINTEGER_32 :UINTEGER_32 <- 
+  ( + gray:UINTEGER_32;
     
     gray := ((col >> 16)+ ((col & 00FF00h)>>8)+ ((col & 0000FFh) >> 3))/3;
     gray
@@ -64,7 +77,7 @@ section PUBLIC
     col
   );
   
-  - color_rgb r,g,b:USMALLINT <- 
+  - color_rgb (r,g,b:UINTEGER_8) <- 
   ( + gray:INTEGER;
     
     gray := (r.to_integer+g+b)/3;
@@ -79,19 +92,19 @@ section PUBLIC
     .when 224 to 255 then { char := '#'; };
   );
   
-  - size:USMALLINT          := 8; 
-  - red_size:USMALLINT      := 3;      
-  - red_pos:USMALLINT       := 0;
-  - green_size:USMALLINT    := 3;
-  - green_pos:USMALLINT     := 3;
-  - blue_size:USMALLINT     := 2;
-  - blue_pos:USMALLINT      := 6;
-  - reserved_size:USMALLINT := 0;
-  - reserved_pos:USMALLINT  := 0;
+  - size:UINTEGER_8          := 8; 
+  - red_size:UINTEGER_8      := 3;      
+  - red_pos:UINTEGER_8       := 0;
+  - green_size:UINTEGER_8    := 3;
+  - green_pos:UINTEGER_8     := 3;
+  - blue_size:UINTEGER_8     := 2;
+  - blue_pos:UINTEGER_8      := 6;
+  - reserved_size:UINTEGER_8 := 0;
+  - reserved_pos:UINTEGER_8  := 0;
   
   - copy other:SELF <-  
   (
-    color_rgb (other.red),(other.green),(other.blue);
+    color_rgb ((other.red),(other.green),(other.blue));
   );
   
   - print <-
@@ -107,7 +120,7 @@ section PUBLIC
     char := c;
   );
 
-  - to_pixel_ascii:PIXEL_ASCII <- self;
+  - to_pixel_ascii:PIXEL_ASCII <- Self;
 
 
 

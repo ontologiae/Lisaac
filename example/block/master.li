@@ -1,43 +1,35 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                             Lisaac Compiler                              *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-/*
-Copyright (C) 2005  Benoit Sonntag
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Library General Public
-License as published by the Free Software Foundation; either
-version 2 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Library General Public License for more details.
-
-You should have received a copy of the GNU Library General Public
-License along with this library; if not, write to the
-Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-Boston, MA  02110-1301, USA.
-*/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
-  + name        := MASTER; 
+  + name     := MASTER; 
+     
+  - author   := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment  := "";
   
-  - category    := MACRO;
-  
-  - bibliography:= "http://IsaacOS.com";
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "";
-  
-section INHERIT  
+Section Inherit  
     
   - parent_object:OBJECT := OBJECT;
   
-section PRIVATE  
+Section Private  
   
   - action n:INTEGER if_odd odd_block:BLOCK if_even even_block:BLOCK <-
   (
@@ -48,30 +40,15 @@ section PRIVATE
     };
   );
       
-section PUBLIC  
+Section Public  
 
-  - make <-
+  - main <-
   ( + n:INTEGER;
     
     "Entry a number:\n".print;
-    IO.read_integer;
+    IO.read_integer;    
     n := IO.last_integer;
     action n 
     if_odd  { "This integer is odd.\n".print;  }
     if_even { "This integer is even.\n".print; };         
   );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

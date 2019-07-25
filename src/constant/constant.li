@@ -1,0 +1,75 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := CONSTANT;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Parent for all constants";
+  
+Section Inherit
+  
+  + parent_expr:Expanded EXPR; 
+  
+Section Public
+
+  //
+  // Comparison.
+  //
+  
+  - is_constant:BOOLEAN <- TRUE;
+  
+  - is_invariant:BOOLEAN <- TRUE;
+  
+  //
+  // Typing.
+  //
+    
+  + static_type:TYPE_FULL;
+  
+  - get_type t:TYPES_TMP <-
+  (                 
+    t.add (static_type.raw);
+  );
+
+  //
+  // Generation.
+  //
+
+  - remove <-
+  (
+    // Nothing. 
+  );
+  
+  - execute_unlink:INSTR <-
+  (
+    new_execute_pass;
+    NULL
+  );
+    
+  - execute_link:EXPR <- Self;
+
+  
+
+

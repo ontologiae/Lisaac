@@ -1,31 +1,42 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := Expanded CHAR_UNICODE -> UINTEGER_16;
 
-section HEADER
-  
-  * name        :=CHAR_UNICODE -> USHORTINT;
-  
-  - category    :=MICRO;
-  
-  - bibliography:="http://IsaacOS.com";
-  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     :="Static Unicode Character library .";
 
-  - type        :=`unsigned short`;
-  - default     :='\0';
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-section INHERIT
+  - comment := "Static Unicode Character library .";
+
+  - type    := `unsigned short`;
+  - default := '\0';
+  
+Section Insert
   
   - parent_character_ref:CHARACTER_REF := CHARACTER_REF;
   
-section PUBLIC
+Section Public
     
-  - in_range low:CHAR_UNICODE to up:CHAR_UNICODE :BOOLEAN <- ((self >= low) && {self<= up});
+  - in_range low:CHAR_UNICODE to up:CHAR_UNICODE :BOOLEAN <- ((Self >= low) && {Self<= up});
   
   //
   // General :
@@ -41,31 +52,31 @@ section PUBLIC
   
   //  - '==' other:CHAR_UNICODE :BOOLEAN <- (code == other.code); BSBS=> JBJB A revoir
 /* BSBS: JBJB a revoir ??
-  - code:USHORTINT <-
+  - code:UINTEGER_16 <-
   // Unicode code of Current.
-  ( + result:USHORTINT;
-    result:=to_ushortint;
+  ( + result:UINTEGER_16;
+    result:=to_uinteger_16;
     result
   );
 */  
-  - to_ushortint:USHORTINT <- USHORTINT.force_conversion self;
+  - to_uinteger_16:UINTEGER_16 <- UINTEGER_16.force_conversion Self;
   // Auto-cast
   
-  //  - print <- to_ushortint.print; BSBS-> JBJB a revoir !!
+  //  - print <- to_uinteger_16.print; BSBS-> JBJB a revoir !!
   
   - to_integer:INTEGER <-
   // Sign-extended conversion.
   ( + result:INTEGER;
     result:=code.to_integer;
-    ? {result.in_range (SMALLINT.minimum) to (SMALLINT.maximum)};
+    ? {result.in_range (INTEGER_8.minimum) to (INTEGER_8.maximum)};
     result
   );
   
-  - code:SMALLINT <-
+  - code:INTEGER_8 <-
   // ASCII code of Current.
   // No Sign-extended conversion.
-  ( + result:SMALLINT;
-    result:=to_smallint;
+  ( + result:INTEGER_8;
+    result:=to_integer_8;
     //? {result.in_range minimum to maximum};
     result
   );
@@ -74,7 +85,7 @@ section PUBLIC
   // Print.
   //
   
-  - print <- IO.put_character self;
+  - print <- IO.put_character Self;
   
   //
   // Switch case :
@@ -82,15 +93,15 @@ section PUBLIC
   
   - when value:CHAR_UNICODE then block:BLOCK :CHAR_UNICODE <-
   (
-    (self=value).if block;
-    self
+    (Self=value).if block;
+    Self
   );
   
   - when first_value:CHAR_UNICODE to last_value:CHAR_UNICODE then block:BLOCK :CHAR_UNICODE <-
   ( ? {first_value<=last_value};
     
-    ((self>=first_value) && {self<=last_value}).if block;
-    self
+    ((Self>=first_value) && {Self<=last_value}).if block;
+    Self
   );
   
   //
@@ -165,7 +176,7 @@ section PUBLIC
   // Case insensitive comparison.
   // No difference between upper/lower case letters.
   ( + result:BOOLEAN;
-    (self = other).if {
+    (Self = other).if {
       result:=TRUE;
     } else {
       code
@@ -184,7 +195,7 @@ section PUBLIC
   // Conversion to the corresponding upper case.
   ( + result:CHAR_UNICODE;
     ((code < 97) || {code > 122}).if {
-      result := self;
+      result := Self;
     } else {
       result := (code - 32).to_character;
     };
@@ -195,7 +206,7 @@ section PUBLIC
   // Conversion to the corresponding lower case.
   ( + result:CHAR_UNICODE;
     ((code < 65) || {code > 90}).if {
-      result := self;
+      result := Self;
     } else {
       result := (code + 32).to_character;
     };
@@ -205,10 +216,10 @@ section PUBLIC
   - is_letter:BOOLEAN <-
   // Is it a letter ('a' .. 'z' or 'A' .. 'Z') ?
   ( + result:BOOLEAN;
-    (self >= 'a').if {
-      result := (self <= 'z');
-    }.elseif {self >= 'A'} then {
-      result := (self <= 'Z');
+    (Self >= 'a').if {
+      result := (Self <= 'z');
+    }.elseif {Self >= 'A'} then {
+      result := (Self <= 'Z');
     };
     ? {result = (in_range 'A' to 'Z' | in_range 'a' to 'z')};
     result
@@ -217,8 +228,8 @@ section PUBLIC
   - is_digit:BOOLEAN <-
   // Belongs to '0'..'9'.
   ( + result:BOOLEAN;
-    (self >= '0').if {
-      result := (self <= '9');
+    (Self >= '0').if {
+      result := (Self <= '9');
     };
     ? {result = in_range '0' to '9'};
     result
@@ -227,7 +238,7 @@ section PUBLIC
   - is_binary_digit:BOOLEAN <-
   // Belongs to '0'..'1'.
   ( + result:BOOLEAN;
-    result:= (self = '0') || {self = '1'};
+    result:= (Self = '0') || {Self = '1'};
     ? {result = in_range '0' to '1'};
     result
   );
@@ -235,8 +246,8 @@ section PUBLIC
   - is_octal_digit:BOOLEAN <-
   // Belongs to '0'..'7'.
   ( + result:BOOLEAN;
-    (self >= '0').if {
-      result := (self <= '7');
+    (Self >= '0').if {
+      result := (Self <= '7');
     };
     ? {result = in_range '0' to '7'};
     result
@@ -247,20 +258,20 @@ section PUBLIC
   ( + result:BOOLEAN;
     (is_digit).if {
       result := TRUE;
-    }.elseif {self >= 'a'} then {
-      result := (self <= 'f');
-    }.elseif {self >= 'A'} then {
-      result := (self <= 'F');
+    }.elseif {Self >= 'a'} then {
+      result := (Self <= 'f');
+    }.elseif {Self >= 'A'} then {
+      result := (Self <= 'F');
     };
-    ? {result = ("0123456789abcdefABCDEF".has self)};
+    ? {result = ("0123456789abcdefABCDEF".has Self)};
     result
   );
   
   - is_lower:BOOLEAN <-
   // Is it some lowercase letter ('a'..'z')?
   ( + result:BOOLEAN;
-    (self >= 'a').if {
-      result:=(self <= 'z');
+    (Self >= 'a').if {
+      result:=(Self <= 'z');
     };
     result
   );
@@ -268,8 +279,8 @@ section PUBLIC
   - is_upper:BOOLEAN <-
   // Is it some uppercase letter ('A'..'Z')?
   ( + result:BOOLEAN;
-    (self >= 'A').if {
-      result:=(self <= 'Z');
+    (Self >= 'A').if {
+      result:=(Self <= 'Z');
     };
     result
   );
@@ -277,8 +288,8 @@ section PUBLIC
   - is_separator:BOOLEAN <-
   // True when character is a separator.
   (
-    (self= ' ') || {self = '\t'} || {self='\n'} ||
-    {self='\r'} || {self = '\0'} || {self='\f'} || {self='\v'}
+    (Self= ' ') || {Self = '\t'} || {Self='\n'} ||
+    {Self='\r'} || {Self = '\0'} || {Self='\f'} || {Self='\v'}
   );
   
   - is_letter_or_digit:BOOLEAN <-
@@ -292,7 +303,7 @@ section PUBLIC
   - is_ascii:BOOLEAN := TRUE;
   // Is character a 8-bit ASCII character?
   
-  - is_bit:BOOLEAN <- ((self='0') || {self='1'});
+  - is_bit:BOOLEAN <- ((Self='0') || {Self='1'});
   // True for `0' and `1'.
   
   - next:CHAR_UNICODE <-

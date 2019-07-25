@@ -1,0 +1,103 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := ITM_EXTERN;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Parent for externals";
+  
+Section Inherit
+  
+  + parent_itm_code:Expanded ITM_CODE;
+  
+Section Public
+
+  //
+  // Data
+  //
+
+  + extern:STRING_CONSTANT;
+
+  //  
+  // Constructor.
+  //
+  
+  - last_code:STRING_CONSTANT;
+  
+  - get_access:FAST_ARRAY[EXPR] <-
+  ( + idx,base:INTEGER;
+    + e:EXPR;
+    + loc:STRING_CONSTANT;
+    + var:VARIABLE;
+    + access_list:FAST_ARRAY[EXPR];
+    
+    string_tmp2.copy extern;
+    idx := string_tmp2.index_of '@' since (string_tmp2.lower);
+    (idx <= string_tmp2.count).if {
+      access_list := ALIAS_ARRAY[EXPR].new;
+      {idx > string_tmp2.upper}.until_do {
+	base := idx;
+	idx  := idx + 1;
+	string_tmp.clear;	
+	{
+	  (idx > string_tmp2.upper) || 
+	  {
+	    (! string_tmp2.item idx.is_letter_or_digit) &&
+	    {string_tmp2.item idx != '_'}
+	  }
+	}.until_do {
+	  string_tmp.add_last (string_tmp2.item idx);
+	  idx := idx + 1;
+	};
+	string_tmp.is_empty.if {
+	  syntax_error (position,"Incorrect external local slot access.");
+	};
+	loc := ALIAS_STR.get string_tmp;
+	var := lookup loc;
+	(var = NULL).if {
+	  string_tmp.copy "External local slot access `";
+	  string_tmp.append loc;
+	  string_tmp.append "' is not found.";
+	  semantic_error (position,string_tmp);
+	}.elseif {var.style = '-'} then {
+	  string_tmp.copy "External local slot access `";
+	  string_tmp.append loc;
+	  string_tmp.append "' must be in `+' style.";
+	  semantic_error (position,string_tmp);
+	};
+	e := var.read position;
+	access_list.add_last e;
+	
+	string_tmp2.remove_between base to (base+loc.count);
+	string_tmp2.insert_string "(@)" to base;
+	idx := string_tmp2.index_of '@' since (base+2);
+      };
+      access_list := ALIAS_ARRAY[EXPR].copy access_list;
+    };
+    last_code := ALIAS_STR.get string_tmp2;
+    access_list
+  );
+
+

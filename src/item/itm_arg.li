@@ -1,0 +1,115 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := ITM_ARG;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "One argument";
+  
+Section Inherit
+  
+  + parent_itm_argument:Expanded ITM_ARGUMENT;
+  
+Section Public
+
+  + name:STRING_CONSTANT;
+  
+  + type:ITM_TYPE_MONO;
+  
+  - count:INTEGER := 1;
+  
+  //
+  // Creation.
+  //
+  
+  - create p:POSITION name n:STRING_CONSTANT type t:ITM_TYPE_MONO :SELF <-
+  ( + result:SELF;
+    
+    result := SELF.clone;
+    result.make p name n type t;
+    result
+  );
+
+  - make p:POSITION name n:STRING_CONSTANT type t:ITM_TYPE_MONO <-
+  (
+    position := p;
+    name     := n;
+    type     := t;
+  );
+  
+  //
+  // Running.
+  //
+
+  - get_type idx:INTEGER :TYPE_FULL <-
+  (
+    ? {idx = 0};
+    type.to_run
+  );
+
+  - to_run arg_lst:FAST_ARRAY[LOCAL] <-
+  ( + loc:LOCAL;
+    + t:TYPE_FULL;
+    
+    t := type.to_run;    
+    loc := LOCAL.create position name name style ' ' type t;
+    arg_lst.add_last loc;
+  );
+  
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  (
+    buffer.append name;
+    buffer.add_last ':';
+    type.display buffer;    
+  );
+  
+  //
+  // Comparaison.
+  //
+  
+  - is_equal other:ITM_ARGUMENT <-
+  ( + o:ITM_ARG;
+    + err:STRING_CONSTANT;
+    ? {other != Self};
+    
+    o ?= other;
+    (o = NULL).if {
+      err := "Invariance number vector argument invalid.";
+    }.elseif {name != o.name} then {
+      err := "Invariance name argument invalid.";
+    }.elseif {type != o.type} then {
+      err := "Invariance type argument invalid.";
+    };
+    (err != NULL).if {
+      POSITION.put_error semantic text err;
+      position.put_position;
+      (other.position).put_position;
+      POSITION.send_error;
+    };
+  );

@@ -1,0 +1,1 @@
+grep $1 *.li constant/*.li compiler_any/*.li external/*.li external/arithmetic/*.li external/comparison/*.li external/logic/*.li item/*.li tools/*.li type/*.li variable/*.li dispatcher/*.li context/*.li code_life/*.li

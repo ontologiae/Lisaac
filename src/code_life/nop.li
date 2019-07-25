@@ -1,0 +1,65 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := NOP;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "The nop instruction";
+  
+  // BSBS: il faurai voir si c'est encore utile... (attention à la phase recursive)
+  
+Section Inherit
+  
+  + parent_instr:Expanded INSTR;
+  
+Section Public
+  
+  - my_copy:SELF <- Self;
+  
+  //
+  // Execute.
+  //
+
+  - remove <-
+  (
+    // Nothing.
+  );
+  
+  - execute:INSTR <- NULL;
+
+  //
+  // Display.
+  //
+
+  - display buffer:STRING <-
+  (
+    buffer.append "nop";
+  );
+
+
+
+
+
+

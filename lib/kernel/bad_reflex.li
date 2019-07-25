@@ -1,0 +1,64 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := BAD_REFLEX;
+
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  - comment := "Facility, but it's not in prototype spirit.";
+
+Section Public
+  
+  //
+  // Conditional.
+  //
+  
+  - if cond:BOOLEAN then true_block:BLOCK :BOOLEAN <-
+  (
+    cond.if true_block
+  );
+
+  - if cond:BOOLEAN then true_block:BLOCK else false_block:BLOCK <-
+  (
+    cond.if true_block else false_block;
+  );
+  
+  //
+  // Loop.
+  //
+  
+  - while cond:BLOCK do body:BLOCK <-
+  (
+    cond.while_do body;
+  );
+  
+  - do body:BLOCK while cond:BLOCK <-
+  (
+    body.do_while cond;
+  );
+  
+  - repeat body:BLOCK until cond:BLOCK <-
+  (
+    body.do_until cond;
+  );
+  

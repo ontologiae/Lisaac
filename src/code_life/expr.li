@@ -1,0 +1,286 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := EXPR;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Parent for all expression";
+  
+Section Inherit
+  
+  + parent_instr:Expanded INSTR;
+  
+Section Public
+  
+  - cardinality:INTEGER <- 1;
+  
+  //
+  // Comparison.
+  //
+  
+  - '==' Right 60 other:EXPR :BOOLEAN <- FALSE;
+  
+  - '!==' Right 60 other:EXPR :BOOLEAN <- ! (Self == other);
+  
+  //
+  // Type.
+  //
+  
+  - static_type:TYPE_FULL <- 
+  ( 
+    deferred; 
+    NULL
+  ); 
+    
+
+  - get_type t:TYPES_TMP <- deferred;
+
+  //
+  // Flag.
+  //
+
+  - is_constant:BOOLEAN <- FALSE;
+    
+  //
+  // Results manager.
+  //
+    
+  - put_result is_last:BOOLEAN :INSTR <-
+  ( + var:LOCAL;
+    + result:INSTR;
+    + idx:INTEGER;
+    + var_result:FAST_ARRAY[LOCAL];
+    + val:EXPR;
+    
+    (is_last).if {
+      result := Self;
+    } else {            
+      ((profil_first != NULL) && {profil_first.code = list_current}).if {		
+	idx := (stack_result.count - stack_result_lower);
+	var_result := profil_first.result_list;
+	(var_result != NULL).if {
+	  (idx <= var_result.upper).if {
+	    var := var_result.item idx;
+	  }.elseif {idx = var_result.count} then {
+	    var := profil_first.result_last;
+	  } else {
+	    POSITION.put_error semantic text "More result value for this slot";
+	    profil_first.slot.position.put_position;
+	    position.put_position;
+	    POSITION.send_error;  
+	  };
+	} else {
+	  (idx != 0).if {
+	    POSITION.put_error semantic text "One result value for this slot";
+	    profil_first.slot.position.put_position;
+	    position.put_position;
+	    POSITION.send_error;
+	  };
+	  var := profil_first.result_last;
+	  (var = NULL).if {
+	    POSITION.put_error semantic text "No result value for this slot";
+	    profil_first.slot.position.put_position;
+	    position.put_position;
+	    POSITION.send_error;
+	  };
+	};	
+      } else {
+	var := static_type.get_temporary position;
+      };
+      stack_result.add_last var;
+      val := check_type (var.type) with (var.position);
+      result := var.write position value val;      
+    };
+    result
+  );
+  
+  //
+  // Check type.
+  //
+  
+  - check_type t:TYPE_FULL with p:POSITION :EXPR <- 
+  ( + result:EXPR;    
+    + local:VARIABLE;
+    + instr:INSTR;    
+    + rec:EXPR;
+    + slot_name:STRING_CONSTANT;
+    + slot_msg:SLOT;    
+    + node:NODE;
+    + args:FAST_ARRAY[EXPR];
+    + typ:TYPE_FULL;
+    
+    ? {static_type != NULL};
+    ? {t != NULL};
+    
+    (t.affect_with static_type).if {          
+      result := Self;
+    } else {            
+      ? {list_current != NULL};
+
+      (static_type.is_export_to t).if {	
+	// Auto-export.	
+	local := static_type.get_temporary position;
+	instr := local.write position value Self;		
+	list_current.add_last instr;
+	//
+	string_tmp.copy "to_";
+	string_tmp.append (t.raw.name);
+	string_tmp.to_lower;
+	slot_name := ALIAS_STR.get string_tmp;
+	slot_msg  := static_type.get_slot slot_name; 
+	(slot_msg = NULL).if {	  
+	  string_tmp.clear;
+	  static_type.append_name_in string_tmp; 
+	  string_tmp.append " -> ";
+	  t.append_name_in string_tmp;
+	  string_tmp.append ". Slot `";
+	  string_tmp.append slot_name;
+	  string_tmp.append "' not found in `";
+	  static_type.append_name_in string_tmp;
+	  string_tmp.append "'.";
+	  POSITION.put_error semantic text string_tmp;
+	  p.put_position;
+	  static_type.prototype.position.put_position;
+	  POSITION.send_error;
+	  //semantic_error p,string_tmp;
+	};	
+	(slot_msg.base_slot.argument_count != 1).if {	  
+	  semantic_error ((slot_msg.position),"No argument for this slot.");
+	};
+	typ := slot_msg.get_type_result;
+	((typ = NULL) || {typ.raw != t.raw}).if {	  	  
+	  string_tmp.copy "Type result ";
+	  (typ != NULL).if {
+	    string_tmp.add_last '`';
+	    typ.append_name_in string_tmp;
+	    string_tmp.add_last '\'';
+	  };
+	  string_tmp.append "' is incorrect (Used for auto-conversion to `";
+	  t.append_name_in string_tmp; 
+	  string_tmp.append "').";
+	  POSITION.put_error semantic text string_tmp;
+	  slot_msg.position.put_position;
+	  position.put_position;
+	  POSITION.send_error;     
+	};
+	//	
+	rec  := local.read position;
+	node := NODE.new_read position slot slot_msg receiver rec self rec;  	
+	list_current.add_last node;
+	//	
+	result := node.result_expr;
+      }.elseif {t.is_import_to static_type} then {
+	local := static_type.get_temporary position;
+	instr := local.write position value Self;		
+	list_current.add_last instr;
+	//
+	string_tmp.copy "from_";
+	string_tmp.append (static_type.raw.name);
+	string_tmp.to_lower;
+	slot_name := ALIAS_STR.get string_tmp;
+	slot_msg  := t.get_slot slot_name; 
+	(slot_msg = NULL).if {	  
+	  string_tmp.clear;
+	  t.append_name_in string_tmp;
+	  string_tmp.append " <- ";
+	  static_type.append_name_in string_tmp; 
+	  string_tmp.append ". Slot `";
+	  string_tmp.append slot_name;
+	  string_tmp.append "' not found in `";
+	  t.append_name_in string_tmp; 
+	  string_tmp.append "'.";
+	  POSITION.put_error semantic text string_tmp;
+	  p.put_position;
+	  t.prototype.position.put_position;
+	  POSITION.send_error;
+	  //semantic_error p,string_tmp;
+	};		
+	(slot_msg.base_slot.argument_count != 2).if {
+	  semantic_error ((slot_msg.position),"Incorrect argument for this slot.");
+	};
+	typ := slot_msg.get_type_result;
+	((typ = NULL) || {typ.raw != t.raw}).if {	  	  
+	  string_tmp.copy "Type result ";
+	  (typ != NULL).if {
+	    string_tmp.add_last '`';
+	    typ.append_name_in string_tmp;
+	    string_tmp.add_last '\'';
+	  };	  
+	  string_tmp.append " is incorrect (Used for auto-conversion to `";
+	  t.append_name_in string_tmp;
+	  string_tmp.append "').";
+	  POSITION.put_error semantic text string_tmp;
+	  slot_msg.position.put_position;
+	  position.put_position;
+	  POSITION.send_error;     
+	};
+	//	
+	args := FAST_ARRAY[EXPR].create_with_capacity 2;
+	args.add_last (PROTOTYPE_CST.create position type t);
+	args.add_last (local.read position);
+	node := NODE.new_read position slot slot_msg receiver (args.first.my_copy) with args;  	
+	list_current.add_last node;
+	//	
+	result := node.result_expr;	
+      } else {
+	// Type Error				
+	string_tmp.copy "Type `";
+	t.append_name_in string_tmp;	
+	string_tmp.append "' is invalid with `";
+	static_type.append_name_in string_tmp;
+	string_tmp.append "'.";
+	POSITION.put_error semantic text string_tmp;
+	p.put_position;
+	position.put_position;
+	POSITION.send_error;      
+      };
+    };
+    result 
+  );
+  
+  //
+  // Execute.
+  //
+  
+  - execute:INSTR <-
+  (
+    execute_unlink
+  );
+  
+  - execute_link:EXPR <-
+  (
+    deferred;
+    NULL
+  );
+  //[ ? {Result != NULL}; ];
+  
+  - execute_unlink:INSTR <-
+  (
+    deferred;
+    NULL
+  );
+  
+ 
+

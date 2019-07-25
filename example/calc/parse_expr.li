@@ -1,0 +1,184 @@
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := PARSE_EXPR;
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Parse arithmetic expression.";
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Private
+  
+  //
+  // Service and terminal parsing.
+  //
+  
+  - index:INTEGER;
+  - source:ABSTRACT_STRING;
+
+  - last_character:CHARACTER;
+
+  - read_character car:CHARACTER :BOOLEAN <-
+  ( + result:BOOLEAN;
+
+    ((index <= source.upper) && {car = source.item index}).if {
+      last_character := car;
+      index  := index + 1;
+      result := TRUE;
+    };
+    result
+  );
+
+  - last_constant:INTEGER;
+
+  - read_constant:BOOLEAN <-
+  ( + result:BOOLEAN;
+
+    ((index <= source.upper) && {source.item index.in_range '0' to '9'}).if {
+      result := TRUE;
+      last_constant := 0;
+      {
+        last_constant := last_constant * 10 + source.item index.decimal_value;
+        index := index + 1;
+      }.do_while {(index <= source.upper) && {source.item index.in_range '0' to '9'}};
+    };
+    result
+  );
+
+  - error <-
+  (
+    "Error : \n".print;
+    source.print;
+    '\n'.print;
+    1.to (index-1) do { j:INTEGER;
+      ' '.print;
+    };
+    "^\n".print;    
+    die_with_code exit_failure_code;
+  ); 
+  
+  //
+  // Grammar parsing.
+  //
+  
+  - read_expr:EXPR <-
+  // EXPR <- EXPR_MUL { ( '+' | '-') EXPR_MUL }
+  ( + result,right:EXPR;
+    + oper:CHARACTER;
+    
+    result := read_expr_mul;
+    (result != NULL).if {
+      {(read_character '+') || {read_character '-'}}.while_do {
+        oper  := last_character;
+        right := read_expr_mul;
+        (right = NULL).if {
+          error;
+        };
+        (oper = '+').if {
+          result := EXPR_ADD.create result and right;
+        } else {
+          result := EXPR_SUB.create result and right;
+        };
+      };
+    };
+    result
+  );
+
+  - read_expr_mul:EXPR <-
+  // EXPR_MUL <- EXPR_UNARY { ( '*' | '/') EXPR_UNARY }
+  ( + result,right:EXPR;
+    + oper:CHARACTER;
+    
+    result := read_expr_unary;
+    (result != NULL).if {
+      {(read_character '*') || {read_character '/'}}.while_do {
+        oper  := last_character;
+        right := read_expr_unary;
+        (right = NULL).if {
+          error;
+        };
+        (oper = '*').if {	  
+          result := EXPR_MUL.create result and right;
+        } else {	  
+          result := EXPR_DIV.create result and right;
+        };
+      };
+    };
+    result
+  );
+
+  - read_expr_unary:EXPR <-
+  // EXPR_UNARY <- ( '+' | '-') EXPR_UNARY
+  //             |  EXPR_CST
+  ( + result:EXPR;
+    + oper:CHARACTER;
+    
+    ((read_character '+') || {read_character '-'}).if {
+      oper   := last_character;
+      result := read_expr_unary;
+      (result = NULL).if {
+        error;
+      };
+      (oper = '-').if {      	
+        result := EXPR_NEG.create result;
+      };
+    } else {
+      result := read_expr_cst;
+    };
+    result
+  );
+
+  - read_expr_cst:EXPR <-
+  // EXPR_CST <- '(' EXPR ')'
+  //           |  constant
+  ( + result:EXPR;
+    
+    (read_character '(').if {
+      result := read_expr;
+      (result = NULL).if {
+        error;
+      };
+      (read_character ')').if_false {
+        error;
+      };
+    }.elseif {read_constant} then {
+      result := EXPR_CST.create last_constant;
+    };
+    result
+  );
+
+Section Public
+
+  - parse src:ABSTRACT_STRING :EXPR <-
+  ( + result:EXPR;
+
+    source := src;
+    index  := source.lower;
+    result := read_expr;
+    ((result = NULL) || {index <= source.upper}).if {
+      error;
+    };
+    result
+  );

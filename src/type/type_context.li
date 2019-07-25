@@ -1,0 +1,63 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := TYPE_CONTEXT;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Type Context for debug mode";
+  
+Section Inherit
+  
+  + parent_type:Expanded TYPE;
+  
+Section Public
+  
+  - name:STRING_CONSTANT <- ALIAS_STR.prototype_context;
+  
+  - type_c:STRING_CONSTANT <- "_____CONTEXT";
+  
+  //
+  // Creation.
+  //
+    
+  - make_context <-
+  (     
+    dico_type.fast_put Self to name;        
+    //slot_run := FAST_ARRAY[SLOT].create_with_capacity 1; // BSBS: Plus utile !
+    default := TYPE_FULL.create Self with (TYPE_FULL.expanded_bit);
+  );
+  
+  - genere_struct <-
+  ( 
+    output_decl.append 
+    "// ___CONTEXT\n\
+    \typedef struct ___CONTEXT_struct _____CONTEXT; \n\
+    \struct ___CONTEXT_struct {\n\
+    \  unsigned long code; \n\
+    \  _____CONTEXT *back; \n\
+    \};\n\
+    \_____CONTEXT *top_context; \n\n";
+  );
+   

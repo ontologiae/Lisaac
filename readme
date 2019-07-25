@@ -1,37 +1,63 @@
+
            Welcome to the Lisaac compiler !
 
                         ~~~~
+
 The first compiler for Object Prototype Language !
 
 Install.
 ========
 
-Note: If your system is Windows, you must install `djgpp' and `binutils'.
-      (Download on `www.IsaacOS.com')
+* Linux/Unix:
+-------------
 
 For the installation in your system, simply to tape : 
 
     make
-    install_lisaac
+    ./install_lisaac
 
 Run `lisaac' to compile.
+
+
+* Windows/Dos:
+--------------
+
+1- Download from our site:
+   * mingw.zip, for C compiler and binutils (GCC for Windows)
+   * emacs_207.zip, for Lisaac editor facilities
+   * last lisaac compiler version (>= 0.11)
+
+2- Uncompress mingw to c:\ and emacs...
+
+3- Install mingw package.
+
+4- Update your C:\AUTOEXEC.BAT:
+Append with good path:
+
+REM **** MINGW ****
+set path=d:/mingw\bin;%path%
+
+5- Reboot or reloaded AUTOEXEC.BAT
+
+6- In lisaac directory, to run 'make', and 'install_lisaac'
+
+7- Reboot or reloaded AUTOEXEC.BAT
 
 Directory description.
 ======================
 
-./lib	      : Standard Library for Lisaac.
-./unix        : Library for Unix and Windows/Dos (Input/Output, File System)
-./bin	      : Executable file compiler (and C source).
-./emacs	      : Lisaac mode for Emacs editor.
-./manual      : Manual reference Lisaac language (PS format).
-./example     : Example Lisaac source code. 
-
-Good luck!
-
-
-
+  ./lib      : Standard Library for Lisaac.
+  ./lib_os   : Library for Unix and Windows and Dos (Input/Output,FileSystem)
+  ./lib_html : Library documentation.
+  ./src      : Source compiler.
+  ./bin      : Executable file compiler (and C source).
+  ./editor   : Lisaac mode for Editor (Emacs, Kate, Vim).
+  ./manual   : Manual reference Lisaac language (PS format).
+  ./shorter  : Mode for shorter program.
+  ./example  : Example Lisaac source code. 
 
 
+Good luck,
+Best regards,
 
-
-
+     Lisaac team.

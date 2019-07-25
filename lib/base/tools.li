@@ -1,35 +1,44 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := TOOLS;
 
-section HEADER
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+    
+  - comment := "Miscellaneous Tools";
   
-  - name        := TOOLS;
+Section Public
   
-  - category    :=MICRO;
-  
-  - bibliography:="http://IsaacOS.com";
-  
-  - author      :="Sonntag Benoit (bsonntag@loria.fr), Boutet Jerome (boutet@loria.fr)";
-  
-  - comment     :="Miscellaneous Tools";
-  
-section PUBLIC
-  
-  - unicode_to_ascii uni:FIXED_ARRAY[CHAR_UNICODE] to asc:FIXED_ARRAY[CHARACTER] <-
+  - unicode_to_ascii uni:FAST_ARRAY[CHAR_UNICODE] to asc:FAST_ARRAY[CHARACTER] <-
   ( + i:INTEGER;
     {uni.item i != 0}.while_do {
-      asc.put ((uni.item i & 0FFh).to_usmallint) to i;
+      asc.put ((uni.item i & 0FFh).to_uinteger_8) to i;
       i := i + 1;
     };
     asc.put 0 to i;    
   );
 
-  - ascii_to_unicode asc:FIXED_ARRAY[CHARACTER] to uni:FIXED_ARRAY[CHAR_UNICODE] <-
+  - ascii_to_unicode asc:FAST_ARRAY[CHARACTER] to uni:FAST_ARRAY[CHAR_UNICODE] <-
   ( + i:INTEGER;
     {asc.item i != 0}.while_do {
       uni.put (asc.item i) to i;

@@ -1,0 +1,303 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := NODE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Parent for all switch node";
+    
+Section Inherit
+  
+  + parent_instr:Expanded INSTR;
+  
+Section NODE, PROFIL_BLOCK, ITM_OLD
+  
+  - node_list_base:LINKED_LIST[NODE_TYPE] := node_list;
+  
+  - node_list:LINKED_LIST[NODE_TYPE] := LINKED_LIST[NODE_TYPE].create;
+  
+  - set_node_list l:LINKED_LIST[NODE_TYPE] <-
+  (
+    node_list := l;
+  );
+  
+Section PROTOTYPE  
+  
+  - extend_pass <-
+  ( + j:INTEGER;
+    + is_ok:BOOLEAN;
+    
+    //NODE_TYPE.reset_count_flat;
+    
+    VARIABLE.update;
+    j := node_list.lower;    
+    {j <= node_list.upper}.while_do {
+      is_ok := node_list.item j.update;      
+      (is_ok).if {
+	node_list.remove j;
+      } else {	
+	j := j + 1;
+      };	            
+    };   
+    /*
+    NODE_TYPE.count_flat.print;
+    '/'.print;
+    (NODE_TYPE.count_flat + NODE_TYPE.count_not_flat).print;
+    '\n'.print;
+    */
+  );
+  
+Section Public
+  
+  //
+  // Extern Creation.
+  //
+  
+  - new_read p:POSITION slot s:SLOT receiver rec:EXPR self my_self:EXPR :NODE <-
+  ( + dta:DTA_RD;
+    + old_self:TYPE_FULL;
+    + result:NODE_TYPE;
+            
+    old_self := ITM_TYPE_SELF.run_value;
+    ITM_TYPE_SELF.set_run (my_self.static_type);
+    //    
+    dta := DTA_RD.create p call s self my_self;
+    result := NODE_TYPE.create rec with dta;
+    //    
+    ITM_TYPE_SELF.set_run old_self;
+    node_list.add_last result;
+    result
+  );
+
+  - new_read p:POSITION slot s:SLOT receiver rec:EXPR with larg:FAST_ARRAY[EXPR] :NODE <-
+  ( + dta:DTA_RD_ARGS;
+    + new_expr:EXPR;
+    + old_self,typ,typ_self:TYPE_FULL;
+    + result:NODE_TYPE;
+
+    old_self := ITM_TYPE_SELF.run_value;
+    typ_self := larg.first.static_type;
+    ITM_TYPE_SELF.set_run typ_self;
+    // Control argument type.    
+    typ_self := typ_self.to_strict;
+    (larg.lower + 1).to (larg.upper) do { j:INTEGER;            
+      typ := s.get_type_argument j;      
+      new_expr := larg.item j.check_type typ with (s.position);
+      larg.put new_expr to j;
+    };
+    //
+    dta := DTA_RD_ARGS.create p call s with larg;
+    result := NODE_TYPE.create rec with dta;
+    //
+    ITM_TYPE_SELF.set_run old_self;
+    node_list.add_last result;
+    result
+  );
+
+  - new_write p:POSITION slot s:SLOT receiver rec:EXPR value val:EXPR :NODE <-
+  ( + dta:DTA_WR_VALUE;    
+    + result:NODE_TYPE;
+        
+    dta := DTA_WR_VALUE.create p slot s self rec value val;
+    result := NODE_TYPE.create rec with dta;
+    //
+    //put_push_debug p;
+    node_list.add_last result;
+    result
+  );
+
+  - new_write p:POSITION slot s:SLOT receiver rec:EXPR code val:ITM_CODE :NODE <-
+  ( + dta:DTA_WR_CODE;
+    + result:NODE_TYPE;
+    
+    dta := DTA_WR_CODE.create p slot s self rec code val;
+    result := NODE_TYPE.create rec with dta;
+    //
+    node_list.add_last result;
+    result
+  );
+
+  - new_cast p:POSITION type typ:TYPE_FULL with val:EXPR :NODE <-
+  ( + dta:DTA_CAST;
+    + result:NODE_TYPE;
+    
+    dta := DTA_CAST.create p type typ;
+    result := NODE_TYPE.create val with dta;
+    //
+    node_list.add_last result;
+    result
+  );
+  
+  - new_block p:POSITION receiver e:EXPR with larg:FAST_ARRAY[EXPR] :NODE <-
+  ( + dta:DTA_BLOCK;
+    + result:NODE_TYPE;
+    + lst_typ:TYPES_TMP;
+    + lst_typ_f:FAST_ARRAY[LOCAL];
+    + new_expr:EXPR;
+    + block_model:PROFIL_BLOCK;
+    + pos:POSITION;
+    
+    lst_typ := TYPES_TMP.new;      
+    e.get_type lst_typ;
+    ((! lst_typ.is_empty) && {lst_typ.first = TYPE_NULL}).if {
+      lst_typ.remove_first;
+    };
+    (lst_typ.is_empty).if {            
+      block_model ?= e.static_type.raw;  // BSBS: ce n'est plus necessaire 
+      (block_model = NULL).if {		 // (il y a tjrs lst_typ.first)
+	semantic_error (p,
+	  "Profil block not found, a first definition must to be before a first evaluation.\n\
+	  \Sorry, it's a limit for this actual compiler.");
+      };
+    } else {          
+      block_model ?= lst_typ.first;        
+    };
+    lst_typ.free;
+    // Control argument type.            
+    lst_typ_f := block_model.argument_list;
+    pos       := block_model.code.position;
+    (lst_typ_f.count != larg.count).if {
+      POSITION.put_error semantic text "Incorrect size of vector argument for this block.";
+      pos.put_position;
+      p  .put_position;
+      POSITION.send_error;
+    };  
+    (larg.lower + 1).to (larg.upper) do { j:INTEGER;            
+      new_expr := larg.item j.check_type (lst_typ_f.item j.type) with pos;
+      larg.put new_expr to j;
+    };
+    //    
+    (debug_level_option != 0).if {
+      (profil_second = NULL).if {
+	crash_with_message "NODE";
+      };
+      list_current.add_last (
+	PUSH.create p context (profil_second.context) first FALSE
+      );
+    };
+    //
+    dta    := DTA_BLOCK.create block_model with larg;
+    result := NODE_TYPE.create e with dta;    
+    //
+    node_list.add_last result;
+    result
+  );
+  
+Section Public  
+  
+  - position:POSITION <- data.position;
+  
+  + expr:EXPR;  
+    
+  + first_code:LIST;
+  + first_type:TYPE;  
+  + switch:SWITCH;
+  
+  - count:INTEGER <- 
+  ( + result:INTEGER;
+    
+    (switch != NULL).if {
+      result := switch.count;
+    }.elseif {first_type != NULL} then {
+      result := 1;
+    };
+    result
+  );
+  
+  + data:DTA;
+  
+  - result_expr:EXPR <- deferred;
+  
+  //
+  // Execute.
+  //
+  
+  - remove <-
+  (
+    data.remove;
+    (switch = NULL).if {      
+      expr.remove;
+      (first_code != NULL).if {
+	first_code.remove;
+      };
+    } else {      
+      switch.remove;
+    };
+  );
+  
+  - execute:INSTR <-
+  ( + result:INSTR;
+
+    data.remove;
+    (switch != NULL).if {
+      result := switch.execute;      
+    } else {            
+      expr.remove;
+      (first_code != NULL).if { // Warning: Dead Code!
+	result := first_code.execute_unlink;
+      };
+    };
+    result
+  );
+    
+  
+Section NODE, DTA  
+
+  //
+  // Update.
+  //
+  
+  - update_link:BOOLEAN <-
+  (
+    deferred;
+  );
+  
+Section Public
+    
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  (
+    (switch = NULL).if {
+      (first_code = NULL).if {	
+	to_pointer.append_in buffer;
+	buffer.append "<NODE VIDE=";
+	expr.display buffer;
+	buffer.append ", Data: ";
+	data.display buffer;
+	buffer.append ", Result: ";
+	result_expr.display buffer;
+	buffer.add_last '>';
+      } else {
+	expr.display buffer;
+	first_code.display buffer;
+      };
+    } else {
+      switch.display buffer;
+    };
+  );
+  

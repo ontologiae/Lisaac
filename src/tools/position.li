@@ -1,0 +1,207 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := Expanded POSITION;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Coding position :    \
+  \ 9 bits  : Index prototype [1..511].  \
+  \ 8 bits  : Column          [0..255].  \
+  \ 15 bits : Line            [1..32767].";
+  
+  - type        := `unsigned long`;
+  - default     := ( CONVERT[INTEGER,POSITION].on 0 );
+  
+Section Insert  
+  
+  - parent_any:ANY := ANY;
+    
+Section Public
+  
+  - object_size:INTEGER <- POINTER.object_size;
+  
+  - code:UINTEGER_32 <- CONVERT[POSITION,UINTEGER_32].on Self;
+  
+  //
+  // Creation.
+  //
+  
+  - create proto:PROTOTYPE line l:INTEGER column c:INTEGER :POSITION <-
+  ( + cod:UINTEGER_32;
+    ? {l    .in_range 0 to 131071};
+    ? {c    .in_range 0 to    255};
+    ? {proto.index.in_range 0 to    511};
+    cod := proto.index.to_uinteger_32 | (c << 9) | (l << 17);
+    CONVERT[UINTEGER_32,POSITION].on cod
+  );
+      
+  //
+  // Localization.
+  //
+
+  - prototype:PROTOTYPE <- PROTOTYPE.prototype_list.item (code.to_integer & 01FFh);
+
+  - line:UINTEGER_32       <- code >> 17;
+  
+  - column:UINTEGER_32     <- (code >> 9) & 0FFh;
+
+  //
+  // Information Generation.
+  //
+  
+  - nb_warning:INTEGER;
+
+  - send_error <-
+  (
+    STD_ERROR.put_string msg_err;
+    is_verbose.if {
+      msg_err.print;
+    };
+    ((type_error != warning) || {is_warning}).if {    
+      die_with_code exit_failure_code;
+    };
+  );
+
+  - put_error type:INTEGER text txt:ABSTRACT_STRING <-
+  (
+    type_error := type;
+    msg_err.clear;
+    type
+    .when syntax   then {
+      msg_err.append "--SYNTAX-----------\n";
+    }.when semantic then {
+      msg_err.append "--SEMANTIC---------\n";
+    }.when warning  then {
+      msg_err.append "--WARNING----------\n";
+    }.when message  then {
+      msg_err.append "--MESSAGE----------\n";
+    };
+    msg_err.append txt;
+  );
+  
+  - put_position <-
+  ( + pos:INTEGER;
+    + c,cols:UINTEGER_32;
+    + src:STRING;
+    + char:CHARACTER;
+    ? {code != 0};
+    
+    msg_err.append "\nLine ";
+    line.append_in msg_err;    
+    msg_err.append " column ";
+    column.append_in msg_err;
+    msg_err.append " in ";
+    msg_err.append (prototype.name);    
+    msg_err.add_last '(';
+    msg_err.append (prototype.filename);
+    msg_err.append "):\n";
+    // Search begin line :
+    src := prototype.source;
+    pos := src.lower;
+    1.to (line-1) do { l:INTEGER;
+      {src.item pos = '\n'}.until_do {
+	pos := pos + 1;
+      };
+      pos := pos + 1;
+    };
+    // copy line :
+    string_tmp.clear;
+    cols := column;
+    {(pos > src.upper) || 
+    {src.item pos='\n'}}.until_do {
+      char := src.item pos;
+      msg_err.add_last char;
+      (c < cols).if {
+	(char = '\t').if {
+	  string_tmp.add_last '\t';
+	} else {
+	  string_tmp.add_last ' ';
+	};
+      };
+      c   := c + 1;
+      pos := pos + 1;
+    };
+    msg_err.add_last '\n';
+    msg_err.append string_tmp;
+    msg_err.append "^\n";
+  );
+  
+  - extract_line:STRING <-
+  ( + pos:INTEGER;
+    + src:STRING;
+    + char:CHARACTER;
+
+    // Search begin line :
+    src := prototype.source;
+    pos := src.lower;
+    1.to (line-1) do { l:INTEGER;
+      {src.item pos = '\n'}.until_do {
+	pos := pos + 1;
+      };
+      pos := pos + 1;
+    };
+    // copy line :
+    string_tmp.clear;    
+    {
+      (pos > src.upper) || 
+      {src.item pos='\n'}
+    }.until_do {
+      char := src.item pos;
+      (char)
+      .when '\\' then { string_tmp.add_last '\\'; }
+      .when '"' then { string_tmp.add_last '\\'; };
+      string_tmp.add_last char;      
+      pos := pos + 1;
+    };    
+    (string_tmp.last.code = 0Dh).if {
+      string_tmp.remove_last 1;
+    };
+    STRING.create_from_string string_tmp
+  );
+  
+Section Private  
+  
+  //
+  // Service manager
+  //
+  
+  - type_error:INTEGER;
+  
+  - msg_err:STRING := STRING.create 256;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,229 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := EXTERNAL_C;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+    
+  - author      := "Sonntag Benoit";
+  - comment     := "External C instruction.";
+  
+Section Inherit
+  
+  + parent_expr:Expanded EXPR;
+  
+Section Public 
+  
+  + is_persistant:BOOLEAN;
+
+  + static_type:TYPE_FULL;
+
+  + living_type:TYPES; 
+  
+  - set_living_type l:TYPES <-
+  (
+    living_type := l;
+  );
+  
+  - get_type t:TYPES_TMP <-
+  (
+    (living_type = NULL).if {
+      t.add (static_type.raw);
+    } else {
+      t.union living_type;
+    };
+  );
+
+  //
+  // External value.
+  //
+  
+  + code:STRING_CONSTANT;
+  + access_list:FAST_ARRAY[EXPR];
+
+  //
+  // Creation.
+  //
+  
+  - create p:POSITION 
+  text c:STRING_CONSTANT
+  access ac:FAST_ARRAY[EXPR] 
+  persistant per:BOOLEAN 
+  type t:TYPE_FULL :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make p text c access ac persistant per type t;
+    result
+  );
+
+  - make p:POSITION 
+  text c:STRING_CONSTANT
+  access ac:FAST_ARRAY[EXPR] 
+  persistant per:BOOLEAN 
+  type t:TYPE_FULL <-
+  (
+    position      := p;
+    static_type   := t;
+    is_persistant := per;
+    code          := c;
+    access_list   := ac;
+  );
+
+  - my_copy:SELF <-
+  ( + result:SELF;
+    + new_access:FAST_ARRAY[EXPR];
+    + val:EXPR;    
+        
+    (access_list != NULL).if {
+      new_access := FAST_ARRAY[EXPR].create_with_capacity (access_list.count);
+      (access_list.lower).to (access_list.upper) do { j:INTEGER;
+	val := access_list.item j.my_copy;	
+	new_access.add_last val;
+      };      
+    };
+    result := SELF.create position text code 
+    access new_access persistant is_persistant type static_type;    
+    result.set_living_type living_type;    
+    result
+  );
+
+  //
+  // Generation.
+  //
+
+  - remove <-
+  (
+    (access_list != NULL).if {
+      (access_list.lower).to (access_list.upper) do { j:INTEGER;
+	access_list.item j.remove;
+      };
+    };
+  );
+  
+  - execute_unlink:INSTR <-
+  ( + result,instr:INSTR;
+    
+    (is_persistant).if {
+      // Normal.
+      static_type := TYPE_VOID.default;
+      result := execute_link;
+    } else {
+      // Remove.
+      (access_list != NULL).if {
+	(access_list.lower).to (access_list.upper) do { j:INTEGER;	  
+	  instr := access_list.item j.execute_unlink;
+	  (instr != NULL).if {
+	    list_current.insert_before instr;
+	  };
+	};
+      };
+    };
+    result
+  );
+
+  - execute_link:EXPR <-
+  ( + e:EXPR;
+ 
+    // Normal
+    (access_list != NULL).if { 
+      (access_list.lower).to (access_list.upper) do { j:INTEGER;
+	e := access_list.item j.execute_link;	  
+	access_list.put e to j;
+      };
+    };
+    Self
+  );
+
+  - genere buffer:STRING <-
+  ( + idx,beg:INTEGER;
+     
+    (static_type.raw != TYPE_VOID).if {
+      buffer.append "((";
+      static_type.genere_declaration buffer;     
+      buffer.add_last ' ';
+      static_type.genere_star_declaration buffer;      
+      buffer.append ")("; 
+    };     
+    
+    (access_list != NULL).if {
+      beg := code.lower;
+      idx := code.index_of '@' since beg;
+      (access_list.lower).to (access_list.upper) do { j:INTEGER;
+	beg.to (idx-1) do { k:INTEGER;
+	  buffer.add_last (code.item k);
+	};
+	beg := idx + 1;
+	access_list.item j.genere buffer;	
+	idx := code.index_of '@' since beg;
+      };
+      // Copy end.
+      beg.to (code.upper) do { k:INTEGER;
+	buffer.add_last (code.item k);
+      };
+    } else {
+      buffer.append code;
+    };
+    (static_type.raw != TYPE_VOID).if {
+      buffer.append "))";
+    };
+  );
+
+  //
+  // Display.
+  //
+
+  - display buffer:STRING <-
+  (     
+    buffer.add_last '`';
+    buffer.append code;    
+    ((access_list != NULL) && { ! access_list.is_empty}).if {
+      buffer.add_last '(';
+      access_list.lower.to (access_list.upper - 1) do { j:INTEGER;
+	access_list.item j.display buffer;
+	buffer.add_last ',';
+      };
+      access_list.last.display buffer;
+      buffer.add_last ')';
+    };    
+    buffer.add_last '`';
+    static_type.append_name_in buffer;
+    (living_type != NULL).if {
+      buffer.add_last '(';      
+      (living_type.lower).to (living_type.upper-1) do { j:INTEGER;			
+	buffer.append (living_type.item j.intern_name);
+	buffer.add_last ',';
+      };
+      buffer.append (living_type.last.intern_name);
+      buffer.add_last ')';
+    };
+    display_ref buffer;
+  );
+    
+
+
+
+
+
+
+
+

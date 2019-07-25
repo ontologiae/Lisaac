@@ -1,47 +1,42 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-/*
-Copyright (C) 2005  Benoit Sonntag
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
-  * name        :=CHARACTER -> SMALLINT, CHAR_UNICODE;
-  
-  - category    :=MICRO;
-  
-  - bibliography:="http://IsaacOS.com";
-  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     :="Static Character library (self is mapping on unsigned char C).";
+  + name    := Expanded CHARACTER -> INTEGER_8, CHAR_UNICODE;
 
-  - type        :=`signed char`;
-  - default     :='\0';
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  - comment := "Static Character library (self is mapping on `char' C).";
+
+  - type    := `char`;
+  - default := '\0';
   
-section INHERIT
+Section Insert
   
   - parent_character_ref:CHARACTER_REF := CHARACTER_REF;
   
-section PUBLIC
-    
-  - in_range low:CHARACTER to up:CHARACTER :BOOLEAN <- ((self >= low) && {self<= up});
+Section Public
+      
+  - in_range low:CHARACTER to up:CHARACTER :BOOLEAN <- ((Self >= low) && {Self<= up});
   
   //
   // General :
@@ -49,7 +44,7 @@ section PUBLIC
   
   - object_size:INTEGER := 1;
 
-  - pointer_size:INTEGER := 1;
+//  - pointer_size:INTEGER := 1;
   
   - maximum:INTEGER := 255;
   
@@ -59,32 +54,32 @@ section PUBLIC
   // Sign-extended conversion.
   ( + result:INTEGER;
     result:=code.to_integer;
-    ? {result.in_range (SMALLINT.minimum) to (SMALLINT.maximum)};
+    ? {result.in_range (INTEGER_8.minimum) to (INTEGER_8.maximum)};
     result
   );
   
-  - code:SMALLINT <-
+  - code:INTEGER_8 <-
   // ASCII code of Current.
   // No Sign-extended conversion.
-  ( + result:SMALLINT;
-    result:=to_smallint;
+  ( + result:INTEGER_8;
+    result:=to_integer_8;
     //? {result.in_range minimum to maximum};
     result
   );
   
-  - to_smallint:SMALLINT <- SMALLINT.force_conversion self;
+  - to_integer_8:INTEGER_8 <- CONVERT[CHARACTER,INTEGER_8].on Self;
   // Auto-cast.
   
-  - to_char_unicode:CHAR_UNICODE <- CHAR_UNICODE.force_conversion self;
+  //- to_char_unicode:CHAR_UNICODE <- CHAR_UNICODE.force_conversion Self;
   // Auto-cast.
   
-  - to_usmallint:USMALLINT <- USMALLINT.force_conversion self;
+  - to_uinteger_8:UINTEGER_8 <- CONVERT[CHARACTER,UINTEGER_8].on Self;
   
   //
   // Print.
   //
   
-  - print <- IO.put_character self;
+  - print <- IO.put_character Self;
   
   //
   // Switch case :
@@ -92,21 +87,21 @@ section PUBLIC
   
   - when value:CHARACTER then block:BLOCK :CHARACTER <-
   (
-    (self=value).if block;
-    self
+    (Self=value).if block;
+    Self
   );
 
   - when value1:CHARACTER or value2:CHARACTER then block:BLOCK :CHARACTER <-
   (
-    ((self = value1) || {self = value2}).if block;
-    self
+    ((Self = value1) || {Self = value2}).if block;
+    Self
   );
   
   - when first_value:CHARACTER to last_value:CHARACTER then block:BLOCK :CHARACTER <-
   ( ? {first_value<=last_value};
 
-    ((self>=first_value) && {self<=last_value}).if block;
-    self
+    ((Self>=first_value) && {Self<=last_value}).if block;
+    Self
   );
 
   //
@@ -115,33 +110,33 @@ section PUBLIC
   
   - to limit_up:SELF do blc:BLOCK <-
   (
-    (self<=limit_up).if {
-      blc.value self;
-      (self+1.to_character).to limit_up do blc;
+    (Self<=limit_up).if {
+      blc.value Self;
+      (Self+1.to_character).to limit_up do blc;
     };
   );
   
   - downto limit_down:SELF do blc:BLOCK <-
   (
-    (self>=limit_down).if {
-      blc.value self;
-      (self-1.to_character).downto limit_down do blc;
+    (Self>=limit_down).if {
+      blc.value Self;
+      (Self-1.to_character).downto limit_down do blc;
     };
   );
   
   - to limit_up:SELF by step:SELF do blc:BLOCK <-
   (
-    (self<=limit_up).if {
-      blc.value self;
-      (self+step.to_character).to limit_up by step do blc;
+    (Self<=limit_up).if {
+      blc.value Self;
+      (Self+step.to_character).to limit_up by step do blc;
     };
   );
   
   - downto limit_down:SELF by step:SELF do blc:BLOCK <-
   (
-    (self>=limit_down).if {
-      blc.value self;
-      (self-step.to_character).downto limit_down by step do blc;
+    (Self>=limit_down).if {
+      blc.value Self;
+      (Self-step.to_character).downto limit_down by step do blc;
     };
   );
   
@@ -153,12 +148,12 @@ section PUBLIC
   
   - '-' other:CHARACTER :CHARACTER <- (code-other.code).to_character;
   
-  - '+#' other:NUMERIC :CHARACTER <- (code + other).to_character;
+  - '+#' other:INTEGER :CHARACTER <- (code + other).to_character;
   
   - '!==' other:CHARACTER :BOOLEAN <- (code !== other.code);
   // Comparison using `code'.
   
-  - '==' right 60 other:CHARACTER :BOOLEAN <- (code == other.code);
+  - '==' Right 60 other:CHARACTER :BOOLEAN <- (code == other.code);
   // Comparison using `code'.
   
   - '<' other:CHARACTER :BOOLEAN <- ( code < other.code );
@@ -219,7 +214,7 @@ section PUBLIC
   // Case insensitive comparison.
   // No difference between upper/lower case letters.
   ( + result:BOOLEAN;
-    (self = other).if {
+    (Self = other).if {
       result:=TRUE;
     } else {
       code
@@ -238,7 +233,7 @@ section PUBLIC
   // Conversion to the corresponding upper case.
   ( + result:CHARACTER;
     ((code < 97) || {code > 122}).if {
-      result := self;
+      result := Self;
     } else {
       result := (code - 32).to_character;
     };
@@ -249,7 +244,7 @@ section PUBLIC
   // Conversion to the corresponding lower case.
   ( + result:CHARACTER;
     ((code < 65) || {code > 90}).if {
-      result := self;
+      result := Self;
     } else {
       result := (code + 32).to_character;
     };
@@ -259,10 +254,10 @@ section PUBLIC
   - is_letter:BOOLEAN <-
   // Is it a letter ('a' .. 'z' or 'A' .. 'Z') ?
   ( + result:BOOLEAN;
-    (self >= 'a').if {
-      result := (self <= 'z');
-    }.elseif {self >= 'A'} then {
-      result := (self <= 'Z');
+    (Self >= 'a').if {
+      result := (Self <= 'z');
+    }.elseif {Self >= 'A'} then {
+      result := (Self <= 'Z');
     };
     ? {result = (in_range 'A' to 'Z' | in_range 'a' to 'z')};
     result
@@ -271,8 +266,8 @@ section PUBLIC
   - is_digit:BOOLEAN <-
   // Belongs to '0'..'9'.
   ( + result:BOOLEAN;
-    (self >= '0').if {
-      result := (self <= '9');
+    (Self >= '0').if {
+      result := (Self <= '9');
     };
     ? {result = in_range '0' to '9'};
     result
@@ -281,7 +276,7 @@ section PUBLIC
   - is_binary_digit:BOOLEAN <-
   // Belongs to '0'..'1'.
   ( + result:BOOLEAN;
-    result:= (self = '0') || {self = '1'};
+    result:= (Self = '0') || {Self = '1'};
     ? {result = in_range '0' to '1'};
     result
   );
@@ -289,8 +284,8 @@ section PUBLIC
   - is_octal_digit:BOOLEAN <-
   // Belongs to '0'..'7'.
   ( + result:BOOLEAN;
-    (self >= '0').if {
-      result := (self <= '7');
+    (Self >= '0').if {
+      result := (Self <= '7');
     };
     ? {result = in_range '0' to '7'};
     result
@@ -301,20 +296,20 @@ section PUBLIC
   ( + result:BOOLEAN;
     (is_digit).if {
       result := TRUE;
-    }.elseif {self >= 'a'} then {
-      result := (self <= 'f');
-    }.elseif {self >= 'A'} then {
-      result := (self <= 'F');
+    }.elseif {Self >= 'a'} then {
+      result := (Self <= 'f');
+    }.elseif {Self >= 'A'} then {
+      result := (Self <= 'F');
     };
-    ? {result = ("0123456789abcdefABCDEF".has self)};
+    ? {result = ("0123456789abcdefABCDEF".has Self)};
     result
   );
   
   - is_lower:BOOLEAN <-
   // Is it some lowercase letter ('a'..'z')?
   ( + result:BOOLEAN;
-    (self >= 'a').if {
-      result:=(self <= 'z');
+    (Self >= 'a').if {
+      result:=(Self <= 'z');
     };
     result
   );
@@ -322,8 +317,8 @@ section PUBLIC
   - is_upper:BOOLEAN <-
   // Is it some uppercase letter ('A'..'Z')?
   ( + result:BOOLEAN;
-    (self >= 'A').if {
-      result:=(self <= 'Z');
+    (Self >= 'A').if {
+      result:=(Self <= 'Z');
     };
     result
   );
@@ -331,8 +326,8 @@ section PUBLIC
   - is_separator:BOOLEAN <-
   // True when character is a separator.
   (
-    (self= ' ') || {self = '\t'} || {self='\n'} ||
-    {self='\r'} || {self = '\0'} || {self='\f'} || {self='\v'}
+    (Self= ' ') || {Self = '\t'} || {Self='\n'} ||
+    {Self='\r'} || {Self = '\0'} || {Self='\f'} || {Self='\v'}
   );
   
   - is_letter_or_digit:BOOLEAN <-
@@ -346,7 +341,7 @@ section PUBLIC
   - is_ascii:BOOLEAN := TRUE;
   // Is character a 8-bit ASCII character?
   
-  - is_bit:BOOLEAN <- ((self='0') || {self='1'});
+  - is_bit:BOOLEAN <- ((Self='0') || {Self='1'});
   // True for `0' and `1'.
   
   - next:CHARACTER <-

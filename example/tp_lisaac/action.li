@@ -1,0 +1,72 @@
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name := ACTION;
+  
+Section Public
+  
+  - main <-
+  ( + col1:FAST_ARRAY[INTEGER];
+    + col2:LINKED_LIST[INTEGER];
+    + action1:BLOCK;
+    //+ action2:BLOCK;
+    + somme:INTEGER;
+    
+    // Creation d'un tableau de 5 elements de 0 à 4 :
+    col1 := FAST_ARRAY[INTEGER].create_with_capacity 5;
+    // Création d'une liste chainee:
+    col2 := LINKED_LIST[INTEGER].create;
+    
+    // Rempli la première collection.
+    1.to 10 do { j:INTEGER;
+      col1.add_last j;
+      col2.add_last (j+j);
+    };
+    
+    // QUESTION 1
+                
+    // Action d'afficher un élément:
+    action1 := {       
+      i:INTEGER;  // argument
+      
+      i.print;
+      ','.print;
+    };
+    
+    // Affichage de `col1' et `col2' avec `action1':
+    col1.foreach action1;
+    col2.foreach action1;
+    
+    // POINT 2
+    
+    // QUESTION 3    
+    
+    //action2 := { 
+    // ... A vous de jouer ...
+    //};
+    
+    // col2.foreach action2;
+    
+    "Somme : ".print;
+    somme.print;
+    '\n'.print;
+  );

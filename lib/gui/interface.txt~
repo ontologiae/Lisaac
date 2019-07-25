@@ -1,8 +1,0 @@
-INPUT_TEXT:
-
-BUTTON_TEXT:
-
-- create_in INTERFACE at 20,20 size 50,20 text "ok" when_click_execute self;
-
-BSBS: Ok, mais 'when_click_execute' trop long !
-

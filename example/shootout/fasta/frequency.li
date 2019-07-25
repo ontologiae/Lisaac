@@ -1,0 +1,56 @@
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name         := FREQUENCY;
+  
+  - bibliography := "http://IsaacOS.com";
+  - author       := "Xavier Oswald (x.oswald@free.fr)";
+  - comment      := "Language shootout - fasta (based on the java version)"; 
+  
+Section Inherit
+  
+  - parent_any:OBJECT := OBJECT;
+
+Section Public
+ 
+  + c :CHARACTER;
+
+  + p :REAL_64;
+
+  - create (p_c:CHARACTER, p_p:REAL_64) :SELF <-
+  ( + result :SELF;
+
+    result := clone;
+    result.make(p_c,p_p);
+    result
+  );
+
+  - make (p_c:CHARACTER, p_p:REAL_64) <-
+  (
+    c := p_c;
+    p := p_p;
+  );
+
+  - put_p r:REAL_64  <-
+  (
+    p := r;
+  );

@@ -1,0 +1,253 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := INTEGER_CST;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Integer constant";
+  
+Section Inherit
+  
+  + parent_constant:Expanded CONSTANT;
+  
+Section Public
+
+  //
+  // Value.
+  //
+
+  + value:INTEGER_64;
+  
+  - set_value new_value:INTEGER_64 <-
+  (
+    value := new_value;
+    check_type;
+  );
+  
+  - to_power:INTEGER_64 <-
+  // 2^Result = self or else -1
+  ( + result,val:INTEGER_64;
+    
+    val := value;
+    (val = 0).if {
+      result := -1;
+    } else {      
+      {(val & 1) = 0}.while_do {		
+	val := val >> 1;
+	result := result + 1;
+      };
+      (val != 1).if {
+	result := -1;
+      };
+    };
+    result
+  );
+  
+  - is_signed:BOOLEAN <-
+  ( + typ:STRING_CONSTANT;
+    
+    typ := static_type.raw.name;   
+    (typ = ALIAS_STR.prototype_integer_64) ||
+    {typ = ALIAS_STR.prototype_integer_32} ||
+    {typ = ALIAS_STR.prototype_integer_16} ||
+    {typ = ALIAS_STR.prototype_integer_8 }
+  );
+  
+  - is_saturated:BOOLEAN <-
+  ( + result:BOOLEAN;
+
+    (is_signed).if {
+      result := value = -1;
+    } else {
+      (static_type.raw.name)
+      .when (ALIAS_STR.prototype_uinteger_64) then {
+	result := FALSE; // value = 0FFFFFFFFFFFFFFFFh;
+      }
+      .when (ALIAS_STR.prototype_uinteger_32) then {
+	result := value = 0FFFF_FFFFh;
+      }
+      .when (ALIAS_STR.prototype_uinteger_16) then {
+	result := value = 0FFFFh;
+      }
+      .when (ALIAS_STR.prototype_uinteger_8 ) then {
+	result := value = 0FFh;
+      };
+    };
+    result    
+  );
+  
+  //
+  // Creation.
+  //
+
+  - create p:POSITION value v:INTEGER_64 type t:TYPE_FULL :SELF<-
+  ( + result:SELF;
+    result := clone;
+    result.make p value v type t;
+    result
+  );
+  
+  - make p:POSITION value v:INTEGER_64 type t:TYPE_FULL <-
+  (
+    position := p;
+    value := v;
+    static_type := t;    
+    check_type;
+  );
+
+  - my_copy:SELF <- SELF.create position value value type static_type;
+
+  //
+  // Comparaison.
+  //
+  
+  - '==' Right 60 other:EXPR :BOOLEAN <-
+  ( + p:INTEGER_CST;
+    p ?= other;
+    (p != NULL) && {value = p.value} && {static_type = p.static_type}
+  );
+
+  //
+  // Depend.
+  //
+
+  - cast_type p:TYPE_FULL <-
+  (
+    ? { p.raw != type_integer };
+    static_type := p;
+    check_type;
+  );
+
+  //
+  // Generation.
+  //
+
+  - genere buffer:STRING <-
+  (    
+    buffer.add_last ' ';    
+    value.append_in buffer;    
+    (value > UINTEGER_32.maximum.to_integer_64).if {
+      buffer.append "LLU";
+    }.elseif {value > INTEGER.maximum.to_integer_64} then {
+      buffer.append "LU";
+    };    
+  );
+
+  //
+  // Display.
+  //
+
+  - display buffer:STRING <-
+  (
+    buffer.add_last '(';
+    static_type.append_name_in buffer;
+    buffer.add_last ')';
+    value.append_in buffer;
+    display_ref buffer;
+  );
+  
+Section Private
+  
+  - check_type <-
+  ( + error:BOOLEAN;
+    + min,max:INTEGER_64;
+    
+    // Check Range.
+    (static_type.raw.name)
+    .when (ALIAS_STR.prototype_uinteger_64) then {
+      (value < 0).if {
+	error := TRUE;
+	max   := 0; // BSBS: A revoir...
+      };
+    }
+    .when (ALIAS_STR.prototype_uinteger_32) then {
+      ((value < 0) || {value > UINTEGER_32.maximum.to_integer_64}).if {
+	error := TRUE;
+	max   := UINTEGER_32.maximum.to_integer_64;
+      };
+    }
+    .when (ALIAS_STR.prototype_uinteger_16) then {
+      ((value < 0) || {value > UINTEGER_16.maximum.to_integer_64}).if {
+	error := TRUE;
+	max   := UINTEGER_16.maximum.to_integer_64;
+      };
+    }
+    .when (ALIAS_STR.prototype_uinteger_8) then {
+      ((value < 0) || {value > UINTEGER_8.maximum.to_integer_64}).if {
+	error := TRUE;
+	max   := UINTEGER_8.maximum.to_integer_64;
+      };
+    }
+    .when (ALIAS_STR.prototype_integer_64) then {
+      // Nothing. (Pb: BSBS : Can't range test.)
+    }
+    .when (ALIAS_STR.prototype_integer_32) then {
+      ((value < INTEGER.minimum) || {value > INTEGER.maximum.to_integer_64}).if { 
+	error := TRUE;
+	min   := INTEGER.minimum;
+	max   := INTEGER.maximum.to_integer_64;
+      };
+    }
+    .when (ALIAS_STR.prototype_integer_16) then {
+      ((value < INTEGER_16.minimum) || {value > INTEGER_16.maximum.to_integer_64}).if {
+	error := TRUE;
+	min   := INTEGER_16.minimum;
+	max   := INTEGER_16.maximum.to_integer_64;
+      };
+    }
+    .when (ALIAS_STR.prototype_integer_8) then {
+      ((value < INTEGER_8.minimum) || {value > INTEGER_8.maximum.to_integer_64}).if {
+	error := TRUE;
+	min   := INTEGER_8.minimum;
+	max   := INTEGER_8.maximum.to_integer_64;
+      };
+    };
+    
+    (error).if {
+      string_tmp.copy "Invalid constant integer (";
+      value.append_in string_tmp;
+      string_tmp.append ") cast into ";
+      static_type.append_name_in string_tmp;      
+      string_tmp.append " [";
+      min.append_in string_tmp;
+      string_tmp.append "..";
+      max.append_in string_tmp;
+      string_tmp.append "] => new value=0.";
+      POSITION.put_error warning text string_tmp;
+      position.put_position;
+      list_current.position.put_position;
+      POSITION.send_error;
+      value := 0;
+    };
+  );
+  
+
+
+
+
+
+
+
+

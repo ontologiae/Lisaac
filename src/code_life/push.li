@@ -1,0 +1,165 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := PUSH;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Push context for debug mode";
+  
+Section Inherit
+  
+  + parent_instr:Expanded INSTR;
+  
+Section PUSH,LISAAC
+  
+  - source_line:HASHED_DICTIONARY[STRING,UINTEGER_32] := 
+  HASHED_DICTIONARY[STRING,UINTEGER_32].create;
+  
+Section Public
+  
+  + context:LOCAL;
+  
+  + is_first:BOOLEAN;
+  
+  - set_first f:BOOLEAN <-
+  (
+    is_first := f;
+  );
+  
+  //
+  // Creation.
+  //
+  
+  - create pos:POSITION context v:LOCAL first f:BOOLEAN :SELF <-
+  ( + result:SELF;
+    ? {v != NULL};
+    
+    result := clone;
+    result.make pos context v first f;
+    result
+  );
+  
+  - make pos:POSITION context v:LOCAL first f:BOOLEAN <-
+  ( ? {pos.code != 0};            
+    ? {v != NULL};
+    (v = NULL).if {
+      crash_with_message "PUSH";
+    };
+    position := pos;
+    context := v;
+    is_first := f;    
+  );
+    
+  - my_copy:SELF <- 
+  ( + result:SELF;
+    + new_context:LOCAL;
+    
+    (LOCAL.is_alias).if {
+      new_context := context.get_alias;
+      new_context.set_ensure_count 1;
+      result := create position context new_context first is_first;
+    } else {    
+      result := create position context context first is_first;
+    };
+    result      
+  );
+      
+  //
+  // Execute.
+  //
+
+  - remove <-
+  (
+    // Nothing.
+  );
+  
+  - execute:INSTR <- 
+  ( + result:INSTR;
+    + other:SELF;
+    
+    result := Self;
+    (list_current.index < list_current.upper).if {
+      other ?= list_current.item (list_current.index + 1);
+      (other != NULL).if {
+	(other.context = context).if {
+	  result := NULL;
+	  (is_first).if {
+	    other.set_first TRUE;
+	  };
+	}.elseif {(is_first) && {! other.is_first}} then {
+	  result := NULL;
+	};
+      };      
+    };
+    result
+  );
+
+  //
+  // Genere
+  //
+    
+  - genere buffer:STRING <-
+  ( + id:UINTEGER_32;
+    add_var_size context;
+    (is_first).if {      
+      buffer.append "push_first(&";
+    } else {
+      buffer.append "push(&";
+    };
+    buffer.append (context.intern_name);
+    buffer.add_last ',';
+    id := position.code;
+    (debug_with_code).if {
+      (! source_line.fast_has id).if {
+	source_line.fast_put (position.extract_line) to id;
+      };
+      buffer.add_last 'L';
+    };
+    id.append_in buffer;
+    buffer.add_last ')';    
+    
+    buffer.append "; // L";
+    position.line.append_in buffer;
+    buffer.add_last ' ';
+    buffer.append (position.prototype.name);    
+    
+  );
+
+  //
+  // Display.
+  //
+
+  - display buffer:STRING <-
+  (
+    buffer.append "push(";
+    buffer.append (context.intern_name);
+    buffer.add_last ')';
+  );
+
+
+
+
+
+

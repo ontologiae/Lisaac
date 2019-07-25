@@ -1,0 +1,171 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := CAST;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Cast type.";
+  
+Section Inherit
+  
+  + parent_expr:Expanded EXPR;
+      
+Section Public
+  
+  - is_invariant:BOOLEAN <- value.is_invariant;
+  
+  + static_type:TYPE_FULL;
+  
+  + value:EXPR;
+  
+  //
+  // Creation.
+  //
+  
+  - create t:TYPE_FULL value v:EXPR :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make t value v;
+    result    
+  );
+  
+  - make t:TYPE_FULL value v:EXPR <-
+  (
+    position    := v.position;
+    static_type := t;
+    value       := v;
+  );
+  
+  - my_copy:SELF <-
+  (
+    create static_type value (value.my_copy)
+  );
+  
+  //
+  // Searching.
+  //
+  
+  - get_type t:TYPES_TMP <-
+  (         
+    t.add (static_type.raw);
+  );
+  
+  //
+  // Executing pass.
+  //
+  
+  - remove <-
+  (        
+    value.remove;
+  );
+    
+  - execute_unlink:INSTR <-  
+  (
+    value.execute_unlink
+  );
+  
+  - execute_link:EXPR <-
+  ( + result:EXPR;
+    + int:INTEGER_CST;
+    + lst_typ:TYPES_TMP;
+    + other:CAST;
+    
+    value  := value.execute_link;
+    result := Self;
+    //
+    ((static_type.raw = type_integer) && {value.is_constant}).if {
+      result := value;
+      new_execute_pass;
+    }.elseif {
+      (ALIAS_STR.is_integer (static_type.raw.name)) && 
+      {value.is_constant} &&
+      { int ?= value;  // BSBS: Merde avc les prototype_cst de type type_id : INTEGER
+	int != NULL
+      }
+    } then {      
+      int.cast_type static_type;
+      result := value;
+      new_execute_pass;
+    }.elseif {
+      other ?= value;
+      (other != NULL) &&
+      {other.static_type = static_type}
+    } then {
+      result := value;
+      new_execute_pass;
+    } else {       
+      lst_typ := TYPES_TMP.new;
+      value.get_type lst_typ;
+      ((lst_typ.count = 1) && {lst_typ.first = static_type.raw}).if {
+	result := value;
+	new_execute_pass;
+      };
+      lst_typ.free;
+    };    
+    //
+    result
+  );
+  
+  //
+  // Genere.
+  //
+  
+  - genere buffer:STRING <-
+  (    
+    buffer.add_last '(';
+    buffer.add_last '(';
+    static_type.genere_declaration buffer;	
+    buffer.add_last ' ';
+    static_type.genere_star_declaration buffer;	
+    buffer.add_last ')';
+    value.genere buffer;
+    buffer.add_last ')';
+  );
+  
+  //
+  // Display.
+  //
+
+  - display buffer:STRING <-
+  (
+    buffer.add_last '(';
+    static_type.append_name_in buffer;
+    (static_type.is_expanded).if_false {
+      buffer.add_last '*';
+    };
+    buffer.add_last ')';
+    value.display buffer;
+  );
+
+
+
+
+
+
+
+
+
+

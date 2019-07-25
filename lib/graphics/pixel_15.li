@@ -1,100 +1,107 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                             Isaac Library                                *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := Expanded PIXEL_15;
 
-section HEADER
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  + name        := PIXEL_15;
-  
-  - comment     := "";
-  
-  - category    := MICRO;
-  
-  - bibliography:= "http://IsaacOS.com";
-  
-  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
-  
-section INHERIT
-  
-  - parent_pixel:PIXEL := PIXEL;
-  
-section MAPPING
-  
-  + real_color:USHORTINT;
-  
-section PRIVATE  
-  
-  - convert_5_to_8:FIXED_ARRAY[USMALLINT] :=
-  ( + result:FIXED_ARRAY[USMALLINT];
-    + step,value:UREAL_26_6;
+  - comment := "Pixel on 15 bits";
     
-    result:=FIXED_ARRAY[USMALLINT].create 32;
-    step := 255;
-    step := step /# 31;
+Section Insert
+  
+  + parent_pixel:Expanded PIXEL;
+  
+Section Mapping  
+  
+  + real_color:UINTEGER_16;
+  
+Section Private
+      
+  - convert_5_to_8:FAST_ARRAY[UINTEGER_8] :=
+  ( + result:FAST_ARRAY[UINTEGER_8];
+    + value:UINTEGER_8;
+    
+    result:=FAST_ARRAY[UINTEGER_8].create 32;
     0.to 31 do { j:INTEGER;
-      result.put (value.to_usmallint) to j;
-      value := value + step;
+      result.put value to j;
+      value := value + 8;      
     };
     result
   );
         
-section PUBLIC
+Section Public
   
-  - red:USMALLINT <- 
+  - red:UINTEGER_8 <- 
   (
     convert_5_to_8.item (real_color >> 10)
   );
   
-  - green:USMALLINT <- 
+  - green:UINTEGER_8 <- 
   (
     convert_5_to_8.item ((real_color >> 5) & 01Fh)
   );
 
-  - blue:USMALLINT <- 
+  - blue:UINTEGER_8 <- 
   (
     convert_5_to_8.item (real_color & 01Fh)
   );
   
-  - color col:UINTEGER :UINTEGER <-
+  - get_raw col:UINTEGER_32 :UINTEGER_32 <- 
   (
-    real_color := (((col & 0F80000h) >> 9) |
-                   ((col & 000F800h) >> 6) |
-                   ((col & 00000F8h) >> 3)).to_ushortint      
+    ((col & 0F80000h) >> 9) |
+    ((col & 000F800h) >> 6) |
+    ((col & 00000F8h) >> 3)
   );
   
-  - color_rgb r,g,b:USMALLINT <-
-  (
-    real_color := ((r & 0F8h).to_ushortint << 7) |
-                  ((g & 0F8h).to_ushortint << 2) |
-                  ((b & 0F8h).to_ushortint >> 3);
+  - make col:UINTEGER_32 <-
+  (   
+    real_color := (
+      ((col & 0F80000h) >> 9) |
+      ((col & 000F800h) >> 6) |
+      ((col & 00000F8h) >> 3)
+    ).to_uinteger_16;
   );
   
-  - is_transparent:BOOLEAN <- 
+  - make_rgb (r,g,b:UINTEGER_8) <-
   (
-    (real_color & 08000h) != 0
-  );  
-  
-  - size:USMALLINT          := 16; 
-  - red_size:USMALLINT      := 5;
-  - red_pos:USMALLINT       := 10;
-  - green_size:USMALLINT    := 5;
-  - green_pos:USMALLINT     := 5;
-  - blue_size:USMALLINT     := 5;
-  - blue_pos:USMALLINT      := 0;
-  - reserved_size:USMALLINT := 1;
-  - reserved_pos:USMALLINT  :=15;
-  
-  - copy other:SELF <-  
-  (
-    real_color := other.real_color;
+    real_color := (
+      ((r & 0F8h).to_uinteger_16 << 7) |
+      ((g & 0F8h).to_uinteger_16 << 2) |
+      ((b & 0F8h).to_uinteger_16 >> 3)
+    );
   );
-  
-  - to_pixel_15:PIXEL_15 <- self;
+    
+  - size:UINTEGER_8          := 16; 
+  - red_size:UINTEGER_8      := 5;
+  - red_pos:UINTEGER_8       := 10;
+  - green_size:UINTEGER_8    := 5;
+  - green_pos:UINTEGER_8     := 5;
+  - blue_size:UINTEGER_8     := 5;
+  - blue_pos:UINTEGER_8      := 0;
+  - reserved_size:UINTEGER_8 := 1;
+  - reserved_pos:UINTEGER_8  :=15;
+    
+  - to_pixel_15:PIXEL_15 <- Self;
   
 
   

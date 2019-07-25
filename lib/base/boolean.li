@@ -1,28 +1,40 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                   (c) INRIA 2003 (see 'licence.txt')                     *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
-  * name     :=BOOLEAN;
-  
-  - category    :=MICRO;
-  
-  - bibliography:="http://IsaacOS.com";
-  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     :="Boolean library (self is mapping on int C).";
+  + name    := Expanded BOOLEAN;
 
-  - type        := `char`;
-  - default     := FALSE;
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  - comment := "Boolean library (self is mapping on int C).";
+
+  - type    := `char`;
+  - default := FALSE;
   
-section INHERIT
+Section Insert
   
   - parent_object:OBJECT := OBJECT;
   
-section PRIVATE  
+Section Private  
   
   - deferred_boolean:BOOLEAN <-
   ( + result:BOOLEAN;
@@ -31,7 +43,7 @@ section PRIVATE
     result
   );
   
-section PUBLIC
+Section Public
 
   //
   // Conditional :
@@ -41,7 +53,7 @@ section PUBLIC
   
   - if_false block:BLOCK <- deferred;
   
-  - if true_block:BLOCK else false_block:BLOCK <- deferred;
+  - if true_block:BLOCK else false_block:BLOCK <- `ERROR`; //deferred;
   
   - if_true true_block:BLOCK else false_block:BLOCK <- deferred;
   
@@ -52,24 +64,32 @@ section PUBLIC
   - elseif cond:BLOCK then block:BLOCK :BOOLEAN <- deferred_boolean;
   
   - elseif cond:BLOCK then block:BLOCK else block_else:BLOCK <- deferred;
+    
+  - else_if cond:BLOCK then block:BLOCK :BOOLEAN <- 
+  // Alias.
+  elseif cond then block;
+  
+  - else_if cond:BLOCK then block:BLOCK else block_else:BLOCK <- 
+  // Alias.
+  elseif cond then block else block_else;
   
   //
   // Binary operator :
   //
   
-  - '||' left 10  other:BLOCK   :BOOLEAN <- deferred_boolean;
+  - '||' Left 10  other:BLOCK   :BOOLEAN <- deferred_boolean;
   
-  - '&&' left 20  other:BLOCK   :BOOLEAN <- deferred_boolean; 
+  - '&&' Left 20  other:BLOCK   :BOOLEAN <- deferred_boolean; 
   
-  - '|'  left 10  other:BOOLEAN :BOOLEAN <- deferred_boolean;
+  - '|'  Left 10  other:BOOLEAN :BOOLEAN <- deferred_boolean;
   
-  - '&'  left 20  other:BOOLEAN :BOOLEAN <- deferred_boolean;
+  - '&'  Left 20  other:BOOLEAN :BOOLEAN <- deferred_boolean;
   
-  - '^' left 10  other:BOOLEAN :BOOLEAN  <- deferred_boolean;
+  - '^' Left 10  other:BOOLEAN :BOOLEAN  <- deferred_boolean;
   
-  - '->' right 25 other:BOOLEAN :BOOLEAN <- deferred_boolean;
+  - '->' Right 25 other:BOOLEAN :BOOLEAN <- deferred_boolean;
 
-  - '->>' right 25 other:BLOCK  :BOOLEAN <- deferred_boolean;
+  - '->>' Right 25 other:BLOCK  :BOOLEAN <- deferred_boolean;
   
   - '=>' s:ABSTRACT_STRING <- deferred;
   
@@ -90,8 +110,8 @@ section PUBLIC
     result
   );
   
-  - to_numeric:NUMERIC <- 
-  ( + result:NUMERIC;
+  - to_integer:INTEGER <- 
+  ( + result:INTEGER;
     
     deferred;
     result

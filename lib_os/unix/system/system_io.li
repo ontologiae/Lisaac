@@ -1,28 +1,37 @@
-/****************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
-
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                            Lisaac OS Library                              //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
-  - name        := SYSTEM_IO;
+  + name     := SYSTEM_IO;
 
-  - comment     :="Lower level for Input / Output";
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  - comment  := "Lower level for Input / Output";
   
-  - category    := MICRO;
-  
-  - bibliography:="http://www.IsaacOS.com";
-
-  - author      :="Boutet Jerome (boutet@loria.fr), Benoit Sonntag (bsonntag@loria.fr)";
-
-  - external    := `#include <stdio.h>
+  - external := `
+#include <stdio.h>
+#include <stdlib.h>
   
 // Hardware 'print_char'
-int print_char(char car)
+void print_char(char car)
 {
   fputc(car,stdout);
 }
@@ -35,11 +44,11 @@ int die_with_code(int code)
 
 `;
 
-section INHERIT
+Section Inherit
   
   - parent_object:OBJECT := OBJECT;
 
-section PUBLIC
+Section Public
 
   - print_char byte:CHARACTER <-
   // Low level buffered output.

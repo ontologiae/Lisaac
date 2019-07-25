@@ -1,0 +1,131 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := IS_EXPANDED;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+    
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "True, if `Self' is Expanded type.";
+  
+Section Inherit
+  
+  + parent_expr:Expanded EXPR;
+  
+Section Public 
+  
+  - is_invariant:BOOLEAN <- TRUE;
+  
+  + receiver:EXPR;
+    
+  - static_type:TYPE_FULL <- type_boolean.default;
+  
+  - get_type t:TYPES_TMP <-
+  (     
+    t.add type_true;
+    t.add type_false;
+  );
+  
+  //
+  // Creation.
+  //
+  
+  - create p:POSITION receiver e:EXPR :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make p receiver e;
+    result
+  );
+  
+  - make p:POSITION receiver e:EXPR <-
+  (
+    position := p;            
+    receiver := e; 
+  );
+  
+  - my_copy:SELF <- SELF.create position receiver (receiver.my_copy);
+  
+  //
+  // Remove
+  //
+  
+  - remove <-
+  (
+    receiver.remove;
+  );
+  
+  //
+  // Execute
+  //
+  
+  - execute_unlink:INSTR <-
+  (     
+    receiver.execute_unlink
+  );
+  
+  - execute_link:EXPR <-
+  ( + result:EXPR;
+    + instr:INSTR;
+    
+    (receiver.static_type.is_expanded).if {
+      result := PROTOTYPE_CST.create position type (type_true.default);
+    } else {
+      result := PROTOTYPE_CST.create position type (type_false.default);
+    };    
+    instr := receiver.execute_unlink;
+    (instr != NULL).if {
+      list_current.insert_before instr;      
+    };
+    new_execute_pass;
+    result
+  );
+    
+  //
+  // Genere.
+  //
+  
+  - genere buffer:STRING <-
+  (
+    crash_with_message "IS_EXPANDED.genere !";
+  );
+  
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  (
+    buffer.append "is_expanded(";
+    receiver.display buffer;
+    buffer.add_last ')';
+  );
+
+
+
+
+
+
+
+
+

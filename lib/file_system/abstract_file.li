@@ -1,32 +1,41 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
-  + name        := ABSTRACT_FILE;
-  
-  - category    := MICRO;
-  
-  - bibliography:= "http://IsaacOS.com";
+  + name    := ABSTRACT_FILE;
 
-  - author      := "Benoit Sonntag (bsonntag@loria.fr)"; 
 
-  - comment     := "Abstract File Management";
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-section INHERIT
+  - comment := "Abstract File Management";
+  
+Section Inherit
   
   + parent_entry:ENTRY := ENTRY;   
   
-section PUBLIC
+Section Public
     
-  + cursor:UINTEGER;
+  + cursor:UINTEGER_32;
   
-  - set_cursor n:UINTEGER <-
+  - set_cursor n:UINTEGER_32 <-
   (
     cursor := n;
   );
@@ -55,7 +64,7 @@ section PUBLIC
     read_bound array_intern size (dest.object_size)
   ); 
   
-  - read dest:ARRAYED size nb_elt:NUMERIC :INTEGER <-
+  - read dest:ARRAYED size nb_elt:INTEGER :INTEGER <-
   ( 
     dest.set_capacity (dest.count + nb_elt);
     read_bound dest size nb_elt
@@ -65,7 +74,7 @@ section PUBLIC
   // Write.
   //
   
-  - write src:ARRAYED from start:NUMERIC size nb_elt:NUMERIC :INTEGER <-
+  - write src:ARRAYED from start:INTEGER size nb_elt:INTEGER :INTEGER <-
   ( + result:INTEGER;
     + elt_size,elt_ofs,size_byte:INTEGER;
     + size_block:INTEGER;
@@ -78,7 +87,7 @@ section PUBLIC
     elt_size:=src.element_sizeof;
     size_byte:=nb_elt * elt_size;    
     basic_seek cursor;
-    cursor := cursor + size_byte.to_uinteger;
+    cursor := cursor + size_byte.to_uinteger_32;
     size_block := 2048;
     idx_elt := start;
     {size_byte > 0}.while_do {
@@ -121,27 +130,33 @@ section PUBLIC
     result
   );
   
-section ENTRY
+Section ENTRY
   
   - make e:ENTRY :BOOLEAN <-
   (
     parent_entry := e;
     physical_open
   );
+
+  - make_read_only e:ENTRY :BOOLEAN <-
+  (
+    parent_entry := e;
+    physical_open_read_only
+  );
   
-section PRIVATE  
+Section Private  
   
-  - read_bound dest:ARRAYED size nb_elt:NUMERIC :INTEGER <-
+  - read_bound dest:ARRAYED size nb_elt:INTEGER :INTEGER <-
   ( + result:INTEGER;
-    + elt_size,size_byte:UINTEGER;
-    + size_block:UINTEGER;
+    + elt_size,size_byte:UINTEGER_32;
+    + size_block:UINTEGER_32;
     
     ? { is_open };
     ? { nb_elt > 0};
     ? { dest!=NULL};
     
-    elt_size  := dest.element_sizeof.to_uinteger;
-    size_byte := nb_elt.to_uinteger * elt_size;
+    elt_size  := dest.element_sizeof.to_uinteger_32;
+    size_byte := nb_elt.to_uinteger_32 * elt_size;
     
     ((cursor + size_byte) > size).if {
       size_byte := size - cursor;
@@ -166,11 +181,11 @@ section PRIVATE
     result    
   );
     
-  + array_intern:FIXED_ARRAY[USMALLINT] := FIXED_ARRAY[USMALLINT].clone;
+  + array_intern:FAST_ARRAY[UINTEGER_8] := FAST_ARRAY[UINTEGER_8].clone;
   
-  + array_intern2:FIXED_ARRAY[USMALLINT] := FIXED_ARRAY[USMALLINT].clone;
+  + array_intern2:FAST_ARRAY[UINTEGER_8] := FAST_ARRAY[UINTEGER_8].clone;
   
-  - tmp_buffer:NATIVE_ARRAY[USMALLINT] := NATIVE_ARRAY[USMALLINT].calloc 2048; // 512 byte
+  - tmp_buffer:NATIVE_ARRAY[UINTEGER_8] := NATIVE_ARRAY[UINTEGER_8].create 2048; // 512 byte
   
   //
   // Physical implementation.
@@ -181,8 +196,14 @@ section PRIVATE
     deferred;
     FALSE
   ); 
+
+  - physical_open_read_only:BOOLEAN <-
+  ( 
+    deferred;
+    FALSE
+  ); 
     
-  - basic_seek pos:NUMERIC :INTEGER <-
+  - basic_seek pos:INTEGER :INTEGER <-
   // return size read or 0 if end of input (-1 on error => exception ?)
   ( 
     ? {is_open};    
@@ -190,7 +211,7 @@ section PRIVATE
     0
   );
   
-  - basic_read buf:NATIVE_ARRAY[USMALLINT] size s:NUMERIC :INTEGER <-
+  - basic_read buf:NATIVE_ARRAY[UINTEGER_8] size s:INTEGER :INTEGER <-
   // return size read or 0 if end of input (-1 on error => exception ?)
   ( 
     ? {is_open};
@@ -198,7 +219,7 @@ section PRIVATE
     0
   );
   
-  - basic_write buf:NATIVE_ARRAY[USMALLINT] size s:NUMERIC :INTEGER <-
+  - basic_write buf:NATIVE_ARRAY[UINTEGER_8] size s:INTEGER :INTEGER <-
   // return size read or 0 if end of input (-1 on error => exception ?)
   ( 
     ? {is_open};

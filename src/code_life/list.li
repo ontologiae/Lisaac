@@ -1,0 +1,423 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := LIST;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Expression list, immediate evaluation";
+  
+Section Inherit
+  
+  + parent_expr:Expanded EXPR;
+  
+Section Private  
+  
+  + expr_list:FAST_ARRAY[INSTR];
+    
+Section Public  
+  
+  - is_invariant:BOOLEAN <-
+  ( + result:BOOLEAN;
+    + j:INTEGER;
+    
+    result := TRUE;
+    j := expr_list.lower;
+    {(j <= expr_list.upper) && {result}}.while_do {
+      result := expr_list.item j.is_invariant;
+      j := j + 1;
+    };
+    result
+  );    
+  
+  - old_seq_or_and:UINTEGER_32;
+  
+  //
+  // Linked list INSTR.
+  //
+  
+  - lower:INTEGER <- expr_list.lower + 1;
+  - upper:INTEGER <- expr_list.upper + 1;
+  - count:INTEGER <- expr_list.count;
+  
+  - first:INSTR  <- expr_list.first;  
+  - second:INSTR <- expr_list.second;
+  
+  - item i:INTEGER :INSTR <- expr_list.item (i-1);
+  
+  - current_item:INSTR <- expr_list.item index;
+  
+  - last:INSTR <- expr_list.last;
+  
+  - add_first i:INSTR <-
+  (
+    expr_list.add_first i;
+  );
+  
+  - add_last i:INSTR <- 
+  (
+    expr_list.add_last i;
+  );  
+  
+  - add e:INSTR to idx:INTEGER <-
+  (
+    expr_list.add e to (idx-1);
+  );
+  
+  - put e:INSTR to idx:INTEGER <-
+  (
+    expr_list.put e to (idx-1);
+  );  
+
+  - last_expr:EXPR <-
+  ( + result:EXPR;
+       
+    result ?= last;
+    result
+  );
+  
+  - remove_last <-
+  (
+    expr_list.remove_last;
+  );
+  
+  - remove_index idx:INTEGER <-
+  (
+    expr_list.remove (idx-1);
+  );
+    
+  //
+  // Iterator.
+  //  
+  
+  + index:INTEGER;
+  
+  - inc_index <-
+  (
+    index := index + 1;
+  );
+  
+  - insert_before e:INSTR <-
+  ( 
+    ? {e != NULL};
+    expr_list.add e to (index - 1);
+    index := index + 1;
+  );
+
+  - insert e:INSTR to idx:INTEGER <-
+  ( 
+    ? {e != NULL};
+    expr_list.add e to (idx - 1);
+    (idx <= index).if {
+      index := index + 1;
+    };
+  );
+  
+  //
+  // Flags.
+  //
+  
+  - is_empty:BOOLEAN <-
+  ( + void_:PROTOTYPE_CST;
+    + result:BOOLEAN;
+
+    (count = 0).if {
+      result := TRUE;
+    }.elseif {count = 1} then {
+      void_ ?= first;
+      result := (void_ != NULL) && {void_.static_type.raw = TYPE_VOID};
+    };
+    result
+  );
+  
+  //
+  // Creation.
+  //
+  
+  - create p:POSITION :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make p;
+    result
+  );
+    
+  - make p:POSITION <-
+  (
+    new_depend_pass;
+    position  := p;
+    expr_list := FAST_ARRAY[INSTR].create_with_capacity 2;
+  );
+
+  - my_copy:SELF <-
+  ( + result:SELF;
+
+    result := SELF.create position;
+    (lower).to (upper) do { j:INTEGER;
+      result.add_last (item j.my_copy);
+    };
+    result
+  );
+
+  //
+  // Remove.
+  //
+
+  - remove <-
+  (     
+    (lower).to (upper) do { j:INTEGER;
+      item j.remove;
+    };    
+  );
+  
+  //
+  // Type.
+  //
+  
+  - static_type:TYPE_FULL <- last_expr.static_type;
+  
+  - get_type t:TYPES_TMP <- last_expr.get_type t;
+
+  //
+  // Execute.
+  //
+    
+  - execute_unlink:INSTR <-  
+  ( 
+    // Result not used : Add last `Void'. (BSBS: OPTIM: Create un Void shared!)
+    (static_type.raw != TYPE_VOID).if {	
+      add_last (PROTOTYPE_CST.create position type (TYPE_VOID.default));
+    };
+    
+    execute_list
+  );
+
+  - execute_link:EXPR <-
+  (
+    execute_list
+  );  
+    
+  - execute_case <-  
+  ( + new_expr:INSTR; 
+    + old_list_current:LIST;
+    
+    //
+    seq_list.add_last Self; 
+    seq_inline := seq_inline + 1;
+    
+    // Update Context.    
+    old_list_current := list_current;
+    list_current := Self;    
+       
+    // Execute expression list.
+    ? {index = 0};
+    index := lower;
+    {index != upper}.while_do {            
+      old_seq_or_and := seq_or_and;                  
+      new_expr := item index.execute;      
+      (new_expr != NULL).if {	
+	put new_expr to index;
+	index := index + 1;
+      } else {
+	remove_index index;
+      };                  
+    };
+      
+    // Last.    
+    old_seq_or_and := seq_or_and;
+    new_expr := last_expr.execute_link;
+    put new_expr to upper;
+    index := 0;
+        
+    // Restore Context.
+    list_current := old_list_current;    
+    //
+    seq_list.remove_last;    
+    seq_inline := seq_inline + 1;
+  );
+  
+Section Private  
+  
+  - execute_list:EXPR <-  
+  ( + result:EXPR;    
+        
+    execute_case;    
+
+    (list_current != NULL).if {
+      // Fusion list.      
+      (lower).to (upper-1) do { j:INTEGER;
+	list_current.insert_before (item j);
+      };
+      result := last_expr; 
+      ? {result != NULL};
+      new_execute_pass;
+    } else {              
+      result := Self;
+    };    
+    result
+  );
+    
+Section Public
+  
+  //
+  // Generation.
+  //
+  
+  //- n_bug:INTEGER;
+    
+  - genere buffer:STRING <-
+  (         
+    buffer.append "{\n";
+    indent.append "  ";
+    
+    lower.to (upper-1) do { j:INTEGER;
+      buffer.append indent;          
+      item j.genere buffer;
+      buffer.append ";\n";
+
+//      buffer.append "if (BUG) printf(\"";
+//      n_bug.append_in buffer;
+//      buffer.append "\\n\");";
+//      n_bug := n_bug + 1;
+    };
+        
+    indent.remove_last 2;    
+    buffer.append indent;
+    buffer.add_last '}';
+  );
+  
+  - n_bug:INTEGER;
+  
+  
+  - genere_extern buffer:STRING <-
+  ( + pos_local:INTEGER;   
+    + last_expr:EXPR;
+    + t:TYPE_FULL;
+      
+    buffer.append "{\n";
+    indent.append "  ";
+    // Local.    
+    pos_local := buffer.count+1;
+    stack_local.clear;
+  
+    (lower).to (upper-1) do { j:INTEGER;
+      buffer.append indent;      
+      
+      //item j.debug_display;
+      
+      item j.genere buffer;
+      buffer.append ";\n";      
+
+//      buffer.append "if (BUG) printf(\"";
+//      n_bug.append_in buffer;
+//      buffer.append "\\n\");";
+//      n_bug := n_bug + 1;
+    };
+    (static_type.raw != TYPE_VOID).if {
+      buffer.append indent;      
+      buffer.append "return(";          
+      //
+      last_expr ?= last;      
+      t := last_expr.static_type;
+      (
+	(t.is_expanded) && 
+	{! t.is_expanded_ref} && 
+	{! t.is_expanded_c}
+      ).if {
+	buffer.add_last '&';
+      };	
+      last_expr.genere buffer;
+      buffer.add_last ')';
+      buffer.append ";\n";    
+    };
+
+    // Local.    
+    string_tmp.clear;        
+    add_local (var_size.item 3) in string_tmp; // 64 bits
+    add_local (var_size.item 2) in string_tmp; // 32 bits
+    add_local (var_size.item 1) in string_tmp; // 16 bits
+    add_local (var_size.item 0) in string_tmp; //  8 bits
+    buffer.insert_string string_tmp to pos_local;      
+    // End.
+    indent.remove_last 2;    
+    buffer.append indent;
+    buffer.add_last '}';
+  );
+  
+  //
+  // Display.
+  //
+
+  - display buffer:STRING <-
+  (    
+    // Begin List.    
+    buffer.add_last '(';
+        
+    // Code.
+    buffer.add_last '\n';
+    indent.append "  ";
+    
+    (lower).to (upper) do { j:INTEGER;
+      buffer.append indent;      
+      item j.display buffer;
+      buffer.add_last '\n';
+    };    
+    indent.remove_last 2;
+    buffer.append indent;
+    
+    // End List.
+    buffer.add_last ')';
+    display_ref buffer;
+  );
+  
+Section Private  
+  
+  - add_local tab:FAST_ARRAY[LOCAL] in buf:STRING <-
+  ( + loc:LOCAL;
+    + t:TYPE_FULL;
+    + cur:INTEGER;
+    
+    (! tab.is_empty).if {
+      (tab.lower).to (tab.upper) do { j:INTEGER;
+	loc := tab.item j;	
+	(((buf.count + loc.intern_name.count - cur) > 70) || {t != loc.type}).if {
+	  // New line
+	  (t != NULL).if {
+	    buf.append ";\n";	  
+	  };
+	  cur := buf.count;
+	  t := loc.type;
+	  buf.append indent;
+	  t.genere_declaration buf;	      	  
+	  buf.add_last ' ';
+	} else {
+	  buf.add_last ',';
+	};
+	t.genere_star_declaration buf;	    	
+	buf.append (loc.intern_name);	
+      };
+      buf.append ";\n";
+      tab.clear;
+    };
+  );
+

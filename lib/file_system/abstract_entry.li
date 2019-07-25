@@ -1,31 +1,37 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := ABSTRACT_ENTRY;
 
-section HEADER
-  
-  + name        := ABSTRACT_ENTRY;
-  
-  - category    := MICRO;
-  
-  - bibliography:= "http://IsaacOS.com";
 
-  - author      := 
-  "Benoit Sonntag (bsonntag@loria.fr), \
-  \Jerome Boutet (boutet@loria.fr)";
-
-  - comment     := "Abstract Entry.";
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-section INHERIT  
+  - comment := "Abstract Entry.";
+  
+Section Inherit  
   
   - parent_object:OBJECT := OBJECT;
   
-section PUBLIC
+Section Public
 
   //
   // Path.
@@ -33,7 +39,7 @@ section PUBLIC
   
   + path:STRING_CONSTANT;
   
-  * name:STRING_CONSTANT; // Alias with the tail `path' storage.
+  + name:STRING_CONSTANT; 
   
   + link_count:INTEGER;
   
@@ -55,13 +61,13 @@ section PUBLIC
   
   - is_file:BOOLEAN <- ! is_directory;
   
-  - this:ENTRY <- self;
+  - this:ENTRY <- Self;
   
   //
   // Size.
   //
   
-  + size:UINTEGER;
+  + size:UINTEGER_32;
   
   //
   // Open / Close
@@ -82,6 +88,30 @@ section PUBLIC
     };
     (child.make this).if_false {
       child := NULL;
+    };
+    child
+  );
+  
+  - open_read_only:ENTRY <-
+  // Return FILE or DIRECTORY, NULL:error.
+  ( + f:STD_FILE;
+    link_count := link_count + 1;    
+    (is_directory).if {
+      (child = NULL).if { 
+	child := DIRECTORY.clone; 
+      };
+      (child.make this).if_false {
+	child := NULL;
+      };
+    } else {
+      (child = NULL).if {
+	f := STD_FILE.clone;
+      } else {
+	f ?= child;
+      };
+      (f.make_read_only this).if {
+	child := f;
+      };
     };
     child
   );
@@ -179,7 +209,7 @@ section PUBLIC
     result
   );
   
-section ENTRY  
+Section ENTRY  
   
   + child:ENTRY;
     
@@ -200,7 +230,10 @@ section ENTRY
   ( + idx:INTEGER;
     path := STRING_CONSTANT.create_copy n;
     idx := path.last_index_of '/'; 
-    name.set_storage (path.storage + idx) count (path.count - idx);
+    (name = NULL).if {
+      name := STRING_CONSTANT.clone;
+    };
+    name.set_storage (path.storage + idx) count (path.count - idx);    
   );
   
   - reduce_path st:STRING <-
@@ -208,9 +241,9 @@ section ENTRY
     + stat:INTEGER;
     + car:CHARACTER;
     
-    //    "Reduce:{".print; 
-    //    st.print;
-    //    "}=>\n       {".print;
+//        "Reduce:{".print; 
+//        st.print;
+//        "}=>\n       {".print;
 
     st.replace_all '\\' with '/';
     i := st.lower;
@@ -263,6 +296,11 @@ section ENTRY
 	  // foo/...bar => foo/...bar
 	  stat := 0;
 	};
+      }.elseif {(car = ':') && {i > 2} && 
+	{st.item (i-1).is_letter} && {st.item (i-2) = '/'}
+      } then {
+	st.remove_first (i-2);
+	i := st.lower;	    
       } else {
 	// Other character.
 	stat := 0;
@@ -296,22 +334,22 @@ section ENTRY
       st.add_last '/';
     };
     
-    //st.print; "}\n".print;
+//    st.print; "}\n".print;
   );
   
-section ENTRY
+Section Public
     
   //
   // Alias Entry.
   //
   
-  - alias:DICTIONARY[ENTRY,ABSTRACT_STRING] := 
-  DICTIONARY[ENTRY,ABSTRACT_STRING].create;
+  - alias:HASHED_DICTIONARY[ENTRY,ABSTRACT_STRING] := 
+  HASHED_DICTIONARY[ENTRY,ABSTRACT_STRING].create;
   
   - get_entry p:ABSTRACT_STRING :ENTRY <- 
   ( + new_entry,result:ENTRY;
-        
-    (alias.has p).if {
+    
+    (alias.has p).if {      
       result := alias.at p;
     } else {
       new_entry := ENTRY.clone;
@@ -331,10 +369,13 @@ section ENTRY
       tmp.copy p;
     };
     i := tmp.last_index_of '/';
-    ? {i != 0};
-    tmp.keep_head (i-1);
-    (tmp.is_empty).if {	  
-      tmp.add_last '/';
+    (i = 0).if {
+      tmp.copy "../";
+    } else {
+      tmp.keep_head (i-1);
+      (tmp.is_empty).if {	  
+	tmp.add_last '/';
+      };
     };
   );
   

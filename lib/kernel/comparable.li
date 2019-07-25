@@ -1,32 +1,42 @@
-/****************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := COMPARABLE;
 
-section HEADER
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  - name        := COMPARABLE;
-  - comment     :=" All classes handling COMPARABLE objects with a total order\
-                  \relation should inherit from this class.";
-  
-  - category    := MICRO;
-  
-  - bibliography:="http://IsaacOS.com";
-  - author      :="Boutet Jerome (boutet@loria.fr)";
-  
-section INHERIT
+  - comment := " All classes handling COMPARABLE objects with a total order\
+               \relation should inherit from this class.";
+    
+Section Inherit
   
   - parent_object:OBJECT := OBJECT;
   
-section PUBLIC
+Section Public
   
-   - '=='  right 60 other:SELF :BOOLEAN <- (! (self < other)) && { ! (other < self)};
+   - '=='  Right 60 other:SELF :BOOLEAN <- (! (Self < other)) && { ! (other < Self)};
 
-  - '<' left 1 other:SELF :BOOLEAN <-
+  - '<' Left 1 other:SELF :BOOLEAN <-
   // Is `self' strictly less than `other'?
   (
     ? { other != NULL };
@@ -34,14 +44,14 @@ section PUBLIC
     //? { result -> ! (other < self)};
   );
 
-  - '<=' left 1 other:SELF :BOOLEAN <-
+  - '<=' Left 1 other:SELF :BOOLEAN <-
   // Is `self' less than or equal `other'?
   (
     + result:BOOLEAN;
     
     ? { other != NULL };
-    result := ! (other < self);
-    ? { result = ((self < other) | == other)};
+    result := ! (other < Self);
+    ? { result = ((Self < other) | == other)};
     
     result
   );
@@ -50,20 +60,20 @@ section PUBLIC
   // Is `self' strictly greater than `other'?
   (
     ?{ other != NULL };
-    other < self
+    other < Self
   );
 
   - '>=' other:SELF :BOOLEAN <-
   // Is `self' greater than or equal than `other'?
   (
     ?{ other != NULL };
-    ! (self < other)
+    ! (Self < other)
   );
   
   - in_range lower:SELF to upper:SELF :BOOLEAN <-
   // Return true if `self' is in range [`lower'..`upper']
   (
-    (self >= lower) && { self <= upper }
+    (Self >= lower) && { Self <= upper }
   );
 
   - compare other:SELF :INTEGER <-
@@ -72,17 +82,17 @@ section PUBLIC
   (
     + result:INTEGER;
     ?{ other != NULL };
-    (self < other).if {
+    (Self < other).if {
       result := -1;
-    }.elseif { other < self } then {
+    }.elseif { other < Self } then {
       result := 1;
     } else {
       result := 0;
     };
 	
     ? { (result =  0) = ( == other)};
-    ? { (result = -1) = (self < other)};
-    ? { (result =  1) = (self > other)};
+    ? { (result = -1) = (Self < other)};
+    ? { (result =  1) = (Self > other)};
 
     result
   );
@@ -93,13 +103,13 @@ section PUBLIC
     + result:SELF;
     
     ?{ other != NULL };
-    ( self <= other ).if {
-      result := self;
+    ( Self <= other ).if {
+      result := Self;
     } else {
       result := other;
     };
     
-    ? { (result <= self) && { result <= other}};
+    ? { (result <= Self) && { result <= other}};
     ? { (compare result = 0) || { other.compare result = 0 }};
     
     result
@@ -112,13 +122,13 @@ section PUBLIC
     + result:SELF;
     ?{ other != NULL };
     
-    ( self >= other ).if {
-      result := self;
+    ( Self >= other ).if {
+      result := Self;
     } else {
       result := other;
     };
 
-    ? { (result >= self) && { result >= other }};
+    ? { (result >= Self) && { result >= other }};
     ? { (compare result = 0) || {other.compare result = 0}};
 
     result

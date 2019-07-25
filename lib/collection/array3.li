@@ -1,31 +1,42 @@
-/****************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
-
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
   + name        := ARRAY3[E];
+
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
   - comment     :=" General prurpose, resizable, three dimensional array..";
+    
+Section Inherit
   
-  - category    := MICRO;
+  + parent_collection3:Expanded COLLECTION3[E];
   
-  - bibliography:="http://IsaacOS.com";
-  - author      :="Boutet Jerome (boutet@loria.fr)";
-  
-section INHERIT
-  
-  - parent_collection3:COLLECTION3[E] := COLLECTION3[E];
-  
-section PUBLIC
+Section Public
   
   + lower1:INTEGER;
   + lower2:INTEGER;
   + lower3:INTEGER;
+  
   + upper1:INTEGER;
   + upper2:INTEGER;
   + upper3:INTEGER;
@@ -33,36 +44,45 @@ section PUBLIC
   + count1:INTEGER;
   + count2:INTEGER;
   + count3:INTEGER;
+  
   + count:INTEGER;
   
-  // ARRAY 2
+Section ARRAY3
+  
   + storage:NATIVE_ARRAY[E];
-  //To store elements line by line.
+  // To store elements line by line.
   
   + capacity:INTEGER;
-  //Number of elements in `storage'.
+  // Number of elements in `storage'.
   
+Section Public
   
-  //Creation / modification:
+  //
+  // Creation / modification:
+  // 
   
-  - create line_min, column_min, depth_min:NUMERIC to line_max, column_max, depth_max:NUMERIC :SELF <-
-  (
-    + result:SELF;
-    result := clone;
-    result.make line_min, column_min, depth_min to line_max, column_max, depth_max;
-    result
-  );
-  
-  
-  - make line_min, column_min, depth_min:NUMERIC to line_max, column_max, depth_max:NUMERIC <-
-  //Reset all bounds `line_minimum' / `line_maximum' / `column_minimum'
-  //`column_maximum' / `depth_min' and `depth_max' using arguments as
-  //new values. All elements are set to the default value of type E.
-  (
-    ? { line_min <= line_max };
-    ? { column_min <= column_max };
-    ? { depth_min <= depth_max };
+  - create (line_min, column_min, depth_min:INTEGER) 
+  to (line_max, column_max, depth_max:INTEGER) :SELF <-
+  // Reset all bounds `line_minimum' / `line_maximum' / `column_minimum'
+  // `column_maximum' / `depth_min' and `depth_max' using arguments as
+  // new values. All elements are set to the default value of type E.
+  ( + result:SELF;
     
+    result := clone;
+    result.make (line_min, column_min, depth_min) to (line_max, column_max, depth_max);
+    result
+  );  
+  
+  - make (line_min, column_min, depth_min:INTEGER) to (line_max, column_max, depth_max:INTEGER) <-
+  // Reset all bounds `line_minimum' / `line_maximum' / `column_minimum'
+  // `column_maximum' / `depth_min' and `depth_max' using arguments as
+  // new values. All elements are set to the default value of type E.
+  [ ...
+    -? { line_min   <= line_max   };
+    -? { column_min <= column_max };
+    -? { depth_min  <= depth_max  };
+  ]
+  (  
     lower1 := line_min;
     upper1 := line_max;
     lower2 := column_min;
@@ -73,255 +93,258 @@ section PUBLIC
     count2 := upper2 - lower2 + 1;
     count3 := upper3 - lower3 + 1;
     count := count1 * count2 * count3;
-    ( capacity >= count ).if {
+    (capacity >= count).if {
       storage.clear_all (count - 1);
     } else {
       capacity := count;
       storage := NATIVE_ARRAY[E].calloc count;
     };
+  )
+  [ ...
+    +? { line_minimum = line_min };
+    +? { line_maximum = line_max };
+    +? { column_minimum = column_min };
+    +? { column_maximum = column_max };
+    +? { depth_minimum = depth_min };
+    +? { depth_maximum = depth_max };
+  ];
     
-    ? { line_minimum = line_min };
-    ? { line_maximum = line_max };
-    ? { column_minimum = column_min };
-    ? { column_maximum = column_max };
-    ? { depth_minimum = depth_min };
-    ? { depth_maximum = depth_max };
-  );
-  
-  
   - from_collection3 model:COLLECTION3[E] <-
   (
-    make (model.line_minimum),
-    (model.column_minimum),
-    (model.depth_minimum) to
-    (model.line_maximum),
-    (model.column_maximum),
-    (model.depth_maximum);
+    make (model.line_minimum, model.column_minimum, model.depth_minimum) 
+    to   (model.line_maximum, model.column_maximum, model.depth_maximum);
     
     line_minimum.to line_maximum do { i:INTEGER;      
       column_minimum.to column_maximum do { j:INTEGER;	 
 	depth_minimum.to depth_maximum do { k:INTEGER;
-	  put (model.item i,j,k) to i,j,k;
-	}; // end do
-      }; // end do
-    }; // end do
+	  put (model.item (i,j,k)) to (i,j,k);
+	}; 
+      }; 
+    }; 
+  )
+  [ ...
+    +? { lower1 = model.lower1 };
+    +? { lower2 = model.lower2 };
+    +? { lower3 = model.lower3 };
+  ];
     
-    // ensure then
-    ? { lower1 = model.lower1 };
-    ? { lower2 = model.lower2 };
-    ? { lower3 = model.lower3 };
-  );
-  
-  
-  - from_collection contents:COLLECTION[E],line_min, line_max, column_min, column_max, depth_min, depth_max:NUMERIC <-
+  - from_collection contents:COLLECTION[E] 
+  size (line_min,column_min,depth_min:INTEGER) 
+  to (line_max,column_max,depth_max:INTEGER) <-
   // Reset all bounds using `line_min', `line_max', `column_min',
   // `column_max', `depth_min', and `depth_max'.
   // Copy all elements of `contents', line by line into Current.
-  (
-    ? { line_min <= line_max };
-    ? { column_min <= column_max };
-    ? { depth_min <= depth_max };
-    ? { contents.count = (line_max - line_min + 1) * (column_max - column_min + 1) * (depth_max - depth_min + 1) };
-    
-    make line_min,column_min,depth_min to line_max,column_max,depth_max;
+  [ ...
+    -? { line_min <= line_max };
+    -? { column_min <= column_max };
+    -? { depth_min <= depth_max };
+    -? { 
+      contents.count = (line_max - line_min + 1) * 
+      (column_max - column_min + 1) * 
+      (depth_max - depth_min + 1) 
+    };
+  ]
+  (    
+    make (line_min,column_min,depth_min) to (line_max,column_max,depth_max);
     
     0.to (count - 1) do { i:INTEGER;
       storage.put (contents.item (contents.lower + i)) to i;
-    }; // end do
+    }; 
+  )
+  [ ...
+    +? { line_minimum = line_min };
+    +? { line_maximum = line_max };
+    +? { column_minimum = column_min };
+    +? { column_maximum = column_max };
+    +? { depth_minimum = depth_min };
+    +? { depth_maximum = depth_max };
+    +? { count = contents.count };
+  ];
     
-    ? { line_minimum = line_min };
-    ? { line_maximum = line_max };
-    ? { column_minimum = column_min };
-    ? { column_maximum = column_max };
-    ? { depth_minimum = depth_min };
-    ? { depth_maximum = depth_max };
-    ? { count = contents.count };
-  );
-  
-  
   - from_model model:COLLECTION[COLLECTION[COLLECTION[E]]] <-
   //The `model' is used to fill line by line the COLLECTION3.
   //Assume all sub-collections of have the same indexing.
   (
-    make (model.lower),
-    (model.first.lower),
-    (model.first.first.lower) to
-    (model.upper),    
-    (model.first.upper),    
-    (model.first.first.upper);
+    make (model.lower,model.first.lower,model.first.first.lower) 
+    to   (model.upper,model.first.upper,model.first.first.upper);
     
     (model.lower).to (model.upper) do { line:INTEGER;
       (model.first.lower).to (model.first.upper) do { column:INTEGER;
 	(model.first.first.lower).to (model.first.first.upper) do { depth:INTEGER;
-	  put (model.item (line).item (column).item depth) to line,column,depth;
-	}; // end do
-      };// end do
-    };// end do
-    
-    ? { line_minimum = model.lower };
-    ? { line_maximum = model.upper };
-    ? { column_minimum = model.first.lower };
-    ? { column_maximum = model.first.upper };
-    ? { depth_minimum = model.first.first.lower };
-    ? { depth_maximum = model.first.first.upper }
-  );
+	  put (model.item line.item column.item depth) to (line,column,depth);
+	}; 
+      };
+    };
+  )
+  [ ...
+    -? { line_minimum = model.lower };
+    -? { line_maximum = model.upper };
+    -? { column_minimum = model.first.lower };
+    -? { column_maximum = model.first.upper };
+    -? { depth_minimum = model.first.first.lower };
+    -? { depth_maximum = model.first.first.upper };
+  ];
   
+  //
+  // Resizing:
+  //
   
-  //Resizing:
-  
-  - resize line_min, column_min, depth_min:NUMERIC to line_max, column_max, depth_max:NUMERIC <-
-  //Resize bounds of the Current array
-  (
-    + tmp:SELF;
-    
-    ? { line_max >= line_min };
-    ? { column_max >= column_min };
-    ? { depth_max >= depth_min };
-    
+  - resize (line_min, column_min, depth_min:INTEGER) to (line_max, column_max, depth_max:INTEGER) <-
+  // Resize bounds of the Current array
+  [ ...
+    -? { line_max   >= line_min   };
+    -? { column_max >= column_min };
+    -? { depth_max  >= depth_min  };
+  ]
+  ( + tmp:SELF;
+        
     tmp := SELF.clone;
-    tmp.make line_min, column_min, depth_min to line_max, column_max, depth_max;
-    //It may be possible to avoid this creation when :
-    //   new `capacity' <= old `capacity'
+    tmp.make (line_min, column_min, depth_min) to (line_max, column_max, depth_max);
+    //BSBS: It may be possible to avoid this creation when :
+    //BSBS:   new `capacity' <= old `capacity'
     
     lower1.to line_maximum do { l:INTEGER;
       lower2.to column_maximum do { c:INTEGER;
 	lower3.to depth_maximum do { d:INTEGER;
-	  ( tmp.valid_index l,c,d) .if {
-	    tmp.put (item l,c,d) to l,c,d;
-	  }; // end if
-	}; // end do
-      }; // end do
-    }; // end do
+	  (tmp.valid_index (l,c,d)).if {
+	    tmp.put (item (l,c,d)) to (l,c,d);
+	  }; 
+	}; 
+      }; 
+    }; 
     
     standard_copy tmp;
+  )
+  [ ...
+    +? { line_minimum = line_min };
+    +? { line_maximum = line_max };
+    +? { column_minimum = column_min };
+    +? { column_maximum = column_max };
+    +? { depth_minimum = depth_min };
+    +? { depth_maximum = depth_max };
+  ];
+  
+  //
+  // Implementation of others feature from COLLECTION3:
+  //
+  
+  - item (line, column, depth:INTEGER) :E <-
+  (
+    storage.item (
+      (line - lower1) * count2 * count3 + 
+      (column - lower2) * count3 + depth - lower3
+    )
+  );
     
-    ? { line_minimum = line_min };
-    ? { line_maximum = line_max };
-    ? { column_minimum = column_min };
-    ? { column_maximum = column_max };
-    ? { depth_minimum = depth_min };
-    ? { depth_maximum = depth_max };
-  );
-  
-  
-  //Implementation of others feature from COLLECTION3:
-  
-  - item line, column, depth:NUMERIC :E <-
+  - put element:E to (line, column, depth:INTEGER) <-
   (
-    storage.item ((line - lower1) * count2 * count3 + (column - lower2) * count3 + depth - lower3)
+    storage.put element to (
+      (line - lower1) * count2 * count3 + 
+      (column - lower2) * count3 + depth - lower3
+    );
   );
-  
-  
-  - put element:E to line, column, depth:NUMERIC <-
+    
+  - force x:E to (line, column, depth:INTEGER) <-
   (
-    storage.put element to ((line - lower1) * count2 * count3 + (column - lower2) * count3 + depth - lower3);
-  );
-  
-  
-  - force x:E to line, column, depth:NUMERIC <-
-  (
-    ( ! valid_index line,column,depth).if {
-      resize (line.min lower1),(column.min lower2),(depth.min lower3) to
-      (line.max upper1),(column.max upper2), (depth.max upper3);
+    (! valid_index (line,column,depth)).if {
+      resize (line.min lower1,column.min lower2,depth.min lower3) 
+      to     (line.max upper1,column.max upper2,depth.max upper3);
     };
-    put x to line,column,depth;
+    put x to (line,column,depth);
   );
-  
-  
+    
   - set_all_with element:E <-
   (
     storage.set_all_with element with (count - 1);
   );
-  
-  
+    
   - replace_all old_value:E with new_value:E <-
   (
     storage.replace_all old_value with new_value until (count - 1);
   );
-  
-  
+    
   - fast_replace_all old_value:E with new_value:E <-
   (
     storage.fast_replace_all old_value with new_value until (count - 1);
   );
-  
-  
-  - sub_collection line_min, column_min, depth_min:NUMERIC to line_max, column_max, depth_max:NUMERIC :SELF <-         
-  (
-    + n:INTEGER;
+    
+  - sub_collection3 (line_min, column_min, depth_min:INTEGER) 
+  to (line_max, column_max, depth_max:INTEGER) :SELF <-
+  ( + n:INTEGER;
     + result:SELF;
     
-    result := SELF.clone;
-    result.make line_min,column_min,depth_min to line_max,column_max,depth_max;
+    result := create (line_min,column_min,depth_min) to (line_max,column_max,depth_max);
     
-    n := 0;
     line_min.to line_max do { i:INTEGER;
       column_min.to column_max do { j:INTEGER;
 	depth_min.to depth_max do { k:INTEGER;
-	  result.storage.put (item i,j,k) to n;
+	  result.storage.put (item (i,j,k)) to n;
 	  n := n + 1;
-	}; // end do
-      };// end do
-    };// end do
-    
-    ? { result.lower1 = line_min };
-    ? { result.lower2 = column_min };
-    ? { result.lower3 = depth_min };
-    ? { result.upper1 = line_max };
-    ? { result.upper2 = column_max };
-    ? { result.upper3 = depth_max };
-    
+	}; 
+      };
+    };
     result
-  );
+  )
+  [ ...   
+    +? { result.lower1 = line_min   };
+    +? { result.lower2 = column_min };
+    +? { result.lower3 = depth_min  };
+    +? { result.upper1 = line_max   };
+    +? { result.upper2 = column_max };
+    +? { result.upper3 = depth_max  };    
+  ];
   
-  
+  //
   // Looking and comparison:
+  //
   
-  - occurrences elt:E :NUMERIC <-
+  - occurrences elt:E :INTEGER <-
   (
     storage.occurrences elt until (count - 1)
   );
-  
-  
-  - fast_occurrences elt:E :NUMERIC <-
+    
+  - fast_occurrences elt:E :INTEGER <-
   (
     storage.fast_occurrences elt until (count - 1)
   );
-  
-  
+    
   - has x:E :BOOLEAN <-
   //Search if a element x is in the array using `equal'.
   //See also `fast_has' to choose the apropriate one.
-  (
-    storage.index_of x until (count - 1) <= count - 1
+  ( + result:BOOLEAN;
+    
+    (count > 0).if {
+      result := storage.index_of x until (count - 1) <= count - 1;
+    };
+    result
   );
-  
-  
+    
   - fast_has x:E :BOOLEAN <-
   // Search if a element x is in the array using `='.
-  (
-    result := storage.fast_index_of x until (count - 1) <= count -1
+  ( + result:BOOLEAN;
+    
+    (count > 0).if {
+      result := storage.fast_index_of x until (count - 1) <= count -1;
+    };
+    result
   );
-  
-  
-  - all_default :BOOLEAN <-
+    
+  - all_default:BOOLEAN <-
   (
     storage.all_default (count - 1)
   );
-  
-  
-  - swap line1, column1, depth1:NUMERIC with line2, column2, depth2:NUMERIC <-
-  (
-    + tmp:E;
+    
+  - swap (line1, column1, depth1:INTEGER) with (line2, column2, depth2:INTEGER) <-
+  ( + tmp:E;
     + index1, index2:INTEGER;
+    
     index1 := (line1 - lower1) * count2 * count3 + (column1 - lower2) * count3 + depth1 - lower3;
     index2 := (line2 - lower1) * count2 * count3 + (column2 - lower2) * count3 + depth2 - lower3;
     tmp := storage.item index1;
     storage.put(storage.item index2) to index1;
     storage.put tmp to index2;
   );
-  
-  
+    
   - copy other:SELF <-
   (
     lower1 := other.lower1;
@@ -330,24 +353,36 @@ section PUBLIC
     upper2 := other.upper2;
     lower3 := other.lower3;
     upper3 := other.upper3;
-    count := other.count;
+    count  := other.count;
     count1 := other.count1;
     count2 := other.count2;
     count3 := other.count3;
-    ( capacity < count ).if {
+    (capacity < count).if {
       capacity := count;
       storage := storage.calloc count;
     };
     storage.copy_from (other.storage) until (count - 1);
   );
   
+  //
+  // Invariant.
+  //
   
-  - '=='  right 60 other:SELF :BOOLEAN <-
+//  [ ...
+//    -? { count1 = upper1 - lower1 + 1 };
+//    -? { count2 = upper2 - lower2 + 1 };
+//    -? { count3 = upper3 - lower3 + 1 };
+//    -? { capacity >= count };
+//  ];
+  
+  
+/*  
+  - '=='  Right 60 other:SELF :BOOLEAN <-
   (
     + result:BOOLEAN;
     result := FALSE;
     
-    ( other = self ).if {
+    ( other = Self ).if {
       result := true;
     }.elseif { lower1 != other.lower1 } then {
     }.elseif { lower2 != other.lower2 } then {
@@ -361,33 +396,4 @@ section PUBLIC
     
     result
   );
-  
-  
-  - same_as other:COLLECTION3[E] :BOOLEAN <-
-  (
-    other.same_as_array3 self
-  );
-  
-  
-  //  COLLECTION3
-  
-  - same_as_array3 other:ARRAY3[E] :BOOLEAN <-
-  (
-    standard_same_as other
-  );
-  
-  
-  - same_as_fixed_array3 other:FIXED_ARRAY3[E] :BOOLEAN <-
-  (
-    standard_same_as other
-  );
-  
-  
-  - invariant :BOOLEAN <-
-  (
-    ( count1 = upper1 - lower1 + 1) && 
-    { count2 = upper2 - lower2 + 1 } &&
-    { count3 = upper3 - lower3 + 1 } &&
-    { capacity >= count }
-  );
-  
+*/

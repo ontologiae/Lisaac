@@ -1,0 +1,258 @@
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := EXAMPLE;
+    
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "The first program.";
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Public  
+    
+  - main <-
+  ( + menu_bar:G_EXPR;
+    + tools_bar:G_EXPR;
+    //
+    + zoom_bar:G_WIN_OUT;
+    //    
+    + file_menu:G_WIN_OUT;
+    + edit_menu:G_WIN_OUT;
+    + present_menu:G_WIN_OUT;
+    + dispo_menu:G_WIN_OUT;
+    + window_menu:G_WIN_OUT;
+    + help_menu:G_WIN_OUT;
+    //
+    + open_win:G_WIN_OUT;
+    + align_win:G_WIN_OUT;
+    //
+    + t,m,b:G_CHECK;
+    + r,c,l:G_CHECK;
+    //
+    + action1:BLOCK;
+    + action2:BLOCK;
+    
+    // Init window.
+    VIDEO.make (640,400);
+    
+    action1 := { bt:G_BUTTON;     
+      + w:G_WIN_OUT;
+      w ?= bt.parent;
+      w.close;
+      "Action\n".print;
+    };
+
+    action2 := { bt:G_BUTTON;     
+      + w:G_WIN_OUT;
+      w ?= bt.parent.parent;
+      w.close;
+      "Action\n".print;
+    };
+    
+    // Open Window :
+    open_win := G_WIN_OUT.create "Open" with (
+      (
+        (
+          G_OUT.create "Directory" /
+          G_WIN_IN.create (80,140) with (
+            G_BUTTON.create (G_OUT.create "Foo") /
+            G_BUTTON.create (G_OUT.create "This long long long file name ...") /
+            G_BUTTON.create (G_OUT.create "Foo1") /
+            G_BUTTON.create (G_OUT.create "Foo2") /
+            G_BUTTON.create (G_OUT.create "Foo3") /
+            G_BUTTON.create (G_OUT.create "Foo4") /
+            G_BUTTON.create (G_OUT.create "Foo5") /
+            G_BUTTON.create (G_OUT.create "Foo6") /
+            G_BUTTON.create (G_OUT.create "Foo7") /
+            G_BUTTON.create (G_OUT.create "Foo8") /
+            G_BUTTON.create (G_OUT.create "Foo9") /
+            G_BUTTON.create (G_OUT.create "FooA") /
+            G_BUTTON.create (G_OUT.create "FooB") /
+            G_BUTTON.create (G_OUT.create "FooC") /
+            G_BUTTON.create (G_OUT.create "FooD") /
+            G_BUTTON.create (G_OUT.create "FooE") /
+            G_BUTTON.create (G_OUT.create "FooF") 
+          )
+        ) | (
+          G_OUT.create "File" /
+          G_WIN_IN.create (80,140) with (
+            G_BUTTON.create (G_OUT.create "Bar")
+          )
+        )
+      ) / (
+        G_OUT.create "File name : " |
+        G_IN.create (16,1)
+      ) / (
+	      G_BUTTON.create (G_OUT.create " Open " justify (G_OUT.center)) action action1 |
+	      G_BUTTON.create (G_OUT.create "Cancel" justify (G_OUT.center)) action action1 
+      )
+    );
+    
+    // Align Window :
+    align_win := G_WIN_OUT.create "Alignment" with (
+      (
+	(
+	  (t := G_CHECK.create (G_OUT.create "Top "))    /
+	  (m := G_CHECK.create (G_OUT.create "Medium ")) /
+	  (b := G_CHECK.create (G_OUT.create "Bottom ")) 
+	) | (
+	  (
+	    (l := G_CHECK.create (G_OUT.create "Left "))   |
+	    (c := G_CHECK.create (G_OUT.create "Center ")) |
+	    (r := G_CHECK.create (G_OUT.create "Right "))
+	  ).fix_height /
+	  (
+	    G_RAW.create ((G_CHECK.create (G_OUT.create "In page ").fix_height.fix_width))
+	  )
+	)
+      ) / (
+	G_BUTTON.create (G_OUT.create "  OK  " justify (G_OUT.center)) action action1 |
+	G_BUTTON.create (G_OUT.create "Cancel" justify (G_OUT.center)) action action1 
+      )
+    );
+    t ^ m ^ b;
+    l ^ c ^ r;
+    
+    // File menu :    
+    file_menu := G_WIN_OUT.create (
+      G_RAW.create (
+	G_BUTTON.create (G_OUT.create "New") action action2
+      ) / 
+      G_RAW.create (
+	G_BUTTON.create (G_OUT.create "Open ...")    connect open_win /
+	G_BUTTON.create (G_OUT.create "Save")        action action2 / 
+	G_BUTTON.create (G_OUT.create "Save as ...") action action2
+      ) /
+      G_RAW.create (
+	G_BUTTON.create (G_OUT.create "Import ...") action action2 /
+	G_BUTTON.create (G_OUT.create "Export ...") action action2
+      ) /
+      G_RAW.create (
+	G_BUTTON.create (G_OUT.create "Print ...") action action2
+      ) /
+      G_RAW.create (
+	G_BUTTON.create (G_OUT.create "Exit")      action action2  
+      )
+    );
+    
+    // Edit menu :    
+    edit_menu := G_WIN_OUT.create (
+      G_RAW.create (
+	G_BUTTON.create (G_OUT.create "Undo") action action2 /
+	G_BUTTON.create (G_OUT.create "Redo") action action2     
+      ) /
+      G_RAW.create (
+	G_BUTTON.create (G_OUT.create "Delete")     action action2 / 
+	G_BUTTON.create (G_OUT.create "Duplicate")  action action2 /
+	G_BUTTON.create (G_OUT.create "Select all") action action2 
+      )
+    );
+    
+    // Present menu :    
+    present_menu := G_WIN_OUT.create (
+      G_CHECK.create (G_OUT.create "Magnetic locate") /
+      G_CHECK.create (G_OUT.create "Contour")         
+    );
+    
+    // Dispo menu :    
+    dispo_menu := G_WIN_OUT.create (      
+      G_RAW.create (
+	G_BUTTON.create (G_OUT.create "Text editor...") action action2 /
+	G_BUTTON.create (G_OUT.create "Alignment") connect align_win   /
+	G_BUTTON.create (G_OUT.create "to curve") action action2       
+      ) /
+      G_RAW.create (	    
+	G_BUTTON.create (G_OUT.create "First plan") action action2     / 
+	G_BUTTON.create (G_OUT.create "Last plan") action action2      
+      ) /
+      G_RAW.create (
+	G_BUTTON.create (G_OUT.create "Group") action action2          /
+	G_BUTTON.create (G_OUT.create "Degroup") action action2        /
+	G_BUTTON.create (G_OUT.create "Combine") action action2        /
+	G_BUTTON.create (G_OUT.create "Decombine") action action2      /        
+	G_BUTTON.create (G_OUT.create "Auto-combine") action action2
+      )
+    );
+
+    // Window menu :    
+    window_menu := G_WIN_OUT.create (
+      G_BUTTON.create (G_OUT.create "Refresh draw") action action1
+    );
+
+    // Help menu :    
+    help_menu := G_WIN_OUT.create (
+      G_BUTTON.create (G_OUT.create "About ...") action action1       /
+      G_BUTTON.create (G_OUT.create "Bugs report ...") action action1 /
+      G_BUTTON.create (G_OUT.create "News ...") action action1 
+    );
+
+    // Menu Bar :
+    menu_bar := (
+      G_BUTTON.create (G_OUT.create " File ")         connect file_menu.fix_width    |
+      G_BUTTON.create (G_OUT.create " Edit ")         connect edit_menu.fix_width    |
+      G_BUTTON.create (G_OUT.create " Presentation ") connect present_menu.fix_width |
+      G_BUTTON.create (G_OUT.create " Disposition ")  connect dispo_menu.fix_width   |
+      G_BUTTON.create (G_OUT.create " Window ")       connect window_menu.fix_width  | 
+      G_OUT.create " "                                                               |
+      G_BUTTON.create (G_OUT.create " Help ")         connect help_menu.fix_width  
+    ).fix_height;
+    
+    // Zoom bar.
+    zoom_bar := G_WIN_OUT.create (
+      G_BUTTON.create (G_IMG.create "zoom_in.bmp")     |
+      G_BUTTON.create (G_IMG.create "zoom_out.bmp")    |
+      G_BUTTON.create (G_IMG.create "zoom_select.bmp") |
+      G_BUTTON.create (G_IMG.create "zoom_page.bmp")   |
+      G_BUTTON.create (G_IMG.create "zoom_100.bmp") 
+    );
+    
+    // Tools bar.
+    tools_bar := (
+      G_BUTTON.create (G_IMG.create "select.bmp")    /
+      G_BUTTON.create (G_IMG.create "zoom.bmp")      connect zoom_bar /
+      G_BUTTON.create (G_IMG.create "line.bmp")      /
+      G_BUTTON.create (G_IMG.create "rectangle.bmp") /
+      G_BUTTON.create (G_IMG.create "ellipse.bmp")   /
+      G_BUTTON.create (G_IMG.create "text.bmp")      /
+      G_BUTTON.create (G_IMG.create "paint.bmp")
+    ).fix_width.fix_height;
+
+    // Screen definition.
+    INTERFACE.make VIDEO size (VIDEO.width,VIDEO.height) with (             
+      menu_bar / (tools_bar | G_PAGE.create) 
+    );
+    
+    // +---------------------+
+    // |         menu        |
+    // +---+-----------------+
+    // | t |                 |
+    // | o |                 |    => menu / (tools | page )
+    // | o |     PAGE        |
+    // | l |                 |
+    // | s |                 |
+    // +---+-----------------+
+            
+    INTERFACE.run;    
+  );

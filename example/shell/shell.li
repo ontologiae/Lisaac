@@ -1,29 +1,38 @@
-/***************************************************************************
-*                             Small Shell                                  *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
-  + name        :=SHELL;
+  + name    := SHELL;
+     
+  - author  := "Benoit Sonntag";
   
-  - category    :=MACRO;
+  - comment := "Small Shell, example File System manager";
   
-  - bibliography:="http://IsaacOS.com";
-  
-  - author      :="Benoit Sonntag";
-  
-  - comment     :="Small Shell, example File System manager";
-  
-section INHERIT
+Section Inherit
   
   - parent_object:OBJECT := OBJECT;
   
-section PRIVATE  
+Section Private  
   
-  - cmds:FIXED_ARRAY[STRING];
+  - cmds:FAST_ARRAY[STRING];
   
   - dir:DIRECTORY;
   
@@ -113,9 +122,9 @@ section PRIVATE
       e.size.append_in string_tmp format 9;
       // Name.
       (e.is_directory).if {
-	string_tmp.append " d ";
+        string_tmp.append " d ";
       } else {
-	string_tmp.append " - ";
+        string_tmp.append " - ";
       };
       string_tmp.append (e.name);
       string_tmp.add_last '\n';
@@ -134,22 +143,22 @@ section PRIVATE
       src := cmds.item 1;
       dst := cmds.item 2;
       (dst.index_of '/' since 1 != 0).if {
-	'`'.print;
-	dst.print;
-	"\': Invalid name.".print;
+        '`'.print;
+        dst.print;
+        "\': Invalid name.".print;
       } else {
-	e := dir.get src;
-	(e = NULL).if {
-	  "`rename\': cannot stat `".print;
-	  src.print;
-	  "\': No such file or directory.\n".print;
-	} else {
-	  (e.rename dst).if_false {
-	    "`rename\': cannot rename file `".print;
-	    dst.print;
-	    "\': Permission denied.\n".print;
-	  };
-	};
+        e := dir.get src;
+        (e = NULL).if {
+          "`rename\': cannot stat `".print;
+          src.print;
+          "\': No such file or directory.\n".print;
+        } else {
+          (e.rename dst).if_false {
+            "`rename\': cannot rename file `".print;
+            dst.print;
+            "\': Permission denied.\n".print;
+          };
+        };
       };
     };
   );
@@ -165,15 +174,15 @@ section PRIVATE
       param := cmds.item 1;
       e := dir.get param;
       (e = NULL).if {
-	"`rm\': cannot remove `".print;
+        "`rm\': cannot remove `".print;
         param.print;
         "\': No such file or directory.\n".print;
       } else {
-	(e.remove).if_false {
-	  "`rm\': cannot remove `".print;
-	  param.print;
-	  "\': Permission denied.\n".print;
-	};
+        (e.remove).if_false {
+          "`rm\': cannot remove `".print;
+          param.print;
+          "\': Permission denied.\n".print;
+        };
       };
     };
   );
@@ -195,25 +204,25 @@ section PRIVATE
       param := cmds.item 1;
       e := dir.get param;
       (e != NULL).if {
-	(e.is_directory).if {
-	  e := e.open;
-	  (e != NULL).if {
-	    dir.close;
-	    dir ?= e;
-	  } else {
-	    "`cd ".print;
-	    param.print;
-	    "\': Permission denied.\n".print;
-	  };
-	} else {
-	  '`'.print;
-	  param.print;
-	  "\': Not a directory.\n".print;
-	};
+        (e.is_directory).if {
+          e := e.open;
+          (e != NULL).if {
+            dir.close;
+            dir ?= e;
+          } else {
+            "`cd ".print;
+            param.print;
+            "\': Permission denied.\n".print;
+          };
+        } else {
+          '`'.print;
+          param.print;
+          "\': Not a directory.\n".print;
+        };
       } else {
-	'`'.print;
-	param.print;
-	"\': No such file or directory.\n".print;
+        '`'.print;
+        param.print;
+        "\': No such file or directory.\n".print;
       };
     };
   );
@@ -230,9 +239,9 @@ section PRIVATE
       param := cmds.item 1;
       e := dir.make_directory param;
       (e = NULL).if {
-	'`'.print;
-	param.print;
-	"\': File exists, cannot create directory.\n".print;
+        '`'.print;
+        param.print;
+        "\': File exists, cannot create directory.\n".print;
       };
     };
   );
@@ -254,24 +263,24 @@ section PRIVATE
       param := cmds.item 1;
       e := dir.get param;
       ((e = NULL) || {! e.is_file}).if {
-	'`'.print;
-	param.print;
-	"\': No such file.\n".print;
+        '`'.print;
+        param.print;
+        "\': No such file.\n".print;
       } else {
-	e := e.open;
-	(e = NULL).if {
-	  '`'.print;
-	  param.print;
-	  "\': Not open.\n".print;
-	} else {
-	  file ?= e;
-	  string_tmp.clear;
-	  string_tmp.set_capacity (file.size.to_integer);
-	  file.read string_tmp size (file.size);
-	  string_tmp.print;
-	  '\n'.print;
-	  file.close;
-	};
+        e := e.open;
+        (e = NULL).if {
+          '`'.print;
+          param.print;
+          "\': Not open.\n".print;
+        } else {
+          file ?= e;
+          string_tmp.clear;
+          string_tmp.set_capacity (file.size.to_integer);
+          file.read string_tmp size (file.size);
+          string_tmp.print;
+          '\n'.print;
+          file.close;
+        };
       };
     };
   );
@@ -287,30 +296,31 @@ section PRIVATE
       param := cmds.item 1;
       e := dir.make_file param;
       (e = NULL).if {
-	'`'.print;
-	param.print;
-	"\': File exists, cannot create file.\n".print;
+        '`'.print;
+        param.print;
+        "\': File exists, cannot create file.\n".print;
       }.elseif {cmds.count > 2} then {
-	f ?= e.open;
-	2.to (cmds.upper) do { j:INTEGER;
-	  string_tmp.copy (cmds.item j);
-	  string_tmp.add_last ' ';
-	  f.write string_tmp from 1 size (string_tmp.count);
-	};
-	f.close;
+        f ?= e.open;
+        2.to (cmds.upper) do { j:INTEGER;
+          string_tmp.copy (cmds.item j);
+          string_tmp.add_last ' ';
+          f.write string_tmp from 1 size (string_tmp.count);
+        };
+        f.close;
       };
     };
   );
     
-section PUBLIC
+Section Public
   
   - main <-
   ( + command:STRING;
     + exit:BOOLEAN;
         
-    cmds := FIXED_ARRAY[STRING].create_with_capacity 10;
+    cmds := FAST_ARRAY[STRING].create_with_capacity 10;
     command := STRING.create 100;
     dir := FILE_SYSTEM;
+    
     {
       dir.path.print;
       " > ".print;
@@ -318,15 +328,13 @@ section PUBLIC
       IO.read_line_in command;
       
       (command.is_empty).if_false {       
-	cmds.clear;
-	command.split_in cmds;
-      
-	exit := (cmds.first == "exit") || {cmds.first == "bye"};
-	(exit).if_false {
-	  execute;
-	};
+        cmds.clear;
+        command.split_in cmds;      
+        exit := (cmds.first == "exit") || {cmds.first == "bye"};	
+        (exit).if_false {
+          execute;
+        };
       };
-      
-    }.do_until {exit};
+    }.do_until {exit};    
     "Good bye.\n".print;
   );

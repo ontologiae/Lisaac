@@ -1,0 +1,249 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := TYPE_BLOCK;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Virtual type for BLOCK manager";
+  
+Section Inherit
+  
+  + parent_type:Expanded TYPE;
+  
+Section Public   
+  
+  - list_block:FAST_ARRAY[TYPE_BLOCK] := FAST_ARRAY[TYPE_BLOCK].create_with_capacity 2048;
+  
+  - clean <-
+  (
+    (list_block.lower).to (list_block.upper) do { j:INTEGER;
+      list_block.item j.remove;
+    };
+  );
+  
+Section Public  
+    
+  - name:STRING_CONSTANT <- ALIAS_STR.prototype_block;
+  
+  - is_context_sensitive:BOOLEAN <- context_extern != NULL;
+  
+  + context_extern:LOCAL;
+  
+  //
+  // Creation.
+  //
+
+  - create base:ITM_BLOCK :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make base;
+    result
+  );
+  
+  - make base:ITM_BLOCK <-
+  ( + var:VARIABLE;
+    + loc:LOCAL;
+    + instr:INSTR;
+    + arg_lower:INTEGER;
+    + list:ITM_LIST;
+    + old_node_list:LINKED_LIST[NODE_TYPE];
+        
+    list_block.add_last Self;
+    profil_list := FAST_ARRAY[PROFIL_SLOT].create_with_capacity 2;
+    node_list := LINKED_LIST[NODE_TYPE].create;
+    //
+    index       := index_count;
+    index_count := index_count + 1;
+    //            
+    list := base.list;
+    CONTEXT.push_intern (list.position);    
+    //
+    old_node_list := NODE.node_list;
+    NODE.set_node_list node_list;
+        
+    // Append arguments.
+    (base.argument != NULL).if {
+      argument_type := ALIAS_ARRAY[TYPE_FULL].new;
+      arg_lower := stack_local.upper + 1;
+      base.argument.to_run stack_local;
+      (arg_lower).to (stack_local.upper) do { j:INTEGER;
+	var   := stack_local.item j;
+	var.set_style '+';
+	argument_type.add_last (var.type);
+	instr := var.write (var.position) value NULL;
+	list_current.add_last instr;
+      };
+      argument_type := ALIAS_ARRAY[TYPE_FULL].alias argument_type;
+    };
+    //
+    (debug_level_option != 0).if {
+      // Debug mode : Add context local.
+      loc := TYPE_CONTEXT.default.new_local (list.position) 
+      name (ALIAS_STR.variable_context) style '+';
+      loc.set_ensure_count 1;
+      stack_local.add_last loc;      
+      list_current.add_last (PUSH.create (list.position) context loc first TRUE);
+    };
+    //
+    list.to_run_base FALSE;    
+    model_list   := list_current;
+    model_result := list.create_result_expr;
+    
+    NODE.set_node_list old_node_list;
+    context_extern := ITM_OBJECT.context_extern;
+    CONTEXT.pop_intern;            
+    //    
+    default := TYPE_FULL.create Self with 0; 
+  );
+  
+  - make_copy other:TYPE_BLOCK <-
+  ( + old_node_list:LINKED_LIST[NODE_TYPE];
+    
+    list_block.add_last Self;
+    profil_list := FAST_ARRAY[PROFIL_SLOT].create_with_capacity 2;
+    node_list   := LINKED_LIST[NODE_TYPE].create;
+    //    
+    index       := index_count;
+    index_count := index_count + 1;
+    //    
+    old_node_list := NODE.node_list;
+    NODE.set_node_list node_list;
+            
+    argument_type  := other.argument_type;
+    //LOCAL.alias_on;
+    model_list     := other.model_list.my_copy;
+    //LOCAL.alias_off;
+    model_result   := other.model_result.my_copy;    
+    context_extern := other.context_extern;    
+    
+    NODE.set_node_list old_node_list;
+    default := TYPE_FULL.create Self with 0;  
+    ? {node_list.count = other.node_list.count};  
+  );
+
+Section Public
+  
+  + profil_list:FAST_ARRAY[PROFIL_SLOT];
+  + node_list:LINKED_LIST[NODE_TYPE];
+  
+  + model_list:LIST;  
+  + copy_list:BOOLEAN;
+  
+  + model_result:EXPR;
+  + copy_result:BOOLEAN;
+  
+  + argument_type:FAST_ARRAY[TYPE_FULL];
+  
+  //
+  // Copy.
+  //
+  
+  - my_copy:SELF <-
+  ( + result:SELF;
+       
+    result := TYPE_BLOCK.clone;    
+    result.make_copy Self;
+        
+    result
+  );
+  
+  //
+  // Block -> List.
+  //
+  
+  - remove <-
+  (            
+    (! copy_list).if {                  
+      model_list.remove;
+      model_result.remove;
+    };
+  );
+  
+  - get_list:LIST <-
+  ( + result:LIST;    
+    
+    (copy_list).if {
+      //LOCAL.alias_on;      
+      result := model_list.my_copy;
+      //LOCAL.alias_off;
+    } else {
+      NODE.node_list.append_collection node_list;       
+      result := model_list;
+      copy_list := TRUE;
+    };            
+        
+    result
+  );
+
+  - get_result:EXPR <-
+  (         
+    model_result
+  );
+    
+  //
+  // BUG !
+  //
+  
+  - prototype:PROTOTYPE <- type_block.prototype;
+  
+  - get_slot n:STRING_CONSTANT :SLOT <-
+  (
+    type_block.get_slot n
+  );
+  
+  - get_local_slot n:STRING_CONSTANT :SLOT <-
+  (
+    type_block.get_local_slot n
+  );
+  
+  - get_path_slot n:STRING_CONSTANT :SLOT <-
+  (
+    type_block.get_path_slot n
+  );
+  
+  - genere_struct; // Nothing.
+         
+  //
+  // Code source generation.
+  //
+  
+  - put_id buffer:STRING <- index.append_in buffer;
+  
+  - put_access_id e:EXPR in buffer:STRING <- 
+  (
+    buffer.append "(int)";
+    e.genere buffer;
+  );
+  
+  - put_value buffer:STRING <- 
+  (
+    buffer.append "(void *)";
+    index.append_in buffer;
+  );
+    
+Section Public
+
+  - is_sub_type other:TYPE :BOOLEAN <- other.name = name;
+  

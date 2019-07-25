@@ -1,28 +1,38 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                             Isaac                                        *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
 
   + name    := AI_BEZIER;
-  
-  - category:= MICRO;
-  
-  - bibliography:="http://IsaacOS.com";
-  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     :="Operation: bezier";
 
-  - version :="1.0";  
-  - date    :="2003/04";
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  - comment := "Operation: bezier";
+  - version := 1;  
   
-section INHERIT
+Section Inherit
   
   - parent_ai_operation:AI_OPERATION := AI_OPERATION;
   
-section PUBLIC
+Section Public
   
   + wx1:REAL_16_16;
   + wy1:REAL_16_16;
@@ -37,14 +47,14 @@ section PUBLIC
   // Creation.
   //
   
-  - create_w1 lx1,ly1:REAL_16_16 w2 lx2,ly2:REAL_16_16 to lx3,ly3:REAL_16_16 :SELF <-
+  - create_w1 (lx1,ly1:REAL_16_16) w2 (lx2,ly2:REAL_16_16) to (lx3,ly3:REAL_16_16) :SELF <-
   (+ result:SELF;
     result := SELF.clone;
-    result.make_w1 lx1,ly1 w2 lx2,ly2 to lx3,ly3;
+    result.make_w1 (lx1,ly1) w2 (lx2,ly2) to (lx3,ly3);
     result    
   );
   
-  - make_w1 lx1,ly1:REAL_16_16 w2 lx2,ly2:REAL_16_16 to lx3,ly3:REAL_16_16 <-
+  - make_w1 (lx1,ly1:REAL_16_16) w2 (lx2,ly2:REAL_16_16) to (lx3,ly3:REAL_16_16) <-
   (
     wx1 := lx1;
     wy1 := ly1;
@@ -69,7 +79,7 @@ section PUBLIC
     
     i_x   := (x * s).rounded;
     i_y   := (y * s).rounded;
-    b.spline_w1 i_wx1,i_wy1 w2 i_wx2,i_wy2 to i_x,i_y;
+    b.spline_w1 (i_wx1,i_wy1) w2 (i_wx2,i_wy2) to (i_x,i_y);
   ); 
 
   - draw_fill b:BITMAP scale s:REAL_16_16 <-
@@ -83,7 +93,7 @@ section PUBLIC
     
     i_x   := (x * s).rounded;
     i_y   := (y * s).rounded;
-    b.poly_spline_w1 i_wx1,i_wy1 w2 i_wx2,i_wy2 to i_x,i_y;
+    b.poly_spline_w1 (i_wx1,i_wy1) w2 (i_wx2,i_wy2) to (i_x,i_y);
   ); 
 
   //  

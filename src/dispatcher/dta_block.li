@@ -1,0 +1,159 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := DTA_BLOCK;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+    
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Lisaac IS A Advanced Compiler";
+    
+Section Inherit
+  
+  - parent_dta:DTA := DTA;
+  
+Section Public
+  
+  + context:PROFIL;
+  
+  + result_expr:EXPR;
+    
+  // Add.
+  
+  + model:PROFIL_BLOCK;
+  
+  + argument_list:FAST_ARRAY[EXPR];
+  
+  + copy_argument:BOOLEAN;
+  
+  //
+  // Creation.
+  //
+  
+  - create mod:PROFIL_BLOCK with larg:FAST_ARRAY[EXPR] :SELF <-
+  ( + result:SELF;
+    context := profil_second;    
+    result := clone;    
+    result.make mod with larg;
+    result    
+  );
+  
+  - make mod:PROFIL_BLOCK with larg:FAST_ARRAY[EXPR] <-
+  (    
+    model         := mod;
+    argument_list := larg;
+    result_expr   := mod.get_expr_result;    
+  );
+  
+  //
+  // Service
+  //
+  
+  - remove <-
+  (
+    (! copy_argument).if {
+      (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
+	argument_list.item j.remove;
+      };
+      copy_argument := TRUE;
+    };
+  );
+
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <- 
+  (
+    buffer.append "DTA_BLOCK";
+  );
+
+Section NODE_STYLE, SELF  
+  
+  - get_argument:FAST_ARRAY[EXPR] <-  
+  ( + result:FAST_ARRAY[EXPR];
+    + rd:READ_SLOT;
+    (copy_argument).if {
+      result := FAST_ARRAY[EXPR].create_with_capacity (argument_list.count);            
+      rd ?= argument_list.first;
+      result.add_last (rd.receiver.my_copy);
+      (argument_list.lower+1).to (argument_list.upper) do { j:INTEGER;		
+	result.add_last (argument_list.item j.my_copy);
+      };            
+    } else {
+      result := argument_list;
+      copy_argument := TRUE;
+    };
+    result
+  );
+
+Section NODE_TYPE, DTA  
+  
+  - product t:TYPE with e:EXPR :LIST <-
+  ( + result:LIST;
+    + t_block:PROFIL_BLOCK;
+    + wrt:WRITE;  
+    + wrt_larg:FAST_ARRAY[WRITE];
+    + call:CALL_SLOT;
+    + em:EXPR_MULTIPLE;
+    + rd:READ;
+    + result_var:VARIABLE;
+    
+    result := LIST.create (e.position);
+    (t = TYPE_NULL).if {                 
+      TYPE_NULL.product_error (e.position) for result_expr in result with context;
+    } else {
+      t_block ?= t;                  
+      wrt_larg := t_block.write_argument get_argument;
+      call := CALL_SLOT.create (e.position) profil t_block with wrt_larg;      
+      (result_expr.static_type.raw != TYPE_VOID).if {	
+	em ?= result_expr;
+	(em != NULL).if {
+	  (em.lower).to (em.upper - 1) do { j:INTEGER;
+	    rd ?= em.item j;
+	    ? {rd != NULL};
+	    result_var := rd.variable;	    
+	    rd  := call.profil.result_list.item j.read (e.position);
+	    wrt := result_var.write (e.position) value rd;
+	    call.result_list.add_last wrt;	    
+	  };
+	  rd ?= em.last;
+	} else {
+	  rd ?= result_expr;
+	};
+	? {rd != NULL};
+	result_var := rd.variable;	
+	result.add_last (result_var.write (e.position) value call);
+      } else {
+	result.add_last call;
+      };
+    };
+    result.add_last (PROTOTYPE_CST.create (e.position) type (TYPE_VOID.default)); // BSBS : Alias
+    result    
+  );  
+  
+  - update_branch l:LIST :BOOLEAN <-
+  (
+    TRUE
+  );
+  

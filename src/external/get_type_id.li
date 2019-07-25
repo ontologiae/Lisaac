@@ -1,0 +1,126 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := GET_TYPE_ID;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+    
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Get intern ID object";
+  
+Section Inherit
+  
+  + parent_expr:Expanded EXPR;
+  
+Section Public 
+  
+  - is_invariant:BOOLEAN <- TRUE;
+  
+  + receiver:EXPR;
+    
+  - static_type:TYPE_FULL <- type_integer.default;
+  
+  - get_type t:TYPES_TMP <-
+  (     
+    t.add type_integer;
+  );
+  
+  //
+  // Creation.
+  //
+  
+  - create p:POSITION receiver e:EXPR :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make p receiver e;
+    result
+  );
+  
+  - make p:POSITION receiver e:EXPR <-
+  (
+    position := p;            
+    receiver := e; 
+  );
+  
+  - my_copy:SELF <- SELF.create position receiver (receiver.my_copy);
+  
+  //
+  // Remove
+  //
+  
+  - remove <-
+  (
+    receiver.remove;
+  );
+  
+  //
+  // Execute
+  //
+  
+  - execute_unlink:INSTR <-
+  (     
+    remove;
+    NULL
+  );
+  
+  - execute_link:EXPR <-
+  (         
+    receiver := receiver.execute_link;
+    Self
+  );
+    
+  //
+  // Genere.
+  //
+  
+  - genere buffer:STRING <-
+  (
+    (receiver.static_type.is_late_binding).if {
+      buffer.append "-1";
+    } else {
+      buffer.append (ALIAS_STR.separate);
+      buffer.append (receiver.static_type.raw.intern_name);
+      buffer.append (ALIAS_STR.separate); // <=> "__";
+    };
+  );
+  
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  (
+    buffer.append "type_id(";
+    receiver.display buffer;
+    buffer.add_last ')';
+  );
+
+
+
+
+
+
+
+
+

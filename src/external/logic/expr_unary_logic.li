@@ -1,0 +1,178 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := EXPR_UNARY_LOGIC;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Unary logical expression.";
+  
+Section Inherit
+  
+  + parent_expr:Expanded EXPR;
+  
+Section Public  
+  
+  - is_invariant:BOOLEAN <- right.is_invariant;
+  
+  + right:EXPR;
+  
+  - symbol:CHARACTER <- 
+  (
+    deferred;
+    ' '
+  );
+  
+  - static_type:TYPE_FULL <- type_boolean.default;
+  
+  - get_type t:TYPES_TMP <-
+  (    
+    t.add type_true; 
+    t.add type_false;
+  );
+  
+  //
+  // Creation.
+  //
+  
+  - create p:POSITION with r:EXPR :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make p with r;
+    result
+  );
+  
+  - make p:POSITION with r:EXPR <-
+  (
+    position := p;
+    right := r;
+  );
+  
+  - my_copy:SELF <- SELF.create position with (right.my_copy);
+  
+  //
+  // Comparaison.
+  //
+  
+  - '==' Right 60 other:EXPR :BOOLEAN <-
+  ( + same:SELF;
+    
+    same ?= other;
+    (same != NULL) && {right == same.right}
+  ); 
+  
+  - remove <-
+  (    
+    right.remove;
+  );
+  
+  //
+  // Execute.
+  //
+  
+  - execute_unlink:INSTR <-
+  (
+    right.execute_unlink
+  );
+  
+  - execute_link:EXPR <-
+  ( + result:EXPR;
+    + old_seq:UINTEGER_32;
+    + right_cst:PROTOTYPE_CST;
+    + right_t:TYPE;
+    
+    old_seq := seq_call_and_loop;    
+    right := right.execute_link;     
+    //    
+    right_cst ?= right;
+    (right_cst != NULL).if { 
+      (right_cst.static_type.raw = type_true).if {
+	right_t := type_true;
+      } else {
+	right_t := type_false;
+      };
+    };
+
+    // Conservator transformation.
+    result := exec_conservator;
+    ((result = NULL) && {right_cst != NULL}).if {      
+      result := exec_right right_t;
+    };
+    ((result = NULL) && {old_seq = seq_call_and_loop}).if {    
+      // No conservator transformation.      
+      result := exec;      
+    };
+    //
+    (result = NULL).if {
+      result := Self;
+    } else {
+      result.set_position position;
+      new_execute_pass;
+    };
+        
+    result
+  );
+  
+  - exec_conservator:EXPR <- NULL;  
+  
+  - exec_right right_cst:TYPE :EXPR <- NULL;
+    
+  - exec:EXPR <- NULL;
+    
+  //
+  // Genere.
+  //
+  
+  - genere buffer:STRING <-
+  (
+    buffer.add_last '(';
+    buffer.add_last symbol;
+    buffer.add_last ' ';
+    right.genere buffer;
+    buffer.add_last ')';
+  );  
+  
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  (
+    buffer.add_last '(';
+    buffer.add_last symbol;
+    buffer.add_last ' ';
+    right.display buffer;
+    buffer.add_last ')';
+  );
+
+
+
+
+
+
+
+
+
+

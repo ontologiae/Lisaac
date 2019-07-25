@@ -1,33 +1,41 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := ABSTRACT_DIRECTORY;
 
-section HEADER
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  + name        := ABSTRACT_DIRECTORY;
+  - comment := "Basic Directory management";
   
-  - category    := MICRO;
-  
-  - bibliography:= "http://IsaacOS.com";
-  
-  - author      := "Boutet Jerome (boutet@loria.fr)";
-  
-  - comment     := "Basic Directory management";
-  
-section INHERIT
+Section Inherit
   
   + parent_entry:ENTRY := ENTRY;
   
-section ENTRY 
+Section ENTRY 
   
   + list:LINKED_LIST[ENTRY];
   
-section PUBLIC
+Section Public
   
   //
   // Update.
@@ -48,7 +56,7 @@ section PUBLIC
   - upper:INTEGER <- list.upper; 
   // Maximum index.
   
-  - valid_index index:NUMERIC :BOOLEAN <- 
+  - valid_index index:INTEGER :BOOLEAN <- 
   // True when `index' is valid (ie. inside actual
   // bounds of the collection).
   ( + result:BOOLEAN;
@@ -71,7 +79,7 @@ section PUBLIC
   // Accessing.
   //
     
-  - item i:NUMERIC :ENTRY <-
+  - item i:INTEGER :ENTRY <-
   // Item at the corresponding index `i'. 
   ( ? {valid_index i};
     list.item i
@@ -129,8 +137,8 @@ section PUBLIC
     + dir:DIRECTORY;
     string_tmp.copy path;
     string_tmp.add_last '/';
-    string_tmp.append n;
-    reduce_path string_tmp;
+    string_tmp.append n;        
+    reduce_path string_tmp;        
     (physical_make_directory string_tmp).if {
       result := get_entry string_tmp;
       (result != NULL).if {
@@ -235,16 +243,16 @@ section PUBLIC
     '\n'.print;
   );
   
-section ENTRY
+Section ENTRY
   
   - make e:ENTRY :BOOLEAN <-
   (
     parent_entry := e;
-    list := LINKED_LIST[ENTRY].create;
+    list := LINKED_LIST[ENTRY].create;    
     refresh
   );
   
-section PRIVATE  
+Section Private  
   
   //
   // Physical implementation.

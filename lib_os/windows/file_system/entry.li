@@ -1,16 +1,29 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                            Lisaac OS Library                              //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
   + name        := ENTRY;
-  
-  - category    := MICRO;
-  
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+    
   - bibliography:= "http://IsaacOS.com";
 
   - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";  
@@ -24,11 +37,11 @@ WIN32_FIND_DATA data2;
 HANDLE hfile2;
 `;
   
-section INHERIT
+Section Inherit
   
-  * parent_abstract_entry:ABSTRACT_ENTRY;
+  + parent_abstract_entry:Expanded ABSTRACT_ENTRY;
     
-section PUBLIC  
+Section Public  
     
   //
   // Physical implementation.
@@ -49,7 +62,7 @@ section PUBLIC
       `FileTimeToSystemTime(&data2.ftLastWriteTime,&systime)`;
       update_date := to_date;
       update_time := to_time;
-      size := `(data2.nFileSizeHigh << 16)|data2.nFileSizeLow`:UINTEGER;
+      size := `(data2.nFileSizeHigh << 16)|data2.nFileSizeLow`:UINTEGER_32;
       `FindClose(hfile2)`;
     };
     result
@@ -74,25 +87,25 @@ section PUBLIC
     `rename(@old_p,@new_p)`:(INTEGER) = 0
   );
   
-section PRIVATE
+Section Private
   
   - to_date:DATE <-
-  ( + y:USHORTINT;
-    + m,d,wd:USMALLINT;
+  ( + y:UINTEGER_16;
+    + m,d,wd:UINTEGER_8;
     
-    y  := `systime.wYear`:USHORTINT;
-    m  := `systime.wMonth`:USMALLINT;
-    d  := `systime.wDay`:USMALLINT;
-    wd := `systime.wDayOfWeek`:USMALLINT;
-    DATE.create y,m,d,wd
+    y  := `systime.wYear`:UINTEGER_16;
+    m  := `systime.wMonth`:UINTEGER_8;
+    d  := `systime.wDay`:UINTEGER_8;
+    wd := `systime.wDayOfWeek`:UINTEGER_8;
+    DATE.create (y,m,d,wd)
   );
   
   - to_time:TIME <-
-  ( + h,m,s,cs:USMALLINT;
+  ( + h,m,s,cs:UINTEGER_8;
     
-    h  := `systime.wHour`:USMALLINT;
-    m  := `systime.wMinute`:USMALLINT;
-    s  := `systime.wSecond`:USMALLINT;
-    cs := `systime.wMilliseconds/10`:USMALLINT;
-    TIME.create h,m,s,cs 
+    h  := `systime.wHour`:UINTEGER_8;
+    m  := `systime.wMinute`:UINTEGER_8;
+    s  := `systime.wSecond`:UINTEGER_8;
+    cs := `systime.wMilliseconds/10`:UINTEGER_8;
+    TIME.create (h,m,s,cs) 
   );

@@ -1,0 +1,148 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := EXPR_MULTIPLE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Multiple expression manager";
+  
+Section Inherit
+  
+  - parent_expr:EXPR := EXPR;
+  
+Section Public
+  
+  + expr_list:FAST_ARRAY[EXPR];
+  
+  - cardinality:INTEGER <- expr_list.count;
+  
+  - static_type:TYPE_FULL <-
+  (
+    expr_list.first.static_type
+  );
+  
+  - get_type t:TYPES_TMP <-
+  (
+    crash_with_message "EXPR_MULTIPLE.get_type";
+  );
+  
+  //
+  // Creation
+  //
+  
+  // BSBS: Optim : Il faut que ce soit alouer et free après !!!
+  - create l:FAST_ARRAY[EXPR] :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make l;
+    result
+  );
+  
+  - make l:FAST_ARRAY[EXPR] <-
+  (
+    expr_list := l;
+    position  := l.last.position;
+  );
+  
+  - my_copy:SELF <-
+  ( + new_lst:FAST_ARRAY[EXPR];
+    
+    new_lst := FAST_ARRAY[EXPR].create_with_capacity (expr_list.count);
+    (expr_list.lower).to (expr_list.upper) do { j:INTEGER;
+      new_lst.add_last (expr_list.item j.my_copy);
+    };
+    SELF.create new_lst
+  );
+  
+  //
+  // Remove.
+  //
+  
+  - remove <-
+  (
+    (expr_list.lower).to (expr_list.upper) do { j:INTEGER;
+      expr_list.item j.remove;
+    };
+  );
+  
+  //
+  // Results manager.
+  //
+    
+  - put_result is_last:BOOLEAN :INSTR <-
+  (     
+    (expr_list.lower).to (expr_list.upper-1) do { j:INTEGER;
+      list_current.add_last (expr_list.item j.put_result FALSE);
+    };
+    expr_list.last.put_result is_last
+  );
+  
+  //
+  // Execute.
+  //
+  
+  - execute_unlink:INSTR <- 
+  (
+    (expr_list.lower).to (expr_list.upper) do { j:INTEGER;
+      expr_list.item j.remove;
+    };
+    NULL
+  );
+  
+  - execute_link:EXPR <-
+  (
+    list_current.debug_display;
+    crash_with_message "EXPR_MULTIPLE.execute_link";
+    NULL
+  );
+  
+  //
+  // Access facility.
+  //
+  
+  - lower:INTEGER <- expr_list.lower;
+  - upper:INTEGER <- expr_list.upper;
+  
+  - item i:INTEGER :EXPR <- expr_list.item i;
+  - last:EXPR            <- expr_list.last;
+  - first:EXPR           <- expr_list.first;
+  
+  - count:INTEGER <- expr_list.count;  
+  
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  (
+    buffer.add_last '(';
+    (expr_list.lower).to (expr_list.upper - 1) do { j:INTEGER;
+      expr_list.item j.display buffer;
+      buffer.add_last ',';
+    };
+    expr_list.last.display buffer;
+    buffer.add_last ')';
+  );
+  

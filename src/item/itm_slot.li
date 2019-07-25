@@ -1,0 +1,221 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := ITM_SLOT;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Slot item";
+  
+Section Inherit
+  
+  + parent_named:Expanded NAMED;
+  
+Section Public
+  
+  //
+  // Profil
+  //
+  
+  + id_section:SECTION_;
+    
+  - argument_count:INTEGER <-
+  ( + result:INTEGER;
+    
+    (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
+      result := result + argument_list.item j.count;
+    };
+    result
+  );
+  
+  - result_is_void:BOOLEAN <- type = ITM_TYPE_MONO.type_void;
+  
+Section SLOT, ITM_READ, ITM_WRITE_VALUE, PROFIL
+  
+  + argument_list:FAST_ARRAY[ITM_ARGUMENT];
+
+  + type:ITM_TYPE;
+  
+Section Public  
+  
+  - set_type t:ITM_TYPE <-
+  ( + tm:ITM_TYPE_MONO;
+    
+    (id_section.is_inherit_or_insert).if {
+      tm ?= t;
+      ((tm = NULL) || {tm = ITM_TYPE_SELF} || {tm = ITM_TYPE_MONO.type_void}).if {
+	semantic_error (position,"Incorrect type for inheritance slot.");
+      };
+    };
+    type := t;
+  );
+  
+  - set_argument_list p:FAST_ARRAY[ITM_ARGUMENT] <-
+  ( 
+    ((p.count > 1) || {p.first.count > 1}).if {    
+      (id_section.is_interrupt).if {
+	semantic_error (p.last.position,"No argument for interrupt slot.");
+      };
+      (id_section.is_inherit_or_insert).if {
+	semantic_error (p.last.position,"No argument for inheritance slot.");
+      };
+    };
+    argument_list := p;
+  );
+  
+  - is_equal_profil other:ITM_SLOT <-
+  (         
+    (Self != other).if {
+      (type != other.type).if {
+	POSITION.put_error semantic text 
+	"Invariance type result invalid.";
+	position.put_position;
+	(other.position).put_position;
+	POSITION.send_error; 
+      };
+      (id_section != other.id_section).if {
+	POSITION.put_error warning text 
+	"Invariance section declaration invalid.";
+	position.put_position;
+	(other.position).put_position;
+	POSITION.send_error;
+      };
+      (argument_list != NULL).if {
+	? {argument_list.count = other.argument_list.count};
+	(argument_list.lower).to (argument_list.upper) do { j:INTEGER;
+	  argument_list.item j.is_equal (other.argument_list.item j);
+	};	  
+      };
+    };
+  );
+  
+  //
+  // Data.
+  //
+
+  + affect:CHARACTER; // ':', '?', '<'
+
+  - set_affect a:CHARACTER <-
+  (
+    affect := a; 
+  );
+
+  + next:ITM_SLOT;
+  
+  - set_next n:ITM_SLOT <-
+  (
+    next := n;
+  );
+    
+  //
+  // Access associativity & priority level.
+  //
+
+  + priority_and_level:INTEGER;
+
+  - associativity:STRING_CONSTANT <-
+  ( + result:STRING_CONSTANT;
+    (priority_and_level >= 0).if {
+      result := ALIAS_STR.keyword_left;
+    } else {
+      result := ALIAS_STR.keyword_right;
+    };
+    result
+  );
+  
+  - priority:INTEGER <-
+  (
+    priority_and_level.abs
+  );
+
+  - set_associativity p:STRING_CONSTANT priority l:INTEGER <-
+  (
+    (p = ALIAS_STR.keyword_left).if {
+      priority_and_level := l;
+    } else {
+      priority_and_level := -l;
+    };
+  );
+
+  //
+  // Value.
+  //
+  
+  + require:ITM_LIST;
+  + ensure:ITM_LIST;
+  
+  + value:ITM_CODE;
+
+  - set_value e:ITM_CODE <-
+  // Static definition.
+  ( 
+    value := e;
+  );    
+
+  - set_require e:ITM_LIST <-
+  ( 
+    require := e;
+  );    
+
+  - set_ensure e:ITM_LIST <-
+  ( 
+    ensure := e;
+  );    
+
+  //
+  // Constructeur.
+  //
+  
+  - create p:POSITION name n:STRING_CONSTANT feature sec:SECTION_ :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make p name n feature sec;
+    result
+  );
+  
+  - make p:POSITION name n:STRING_CONSTANT feature sec:SECTION_ <-
+  (
+    name        := n;
+    position    := p;    
+    id_section  := sec;
+  );
+      
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  (
+    buffer.append name;
+    (argument_list.lower).to (argument_list.upper) do { j:INTEGER;       
+      buffer.add_last ' ';
+      argument_list.item j.display buffer;
+    }; 
+    buffer.add_last ' ';
+    buffer.add_last ':';
+    type.display buffer;    
+  );    
+  
+
+  

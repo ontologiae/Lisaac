@@ -1,38 +1,48 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
   + name        := AREA;
+
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  - comment     := "Window Clipping. (Algorithm 01/2001 by Benoit Sonntag)";
+  - comment     := "Window Clipping. (Algorithm by Benoit Sonntag)";
+    
+  - version     := 5;
   
-  - category    := MICRO;
+Section Inherit
   
-  - bibliography:= "http://IsaacOS.com";
-  
-  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
-  
-  - version     := "4.5";
-  
-section INHERIT
-  
-  - parent_video:BITMAP := BITMAP;
+  - parent_video:ABSTRACT_BITMAP := ABSTRACT_BITMAP;
   
   - parent_inbox:INBOX := INBOX;
   
-section INTERFACE  
+Section INTERFACE  
   
-  - set_video_support bmp:BITMAP <-
+  - set_video_support bmp:ABSTRACT_BITMAP <-
   (
     parent_video := bmp;
   );
   
-section PUBLIC  
+Section Public  
   
   //
   // Redefine BITMAP.
@@ -60,12 +70,13 @@ section PUBLIC
   // Current color.
   
   // Slave display.
-  - slave_pixel_hard  x,y:INTEGER color col:UINTEGER; 
-  - slave_line_h_hard x1,y:INTEGER until x2:INTEGER color col:UINTEGER; 
-  - slave_line_h_hard x1,y:INTEGER until x2:INTEGER image line:BMP_LINE offset ofs:INTEGER; 
+  - slave_pixel_hard  (x,y:INTEGER) color col:UINTEGER_32; 
+  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER color col:UINTEGER_32; 
+  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER 
+  image line:ABSTRACT_BMP_LINE offset ofs:INTEGER; 
   
   // Master / Normal display.
-  - pixel_hard x,y:INTEGER color col:UINTEGER <-
+  - pixel_hard (x,y:INTEGER) color col:UINTEGER_32 <-
   ( + c:CLIP;
     + win:AREA;
     + xx,yy:INTEGER;
@@ -73,32 +84,32 @@ section PUBLIC
     xx := x + x_window; 
     yy := y + y_window;
     
-    c:=get_clip xx,yy;
+    c:=get_clip (xx,yy);
     (c!=NULL).if {
       win := c.window;
-      (win=self).if {	
-	parent_video.pixel_hard xx,yy color col; 
+      (win=Self).if {	
+	parent_video.pixel_hard (xx,yy) color col; 
       } else {
-	win.slave_pixel_hard (xx-win.x_window),(yy-win.y_window) color col;
+	win.slave_pixel_hard ((xx-win.x_window),(yy-win.y_window)) color col;
       };
     };
   );
   
-  - line_h_hard x0,y0:INTEGER until x1:INTEGER color col:UINTEGER <-
+  - line_h_hard (x0,y0:INTEGER) until x1:INTEGER color col:UINTEGER_32 <-
   ( + xw,tmp,xb,y,xe:INTEGER;
     + c:CLIP;
     + win:AREA;
-    
-    (plan!=NULL).if { 
+       
+    (plan != NULL).if { 
       xb := x0 + x_window;
       y  := y0 + y_window; 
       xe := x1 + x_window;
-      ((y<plan.y1.value) && {y>=plan.y0.value}).if {
+      ((y < plan.y1.value) && {y >= plan.y0.value}).if {
 	xb:=xb.max (plan.x0.value);
 	xe:=xe.min (plan.x1.value);	
-	(xb<=xe).if {
+	(xb <= xe).if {
 	  {	    
-	    c:=get_clip xb,y;
+	    c:=get_clip (xb,y);
 	    ? {c!=NULL};
 	    /*
 	    (c=NULL).if {
@@ -133,32 +144,31 @@ section PUBLIC
 	    */
 	    tmp:=xe.min (c.x_max);  
 	    win:=c.window;
-	    (win=self).if {
-	      parent_video.line_h_hard xb,y until tmp color col; 
+	    (win=Self).if {
+	      parent_video.line_h_hard (xb,y) until tmp color col; 
 	    } else {
 	      xw:=win.x_window;
-	      win.slave_line_h_hard (xb-xw),(y-win.y_window) until (tmp-xw) color col;
+	      win.slave_line_h_hard ((xb-xw),(y-win.y_window)) until (tmp-xw) color col;
 	    };
 	    xb:=tmp+1;
 	  }.do_while {xb<=xe};
 	};
       };
     };
-    
   );
   
-  - line_h_hard x0,y0:INTEGER until x1:INTEGER image line:BMP_LINE offset ofs:INTEGER <-
+  - line_h_hard (x0,y0:INTEGER) until x1:INTEGER image line:ABSTRACT_BMP_LINE offset ofs:INTEGER <-
   ( + xb,y,xe,tmp,xw,tmp_offset:INTEGER;
     + c:CLIP;
     + win:AREA;
     
-    (plan!=NULL).if {
+    (plan != NULL).if {
       xb := x0 + x_window; 
       y  := y0 + y_window; 
       xe := x1 + x_window;
-      ((y<plan.y1.value) && {y>=plan.y0.value}).if {
+      ((y < plan.y1.value) && {y >= plan.y0.value}).if {
 	tmp:=plan.x0.value;
-	(xb<tmp).if { 
+	(xb < tmp).if { 
 	  tmp_offset := ofs + tmp - xb;
 	  xb:=tmp; 
 	} else {
@@ -167,24 +177,25 @@ section PUBLIC
 	xe:=xe.min (plan.x1.value);
 	(xb<=xe).if {
 	  {
-	    c:=get_clip xb,y;
-	    tmp:=xe.min (c.x_max);
-	    win:=c.window;
-	    (win=self).if {
-	      parent_video.line_h_hard xb,y until tmp image line offset tmp_offset;
+	    c   := get_clip (xb,y);
+	    tmp := xe.min (c.x_max);
+	    win := c.window;
+	    (win = Self).if {
+	      parent_video.line_h_hard (xb,y) until tmp image line offset tmp_offset;
 	    } else {
-	      xw:=win.x_window;
-	      win.slave_line_h_hard (xb-xw),(y-win.y_window) until (tmp-xw) image line offset tmp_offset;
+	      xw := win.x_window;
+	      win.slave_line_h_hard (xb-xw, y-win.y_window) 
+	      until (tmp-xw) image line offset tmp_offset;
 	    };
 	    tmp_offset := tmp_offset + tmp-xb + 1;
-	    xb:=tmp+1;
-	  }.do_while {xb<=xe};
+	    xb := tmp+1;
+	  }.do_while {xb <= xe};
 	};
       };
     };
   );
   
-section AREA  
+Section Public
   
   // Window links.
   + parent:AREA;  // Englobe window.
@@ -226,18 +237,18 @@ section AREA
     child:=new;
   );
   
-section PUBLIC  
+Section Public  
   
   - debug_display <-
   (
     (clip!=NULL).if {
-      clip.display self;
+      clip.display Self;
     } else {
       //"Clip null!".print;
     };
   );
   
-section PUBLIC  
+Section Public  
   
   - get_x_window:INTEGER <-
   ( + result:INTEGER;
@@ -265,27 +276,27 @@ section PUBLIC
   // New window
   //
   
-  - make father:AREA from x0,y0:INTEGER size w,h:INTEGER <-
+  - make father:AREA from (x0,y0:INTEGER) size (w,h:INTEGER) <-
   ( ? {w > 0};
     ? {h > 0};
-    
-    parent:=father;
-    (father=NULL).if {
-      x_window:=x0;
-      y_window:=y0;
-      next:=NULL;
+
+    parent := father;
+    (father = NULL).if {
+      x_window := x0;
+      y_window := y0;
+      next := NULL;
     } else {      
-      x_window:=father.x_window+x0;
-      y_window:=father.y_window+y0;
-      next:=father.child;
-      (next!=NULL).if {
-	next.set_prev self;
+      x_window := father.x_window+x0;
+      y_window := father.y_window+y0;
+      next := father.child;
+      (next != NULL).if {
+	next.set_prev Self;
       };
-      parent.set_child self;
+      parent.set_child Self;
     };
-    child:=prev:=NULL;
-    clip:=NULL;
-    plan:=NULL;
+    child := prev := NULL;
+    clip := NULL;
+    plan := NULL;
     
     height:=h;
     width :=w;
@@ -297,13 +308,13 @@ section PUBLIC
     refresh;
   );
   
-  - create x,y:INTEGER size w,h:INTEGER :AREA <-
+  - create (x,y:INTEGER) size (w,h:INTEGER) :AREA <-
   ( + result:AREA;
     ? {w > 0};
     ? {h > 0};
     
     result:=AREA.clone;
-    result.make self from x,y size w,h;
+    result.make Self from (x,y) size (w,h);
     result
   );
   
@@ -315,11 +326,11 @@ section PUBLIC
   ( + x0,y0,x1,y1:INTEGER;
     + is_draw:BOOLEAN;
     + old_parent, old_next:AREA;
-    ? {parent!=NULL};
+    ? {parent != NULL};
     
-    old_parent:=parent;
-    old_next  :=next;
-    (plan!=NULL).if {
+    old_parent := parent;
+    old_next   := next;
+    (plan != NULL).if {
       x0:=plan.x0.value; 
       x1:=plan.x1.value;
       y0:=plan.y0.value; 
@@ -327,13 +338,13 @@ section PUBLIC
       is_draw:=TRUE;
     };
     sub_delete;
-    (old_next=NULL).if {
+    (old_next = NULL).if {
       old_parent.creat_clip;
     } else {
       old_next.clip_type1;
     };
     (is_draw).if {
-      redraw x0,y0 to x1,y1;
+      redraw (x0,y0) to (x1,y1);
     };
   );
   
@@ -341,7 +352,17 @@ section PUBLIC
   // Moving window
   // 
   
-  - move x,y:INTEGER <-
+  - update father:AREA from (x0,y0:INTEGER) size (w,h:INTEGER) <-
+  (
+    (father != parent).if {
+      make father from (x0,y0) size (w,h);
+    } else {
+      set_position (x0,y0);
+      resize (w,h);
+    };
+  );
+      
+  - move (x,y:INTEGER) <-
   ( + x0,y0,x1,y1,x2,y2,x3,y3:INTEGER;
     + old_plan:PLAN;
     ? {parent!=NULL};
@@ -353,7 +374,7 @@ section PUBLIC
       y0:=plan.y0.value; 
       y1:=plan.y1.value-1;
     };
-    sub_move x,y;
+    sub_move (x,y);
     clip_type1;
     (plan!=NULL).if {
       x2:=plan.x0.value; 
@@ -363,21 +384,21 @@ section PUBLIC
     };
     ((old_plan!=NULL) && {plan!=NULL}).if {
       (((x.abs)>width) || {(y.abs)>height}).if {
-	redraw x0,y0 to x1,y1;
-	redraw x2,y2 to x3,y3;
+	redraw (x0,y0) to (x1,y1);
+	redraw (x2,y2) to (x3,y3);
       } else {	
-	redraw (x0.min x2),(y0.min y2) to (x1.max x3),(y1.max y3);
+	redraw ((x0.min x2),(y0.min y2)) to ((x1.max x3),(y1.max y3));
       };
     } else {
       (old_plan!=NULL).if {
-	redraw x0,y0 to x1,y1; 
+	redraw (x0,y0) to (x1,y1); 
       }.elseif {plan!=NULL} then {
-	redraw x2,y2 to x3,y3;
+	redraw (x2,y2) to (x3,y3);
       };
     };    
   );
   
-  - set_position x,y:INTEGER <-
+  - set_position (x,y:INTEGER) <-
   ( + dx,dy:INTEGER;
     ? {parent!=NULL};    
     
@@ -385,7 +406,7 @@ section PUBLIC
     dy:=y-(y_window-parent.y_window);
     // BSBS : A Revoir Pas normal que ca plante !! ? {(dx!=0) || {dy!=0}};
     ((dx!=0) || {dy!=0}).if {
-      move dx,dy;
+      move (dx,dy);
     };
   );
   
@@ -393,34 +414,35 @@ section PUBLIC
   // Resize window.
   //
   
-  - resize lx,ly:INTEGER <-
+  - resize (lx,ly:INTEGER) <-
   // Resize window.
   ( + x0,y0,x1,y1:INTEGER;
-    ? {parent!=NULL};
-    ? {(lx!=width) || {ly!=height}};
-    
-    (plan=NULL).if {
-      y0:=x0:=INTEGER.maximum.to_integer;
-      y1:=x1:=INTEGER.minimum.to_integer;
-    } else {
-      x0:=plan.x0.value;    
-      x1:=plan.x1.value;
-      y0:=plan.y0.value;    
-      y1:=plan.y1.value;
-    };
-    width :=lx;
-    height:=ly;
-    sub_resize;
-    clip_type1;
-    clipping_off;
-    (plan!=NULL).if {
-      x0:=x0.min (plan.x0.value);
-      x1:=x1.max (plan.x1.value);
-      y0:=y0.min (plan.y0.value);
-      y1:=y1.max (plan.y1.value);
-    };
-    (x0<=x1).if {
-      redraw x0,y0 to x1,(y1-1);
+    //? {parent!=NULL};
+
+    ((lx != width) || {ly != height}).if {
+      (plan=NULL).if {
+	y0:=x0:=INTEGER.maximum.to_integer;
+	y1:=x1:=INTEGER.minimum.to_integer;
+      } else {
+	x0:=plan.x0.value;    
+	x1:=plan.x1.value;
+	y0:=plan.y0.value;    
+	y1:=plan.y1.value;
+      };
+      width :=lx;
+      height:=ly;
+      sub_resize;
+      clip_type1;
+      clipping_off;
+      (plan!=NULL).if {
+	x0:=x0.min (plan.x0.value);
+	x1:=x1.max (plan.x1.value);
+	y0:=y0.min (plan.y0.value);
+	y1:=y1.max (plan.y1.value);
+      };
+      (x0<=x1).if {
+	redraw (x0,y0) to (x1,(y1-1));
+      };
     };
   );
   
@@ -503,17 +525,17 @@ section PUBLIC
       // Creation new link.
       prev:=NULL;
       next:=parent.child;
-      next.set_prev self;
-      parent.set_child self;
+      next.set_prev Self;
+      parent.set_child Self;
       
       (is_draw).if {
 	clip_type1;
-	redraw x0,y0 to x1,y1;
+	redraw (x0,y0) to (x1,y1);
       };
     };
   );
   
-  - get_window x,y:INTEGER :AREA <-
+  - get_window (x,y:INTEGER) :AREA <-
   // Get object pointer by (X,Y).
   ( + c:CLIP;
     + result,win:AREA;
@@ -521,15 +543,15 @@ section PUBLIC
     
     xx := x + x_window; 
     yy := y + y_window;    
-    c:=get_clip xx,yy;
+    c:=get_clip (xx,yy);
     (c!=NULL).if { 
-      (c.window=self).if {
-	result:=self;
+      (c.window=Self).if {
+	result:=Self;
       } else {
 	win:=c.window;
-	result:=win.get_window (xx-win.x_window),(yy-win.y_window);
+	result:=win.get_window ((xx-win.x_window),(yy-win.y_window));
 	(result=NULL).if {
-	  result:=self;
+	  result:=Self;
 	};
       };
     };
@@ -540,7 +562,7 @@ section PUBLIC
   //                         AREA                           //
   //////////////////////////////////////////////////////////////
   
-section AREA
+Section AREA
   
   - list_plan:PLAN;
   - list_x:LIMIT_X;
@@ -580,7 +602,7 @@ section AREA
   //                       .
   //                     list_y
   
-  - stack_plan:FIXED_ARRAY[PLAN]:=FIXED_ARRAY[PLAN].create 16;
+  - stack_plan:FAST_ARRAY[PLAN]:=FAST_ARRAY[PLAN].create 16;
   - last_clip :CLIP;
   - first_clip:CLIP;
   - top_clip  :CLIP;
@@ -595,7 +617,7 @@ section AREA
   //|            |       |           | |           |
   //+------------+       +-----------+ +-----------+
   
-  - add_clip win:AREA from xmin,ymin:INTEGER to xmax,ymax:INTEGER <-
+  - add_clip win:AREA from (xmin,ymin:INTEGER) to (xmax,ymax:INTEGER) <-
   ( + new_clip:CLIP;
     /*    
     '['.print;
@@ -615,7 +637,7 @@ section AREA
       new_clip.set_right NULL;
     } else {
       // Creation.
-      new_clip:=CLIP.create win at xmin,ymin to xmax,ymax;
+      new_clip:=CLIP.create win at (xmin,ymin) to (xmax,ymax);
       new_clip.set_left last_clip; 
       new_clip.set_top  top_clip;
       {(top_clip!=NULL) && {top_clip.x_max<=xmax}}.while_do {
@@ -690,8 +712,8 @@ section AREA
 	y1:=y1.min yw1;
 	
 	// Append one Plan.
-	plan:=PLAN.create self;
-	win:=self;
+	plan:=PLAN.create Self;
+	win:=Self;
 	{
 	  winp:=win.prev;
 	  {(winp!=NULL) && {winp.plan=NULL}}.while_do {
@@ -834,7 +856,7 @@ section AREA
 	win:=win.next;
       };
       // Tous les prec et les prec des parents.
-      win:=self;
+      win:=Self;
       {
 	winp:=win.prev;
 	{winp!=NULL}.while_do {
@@ -874,7 +896,7 @@ section AREA
 	  elt_x:=list_x; // A Optimiser !	  	  
 	  plan_value:=0; 
 	  cx0:=x0; 
-	  win:=self;
+	  win:=Self;
 	  {	    
 	    pl:=elt_x.plan;
 	    (pl.is_x).if {      	      
@@ -885,7 +907,7 @@ section AREA
 		  // Limit
 		  cx1:=(elt_x.value-1).min x1;
 		  (cx0<=cx1).if {
-		    add_clip win from cx0,cy0 to cx1,cy1;
+		    add_clip win from (cx0,cy0) to (cx1,cy1);
 		    cx0:=cx1+1;
 		  };
 		  plan_value:=pl.level;
@@ -898,7 +920,7 @@ section AREA
 		  // Limit
 		  cx1:=(elt_x.value).min x1;
 		  (cx0<=cx1).if {
-		    add_clip win from cx0,cy0 to cx1,cy1;
+		    add_clip win from (cx0,cy0) to (cx1,cy1);
 		    cx0:=cx1+1;
 		  };
 		  //cx0:=cx1+1;
@@ -912,7 +934,7 @@ section AREA
 	    elt_x:=elt_x.next;
 	  }.do_while {elt_x!=NULL};	  
 	  (cx0<=x1).if {
-	    add_clip win from cx0,cy0 to x1,cy1;
+	    add_clip win from (cx0,cy0) to (x1,cy1);
 	  };
 	  cy0:=cy1+1;
 	};
@@ -957,23 +979,23 @@ section AREA
   - sub_delete <-
   (
     // On supprime les liens dans la chaine des fenetres :
-    (prev=NULL).if {
+    (prev = NULL).if {
       parent.set_child next;
     } else {
       prev.set_next next;
     };
-    (next!=NULL).if {
+    (next != NULL).if {
       next.set_prev prev;
     };
-    parent:=prev:=next:=NULL;
+    parent := prev := next := NULL;
     remove_plan;
-    clip:=NULL; // Delete Clip (GC).
-    {child!=NULL}.while_do {
+    clip := NULL; // Delete Clip (GC).
+    {child != NULL}.while_do {
       child.sub_delete;
     };
   );
   
-  - sub_move x,y:INTEGER <-
+  - sub_move (x,y:INTEGER) <-
   ( + win:AREA;
     
     x_window:=x_window+x; 
@@ -981,7 +1003,7 @@ section AREA
     update_plan; 
     win:=child;
     {win!=NULL}.while_do {
-      win.sub_move x,y;
+      win.sub_move (x,y);
       win:=win.next;
     };
   );
@@ -1012,7 +1034,7 @@ section AREA
   
   - debug:BOOLEAN;
   
-  - get_clip x,y:INTEGER :CLIP <-
+  - get_clip (x,y:INTEGER) :CLIP <-
   // Find clip `(x,y)', begin search is `clip'.
   ( + fg_t,fg_b,fg_r,fg_l,fg_p:BOOLEAN;
     + c:CLIP;
@@ -1103,20 +1125,20 @@ section AREA
     c
   );
   
-section PUBLIC  
+Section Public  
   
   - margin_clip_x0:INTEGER;
   - margin_clip_y0:INTEGER;
   - margin_clip_x1:INTEGER;
   - margin_clip_y1:INTEGER;
   
-  - redraw x0,y0:INTEGER to x1,y1:INTEGER <-
+  - redraw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
   ( + elt_p:PLAN;
     + lev,xb0,yb0,xb1,yb1:INTEGER;
     + win2,win3:AREA;
     
     // With Previous :
-    win3:=self;
+    win3:=Self;
     {
       win2 := win3.prev;
       {(lev = 0) && {win2 != NULL}}.while_do {
@@ -1152,7 +1174,7 @@ section PUBLIC
 	xb1 := xb1 - win2.x_window;  
 	yb0 := yb0 - win2.y_window; 
 	yb1 := yb1 - win2.y_window;
-	win2.draw xb0,yb0 to xb1,yb1;
+	win2.draw (xb0,yb0) to (xb1,yb1);
       };
       elt_p := elt_p.next;
     };
@@ -1160,29 +1182,31 @@ section PUBLIC
     margin_clip_y0 := margin_clip_y1 := 0;
   );
   
-  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
   (
     // Nothing.    
   );
   
   - refresh <-
   (
-    draw 0,0 to (width-1),(height-1);
+    (clip != NULL).if {
+      draw (0,0) to (width-1,height-1);
+    };
   );
   
-  - get_object x,y:INTEGER :AREA <-
+  - get_object (x,y:INTEGER) :AREA <-
   ( + c:CLIP;
     + result,win:AREA;
     
-    c:=get_clip x,y;
-    (c!=NULL).if {
+    c := get_clip (x,y);
+    (c != NULL).if {
       win := c.window;
-      (win=self).if {
-	result:=self;
+      (win = Self).if {
+	result := Self;
       } else {
-	result:=win.get_object x,y;
-	(result=NULL).if {
-	  result:=self;
+	result := win.get_object (x,y);
+	(result = NULL).if {
+	  result := Self;
 	};
       };
     };
@@ -1193,6 +1217,7 @@ section PUBLIC
   // Default.
   (
     (parent != NULL).if {
+      msg.set_destination parent;
       parent.receive msg;
     };
   );

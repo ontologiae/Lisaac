@@ -1,0 +1,362 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := ANY;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Common parent for compiler";
+  
+Section Inherit
+  
+  - parent_any_option:ANY_OPTION := ANY_OPTION;
+  
+Section Public
+  
+  //
+  // Invariant loop system.
+  //
+  - count_invariant:INTEGER;
+  
+  - loop_list:LIST; 
+  - loop_seq_index:INTEGER;
+  - loop_seq_call_local_and_loop:INTEGER;
+  - loop_seq_call_and_loop:INTEGER;
+  - loop_invariant:LOOP;
+  
+  //
+	
+  - late_binding_counter:INTEGER;
+  
+  - null_counter:INTEGER;
+  
+  - polymorphic_counter:INTEGER;
+  
+  //
+  // Display debug tools.
+  //
+  
+  + object_id:INTEGER <- 
+  ( + result:INTEGER;
+    - object_counter:INTEGER; 
+
+    result := object_counter;
+    object_counter := object_counter + 1;
+    object_id := result;
+    result
+  );
+
+  //
+  // Compiler Options.
+  //
+  
+  - is_optimization:BOOLEAN;  
+  
+  - inline_level:INTEGER := 17;
+  
+  - is_statistic:BOOLEAN;
+  
+  - is_quiet_operation:BOOLEAN;
+  
+  - debug_level_option:INTEGER;  
+  
+  - debug_with_code:BOOLEAN;
+    
+  - verbose_level:INTEGER;
+  - is_verbose:BOOLEAN <- (verbose_level != 0);
+
+  - is_warning:BOOLEAN;
+  
+  - is_all_warning:BOOLEAN;
+  
+  - is_executing_pass:BOOLEAN;
+  
+  //
+  // Other flags.
+  //
+  
+  - is_copy_local:BOOLEAN;
+  
+  - pass_count:INTEGER;
+  
+  - modify_count:INTEGER;
+  
+  - new_depend_pass <-
+  (    
+    modify_count := modify_count + 1;
+    //(pass_count > 50).if {
+    //  crash;
+    //};
+  );
+  
+  - new_execute_pass <- new_depend_pass;
+  
+  //
+  // Sequence counter.
+  //
+  
+  - seq_inline:UINTEGER_32;
+  
+  - seq_index              :UINTEGER_32; // Global index sequence.
+  - seq_or_and             :UINTEGER_32; // || or &&  
+  - seq_call_and_loop      :UINTEGER_32; // Call or loop (or function).
+  - seq_call_local_and_loop:UINTEGER_32; // Call sensitive or loop.
+  - seq_list:FAST_ARRAY[LIST] := FAST_ARRAY[LIST].create_with_capacity 64;
+  
+  - is_seq_list l:LIST :BOOLEAN <-
+  ( + result:BOOLEAN;
+    + j:INTEGER;
+    
+    j := seq_list.upper;
+    {(j >= seq_list.lower) && {! result}}.while_do {
+      result := seq_list.item j = l;
+      j := j - 1;
+    };
+    result
+  );
+        
+  //
+  // Runtime.
+  //
+  
+  - list_main:LIST;
+  - context_main:LOCAL;
+  
+  - list_current:LIST;
+    
+  - stack_local:FAST_ARRAY[LOCAL]  := FAST_ARRAY[LOCAL].create_with_capacity 64;  
+  - stack_result:FAST_ARRAY[LOCAL] := FAST_ARRAY[LOCAL].create_with_capacity 16;  
+  - stack_local_lower :INTEGER;
+  - stack_result_lower:INTEGER;
+  
+  - profil_first:PROFIL_SLOT;
+  - profil_second:PROFIL;
+      
+  - display_stack_local <-
+  (
+    string_tmp.clear;
+    (stack_local.lower).to (stack_local.upper) do { j:INTEGER;
+      stack_local.item j.display string_tmp;
+      string_tmp.add_last '\n';
+    };
+    string_tmp.print;
+  );
+  
+  //
+  // Output Buffer and service.
+  //
+  
+  - var_size:FAST_ARRAY[FAST_ARRAY[LOCAL]] :=
+  ( + result:FAST_ARRAY[FAST_ARRAY[LOCAL]];
+    
+    result := FAST_ARRAY[FAST_ARRAY[LOCAL]].create_with_capacity 4;
+    0.to 3 do { j:INTEGER;
+      result.add_last (FAST_ARRAY[LOCAL].create_with_capacity 32);
+    };
+    result
+  );
+  
+  - add_var_size v:LOCAL <-
+  ( + tab:FAST_ARRAY[LOCAL];
+    + j:INTEGER;
+    + t:TYPE_FULL;
+    
+    ? {v.style = '+'};
+    
+    (v.style != '+').if {
+      v.intern_name.print; " style [".print; v.style.print; "]\n".print;
+      warning_error (v.position,"BUG ANY.add_var_size Error");
+    };
+    // BSBS: C'est pas top, avec des HASHED_SET ce serait mieux...
+    t := v.type;
+    tab := var_size.item (v.type.size);
+    j := tab.lower;    
+    {(j <= tab.upper) && {tab.item j.type != t}}.while_do {
+      j := j + 1;
+    };
+    (j > tab.upper).if {
+      tab.add_last v;
+    } else {
+      {(j <= tab.upper) && {tab.item j != v} && {tab.item j.type = t}}.while_do {
+	j := j + 1;
+      };
+      ((j > tab.upper) || {tab.item j != v}).if {
+	tab.add v to j;	
+      };
+    };
+  );
+  
+  - output_decl:STRING := STRING.create 60000;
+  - output_glob:STRING := STRING.create 10000;
+  - output_code:STRING := STRING.create 4000000;
+  
+  - title txt:STRING_CONSTANT in buf:STRING <-
+  (
+    buf.append "\n//";
+    3.to 28 do { j:INTEGER;
+      buf.add_last '=';      
+    };
+    buf.append "//\n// ";
+    buf.append txt;
+    (txt.count+5).to 28 do { j:INTEGER;
+      buf.add_last ' ';
+    };
+    buf.append " //\n//";
+    3.to 28 do { j:INTEGER;
+      buf.add_last '=';      
+    };
+    buf.append "//\n\n";
+  );
+  
+  
+  - indent:STRING := STRING.create 128;
+
+  - operator_to_name (typ,op:ABSTRACT_STRING) :STRING_CONSTANT <-
+  ( + c:CHARACTER;
+    string_tmp.copy typ;
+    (op.lower).to (op.upper) do { j:INTEGER;
+      c:=op.item j;
+      (c = '+').if {
+	string_tmp.append "_add";
+      }.elseif { c = '-' } then {
+	string_tmp.append "_sub";
+      }.elseif { c = '~' } then {
+	string_tmp.append "_logicnot";
+      }.elseif { c = '!' } then {
+	string_tmp.append "_not";
+      }.elseif { c = '/' } then {
+	string_tmp.append "_div";
+      }.elseif { c = '*' } then {
+	string_tmp.append "_mul";
+      }.elseif { c = '^' } then {
+	string_tmp.append "_xor";
+      }.elseif { c = '%' } then { 
+	string_tmp.append "_mod";
+      }.elseif { c = '>' } then {
+	string_tmp.append "_greater";
+      }.elseif { c = '<' } then {
+	string_tmp.append "_less";
+      }.elseif { c = '=' } then {
+	string_tmp.append "_equal";
+      }.elseif { c = '\\' } then {
+	string_tmp.append "_notdiv";
+      }.elseif { c = '|' } then {
+	string_tmp.append "_or";
+      }.elseif { c = '&' } then {
+	string_tmp.append "_and";
+      }.elseif { c = '$' } then {
+	string_tmp.append "_dollar";
+      }.elseif { c = '#' } then {
+	string_tmp.append "_diese";
+      }.elseif { c = '@' } then {
+	string_tmp.append "_at";
+      }.elseif { c = '?' } then {
+	string_tmp.append "_ask";
+      };
+    };
+    ALIAS_STR.get string_tmp
+  );
+
+  //
+  // Error manager.
+  //
+  
+  - syntax  :INTEGER := 0;
+  - semantic:INTEGER := 1;
+  - warning :INTEGER := 2;
+  - message :INTEGER := 3;
+
+  - syntax_error (pos:POSITION,txt:ABSTRACT_STRING) <-
+  (
+    pos.put_error syntax text txt;
+    pos.put_position;
+    POSITION.send_error;
+  );
+
+  - semantic_error (pos:POSITION,txt:ABSTRACT_STRING) <-
+  ( 
+    pos.put_error semantic text txt;
+    pos.put_position;
+    POSITION.send_error;
+  );
+  
+  - warning_error (pos:POSITION,txt:ABSTRACT_STRING) <-
+  (
+    pos.put_error warning text txt;
+    pos.put_position;
+    POSITION.send_error;
+  );
+
+  - message_error (pos:POSITION,txt:ABSTRACT_STRING) <-
+  (
+    is_verbose.if {
+      pos.put_error message text txt;
+      pos.put_position;
+      POSITION.send_error;
+    };
+  );
+
+  //
+  // String temporary.
+  //
+
+  - string_tmp:STRING := STRING.create 256;
+  
+  - string_tmp2:STRING := STRING.create 256;
+  
+  //
+  // Path directory and command front end.
+  //
+  
+  - path_directory:LINKED_LIST[STRING_CONSTANT] := 
+  LINKED_LIST[STRING_CONSTANT].create;
+
+  - command_list  :LINKED_LIST[STRING_CONSTANT] := 
+  LINKED_LIST[STRING_CONSTANT].create;
+
+  //
+  // Alias type.
+  //
+  
+  - type_input            :TYPE;
+  - type_integer          :TYPE;
+  - type_real             :TYPE;
+  - type_character        :TYPE;
+  - type_block            :TYPE;
+  - type_true             :TYPE;
+  - type_false            :TYPE;
+  - type_boolean          :TYPE;
+  - type_integer_32       :TYPE;
+  - type_pointer          :TYPE;
+  - type_string_constant  :TYPE;
+  - type_n_a_character    :TYPE;
+  - type_n_a_n_a_character:TYPE;
+  
+  //
+  // Usage Variable.
+  //
+  
+  - last_position:POSITION;
+
+

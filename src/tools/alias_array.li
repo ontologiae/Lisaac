@@ -1,0 +1,91 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := ALIAS_ARRAY[E];
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Aliser collection.";
+  
+Section Inherit  
+  
+  - parent_object:ANY := ANY;
+  
+Section Private
+  
+  - bucket:HASHED_SET[FAST_ARRAY[E]] := 
+  HASHED_SET[FAST_ARRAY[E]].create;
+  
+  - free_list:FAST_ARRAY[FAST_ARRAY[E]] := 
+  FAST_ARRAY[FAST_ARRAY[E]].create_with_capacity 5;
+  
+Section Public
+    
+  //
+  // Temporary manager.
+  //
+  
+  - new:FAST_ARRAY[E] <-
+  ( + result:FAST_ARRAY[E];
+    
+    (free_list.is_empty).if {
+      result := FAST_ARRAY[E].create_with_capacity 16;
+    } else {
+      result := free_list.last;
+      free_list.remove_last;
+    };
+      
+    result
+  );
+  
+  - alias tmp:FAST_ARRAY[E] :FAST_ARRAY[E] <-
+  ( + result:FAST_ARRAY[E];
+    
+    result := bucket.reference_at tmp;
+    (result = NULL).if {
+      result := FAST_ARRAY[E].create_with_capacity (tmp.count);
+      result.copy tmp;
+      bucket.fast_add result;
+    };
+    free tmp;    
+    result
+  );
+  
+  - copy tmp:FAST_ARRAY[E] :FAST_ARRAY[E] <-
+  ( + result:FAST_ARRAY[E];
+        
+    result := FAST_ARRAY[E].create_with_capacity (tmp.count);
+    result.copy tmp;    
+    free tmp;
+    result
+  ); 
+  
+  - free tmp:FAST_ARRAY[E] <-
+  (     
+    tmp.clear;
+    free_list.add_last tmp;
+  );
+
+
+

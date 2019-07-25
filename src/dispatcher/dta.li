@@ -1,0 +1,137 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := DTA;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Parent for all late binding";
+    
+Section Inherit
+  
+  + parent_itm_object:Expanded ITM_OBJECT;
+  
+Section Public
+    
+  + context:PROFIL;
+  
+  + result_expr:EXPR;
+  
+  + slot:SLOT;
+  
+  + self_arg:EXPR;
+    
+  //
+  // Service
+  //
+  
+  - remove <-
+  (
+    // Nothing.
+  );
+  
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <- 
+  (
+    buffer.append "DTA";
+    deferred;
+  );
+  
+Section NODE_TYPE, DTA  
+  
+  - product t:TYPE with e:EXPR :LIST <-
+  ( + result:LIST;
+        
+    result := LIST.create (e.position);
+    (t = TYPE_NULL).if {                  
+      TYPE_NULL.product_error position for result_expr in result with context;
+    } else {
+      lookup t with e in result;
+    };
+    result    
+  );  
+
+  - update_branch l:LIST :BOOLEAN <-
+  ( + node:NODE;
+    + result:BOOLEAN;
+     
+    node ?= l.first;
+    (node = NULL).if {
+      result := TRUE;
+    } else {
+      node.update_link;
+      node ?= l.second;
+      (node != NULL).if {
+	node.update_link;
+      };
+    };
+    result
+  );
+  
+Section NODE_STYLE, SELF  
+  
+  - get_argument:FAST_ARRAY[EXPR] <-  
+  ( + result:FAST_ARRAY[EXPR];
+    
+    result := FAST_ARRAY[EXPR].create_with_capacity 1;
+    result.add_last (self_arg.my_copy);
+    result
+  );
+  
+Section DTA
+  
+  - finalise typ:TYPE with (expr:EXPR,s:SLOT) in lst:LIST <- 
+  ( + node:NODE_STYLE;
+    
+    node := NODE_STYLE.create (expr.my_copy,s) with Self result result_expr;
+    lst.add_last node;    
+  );
+  
+Section Private
+  
+  - lookup typ:TYPE with expr:EXPR in lst:LIST <-
+  ( + s:SLOT;
+    + name:STRING_CONSTANT;
+    + node_style:NODE_STYLE;
+    + r:EXPR;
+    
+    name := slot.name;
+    s := typ.get_local_slot name;    
+    (s = NULL).if {
+      // Lookup parent.      
+      s := typ.get_path_slot name;                  
+      r := s.get_expr_result;
+      node_style := NODE_STYLE.create ((expr.my_copy),s) with Self result r;
+      lst.add_last node_style;
+      lst.add_last (NODE_TYPE.create r with Self);      
+    } else {
+      // Direct call.
+      s.base_slot.is_equal_profil (slot.base_slot);
+      finalise typ with (expr,s) in lst;
+    };
+    lst.add_last (PROTOTYPE_CST.create (expr.position) type (TYPE_VOID.default)); // BSBS: Alias.
+  );

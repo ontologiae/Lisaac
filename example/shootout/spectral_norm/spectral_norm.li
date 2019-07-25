@@ -1,0 +1,113 @@
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name         := SPECTRAL_NORM;
+  
+  - bibliography := "http://IsaacOS.com";
+  - author       := "Xavier Oswald (x.oswald@free.fr)";
+  - comment      := "Language shootout - spectral-norm"; 
+  
+Section Inherit
+  
+  - parent_any:OBJECT := OBJECT;
+
+Section Private
+
+  - eval_a(i,j:INTEGER) :REAL_64 <- 
+  (
+    1.0 /((i+j)*(i+j+1)/2+i+1)
+  );
+
+  - eval_a_times_u(u,au:FAST_ARRAY[REAL_64]) <- 
+  ( 
+    0.to (au.upper) do { i:INTEGER;
+      au.put 0 to i;
+      0.to (au.upper) do { j:INTEGER;
+        au.put (au.item i + eval_a(i,j) * u.item j) to i;
+      };
+    };
+  );
+
+  - eval_at_times_u(u,au:FAST_ARRAY[REAL_64]) <-
+  (
+    0.to (au.upper) do { i:INTEGER;
+      au.put 0 to i;
+      0.to (au.upper) do { j:INTEGER;
+        au.put (au.item i + eval_a(j,i) * u.item j) to i;
+      };
+    };
+  );
+
+  - eval_ata_times_u(u,atau:FAST_ARRAY[REAL_64]) <-
+  ( + v:FAST_ARRAY[REAL_64];
+    v := FAST_ARRAY[REAL_64].create (u.count);
+    eval_a_times_u(u,v);
+    eval_at_times_u(v,atau);
+  );
+
+Section Public
+ 
+  - main <-
+  ( + vbv,vv:REAL_64;
+    + u :FAST_ARRAY[REAL_64];
+    + v :FAST_ARRAY[REAL_64];
+    + n :INTEGER;
+ 
+    ( COMMAND_LINE.upper = 1).if {
+      n := COMMAND_LINE.item 1.to_integer;
+    } else {
+      n := 2000;
+    };
+    
+    u := FAST_ARRAY[REAL_64].create_with_capacity n;
+    v := FAST_ARRAY[REAL_64].create n;
+    
+    0.to (n-1) do { i:INTEGER;
+      u.add_last 1;    
+    };
+
+    0.to 9 do { i:INTEGER;
+      eval_ata_times_u(u,v);
+      eval_ata_times_u(v,u);
+    };
+
+    0.to (n-1) do { i:INTEGER;
+      vbv := vbv + u.item i * v.item i;
+       vv :=  vv + v.item i * v.item i;
+    };
+     
+    ((vbv/vv).sqrt).print;
+    '\n'.print;
+
+    /*
+    ( + t:REAL_64;
+      t := (vbv/vv).sqrt;
+     `printf("%f\n",@t)`;
+     '\n'.print;
+     vbv.print;
+     '\n'.print;
+     vv.print;
+     '\n'.print;
+    );
+    */
+
+  );

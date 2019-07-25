@@ -1,25 +1,35 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                             Lisaac Compiler                              *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
   + name        := HANOI;
   
-  - category    := MACRO;
-  
-  - bibliography:= "http://IsaacOS.com";
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "The classic Tower of Hanoi game.";
   
-section INHERIT
+Section Inherit
   
   - parent_object:OBJECT := OBJECT;
 
-section PRIVATE
+Section Private
 
   + nb:INTEGER;
 
@@ -27,10 +37,10 @@ section PRIVATE
   + tower2:TOWER;
   + tower3:TOWER;
 
-section PUBLIC
+Section Public
 
-  - make <-
-  (
+  - main <-
+  ( 
     (COMMAND_LINE.upper = 0).if {
       "Number of discus: ".print;
       IO.read_integer;
@@ -38,32 +48,35 @@ section PUBLIC
     }.elseif {COMMAND_LINE.upper != 1} then {
       "Usage: hanoi <NumberOfDiscus>\n".print;
       die_with_code exit_failure_code;
-    }.elseif {COMMAND_LINE.item 1.is_integer} then {
+    }.elseif {COMMAND_LINE.item 1.is_integer} then {            
       nb := COMMAND_LINE.item 1.to_integer.max 1;
     } else {
       "hanoi: bad argument (not an integer)\n".print;
       die_with_code exit_failure_code;
     };
+    
     tower1 := TOWER.full nb;
     tower2 := TOWER.empty nb;
     tower3 := TOWER.empty nb;
-    "Situation at the beginning:\n".print;
-    move nb,tower1,tower2,tower3;
+        
+    "Situation at the beginning:\n".print;        
+    move (nb,tower1,tower2,tower3);
     "Situation at the end:\n".print;
-    print;
+    print;    
   );
   
-section PRIVATE
+Section Private
   
-  - move how_many:INTEGER, source, intermediate, destination:TOWER <-
+  - move (how_many:INTEGER, source, intermediate, destination:TOWER) <-
   ( + discus:INTEGER;
-
-    (how_many > 0).if {
-      move (how_many-1),source,destination,intermediate;
+        
+    (how_many > 0).if {    
+      move (how_many-1,source,destination,intermediate);
       print;
       discus := source.remove_discus;
       destination.add_discus discus;
-      move (how_many-1),intermediate,source,destination;
+      move ((how_many-1),intermediate,source,destination);
+      //'F'.print; '\n'.print;
     };
   );
   
@@ -84,4 +97,3 @@ section PRIVATE
     };
     '\n'.print;
   );
-  

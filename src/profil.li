@@ -1,0 +1,466 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := PROFIL;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Method with costumization";
+  
+Section Inherit
+  
+  + parent_any:Expanded ANY; 
+  
+Section PROFIL_LIST
+
+  + life_index:INTEGER;
+  
+  - set_life_index idx:INTEGER <-
+  (
+    life_index := idx;
+  );
+  
+Section Public
+  
+  - slot:SLOT <- deferred;
+
+  - is_interrupt:BOOLEAN;
+  
+  - is_external:BOOLEAN;
+  
+  + type_self:TYPE_FULL; 
+    
+  + argument_list:FAST_ARRAY[LOCAL];  
+  
+  + result_list:FAST_ARRAY[LOCAL];
+  + result_last:LOCAL;
+    
+  + code:LIST;
+  + context:LOCAL;
+  
+  + count_intern_call:INTEGER;
+  
+  + link_count:INTEGER;
+  
+  + name:STRING_CONSTANT;
+    
+  - is_context_sensitive:BOOLEAN <- deferred;
+    
+  + stat:INTEGER_8 := -1;
+  // 00 : No recursive, No inlinable.
+  // 01 : No recursive, Inlinable.
+  // 10 : Recusive,     No tail.
+  // 11 : Recusive,     Tail
+  
+  - recursivity_bit:INTEGER_8 := 10b;
+  - tail_bit:INTEGER_8        := 01b;
+  - inlining_bit:INTEGER_8    := 01b;
+  
+  - is_tail_recursive:BOOLEAN     <- stat = 11b;
+  - is_not_tail_recursive:BOOLEAN <- stat = 10b;
+  - is_inlinable:BOOLEAN          <- stat = 01b;
+  - is_recursive:BOOLEAN          <- (stat & recursivity_bit) != 0;
+
+  //
+  
+  - mode_recursive:BOOLEAN;
+  
+  - set_mode_recursive b:BOOLEAN <-
+  (
+    mode_recursive := b;
+  );
+    
+  - set_life <-
+  (     
+    PROFIL_LIST.set_life Self;
+    (mode_recursive).if {      
+      execute_recursive;
+    };
+  );
+
+  - link <-
+  ( 
+    link_count := link_count + 1;
+  );
+  
+  - unlink <-
+  (
+    link_count := link_count - 1;    
+    ((link_count = 0) && {life_index != -1}).if { // BSBS: -1 normalement impossible !
+      PROFIL_LIST.unset_life Self;
+    };
+    ? {link_count >= 0};
+  );
+    
+  - write_argument args:FAST_ARRAY[EXPR] :FAST_ARRAY[WRITE] <-
+  ( + loc:LOCAL;
+    + val:EXPR;
+    + wrt:WRITE;
+    + result:FAST_ARRAY[WRITE];
+    
+    (args.count != argument_list.count).if {
+      semantic_error (args.last.position,"Incorrect vector size.");
+    };
+    
+    result := FAST_ARRAY[WRITE].create_with_capacity (argument_list.count);
+    (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
+      loc := argument_list.item j;
+      val := args.item j;
+      (loc != NULL).if {	
+	wrt := loc.write (val.position) value val;
+	result.add_last wrt;
+      } else {	
+	result.add_last NULL;
+	val.remove;
+      };
+    };
+    result
+  );
+  
+  //
+  // Comparaison.
+  //
+  
+  - compatibility_with other:PROFIL <-
+  ( + n1,n2:INTEGER;
+    (argument_list.count != other.argument_list.count).if {
+      POSITION.put_error semantic text "Incorrect vector size argument.";
+      code.position.put_position;
+      other.code.position.put_position;
+      POSITION.send_error;
+    };
+    (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
+      (argument_list.item j.type != other.argument_list.item j.type).if {
+	POSITION.put_error semantic text "Incorrect invariant type argument.";
+	argument_list.item j.position.put_position;
+	other.argument_list.item j.position.put_position;
+	POSITION.send_error;
+      };
+    };
+    (result_list != NULL).if {
+      n1 := result_list.count;
+    };      
+    (other.result_list != NULL).if {
+      n2 := other.result_list.count;
+    };
+    (n1 != n2).if {
+      POSITION.put_error semantic text "Incorrect vector size result.";
+      code.position.put_position;
+      other.code.position.put_position;
+      POSITION.send_error;
+    };
+    (n1 != 0).if {
+      (result_list.lower).to (result_list.upper) do { j:INTEGER;
+	(result_list.item j.type != other.result_list.item j.type).if {
+	  POSITION.put_error semantic text "Incorrect invariant type result.";
+	  result_list.item j.position.put_position;
+	  other.result_list.item j.position.put_position;
+	  POSITION.send_error;
+	};
+      };
+    };
+    ((result_last != NULL) && {other.result_last != NULL}).if {
+      (result_last.type != other.result_last.type).if {
+	POSITION.put_error semantic text "Incorrect invariant type result.";
+	result_last.position.put_position;
+	other.result_last.position.put_position;
+	POSITION.send_error;
+      };
+    }.elseif {(result_last != NULL) || {other.result_last != NULL}} then {
+      POSITION.put_error semantic text "Incorrect invariant result.";
+      code.position.put_position;
+      other.code.position.put_position;
+      POSITION.send_error;
+    };      
+  );
+  
+  - lookup n:STRING_CONSTANT :LOCAL <-
+  ( + j:INTEGER;
+    + result:LOCAL;
+    
+    j := argument_list.lower;
+    {(j > argument_list.upper) || {argument_list.item j.name = n}}.until_do {      
+      j := j + 1;
+    };
+    (j <= argument_list.upper).if {
+      result := argument_list.item j;
+    }.elseif {result_last != NULL} then {
+      (n = result_last.name).if {
+	result := result_last;
+      }.elseif {result_list != NULL} then {
+	j := result_list.lower;
+	{(j > result_list.upper) || {result_list.item j.name = n}}.until_do {      
+	  j := j + 1;
+	};
+	(j <= result_list.upper).if {
+	  result := result_list.item j;
+	};
+      };
+    };
+    result
+  );
+  
+  //
+  // Execute.
+  //
+  
+  - remove_inline <-
+  (    
+    PROFIL_LIST.remove Self;    
+  );
+  
+  - remove <-
+  ( 
+    code.remove;    
+  );
+  
+  - search_tail_recursive:BOOLEAN <-
+  ( + switch:SWITCH;
+    + void_:PROTOTYPE_CST;
+    + msg:CALL_SLOT;
+    + lst:LIST;
+    + count_recur:INTEGER;
+    + result:BOOLEAN;
+        
+    (
+      (! mode_recursive)       &&
+      {is_not_tail_recursive } &&       
+      {code.count     >= 2   }
+    ).if {          
+      switch ?= code.item (code.upper-1);
+      void_  ?= code.last;
+      (
+	(switch != NULL) &&	
+	{void_ != NULL}  &&
+	{void_.static_type.raw = TYPE_VOID}
+      ).if {	
+	// Verification des cases :		
+	(switch.list.lower).to (switch.list.upper) do { j:INTEGER;
+	  lst := switch.list.item j.code;
+	  (lst.count > 1).if {
+	    msg ?= lst.item (lst.upper - 1);
+	    ((msg != NULL) && {msg.profil = Self}).if {	      	      
+	      count_recur := count_recur + 1;
+	    };
+	  };
+	};
+	(count_recur = switch.list.count).if {
+	  semantic_error ((slot.position),"Recursivity without end.");
+	};
+	(count_recur = switch.list.count - 1).if {	  	  
+	  ((count_intern_call - 1) = count_recur).if {
+	    (link_count = count_intern_call).if {
+	      result := TRUE;
+	      stat := stat | tail_bit;
+	    };
+	  };
+	};
+      };
+    };
+    result    
+  );
+  
+  - execute_recursive <-
+  ( + old_list_current:LIST;    
+    
+    (stat = -1).if {
+      count_intern_call := count_intern_call + 1;
+      (count_intern_call = 1).if {	  	  
+	old_list_current   := list_current;
+	//
+	execute 3;
+	//	
+	list_current   := old_list_current;
+	? {code != NULL};      
+	(count_intern_call = 1).if {	  
+	  stat := 0;
+	} else {
+	  stat := recursivity_bit;
+	};	
+      };
+    };
+  );
+  
+  - execute inline_lev:INTEGER <-
+  ( + old_seq_inline:UINTEGER_32;
+        
+    list_current  := NULL;
+    old_seq_inline := seq_inline;
+    
+    CALL_SLOT.reset_count_context_sensitive;  
+    
+    seq_call_and_loop := seq_call_and_loop + 1;
+      
+    (result_last = NULL).if {
+      code ?= code.execute_unlink;      
+    } else {
+      code ?= code.execute_link;
+    };      
+    
+    LOCAL_SEQ.clear;
+    
+    seq_call_and_loop := seq_call_and_loop + 1;
+    
+    (
+      (CALL_SLOT.count_context_sensitive = 0) && 
+      {! mode_recursive} &&
+      {stat = 0} &&
+      {is_context_sensitive || {(seq_inline - old_seq_inline) < inline_lev}}
+    ).if {
+      stat := stat | inlining_bit;      
+      new_execute_pass;
+    };
+  );
+  
+  //
+  // Genere.
+  //
+  
+  - is_static:BOOLEAN <- deferred;
+  
+  - genere_handler buffer:STRING <-
+  ( + ts:TYPE_FULL;    
+    + v:LOCAL;
+    
+    (is_static).if {
+      buffer.append "static ";
+    };
+    
+    // Result.    
+    (result_last = NULL).if {
+      buffer.append "void ";
+    } else {      
+      ts := result_last.type;            
+      ts.genere_declaration buffer;
+      ts.genere_star_declaration buffer;
+      buffer.add_last ' ';
+    };
+    
+    // Name.
+    buffer.append name;
+    buffer.add_last '(';
+    
+    // Arguments.    
+    (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
+      v := argument_list.item j;
+      (v != NULL).if {
+	? {v.style = ' '};
+	
+	(v.style != ' ').if {
+	  semantic_error (v.position,"BUG PROFIL.genere_handler Error");
+	};
+	genere v result FALSE in buffer;	
+	buffer.add_last ',';
+      };
+    };    
+    
+    // Results.
+    (result_list != NULL).if {      
+      (result_list.lower).to (result_list.upper) do { j:INTEGER;
+	v := result_list.item j;
+	v.set_ensure_count (-1);
+	genere v result TRUE in buffer;
+	buffer.add_last ',';
+      };
+    };
+    (buffer.last = ',').if {
+      buffer.remove_last 1;
+    };
+    buffer.add_last ')';
+  );
+  
+  - genere buffer:STRING <-
+  (         
+    buffer.add_last '\n';
+    genere_handler buffer;
+    buffer.append "\n// ";
+    append_type buffer;
+    ((stat & 10b) = 0).if {
+      buffer.append "No recursive, ";
+    } else {
+      buffer.append "Recursive, ";
+    };
+    ((stat & 01b) = 0).if {
+      buffer.append "No inlinable.";
+    } else {
+      buffer.append "Inlinable.";
+    };
+    buffer.add_last '\n';
+    code.genere_extern buffer;
+    buffer.add_last '\n';
+  );
+  
+  //
+  // Display.
+  //
+    
+  - display buffer:STRING <-
+  (    
+    buffer.append (slot.name);
+    append_type buffer;
+  );    
+  
+  - display_all buffer:STRING <-
+  (
+    display buffer;
+    code.display buffer;
+    buffer.append "\n---------------------\n";
+  );
+  
+Section Private  
+  
+  - append_type buffer:STRING <-
+  ( + v:VARIABLE;
+    
+    buffer.add_last '(';
+    (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
+      v := argument_list.item j;
+      (v != NULL).if {
+	v.display_type buffer;
+	buffer.add_last ',';
+      };
+    };
+    (buffer.last = ',').if {
+      buffer.remove_last 1;
+    };
+    buffer.add_last ')';
+    (result_last != NULL).if {
+      buffer.append " With result";
+    } else {
+      buffer.append " Void";
+    };
+  );
+  
+  - genere v:LOCAL result is_res:BOOLEAN in buffer:STRING <-
+  ( + ts:TYPE_FULL;
+    
+    ts := v.type;
+    ts.genere_declaration buffer;
+    buffer.add_last ' ';
+    ts.genere_star_declaration buffer;	
+    (is_res).if {
+      buffer.add_last '*';
+    };
+    buffer.append (v.intern_name);
+  );

@@ -1,0 +1,136 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := ITM_ARGS;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "One argument vector";
+  
+Section Inherit
+  
+  + parent_itm_argument:Expanded ITM_ARGUMENT;
+  
+Section Public
+
+  + name:FAST_ARRAY[STRING_CONSTANT];
+  
+  + type:ITM_TYPE_MULTI;
+  
+  - count:INTEGER <- name.count;
+  
+  //
+  // Creation.
+  //
+  
+  - create p:POSITION name n:FAST_ARRAY[STRING_CONSTANT] 
+  type t:ITM_TYPE_MULTI :SELF <-
+  ( + result:SELF;
+    
+    result := SELF.clone;
+    result.make p name n type t;
+    result
+  );
+
+  - make p:POSITION name n:FAST_ARRAY[STRING_CONSTANT] 
+  type t:ITM_TYPE_MULTI <-
+  (
+    position := p;
+    name     := n;
+    type     := t;
+  );
+        
+  //
+  // Running.
+  //
+
+  - get_type idx:INTEGER :TYPE_FULL <-
+  (
+    ? {idx.in_range 0 to (count-1)};
+    type.item idx.to_run
+  );
+
+  - to_run arg_lst:FAST_ARRAY[LOCAL] <-
+  ( + t:TYPE_FULL;
+    + loc:LOCAL;
+    
+    (name.lower).to (name.upper) do { j:INTEGER;
+      t := type.item j.to_run;      
+      loc := LOCAL.create position name (name.item j) style ' ' type t;
+      arg_lst.add_last loc;
+    };
+  );
+  
+  /*
+  - to_run_type arg_lst:FAST_ARRAY[TYPE_FULL] <-
+  (    
+    (name.lower).to (name.upper) do { j:INTEGER;
+      arg_lst.add_last (type.item j.to_run);
+    };
+  );
+  */
+  
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  ( 
+    buffer.add_last '(';
+    (name.lower).to (name.upper - 1) do { j:INTEGER;      
+      buffer.append (name.item j);
+      buffer.add_last ':';
+      type.item j.display buffer;
+      buffer.add_last ',';
+    };
+    buffer.append (name.last);
+    buffer.add_last ':';
+    type.last.display buffer;    
+    buffer.add_last ')';
+  );
+
+  //
+  // Comparaison.
+  //
+  
+  - is_equal other:ITM_ARGUMENT <-
+  ( + o:ITM_ARGS;
+    + err:STRING_CONSTANT;
+    ? {other != Self};
+    
+    o ?= other;
+    (o = NULL).if {
+      err := "Invariance number vector argument invalid.";
+    }.elseif {name != o.name} then {
+      err := "Invariance name argument invalid.";
+    }.elseif {type != o.type} then {
+      err := "Invariance type argument invalid.";
+    };
+    (err != NULL).if {
+      POSITION.put_error semantic text err;
+      position.put_position;
+      (other.position).put_position;
+      POSITION.send_error;
+    };
+  );

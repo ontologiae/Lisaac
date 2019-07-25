@@ -1,0 +1,113 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  - name        := TABLE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Display array manager.";
+  
+Section Inherit  
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Private
+  
+  - table:FAST_ARRAY2[ABSTRACT_STRING] := FAST_ARRAY2[ABSTRACT_STRING].create (10,10);
+  
+  - size:FAST_ARRAY[INTEGER] := FAST_ARRAY[INTEGER].create_with_capacity 10;
+  
+  - line:INTEGER;
+  - column:INTEGER;
+    
+Section Public
+  
+  - new_table (l,c:INTEGER) <-
+  (
+    table.make (l,c);
+    line := column := 0;    
+  );
+  
+  - add n:ABSTRACT_STRING <-
+  (
+    ? {n != NULL};
+    
+    table.put n to (line,column);
+    (column = table.upper2).if {
+      column := 0;
+      line   := line + 1;
+    } else {
+      column := column + 1;
+    };    
+  );
+  
+  - append_in buffer:STRING <-
+  ( + siz:INTEGER;
+    + append_line,append_bar:BLOCK;
+    
+    // Size column.
+    size.make (table.count2);
+    0.to (table.upper1) do { l:INTEGER;
+      0.to (table.upper2) do { c:INTEGER;
+	siz := table.item (l,c).count;
+	(siz > size.item c).if {
+	  size.put siz to c;
+	};
+      };
+    };
+    
+    // Sub-code for one line.
+    append_line := 
+    { l:INTEGER;
+      + n:ABSTRACT_STRING;
+      buffer.append "// ";
+      0.to (table.upper2) do { c:INTEGER;
+	n := table.item (l,c);
+	buffer.append "| ";	
+	buffer.append n;
+	buffer.extend_multiple ' ' by (size.item c - n.count + 1);
+      };
+      buffer.append "|\n";
+    };
+    append_bar :=
+    {
+      buffer.append "// ";
+      0.to (table.upper2) do { c:INTEGER;
+	buffer.add_last '+';
+	buffer.extend_multiple '-' by (size.item c + 2);
+      };
+      buffer.append "+\n";
+    };
+
+    // Display Header.
+    append_bar.value;
+    append_line.value 0;
+    append_bar.value;
+    // Display table.
+    1.to (table.upper1) do { l:INTEGER;
+      append_line.value l;
+    };
+    // Display End.
+    append_bar.value;
+  );

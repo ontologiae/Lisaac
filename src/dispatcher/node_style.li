@@ -1,0 +1,239 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := NODE_STYLE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Switch node for style";
+    
+Section Inherit
+  
+  + parent_node:Expanded NODE;
+  
+Section Public
+  
+  + result_expr:EXPR;
+  
+  + slot:SLOT;
+
+Section NODE, DTA
+    
+  //
+  // Creation.
+  //
+  
+  - create (e:EXPR,sl:SLOT) with dta:DTA result r:EXPR :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make (e,sl) with dta result r;
+    result
+  );
+  
+  - make (e:EXPR,sl:SLOT) with dta:DTA result r:EXPR <-
+  (   
+    expr        := e;
+    slot        := sl;
+    data        := dta;
+    result_expr := r;
+  );
+  
+Section Public
+  
+  - my_copy:SELF <- 
+  ( 
+    crash_with_message "NODE_STYLE.my_copy";
+    NULL 
+  );
+  
+Section NODE, DTA  
+  
+  //
+  // Update.
+  //
+  
+  - update_link:BOOLEAN <-
+  ( + typ:TYPE;
+    + list:FAST_ARRAY[CASE];
+    + case:CASE;
+    + e:EXPR;
+    + low,up,count:INTEGER;
+    
+    (slot.slot_id = NULL).if {
+      (first_code = NULL).if {
+	first_type := TYPE_ID.get_index (slot.lower_style);
+	first_code := call_for first_type;      
+      };
+    } else {            
+      low := slot.lower_style;
+      up  := slot.upper_style;      
+      count := up-low + 1;
+      (switch = NULL).if {
+	(slot.style = '-').if {
+	  e := slot.slot_id.read position;
+	  expr.remove;
+	} else {
+	  e := slot.slot_id.read position with expr;
+	};
+	switch := SWITCH.create Self with e size count;
+      };
+      list := switch.list;
+      (list.count != count).if {
+	0.to (count-1) do { j:INTEGER;	    
+	  typ := TYPE_ID.get_index (j+low);
+	  
+	  ((j > list.upper) || {typ != list.item j.id}).if {
+	    case := CASE.create typ with (call_for typ);
+	    list.add case to j;
+	  };	    
+	};	  
+      };
+    };
+    FALSE
+  );
+  
+Section Private  
+  
+  - call_for t:TYPE :LIST <-
+  ( + result:LIST;
+    + typ:TYPE_ID;
+    + call:CALL_SLOT;
+    + em:EXPR_MULTIPLE;
+    + rd:READ;
+    + wrt:WRITE;
+    + result_var:VARIABLE;
+    + new_larg:FAST_ARRAY[EXPR];    
+    + slot_dta:SLOT_DATA;
+    + slot_cod:SLOT_CODE;
+    + idx:INTEGER;    
+    + type:TYPE_FULL;
+    + my_profil:PROFIL;
+    + wrt_lst:FAST_ARRAY[WRITE];
+    + ctext:LOCAL;
+    
+    result := LIST.create position;
+    
+    typ ?= t;
+    idx := typ.index;
+    (idx = 0).if {
+      // Data.
+      slot_dta := slot.slot_data;      
+      slot_dta.init;
+      (slot.slot_data_list != NULL).if {
+	(slot.slot_data_list.lower).to (slot.slot_data_list.upper) do { j:INTEGER;
+	  slot.slot_data_list.item j.init;
+	};
+      };
+      (result_expr.static_type.raw = TYPE_VOID).if {
+	(slot_dta.style = '-').if {
+	  result.add_last (slot_dta.read position);
+	} else {		
+	  result.add_last (slot_dta.read position with (expr.my_copy));
+	};
+	result.add_last (PROTOTYPE_CST.create position type (TYPE_VOID.default)); // BSBS: Alias.
+      } else {	
+	em ?= result_expr;
+	(em != NULL).if {
+	  (em.lower).to (em.upper - 1) do { j:INTEGER;
+	    rd ?= em.item j;
+	    ? {rd != NULL};
+	    result_var := rd.variable;	    
+	    result.add_last (new_write result_var with (expr,slot.slot_data_list.item j));	    
+	  };
+	  rd ?= em.last;
+	} else {
+	  rd ?= result_expr;
+	};	
+	result_var := rd.variable;
+	result.add_last (new_write result_var with (expr,slot_dta));
+      };
+    } else {
+      // Function.
+      slot_cod := slot.slot_code idx;      
+      (slot_cod.id_section.is_inherit_or_insert).if {
+	new_larg := FAST_ARRAY[EXPR].create_with_capacity 1;
+	new_larg.add_last (data.self_arg.my_copy);
+      } else {
+	new_larg := data.get_argument;
+      };
+      type := new_larg.first.static_type;      
+      (type.is_strict).if {
+	// Fix Self type for resend call (else it's fixed by NODE_TYPE)
+	ITM_TYPE_SELF.set_run type;      
+      };
+      //      
+      (debug_level_option != 0).if {	
+	(data.context = NULL).if {
+	  ctext := context_main;
+	} else {
+	  ctext := data.context.context;
+	};
+	result.add_last (
+	  PUSH.create position context ctext first FALSE
+	);
+      };
+      //
+      (my_profil, wrt_lst) := slot_cod.get_profil new_larg;
+      call := CALL_SLOT.create position profil my_profil with wrt_lst;      
+      (result_expr.static_type.raw != TYPE_VOID).if {	
+	em ?= result_expr;
+	(em != NULL).if {
+	  (em.lower).to (em.upper - 1) do { j:INTEGER;
+	    rd ?= em.item j;
+	    ? {rd != NULL};
+	    result_var := rd.variable;	    
+	    rd  := call.profil.result_list.item j.read position;
+	    wrt := result_var.write position value rd;
+	    call.result_list.add_last wrt;	    
+	  };
+	  rd ?= em.last;
+	} else {
+	  rd ?= result_expr;
+	};
+	? {rd != NULL};
+	result_var := rd.variable;	
+	result.add_last (result_var.write position value call);
+      } else {
+	result.add_last call;
+      };
+    };
+    // In list.    
+    result.add_last (PROTOTYPE_CST.create position type (TYPE_VOID.default)); // BSBS : Alias.
+    result
+  );
+    
+Section Private 
+  
+  - new_write var:VARIABLE with (e:EXPR,slot:SLOT_DATA) :WRITE <-
+  ( + rd:READ;
+    
+    (slot.style = '-').if {
+      rd  := slot.read position;
+    } else {		
+      rd  := slot.read position with (e.my_copy);
+    };
+    var.write position value rd
+  );
+  

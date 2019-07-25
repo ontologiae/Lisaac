@@ -1,0 +1,105 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := READ_LOCAL;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Read for local.";
+  
+Section Inherit
+  
+  + parent_read:Expanded READ;
+    
+Section Public
+  
+  - is_invariant:BOOLEAN <- local.is_invariant;  
+  
+  + local:LOCAL;
+  
+  - variable:VARIABLE <- local;
+  
+  //
+  // Comparison.
+  //
+  
+  - '==' Right 60 other:EXPR :BOOLEAN <- 
+  ( + rd:READ_LOCAL;
+    
+    rd ?= other;
+    ((rd != NULL) && {local = rd.local})    
+  );
+    
+  //
+  // Creation.
+  //
+    
+  - create p:POSITION with l:LOCAL :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make p with l;
+    result    
+  );
+  
+  - make p:POSITION with l:LOCAL <-
+  (
+    position := p;
+    local    := l;       
+  );
+  
+  //
+  // Execute
+  //
+  
+  - execute_access_unlink:INSTR <- NULL;
+  
+  - execute_access_link;
+  
+  //
+  // Genere
+  //
+  
+  - genere buffer:STRING <-
+  ( + tb:PROFIL_BLOCK;
+    (variable.ensure_count = -1).if {
+      buffer.add_last '*';
+    };
+    buffer.append (variable.intern_name);     
+    //
+    tb ?= local.type.raw;
+    (tb != NULL).if {
+      add_var_size local;
+    };
+  );
+  
+
+
+
+
+
+
+
+
+

@@ -1,57 +1,69 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                             Isaac Library                                *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
 
-  - name    := INTERFACE;
-  
-  - category:=MICRO;
-  
+  + name    := INTERFACE;
+
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+    
   - bibliography:="http://IsaacOS.com";
   - author      :="Sonntag Benoit (bsonntag@loria.fr)";
   - comment     :="User Interface and Events managment.";
 
-  - version :="1.0";  
-  - date    :="2003/04";
+  - version := 1;  
+  - date    := "2003/04";
   
-section INHERIT  
+Section Inherit  
   
-  * parent_window:AREA;
+  + parent_g_raw:Expanded G_GROUP;
         
-section PUBLIC
+Section Public
   
   - screen:AREA; // Physical screen.
   
-  - make bmp:BITMAP size w,h:INTEGER <-
+  - make bmp:ABSTRACT_BITMAP size (w,h:INTEGER) with elt:G_EXPR <-
   (
     set_video_support bmp;
     screen := AREA.clone;
-    screen.make NULL from 0,0 size (bmp.width),(bmp.height);    
-    make screen from 0,0 size w,h;
+    screen.make NULL from (0,0) size (bmp.width,bmp.height);    
+    make screen from (0,0) size (w,h);
     EVENT_SYSTEM.make;
-    focus := self;
-  );
-
-  - make bmp:BITMAP <-
-  (
-    make bmp size (bmp.width),(bmp.height);    
+    focus := Self;
+    root := elt;
+    //
+    connect_to MOUSE;
+    connect_to KEYBOARD;
+    connect_to TIMER;
   );
   
   //
   // Display.
   //
   
-  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
-  (
-    clipping x0,y0 to x1,y1;
-    rectangle_fill 1,1 to (width-2),(height-2) color gray;
-    rectangle 0,0 to (width-1),(height-1) color white;    
+  - draw_slave bmp:ABSTRACT_BITMAP from (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
+  (     
+    bmp.rectangle_fill (x0,y0) to (x1,y1) color color_back; 
   );
-   
+     
   //
   // Connect.
   //    
@@ -59,22 +71,29 @@ section PUBLIC
   - connect_to obj:INPUT <-
   (
     obj.make;
-    obj.add_client self;
-  );
-  
-  - connect_all <-
-  (
-    connect_to MOUSE;
-    connect_to KEYBOARD;
-    connect_to TIMER;
+    obj.add_client Self;
   );
   
   - focus:INBOX;
   
+  - set_focus f:INBOX <-
+  (
+    focus := f;
+  );
+  
+  - resize_window (w,h:INTEGER) <-
+  (    
+    VIDEO.resize (w,h);
+    screen.resize (w,h);
+    resize (w,h);
+    root.set_position Self at (0,0) size (w,h);    
+  );
+  
   - run <-
   ( + msg:EVENT;    
     + input:INPUT;
-        
+    
+    root.set_position Self at (0,0) size (width,height);
     {
       EVENT_SYSTEM.get_event;
       
@@ -93,11 +112,11 @@ section PUBLIC
   // Message Server.
   //
   
-section PRIVATE
+Section Private
   
   - storage_message:LINKED_LIST[EVENT] := LINKED_LIST[EVENT].create;
   
-section PUBLIC  
+Section Public  
   
   - receive msg:EVENT <-
   ( + mouse:EVENT_MOUSE;
@@ -109,7 +128,7 @@ section PUBLIC
       // Other message.
       mouse ?= msg;
       (mouse != NULL).if {
-	win := get_object (mouse.x_current),(mouse.y_current);
+	win := get_object ((mouse.x_current),(mouse.y_current));
 	(win != focus).if {
 	  focus := win;
 	  msg.set_destination focus;

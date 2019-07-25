@@ -1,16 +1,28 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                            Lisaac OS Library                              //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
   + name        :=DIRECTORY;
-  
-  - category    :=MICRO;
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
   - bibliography:="http://IsaacOS.com";
   
@@ -25,11 +37,11 @@ section HEADER
 #include <sys/types.h>
 `;
   
-section INHERIT
+Section Inherit
   
-  * parent_abstract_directory:ABSTRACT_DIRECTORY;
+  + parent_abstract_directory:Expanded ABSTRACT_DIRECTORY;
   
-section PRIVATE  
+Section Private  
   
   //
   // Physical implementation.
@@ -48,10 +60,11 @@ section PRIVATE
     
     list.clear;
     p := path.to_external;
-    dir := `opendir(@p)`:POINTER;
+    dir := `opendir(@p)`:POINTER; 
     (dir != NULL).if {
       result := TRUE;
       {
+
 	dirent := `readdir(@dir)`:POINTER;
 	(dirent != NULL).if {
 	  n := `((struct dirent *)@dirent)->d_name`:NATIVE_ARRAY[CHARACTER];	
@@ -66,7 +79,7 @@ section PRIVATE
 	    string_tmp.prepend path;
 	    reduce_path string_tmp;
 	    new_entry := get_entry string_tmp;
-	    (new_entry = NULL).if {
+	    (new_entry = NULL).if {	      	      
 	      result := FALSE;
 	    } else {
 	      (new_entry.path.count < path.count).if {

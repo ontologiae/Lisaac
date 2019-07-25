@@ -1,29 +1,37 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                             Isaac Library                                *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
-
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
   + name        := BMP_HEADER;
+
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
   - comment     := "Mapping BMP Image File Header structure";
   
-  - category    := MICRO;
-  
-  - bibliography:= "http://IsaacOS.com";
-
-  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
-  
-section INHERIT
+Section Inherit
   
   - parent_object:OBJECT := OBJECT;
   
-section MAPPING
+Section Mapping
   
   //
   // File Header
@@ -31,33 +39,37 @@ section MAPPING
   
   + file_type1:CHARACTER;     //00h  Must be 'B'
   + file_type2:CHARACTER;     //01h  Must be 'M'  
-  + file_size:UINTEGER;       //02h  Size of file
-  + reserved:UINTEGER;        //06h
-  + bitmap_offset:UINTEGER;   //0Ah   Offset of the data section  
+  + file_size:UINTEGER_32;       //02h  Size of file
+  + reserved:UINTEGER_32;        //06h
+  + map_bitmap_offset:UINTEGER_32;   //0Ah   Offset of the data section  
   
   //
   // Bitmap Header
   //
   
-  + header_size:UINTEGER;     //0Eh  Size of this header
-  + width:INTEGER;            //12h  width (in pixel) of the image
-  + height:INTEGER;           //16h  height (in pixel)
-  + planes:USHORTINT;         //1Ah  number of planes use (always 1)
-  + bits_per_pixel:USHORTINT; //1Ch  number of bits per pixel (1,4,8,16,24,32)
-  + compression:UINTEGER;     //1Eh  compression method:
+  + header_size:UINTEGER_32;     //0Eh  Size of this header
+  + map_width:INTEGER;            //12h  width (in pixel) of the image
+  + map_height:INTEGER;           //16h  height (in pixel)
+  + planes:UINTEGER_16;         //1Ah  number of planes use (always 1)
+  + bits_per_pixel:UINTEGER_16; //1Ch  number of bits per pixel (1,4,8,16,24,32)
+  + compression:UINTEGER_32;     //1Eh  compression method:
   // 0: no compression
   // 1: 8-bit run length encoding
   // 2: 4-bit run length encoding
   // 3: bitfields encoding
 
-  + size_of_bitmap:UINTEGER;  //22h  size of image (in octet), useful for compression
-  + h_resolution:UINTEGER;    //26h  horizontal resolution (in pixel per meter)
-  + v_resolution:UINTEGER;    //2Ah  vertical resolution (in pixel per meter)
-  + colors_used:UINTEGER;     //2Eh  number of colors 
-  + colors_important:UINTEGER;//32h  number of important colors
+  + size_of_bitmap:UINTEGER_32;  //22h  size of image (in octet), useful for compression
+  + h_resolution:UINTEGER_32;    //26h  horizontal resolution (in pixel per meter)
+  + v_resolution:UINTEGER_32;    //2Ah  vertical resolution (in pixel per meter)
+  + colors_used:UINTEGER_32;     //2Eh  number of colors 
+  + colors_important:UINTEGER_32;//32h  number of important colors
 
-section PUBLIC  
+Section Public  
   
+  - width :INTEGER <- map_width;
+  - height:INTEGER <- map_height;   
+  - bitmap_offset:UINTEGER_32 <- map_bitmap_offset;
+
   - file_type:STRING <-
   ( + result:STRING;
     result := STRING.create 0;

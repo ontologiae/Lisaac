@@ -1,0 +1,88 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := ITM_TYPE_SIMPLE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Simple type";
+  
+Section Inherit
+  
+  + parent_itm_type_mono:Expanded ITM_TYPE_MONO;
+  
+Section ITM_TYPE_SIMPLE, ITM_TYPE_SELF
+  
+  - dico:HASHED_DICTIONARY[ITM_TYPE_SIMPLE,STRING_CONSTANT] := 
+  ( + result:HASHED_DICTIONARY[ITM_TYPE_SIMPLE,STRING_CONSTANT];
+    
+    result := HASHED_DICTIONARY[ITM_TYPE_SIMPLE,STRING_CONSTANT].create;
+    ITM_TYPE_SELF.make;
+    result.fast_put ITM_TYPE_SELF to (ALIAS_STR.prototype_self);
+    result
+  );
+
+Section Private 
+  
+  - create n:STRING_CONSTANT :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make n;
+    result
+  );
+  
+  - make n:STRING_CONSTANT <-
+  (
+    name := n;
+  );
+  
+Section Public
+
+  - hash_code:INTEGER <- name.hash_code;
+  
+  + name:STRING_CONSTANT;
+  
+  - style:STRING_CONSTANT; // NULL
+  
+  - get n:STRING_CONSTANT :ITM_TYPE_SIMPLE <-
+  ( + result:ITM_TYPE_SIMPLE;
+  
+    result := dico.fast_reference_at n;
+    (result = NULL).if {
+      result := create n;
+      dico.fast_put result to n;
+    };
+    result
+  );
+  
+  + to_run:TYPE_FULL <-
+  (     
+    to_run := TYPE.get Self
+  );
+  
+  - display buffer:STRING <-
+  (
+    buffer.append name;
+  );

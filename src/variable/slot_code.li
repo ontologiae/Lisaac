@@ -1,0 +1,301 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := SLOT_CODE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Slot with method";
+  
+Section Inherit
+  
+  + parent_slot:SLOT := SLOT;
+  
+Section Public
+  
+  - common_slot:SLOT <- parent_slot;
+
+  - position:POSITION <- base_slot.position;
+  
+  + index:INTEGER;
+  
+  //
+  // Static and Dynamic profil.
+  //
+  
+  + value:ITM_CODE;
+         
+  //
+  // Dynamic profil.
+  //
+
+  + profil:FAST_ARRAY[PROFIL_SLOT];
+    
+  - get_profil args:FAST_ARRAY[EXPR] :(PROFIL, FAST_ARRAY[WRITE]) <-
+  ( + result:PROFIL_SLOT;    
+    + res_lst:FAST_ARRAY[WRITE];
+    + pro:PROFIL_SLOT;
+    + j,i:INTEGER;
+    + loc:LOCAL;
+    + typ:TYPE_FULL;
+    + typ_block:PROFIL_BLOCK;
+    + typ_list:TYPES_TMP;
+    + pro_list:FAST_ARRAY[PROFIL_SLOT];    
+    + is_new:BOOLEAN;
+        
+    // Block Detect.
+    j := args.lower;
+    {(j <= args.upper) && {(typ = NULL) || {! (typ.raw == type_block)}}}.while_do {
+      typ := args.item j.static_type;
+      (typ.raw == type_block).if {
+	typ_list := TYPES_TMP.new;
+	args.item j.get_type typ_list;
+	(typ_list.first = TYPE_NULL).if {
+	  (typ_list.count > 1).if {
+	    typ_block ?= typ_list.second;
+	  } else {
+	    typ := NULL;
+	  };
+	} else {
+	  typ_block ?= typ_list.first;
+	};
+	typ_list.free;
+      };
+      j := j + 1;
+    };
+
+    (typ_block != NULL).if {
+      pro_list := typ_block.profil_list;
+      i := pro_list.lower;
+      {(i <= pro_list.upper) && {result = NULL}}.while_do {
+	pro := pro_list.item i;
+	(
+	  (pro.slot = Self) && {
+	    (pro.type_self = NULL) || {pro.type_self == ITM_TYPE_SELF.to_run}
+	  } // BSBS: il fo aussi tester les args comme plus bas...
+	).if {
+	  result := pro; // Rmq. : It's limit for dispatching (See...)
+	};
+	i := i + 1;
+      };
+            
+      (result = NULL).if {
+	result := PROFIL_SLOT.clone;	
+	result.set_context_sensitive;
+	typ_block.profil_list.add_last result;
+	is_new := TRUE;	
+      };
+    } else {	    
+      // Select classic Profil (no block).
+      j := profil.lower;      
+      {(j <= profil.upper) && {result = NULL}}.while_do {
+	pro := profil.item j;					
+	((pro.type_self = NULL) || {pro.type_self == ITM_TYPE_SELF.to_run}).if {
+	  result := pro;
+	  i := args.lower + 1;
+	  {(i <= args.upper) && {result != NULL}}.while_do {
+	    typ := args.item i.static_type;
+	    loc := pro.argument_list.item i;	    	    
+	    (
+	      (loc != NULL) && 
+	      {(typ.is_expanded) || {loc.type.is_expanded       }} && 
+	      {typ !== loc.type} && {loc.type.raw != type_boolean}
+	    ).if {
+	      result := NULL;	      	      	      
+	    };
+	    i := i + 1;    
+	  };
+	};
+	j := j + 1;
+      };
+      (result = NULL).if {	
+	result := PROFIL_SLOT.clone;		
+	profil.add_last result;
+	((id_section.is_external) && {profil.count > 1}).if {
+	  semantic_error (position,"Polymorphic External slot is not possible.");
+	};
+	is_new := TRUE;
+      };
+    };
+    (is_new).if {      
+      ITM_TYPE_SELF.set_self_up receiver_type;
+      res_lst := result.make Self with args verify (profil.count = 1);      
+      ITM_TYPE_SELF.set_self_up (Old ITM_TYPE_SELF.self_up);
+    } else {
+      res_lst := result.write_argument args;
+    };
+    result, res_lst
+  );
+
+  //
+  // Constructeur.
+  //
+  
+  - create base:SLOT with val:ITM_CODE :SLOT_CODE <-
+  ( + result:SELF;
+    result := clone;
+    result.make base with val;
+    result
+  );
+  
+  - make base:SLOT with val:ITM_CODE <-
+  ( 
+    parent_slot := base;
+    value := val;
+    profil := FAST_ARRAY[PROFIL_SLOT].create_with_capacity 1;    
+  );
+      
+  //
+  // Execute.
+  //
+  
+  + last_type_contract:TYPE; 
+  + is_require:BOOLEAN;
+  
+  - previous_contract:ITM_LIST <-
+  ( + slot:ITM_SLOT;
+    + contract:ITM_LIST;
+    
+    (is_require).if {
+      slot := last_type_contract.search_require name;
+    } else {
+      slot := last_type_contract.search_ensure name;
+    };
+    (slot != NULL).if {
+      (is_require).if {
+	contract := slot.require;
+      } else {
+	contract := slot.ensure;
+      };
+      last_type_contract := last_type_contract.last_type_contract;
+    };          
+    contract
+  );
+  
+  - create_code is_first:BOOLEAN <-
+  ( + contract:ITM_LIST;
+    + slot:ITM_SLOT;
+    + instr:INSTR;
+        
+    //ITM_TYPE_SELF.set_self_up receiver_type;
+    
+    verify := is_first;
+    
+    // Require
+    is_require := TRUE;
+    contract := base_slot.require;
+    last_type_contract := receiver_type;
+    (contract = NULL).if {
+      slot := receiver_type.search_require name;
+      (slot != NULL).if {
+	(verify).if {
+	  base_slot.is_equal_profil slot;
+	};
+	contract := slot.require;
+	last_type_contract := receiver_type.last_type_contract;
+      };      
+    };
+    (contract != NULL).if {      
+      list_current.add_last (contract.to_run_contract);
+    };
+    
+    // Body.
+    value.to_run_extern;
+    
+    // Ensure
+    is_require := FALSE;
+    contract := base_slot.ensure;
+    last_type_contract := receiver_type;
+    (contract = NULL).if {
+      slot := receiver_type.search_ensure name;
+      (slot != NULL).if {
+	(verify).if {
+	  base_slot.is_equal_profil slot;
+	};
+	contract := slot.ensure;
+	last_type_contract := receiver_type.last_type_contract;
+      };      
+    };
+    (contract != NULL).if {            
+      list_current.add_last (contract.to_run_contract);
+    };
+    // Result.
+    (profil_first.result_last != NULL).if {
+      instr := profil_first.result_last.read position;    
+    } else {
+      (id_section.is_interrupt).if {
+	list_current.add_first (
+	  EXTERNAL_C.create position text "__BEGIN_INTERRUPT__" access NULL
+	  persistant TRUE type (TYPE_VOID.default)
+	);
+	list_current.add_last (
+	  EXTERNAL_C.create position text "__END_INTERRUPT__" access NULL
+	  persistant TRUE type (TYPE_VOID.default)
+	);
+      };
+      instr := PROTOTYPE_CST.create position type (TYPE_VOID.default);
+    };
+    list_current.add_last instr;
+  );
+  
+  - remove_profil prof:PROFIL_SLOT <-
+  ( + idx:INTEGER;
+    
+    idx := profil.fast_first_index_of prof;
+    (idx <= profil.upper).if { // Else, This profil is in BLOCK      
+      profil.remove idx;
+    };
+  );
+    
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  (
+    buffer.append name;
+    (argument_list.lower).to (argument_list.upper) do { j:INTEGER;       
+      buffer.add_last ' ';
+      argument_list.item j.display buffer;
+    }; 
+    buffer.add_last ' ';
+    buffer.add_last ':';
+    type.display buffer;    
+  );    
+  
+  - display_all <-
+  ( + prof:PROFIL;
+    
+    string_tmp.clear;    
+    (profil != NULL).if {
+      (profil.upper).downto (profil.lower) do { k:INTEGER;
+	prof := profil.item k;
+	prof.display_all string_tmp;
+      };
+    };
+    string_tmp.print;
+  );
+  
+
+  

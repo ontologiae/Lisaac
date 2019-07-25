@@ -1,26 +1,37 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        :=OUTPUT_STREAM;
 
-section HEADER
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  - name        :=OUTPUT_STREAM;
-  
-  - category    :=MICRO;
-  
-  - bibliography:="http://IsaacOS.com";
-  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
   - comment     :="Standard Output Stream.";
   
-section INHERIT
+Section Inherit
   
   - parent_object:OBJECT := OBJECT;
   
-section PUBLIC
+Section Public
   
   - is_connected:BOOLEAN <- deferred;
   
@@ -48,13 +59,13 @@ section PUBLIC
     put_string tmp_string;
   );
   
-  - put_integer_format i, s:INTEGER <-
+  - put_integer_format (i, s:INTEGER) <-
   // Output `i' to current output device using at most
   // `s' character.
   ( ? {is_connected};
     
     tmp_string.clear;
-    i.append_in_format tmp_string,s;
+    i.append_in_format (tmp_string,s);
     put_string tmp_string;
   );
   
@@ -124,7 +135,7 @@ section PUBLIC
     deferred;
   );
   
-section PRIVATE
+Section Private
   
   - basic_io_putc c:CHARACTER <- SYSTEM_IO.print_char c;
   

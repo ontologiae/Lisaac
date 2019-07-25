@@ -1,0 +1,108 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := ITM_PROTOTYPE;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Prototype constant";
+  
+Section Inherit
+  
+  + parent_itm_constant:Expanded ITM_CONSTANT;
+  
+Section Public
+
+  + type:ITM_TYPE_MONO;
+
+  //
+  // Constructor
+  //
+  
+  - create p:POSITION type n:ITM_TYPE_MONO :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make p type n;
+    result
+  );
+    
+  - make p:POSITION type n:ITM_TYPE_MONO <-
+  (
+    position := p;
+    type := n;
+  );
+
+  //
+  // Runnable
+  //
+
+  - to_run_expr:EXPR <- 
+  ( + t:TYPE_FULL;
+    + tb:PROFIL_BLOCK;
+    + loc,my_self:LOCAL;    
+    + result,val,rec:EXPR;
+    + wrt:WRITE;
+    
+    t := type.to_run;
+    tb ?= t.raw;
+    (tb != NULL).if {
+      // BLOCK :
+      loc := t.get_temporary position;	
+      // tmp.id := id_block;
+      rec := loc.read position;
+      val := PROTOTYPE_CST.create position type t;      
+      wrt := tb.slot_value.write position with rec value val;
+      list_current.add_last wrt;
+      // tmp.self := Self;
+      rec := loc.read position;
+      my_self := lookup (ALIAS_STR.variable_self);
+      val := my_self.read position;
+      wrt := tb.slot_self.write position with rec value val;
+      list_current.add_last wrt;
+      // tmp
+      result := loc.read position;
+    } else {
+      // TYPE Classic.
+      (
+	(t.is_expanded_c) && 
+	{t.raw != type_boolean} && 
+	{t.raw != type_true} && 
+	{t.raw != type_false}
+      ).if {
+	result := t.default_value position;
+	result := result.check_type t with position;
+      } else {      
+	result := PROTOTYPE_CST.create position type t;
+      };
+    };
+    result
+  );
+
+
+
+
+
+
+
+

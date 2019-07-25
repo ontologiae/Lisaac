@@ -1,0 +1,143 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := PROFIL_SLOT;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Method with costumization";
+  
+Section Inherit
+  
+  + parent_profil:Expanded PROFIL; 
+  
+Section Public
+    
+  - slot:SLOT <- slot_code;
+  
+  - is_interrupt:BOOLEAN <- slot_code.id_section.is_interrupt;  
+  - is_external:BOOLEAN  <- slot_code.id_section.is_external;  
+
+  + slot_code:SLOT_CODE;
+    
+  + is_context_sensitive:BOOLEAN; 
+  // BSBS: Le bloc passé en argument peux ne pas etre context sensitive
+  // Et puis, cet stat peu changer dans le temps...
+    
+  - set_context_sensitive <-
+  (
+    is_context_sensitive := TRUE;
+  );
+
+  //
+  // Creation.
+  //
+  
+  - make s:SLOT_CODE with call_lst:FAST_ARRAY[EXPR] verify is_first:BOOLEAN :FAST_ARRAY[WRITE] <-
+  ( + loc:LOCAL;
+    + typ:TYPE_FULL;    
+    + item_lst:FAST_ARRAY[ITM_ARGUMENT];       
+    + idx_result:INTEGER;
+    + type_multiple:ITM_TYPE_MULTI;
+    + type_mono:ITM_TYPE_MONO;
+    + result:FAST_ARRAY[WRITE];
+    
+    PROFIL_LIST.add Self;
+    
+    (s.id_section.is_external).if {
+      name := s.name;
+    } else {
+      name := ALIAS_STR.get_intern (s.name);    
+    };
+    slot_code   := s;
+    type_self   := ITM_TYPE_SELF.to_run;
+            
+    // Arguments.    
+    item_lst := s.base_slot.argument_list;    
+    argument_list := FAST_ARRAY[LOCAL].create_with_capacity (s.base_slot.argument_count); 
+    (item_lst.lower).to (item_lst.upper) do { j:INTEGER;
+      item_lst.item j.to_run argument_list;
+    };
+    ((s.id_section.is_external) && {argument_list.count > 1}).if {
+      (argument_list.lower+1).to (argument_list.upper) do { j:INTEGER;      
+	loc := argument_list.item j;
+	loc.set_ensure_count 1;
+	loc.write (loc.position) value (
+	  EXTERNAL_C.create (loc.position) text "/* External slot */"
+	  access NULL persistant FALSE type (loc.type)
+	);
+      };
+    };    
+    
+    // Results
+    (s.base_slot.type != ITM_TYPE_MONO.type_void).if {
+      type_multiple ?= s.base_slot.type;
+      (type_multiple != NULL).if {  
+	result_list := FAST_ARRAY[LOCAL].create_with_capacity (type_multiple.count - 1);	
+	idx_result := 1;
+	0.to (type_multiple.upper - 1) do { k:INTEGER;	  
+	  typ := type_multiple.item k.to_run;	
+	  loc := typ.get (s.position) result idx_result;
+	  result_list.add_last loc;
+	  idx_result := idx_result + 1;
+	};
+	typ := type_multiple.last.to_run;	
+      } else {
+	type_mono ?= s.base_slot.type;
+	typ := type_mono.to_run;
+      };
+      result_last := typ.get (s.position) result idx_result;
+    };
+    //
+    result := write_argument call_lst;
+    //    
+    context := CONTEXT.push_extern (slot_code.position) profil Self;
+    code := list_current;
+    slot_code.create_code is_first;    
+    CONTEXT.pop_extern;    
+    //
+    result
+  );
+      
+  //
+  // Execute.
+  //
+  
+  - remove_inline <-
+  (
+    parent_profil.remove_inline;
+    slot_code.remove_profil Self;    
+  );
+  
+  - remove <-
+  ( 
+    parent_profil.remove;
+    slot_code.remove_profil Self;            
+  );
+  
+  //
+  // Genere.
+  //
+  
+  - is_static:BOOLEAN <- (! slot.id_section.is_interrupt) && {! slot.id_section.is_external};

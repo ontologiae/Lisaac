@@ -1,0 +1,79 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := DTA_RD;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Read site";
+    
+Section Inherit
+  
+  + parent_dta:Expanded DTA;
+  
+Section Public
+      
+  //
+  // Creation.
+  //
+  
+  - create p:POSITION call sl:SLOT self arg:EXPR :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make p call sl self arg res (sl.get_expr_result);        
+    result
+  );
+  
+  - make p:POSITION call sl:SLOT self arg:EXPR res e:EXPR <-
+  ( + sd:SLOT_DATA;
+    + loc:LOCAL;
+    + rd:READ_LOCAL;
+    ? {sl != NULL};    
+    position := p;          
+    context := profil_second;    
+    slot        := sl;
+    self_arg    := arg;    
+    result_expr := e;
+    ((result_expr.static_type.raw = type_block) && {sl.slot_data_intern != NULL}).if {
+      // Patch for data_slot block type.
+      sd := sl.slot_data_intern;
+      sd.init;
+      ((sd.type_list = NULL) || {sd.type_list.is_empty}).if {
+	semantic_error (position,"DTA_RD : Bug BLOCK!!!");
+      };
+      rd ?= result_expr;
+      loc := rd.local;
+      loc.set_type_list (sd.type_list);
+    };
+  );
+  
+  //
+  //
+  //
+  
+  - display buffer:STRING <-
+  (
+    buffer.append "DTA_READ";
+  );

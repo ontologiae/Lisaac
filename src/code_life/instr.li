@@ -1,0 +1,107 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := INSTR;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Parent for all Instruction.";
+  
+Section Inherit
+  
+  + parent_itm_object:Expanded ITM_OBJECT;
+  
+Section Public
+  
+  - is_invariant:BOOLEAN <- FALSE;
+  
+  //
+  //
+  //
+  
+  - hash_code:INTEGER <- INTEGER.force_conversion position;
+
+  - my_copy:SELF <- 
+  ( 
+    debug_display;
+    deferred; 
+    NULL 
+  );  
+  
+  //
+  // Executing pass.
+  //
+
+  - cmp other:INSTR :BOOLEAN := FALSE;
+  
+  - execute:INSTR <- 
+  ( 
+    debug_display;
+    deferred; 
+    NULL
+  );
+  
+  - remove <- 
+  (
+    debug_display;    
+    deferred;
+  );
+
+  - genere buffer:STRING <- 
+  (
+    // BUG.
+    display buffer;
+    buffer.append " /* INSTR.genere :: Not genere ! */";
+    // FIN BUG.
+    //deferred;
+  );
+
+  //
+  // Display.
+  //
+
+  - display_ref buffer:STRING <-
+  (
+    is_verbose.if {
+      buffer.append "<";
+      object_id.append_in buffer;
+      buffer.append ">";
+    };
+  );
+
+  - display buffer:STRING <- 
+  (
+    "INSTR.display\n".print;
+    deferred; 
+  );
+
+  - debug_display <-
+  ( + voir:STRING;
+    
+    voir := STRING.create 250;
+    display voir;
+    voir.print;
+    '\n'.print;
+  );
+  

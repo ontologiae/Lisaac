@@ -1,0 +1,77 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := ITM_ARGUMENT;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Parent argument";
+  
+Section Inherit
+  
+  + parent_itm_code:Expanded ITM_OBJECT;
+  
+Section Public
+  
+  - count:INTEGER <- ( deferred; 0);
+
+  //
+  // Running.
+  //
+  
+  - get_type idx:INTEGER :TYPE_FULL <-
+  (
+    deferred;
+    NULL
+  );
+  
+  - to_run arg_lst:FAST_ARRAY[LOCAL] <-
+  (
+    deferred;
+  );
+  
+  /*
+  - to_run_type arg_lst:FAST_ARRAY[TYPE_FULL] <-
+  (
+    deferred;
+  );
+  */
+   
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  (
+    deferred;
+  );
+  
+  //
+  // Comparaison.
+  //
+  
+  - is_equal other:ITM_ARGUMENT <- deferred;
+
+  
+  

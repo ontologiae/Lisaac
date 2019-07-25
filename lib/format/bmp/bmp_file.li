@@ -1,46 +1,54 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                             Isaac Library                                *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
-
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
   + name        := BMP_FILE;
+
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
   - comment     := "Mapping BMP Image File (V < 4.0)";
+    
+Section Inherit
   
-  - category    := MICRO;
+  + parent_std_file:Expanded STD_FILE;
   
-  - bibliography:= "http://IsaacOS.com";
-  
-  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
-  
-section INHERIT
-  
-  * parent_std_file:STD_FILE;
-  
-section PUBLIC
+Section Public
   
   - pos_buffer:INTEGER;
 
-  - bmp_buffer:FIXED_ARRAY[USMALLINT];
+  - bmp_buffer:FAST_ARRAY[UINTEGER_8];
   
   //
   
   - header:BMP_HEADER;
 
-  - color_map:MAP_FIXED_ARRAY[PIXEL_24];
+  - color_map:FAST_ARRAY[Expanded PIXEL_24];
   
   //
   
   - read_header <-
   (     
     (bmp_buffer = NULL).if {
-      bmp_buffer := FIXED_ARRAY[USMALLINT].create_with_capacity size;
+      bmp_buffer := FAST_ARRAY[UINTEGER_8].create_with_capacity size;
     }.elseif {bmp_buffer.capacity < size.to_integer} then {
       bmp_buffer.set_capacity (size.to_integer);
       bmp_buffer.clear;
@@ -48,7 +56,7 @@ section PUBLIC
       bmp_buffer.clear;
     };
     read bmp_buffer size size;    
-    header := BMP_HEADER.force_conversion (bmp_buffer.storage);
+    header := CONVERT[NATIVE_ARRAY[UINTEGER_8],BMP_HEADER].on (bmp_buffer.storage);
     pos_buffer := BMP_HEADER.object_size;
   );
 
@@ -65,31 +73,35 @@ section PUBLIC
     };
     nb_colors := header.get_nb_colors;
     (color_map = NULL).if {
-      color_map := MAP_FIXED_ARRAY[PIXEL_24].create 256;
+      color_map := FAST_ARRAY[PIXEL_24].create 256;
     };            
     0.to (nb_colors-1) do { j:INTEGER; 
       color_map.item j
-      .color_rgb (bmp_buffer.item (pos_buffer + 2)),(bmp_buffer.item (pos_buffer + 1)),(bmp_buffer.item pos_buffer);
+      .make_rgb (
+	bmp_buffer.item (pos_buffer + 2),
+	bmp_buffer.item (pos_buffer + 1),
+	bmp_buffer.item pos_buffer
+      );
       pos_buffer := pos_buffer + code;
     };
   );
           
-  - buf_item :USMALLINT <-
-  ( + result:USMALLINT;
+  - buf_item :UINTEGER_8 <-
+  ( + result:UINTEGER_8;
     result := bmp_buffer.item pos_buffer;
     pos_buffer := pos_buffer + 1;
     result
   );
   
   // JBJB POUR AFFICHAGE EN MODE TEXTE
-  - fill_bitmap b:BITMAP <-
+  - fill_bitmap b:ABSTRACT_BITMAP <-
   ( + end:BOOLEAN;
     + x,y:INTEGER;
-    + line_24:BMP_LINE_24;
+    + line_24:BMP_LINE[PIXEL_24];
     //+ line_ascii:BMP_LINE_ASCII;
     + tmp_pix:PIXEL_24;
-    + escape,cmd:USMALLINT;
-    + align:UINTEGER;
+    + escape,cmd:UINTEGER_8;
+    + align:UINTEGER_32;
     ? {header != NULL};
     
     is_valid_bmp.if {
@@ -100,7 +112,7 @@ section PUBLIC
 	//
 	// 8 Bit
 	// 	  
-	line_24 := BMP_LINE_24.create (header.width);
+	line_24 := BMP_LINE[PIXEL_24].create (header.width);
 	init_color_map;
 	
 	header.is_rle8_compressed.if {	  
@@ -113,12 +125,12 @@ section PUBLIC
 	    (escape = 00h).if {
 	      cmd := buf_item;
 	      (cmd = 00h).if {
-		b.line_h 0,y until (header.width - 1) image line_24;	
+		b.line_h (0,y) until (header.width - 1) image line_24;	
 		x := 0;
 		y := y - 1;
 	      }.elseif {cmd = 01h} then {
 		// End of file
-		b.line_h 0,y until (header.width - 1) image line_24;	
+		b.line_h (0,y) until (header.width - 1) image line_24;	
 		end := TRUE;
 	      }.elseif {cmd = 02h} then {
 		// Move cursor: usually not used except for MS icons
@@ -127,7 +139,7 @@ section PUBLIC
 	      } else {
 		// Pixel not compressed
 		1.to cmd do { j:INTEGER;
-		  line_24.item x.copy (color_map.item buf_item);
+		  line_24.item_24 x.make (color_map.item buf_item.get_color);
 		  x := x + 1;
 		};
 		cmd.is_odd.if {
@@ -138,7 +150,7 @@ section PUBLIC
 	      // Pixel compressed
 	      tmp_pix := color_map.item buf_item;
 	      1.to escape do { j:INTEGER;
-		line_24.item x.copy tmp_pix;
+		line_24.item_24 x.make (tmp_pix.get_color);
 		x := x + 1;
 	      };
 	    };
@@ -148,14 +160,14 @@ section PUBLIC
 	//
 	// 24 Bit
 	//	
-	line_24 := BMP_LINE_24.create_with_capacity (header.width);
-	align   := ((header.width * -3) & 011b).to_uinteger;
+	line_24 := BMP_LINE[PIXEL_24].create_with_capacity (header.width);
+	align   := ((header.width * -3) & 011b).to_uinteger_32;
 	set_cursor (header.bitmap_offset);
 	// No compression
 	0.to (header.height - 1) do { i:INTEGER;
 	  read line_24 size (header.width);	  
 	  set_cursor (cursor + align);
-	  b.line_h 0,(header.height - i - 1) until (header.width - 1) image line_24;
+	  b.line_h (0,(header.height - i - 1)) until (header.width - 1) image line_24;
 	  line_24.clear;
 	};	    
       };

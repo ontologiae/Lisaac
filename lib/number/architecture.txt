@@ -1,0 +1,17 @@
+                           NUMERIC
+              /                                      \
+           INTEGER                                   REAL
+       /            \                          /             \
+SIGNED_INTEGER  UNSIGNED_INTEGER           FIXED_REAL       FLOAT_REAL
++- INTEGER_8       +- UINTEGER_8        /            \      +- REAL_32+-REAL_64
++- INTEGER_16      +- UINTEGER_16  SIGNED_FIXED_REAL UNSIGNED_FIXED_REAL
++- INTEGER_32      +- ...           +- REAL_16_16     +- UREAL_16_16
++- INTEGER_64                       +- REAL_24_8      +- UREAL_24_8
++- INTEGER_BIG                      +- REAL_26_6      +- UREAL_26_6
+
+Convertir :
+NUMERIC  -> INTEGER
+SMALLINT -> INTEGER_8
+SHORTINT -> INTEGER_16
+LONGINT  -> INTEGER_64
+LARGEINT -> INTEGER_BIG

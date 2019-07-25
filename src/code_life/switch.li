@@ -1,0 +1,515 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := SWITCH;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Switch for late binding resolution";
+  
+  // BSBS: Optim. : Détecter les switch identique l'un après l'autre
+  // pour les fusionner...
+  
+Section Inherit
+  
+  + parent_instr:Expanded INSTR;
+  
+Section Public  
+  
+  - is_invariant:BOOLEAN <-
+  ( + result:BOOLEAN;
+    + j:INTEGER;
+    
+    (expr.is_invariant).if {
+      result := TRUE;
+      j := list.lower;
+      {(j <= list.upper) && {result}}.while_do {
+	result := list.item j.code.is_invariant;
+	j := j + 1;
+      };
+    };
+    result
+  );
+  
+  + expr:EXPR;
+  
+  + list:FAST_ARRAY[CASE];
+  
+  - count:INTEGER <- list.count;
+  
+  //
+  // Creation.
+  //
+  
+  - create n:NODE with e:EXPR size s:INTEGER :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make n with e size s;
+    result
+  );  
+  
+  - make n:NODE with e:EXPR size s:INTEGER <-
+  ( + first:CASE;
+    position := n.position;
+    expr     := e;
+    list     := FAST_ARRAY[CASE].create_with_capacity s;
+    (n.first_code != NULL).if {
+      first := CASE.create (n.first_type) with (n.first_code);
+      list.add_last first;
+    };
+  );
+  
+  //
+  // Copy.
+  //
+  
+  - set_expr e:EXPR list l:FAST_ARRAY[CASE] <-
+  (
+    expr := e;
+    list := l;
+  );
+
+  - my_copy:SELF <-
+  ( + result:SELF;
+    + new_list:FAST_ARRAY[CASE];
+    
+    new_list := FAST_ARRAY[CASE].create_with_capacity (list.count);
+    (list.lower).to (list.upper) do { j:INTEGER;
+      new_list.add_last (list.item j.my_copy);
+    };
+    
+    result := clone;
+    result.set_expr (expr.my_copy) list new_list;
+    result
+  );
+  
+  //
+  // Remove.
+  //
+    
+  - remove <-
+  (
+    (expr != NULL).if {
+      expr.remove;
+    };
+    (list.lower).to (list.upper) do { j:INTEGER;
+      list.item j.code.remove;
+    };    
+  );
+  
+  //
+  // Execute
+  //
+    
+  - execute:INSTR <-
+  ( + lst_typ:TYPES_TMP;        
+    + result:INSTR;
+    + typ:TYPE;
+    + wrt:WRITE;
+    + lst:LIST;
+    + tb:PROFIL_BLOCK;    
+    + is_end:BOOLEAN;
+    
+    // Update.
+    lst_typ := TYPES_TMP.new;        
+    expr.get_type lst_typ;            
+    ? {! lst_typ.is_empty};
+    
+    /*
+    (lst_typ.first = TYPE_NULL).if {
+      null_counter := null_counter + 1;
+      (debug_level_option = 0).if {
+	// Remove TYPE_NULL
+	(list.first.id = TYPE_NULL).if {
+	  wrt ?= list.first.code.first; // For ?= with NULL type.
+	  (wrt = NULL).if {
+	    lst_typ.remove_first;
+	  };
+	};	
+      };
+    };
+    */
+    ? {lst_typ.count <= list.count};        
+    
+    
+    (lst_typ.count > list.count).if {
+      "New type: ".print;
+      lst_typ.print;
+      "\nOld type: ".print;
+      string_tmp.clear;
+      list.lower.to (list.upper) do { j:INTEGER;
+	list.item j.id.append_name_in string_tmp;
+	string_tmp.add_last ',';
+      };
+      string_tmp.print;
+      '\n'.print;
+      syntax_error (position,"*****SWITCH BUG********");
+    };
+    
+    //    
+    // BSBS: Il faut que tu supprimes aussi les listes vides
+    // Le pb : Le test des set types devient obsolète...
+    //
+    // BSBS: Ajoute un pattern pour les elseif ...
+    //    
+    (lst_typ.lower).to (lst_typ.upper) do { j:INTEGER;	
+      typ := lst_typ.item j;      
+      {typ = list.item j.id}.until_do {
+	list.item j.remove;
+	list.remove j;
+      };
+    };    
+    {lst_typ.count = list.count}.until_do {
+      list.last.remove;
+      list.remove_last;
+    };
+    lst_typ.free;
+    
+    // Execute.
+    (
+      (list.count = 1) || {
+	(list.count = 2) && 
+	{debug_level_option = 0} && 
+	{list.first.id = TYPE_NULL} && {
+	  wrt ?= list.first.code.first; // For ?= with NULL type.
+	  wrt = NULL
+	}
+      }
+    ).if {
+      result := expr.execute_unlink;
+      (result != NULL).if {
+	list_current.insert_before result;
+      };
+      tb ?= list.last.id;
+      (tb != NULL).if {
+	tb.dec_id;
+      };
+      result := list.last.code.execute;
+      is_end := TRUE;
+    };
+    (
+      (list.count = 2) && 
+      {expr.static_type.raw = type_boolean} && 
+      {list.first .code.is_empty} &&
+      {list.second.code.is_empty}
+    ).if { 
+      result := expr.execute_unlink;
+      is_end := TRUE;
+    };
+    //
+    (! is_end).if {
+      // Normal execution.      
+      (
+	(expr.static_type.raw = type_boolean) && 
+	{list.count = 2} && 
+	{list.first.code.is_empty}
+      ).if {
+	? {! list.second.code.is_empty};
+	expr := EXPR_NOT_LOGIC.create (expr.position) with expr;
+	lst := list.first.code;
+	list.first .set_code (list.second.code);
+	list.second.set_code lst;
+      };
+      expr := expr.execute_link;      
+      
+      CALL_SLOT.reset_count_no_recursive;
+      ((list.first.id = TYPE_NULL) && {list.count = 2}).if { 	
+	list.first .code.execute_case;
+	list.second.code.execute_case;		
+      } else {		
+	(list.lower).to (list.upper) do { j:INTEGER;
+	  list.item j.execute;	
+	};
+      };      
+      result := detect_logic_expr;
+      (result = NULL).if {      	
+	result := Self;
+      };
+    };    
+    result
+  );
+  
+  //
+  // Genere.
+  //
+  
+  - genere buffer:STRING <-
+  ( + lst:LIST;
+    + first_case:INTEGER;
+    + typ_first:TYPE;
+    + typ_id:TYPE_ID;
+    + wrt:WRITE;
+    
+    (
+      (list.first.id = TYPE_NULL) && 
+      {debug_level_option = 0} && {
+	wrt ?= list.first.code.first; // For ?= with NULL type.
+	wrt = NULL
+      }
+    ).if {
+      list.remove_first;
+    };
+    //
+    typ_first := list.first.id;
+    typ_id ?= typ_first;    
+    ((list.count = 2) || {typ_first = TYPE_NULL}).if {
+      buffer.append "if (";
+      //                  
+      ((expr.static_type.raw = type_block) && {typ_first = TYPE_NULL}).if {
+	expr.genere buffer;	
+	buffer.append ".__id==0";
+      } else {
+	typ_first.put_access_id expr in buffer;      
+	(expr.static_type.raw != type_boolean).if {
+	  buffer.append "==";
+	  typ_first.put_id buffer;	
+	} else {
+	  ? {typ_first.name = ALIAS_STR.prototype_true};
+	};
+      };
+      buffer.append ") ";
+      //
+      list.first.genere buffer; 
+      //
+      (list.count = 2).if {
+	lst := list.second.code;
+	(! lst.is_empty).if {
+	  buffer.append " else ";
+	  list.second.genere buffer;
+	};
+	first_case := 2;
+      } else {
+	buffer.append " else {\n";
+	indent.append "  ";
+	buffer.append indent;
+	first_case := 1;
+      };
+    };
+    (first_case <= list.upper).if {
+      polymorphic_counter := polymorphic_counter + 1;
+      buffer.append "switch (";      
+      list.item first_case.id.put_access_id expr in buffer;
+      buffer.append ") {\n";
+      (first_case).to (list.upper) do { j:INTEGER;
+	buffer.append indent; 
+	buffer.append "case ";
+	list.item j.id.put_id buffer;
+	buffer.append ": ";
+	list.item j.genere buffer;
+	buffer.add_last ' ';	
+	buffer.append "break;\n";
+      };	
+      buffer.append indent;
+      buffer.add_last '}';
+      (first_case != 0).if {
+	buffer.add_last '\n';
+	indent.remove_last 2;    
+	buffer.append indent;
+	buffer.add_last '}';
+      };
+    };
+  );
+  
+  //
+  // Display.
+  //
+  
+  - display buffer:STRING <-
+  ( + line:BLOCK;
+    
+    line := 
+    { j:INTEGER;
+      + i:LIST;
+      buffer.append indent;
+      buffer.put '+' to (buffer.upper-1);
+      buffer.put '-' to (buffer.upper);
+      buffer.append (list.item j.id.intern_name);
+      buffer.append ":\n";
+      buffer.append indent;
+      i := list.item j.code;
+      (i = NULL).if {
+	buffer.append "<Empty>";
+      } else {
+	i.display buffer;
+      };
+    };
+    
+    buffer.append "Switch ";
+    expr.display buffer;
+    buffer.add_last '\n';
+    (list.count > 0).if {
+      indent.append "| ";    
+      0.to (list.upper - 1) do { j:INTEGER;
+	line.value j;
+	buffer.add_last '\n';
+      };    
+      indent.put ' ' to (indent.upper-1);
+      line.value (list.upper);
+      indent.remove_last 2;
+    };
+  );
+  
+  - switch_new_pass:BOOLEAN;
+  - reset_switch_new_pass <-
+  (
+    switch_new_pass := FALSE;
+  );
+  
+Section Private
+  
+  - detect_logic_expr:INSTR <-
+  // Detection !, |, &, ||, && :
+  ( + result:INSTR;
+    + wr_true,wr_false:WRITE;
+    + rd:READ;
+    + val_true,val_false:EXPR;
+    + a,b,c,d:BOOLEAN;
+
+    (
+      (expr.static_type.raw = type_boolean) && 
+      {list.count = 2} && 
+      {list.first.code.count  = 2} && 
+      {list.second.code.count = 2}
+    ).if {
+      ? {list.first.id  = type_true };
+      ? {list.second.id = type_false};
+      
+      ((list.first.id != type_true) || {list.second.id != type_false}).if {
+	syntax_error (position,"PB dans SWITCH.");
+      };
+      
+      wr_true  ?= list.first .code.first;
+      wr_false ?= list.second.code.first;
+      (
+	(wr_true  != NULL) && 
+	{wr_false != NULL} &&
+	{wr_true.static_type.raw = type_boolean} &&
+	{wr_true.variable = wr_false.variable}
+      ).if {
+	val_true  := wr_true .value;
+	val_false := wr_false.value;	
+	// BSBS: val_true.static_type = type_true ???
+	(
+	  (a := val_true.is_constant) && 
+	  {b := (val_true.static_type.raw = type_true)}
+	).if {
+	  // | or ||
+	  rd ?= val_false;	  
+	  (rd != NULL).if {
+	    // | 
+	    wr_true.remove;
+	    val_false := EXPR_OR_LOGIC.create position with expr and val_false;
+	    wr_false.set_value val_false;
+	    result := wr_false;
+	    new_execute_pass;
+	  }.elseif {(CALL_SLOT.count_no_recursive = 0) || {modify_count = 0}} then {
+	    // ||
+	    wr_true.remove;
+	    val_false := EXPR_OR_OR_LOGIC.create position with expr and val_false;
+	    wr_false.set_value val_false;
+	    result := wr_false;
+	    switch_new_pass := TRUE;
+	  };	  	  
+	}.elseif {
+	  (c := val_false.is_constant) && 
+	  {d := (val_false.static_type.raw = type_false)}
+	} then {
+	  // & or &&	  
+	  rd ?= val_true;	  
+	  (rd != NULL).if {
+	    // & 
+	    wr_false.remove;	  
+	    val_true := EXPR_AND_LOGIC.create position with expr and val_true;
+	    wr_true.set_value val_true;
+	    result := wr_true;	    
+	    new_execute_pass;
+	  }.elseif {(CALL_SLOT.count_no_recursive = 0) || {modify_count = 0}} then {
+	    // &&	    
+	    wr_false.remove;
+	    val_true := EXPR_AND_AND_LOGIC.create position with expr and val_true;
+	    wr_true.set_value val_true;
+	    result := wr_true;
+	    switch_new_pass := TRUE;
+	  };	  
+	}.elseif {
+	  (a) && {!b} && {c} && {!d}
+	} then {
+	  // !
+	  wr_false.remove;
+	  wr_true.set_value (EXPR_NOT_LOGIC.create position with expr);
+	  result := wr_true;	  
+	  new_execute_pass;
+	};
+      };
+    };
+    result
+  );
+  
+  - switch_fusion <-
+  ( + other:SWITCH;
+    + index:INTEGER;
+    + wrt:WRITE;
+    + rd,rd2:READ;
+    
+    index := list_current.index + 1;
+    other ?= list_current.item index;
+    ((other != NULL) && {other.expr == expr} && {other.list.count = list.count}).if {
+      concat_switch other;
+      list_current.put NOP to index;
+    };
+    (index < list_current.upper).if {
+      // BSBS: Dans ce cas la, tu devrai en avoir 250 !!!!
+      // Regarde pourquoi tu n'as que 14 cas !
+      wrt ?= list_current.item index;
+      rd  ?= expr; 
+      ((wrt != NULL) && {rd != NULL} && {wrt.variable != rd.variable}).if {
+	rd2   ?= wrt.value;	
+	other ?= list_current.item (index + 1);
+	((rd2 != NULL) && {other != NULL} && 
+	{other.expr == expr} && {other.list.count = list.count}).if {
+	  (list.lower).to (list.upper-1) do { j:INTEGER;
+	    list.item j.code.add_last (wrt.my_copy);
+	  };
+	  list.last.code.add_last wrt;
+	  list_current.put NOP to index;
+	  concat_switch other;
+	  list_current.put NOP to (index + 1);	  
+	};
+      };
+    };
+  );
+    
+  - concat_switch other:SWITCH <-
+  ( + other_list:FAST_ARRAY[CASE];
+    + code:LIST;
+    
+    other.expr.remove;
+    other_list := other.list;
+    (list.lower).to (list.upper) do { j:INTEGER;
+      code := list.item j.code;
+      code.add_last (other_list.item j.code);
+    };
+    new_execute_pass;
+  );

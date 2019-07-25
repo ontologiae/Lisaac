@@ -1,0 +1,173 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := SECTION_;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Test Section protection";
+  
+Section Inherit
+  
+  - parent_any:ANY := ANY;
+  
+Section Public
+
+  + name:STRING_CONSTANT;
+  
+  + type_list:FAST_ARRAY[ITM_TYPE_MONO];
+  
+  //
+  // Creation.
+  // 
+
+  - get_name n:STRING_CONSTANT :SECTION_ <-
+  ( + result:SECTION_;
+    
+    result := bucket_name.fast_reference_at n;
+    (result = NULL).if {
+      result := clone;
+      result.make n list NULL;
+      bucket_name.fast_put result to n;
+    };
+    result
+  );
+  
+  - get_type_list l:FAST_ARRAY[ITM_TYPE_MONO] :SECTION_ <-
+  ( + result:SECTION_;
+    
+    result := bucket_list.fast_reference_at l;
+    (result = NULL).if {
+      result := clone;
+      result.make NULL list l;
+      bucket_list.fast_put result to l;
+    };
+    result    
+  );
+  
+  //
+  // Consultation
+  //
+  
+  - is_mapping:BOOLEAN   <- name = ALIAS_STR.section_mapping;
+  
+  - is_private:BOOLEAN   <- name = ALIAS_STR.section_private;
+  
+  - is_public:BOOLEAN    <- name = ALIAS_STR.section_public;
+  
+  - is_header:BOOLEAN    <- name = ALIAS_STR.section_header;
+  
+  - is_inherit:BOOLEAN   <- name = ALIAS_STR.section_inherit;
+  
+  - is_insert:BOOLEAN    <- name = ALIAS_STR.section_insert;
+  
+  - is_inherit_or_insert:BOOLEAN <- (is_inherit) || {is_insert};
+  
+  - is_interrupt:BOOLEAN <- name = ALIAS_STR.section_interrupt;
+
+  - is_directory:BOOLEAN <- name = ALIAS_STR.section_directory;
+  
+  - is_external:BOOLEAN  <- name = ALIAS_STR.section_external;
+  
+  - is_private_style:BOOLEAN <-
+  (
+    ? {! is_header};
+    (! is_public) && {type_list = NULL}
+  );
+  
+  //
+  // Display.
+  //
+  
+  - append_in buf:STRING <-
+  (
+    (name != NULL).if {
+      buf.append name;
+    } else {
+      (type_list.lower).to (type_list.upper - 1) do { j:INTEGER;
+	buf.append (type_list.item j.intern_name);
+	buf.add_last ',';
+	buf.add_last ' ';	
+      };
+      buf.append (type_list.last.intern_name);
+    };
+  );
+  
+  //
+  // Access test.
+  //
+  
+  - access me:TYPE with client:TYPE :BOOLEAN <-
+  ( + result:BOOLEAN;
+    + j:INTEGER;
+    + ts:ITM_TYPE_SIMPLE;
+    ? {! is_header};
+    
+    ((me = client) || {is_public} || {is_external}).if {
+      result := TRUE;
+    }.elseif {is_directory} then {
+      string_tmp.copy (me.prototype.filename);
+      j := string_tmp.last_index_of '/';
+      string_tmp.keep_head j;      
+      result := client.prototype.filename.has_prefix string_tmp;
+    }.elseif {type_list != NULL} then {
+      j := type_list.lower;
+      {(j <= type_list.upper) && {! result}}.while_do {
+	ts ?= type_list.item j;
+	result := client.is_sub_type_with_name (ts.name); 	
+	j := j + 1;
+      };
+    };
+    result
+  );
+  
+Section Public
+  
+  - hash_code:INTEGER <-
+  ( + result:INTEGER;
+    
+    (name != NULL).if {      
+      result := name.hash_code;
+    } else {
+      result := type_list.hash_code;
+    };
+    result
+  );
+
+Section SECTION_
+  
+  // BSBS: Tu devrais créer deux sous-proto section_name, section_list.
+  
+  - bucket_name:HASHED_DICTIONARY[SECTION_,STRING_CONSTANT] := 
+  HASHED_DICTIONARY[SECTION_,STRING_CONSTANT].create;
+  
+  - bucket_list:HASHED_DICTIONARY[SECTION_,FAST_ARRAY[ITM_TYPE_MONO]] := 
+  HASHED_DICTIONARY[SECTION_,FAST_ARRAY[ITM_TYPE_MONO]].create;
+  
+  - make n:STRING_CONSTANT list t:FAST_ARRAY[ITM_TYPE_MONO] <-
+  (
+    name      := n;
+    type_list := t;
+  );
+  

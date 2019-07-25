@@ -1,45 +1,40 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-/*
-Copyright (C) 2005  Benoit Sonntag
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
-  * name        :=FALSE;
-  
-  - category    :=MICRO;
-  
-  - bibliography:="http://IsaacOS.com";
-  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     :="FALSE object";
+  + name    := Expanded FALSE;
 
-  - type        := `char`;
-  - default     := FALSE;
+
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+
+  - comment := "FALSE object";
+
+  - type    := `char`;
+  - default := FALSE;
   
-section INHERIT
+Section Inherit
   
   - parent_boolean:BOOLEAN := BOOLEAN;
   
-section PUBLIC
+Section Public
   
   //
   // Conditional :
@@ -72,8 +67,8 @@ section PUBLIC
   - elseif cond:BLOCK then block:BLOCK :BOOLEAN <-
   ( + result:BOOLEAN;
     
-    result:=cond.value;
-    (result).if {
+    result := cond.value;
+    result.if {
       block.value;
     };
     result
@@ -92,23 +87,23 @@ section PUBLIC
   // Binary operator :
   //
   
-  - '=='  right 60 other:BOOLEAN :BOOLEAN <- ! other;
+  - '=='  Right 60 other:BOOLEAN :BOOLEAN <- ! other;
   
-  - '!==' right 60 other:BOOLEAN :BOOLEAN <- other;
+  - '!==' Right 60 other:BOOLEAN :BOOLEAN <- other;
   
-  - '||'  left 10  other:BLOCK   :BOOLEAN <- other.value;
+  - '||'  Left 10  other:BLOCK   :BOOLEAN <- other.value;
   
-  - '&&'  left 20  other:BLOCK   :BOOLEAN <- FALSE;
+  - '&&'  Left 20  other:BLOCK   :BOOLEAN <- FALSE;
   
-  - '|'   left 10  other:BOOLEAN :BOOLEAN <- other;
+  - '|'   Left 10  other:BOOLEAN :BOOLEAN <- other;
   
-  - '&'   left 20  other:BOOLEAN :BOOLEAN <- FALSE;
+  - '&'   Left 20  other:BOOLEAN :BOOLEAN <- FALSE;
   
-  - '^'  left 10  other:BOOLEAN :BOOLEAN <- other;
+  - '^'  Left 10  other:BOOLEAN :BOOLEAN <- other;
   
-  - '->'  right 25 other:BOOLEAN :BOOLEAN <- TRUE;
+  - '->'  Right 25 other:BOOLEAN :BOOLEAN <- TRUE;
   
-  - '->>' right 25 other:BLOCK  :BOOLEAN <- TRUE;
+  - '->>' Right 25 other:BLOCK  :BOOLEAN <- TRUE;
   
   - '=>' s:ABSTRACT_STRING <-
   (
@@ -126,7 +121,7 @@ section PUBLIC
   
   - to_string:STRING       <- "0".to_string;
   
-  - to_numeric:NUMERIC     <- 0;
+  - to_integer:INTEGER     <- 0;
   
   - to_character:CHARACTER <- '0';
 

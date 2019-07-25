@@ -1,45 +1,39 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
-/*
-Copyright (C) 2005  Benoit Sonntag
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := CLIP;
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
 
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
-section HEADER
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  + name        := CLIP;
+  - comment := "Clip structure (Use for AREA).";
   
-  - comment     := "Clip structure (Use for AREA).";
+  - version := 1;
   
-  - category    := MICRO;
-  
-  - bibliography:= "http://IsaacOS.com";
-  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
-  
-  - verision    := "1.0";
-  
-section INHERIT
+Section Inherit
 
   - parent_object:OBJECT := OBJECT;
   
-section PUBLIC  
+Section Public  
   
   //                 top
   //                  /\ 
@@ -69,9 +63,9 @@ section PUBLIC
   + top:CLIP;
   + bottom:CLIP;
   
-section PUBLIC  
+Section Public  
   
-  - make win:AREA at x0,y0:INTEGER to x1,y1:INTEGER <-
+  - make win:AREA at (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
   (
     window:=win;
     x_min:=x0;
@@ -80,11 +74,11 @@ section PUBLIC
     y_max:=y1;
   );
     
-  - create win:AREA at x0,y0:INTEGER to x1,y1:INTEGER :CLIP <-
+  - create win:AREA at (x0,y0:INTEGER) to (x1,y1:INTEGER) :CLIP <-
   ( + result:CLIP;
     
     result:=CLIP.clone;
-    result.make win at x0,y0 to x1,y1;
+    result.make win at (x0,y0) to (x1,y1);
     result
   );
     
@@ -130,15 +124,15 @@ section PUBLIC
 
   - display win:AREA <-
   (
-    sub_display (! flag), win;
+    sub_display ((! flag), win);
   );
   
-section PRIVATE
+Section Private
 
   // Mark display flag.
   + flag:BOOLEAN;
 
-  - sub_display val:BOOLEAN, win:AREA <-
+  - sub_display (val:BOOLEAN, win:AREA) <-
   // Display recurssive clipping. 
   ( 
     (window=win).if {
@@ -148,19 +142,19 @@ section PRIVATE
     };
     //x_min.print; ','.print; y_min.print; " to ".print; 
     //x_max.print; ','.print; y_max.print; '\n'.print;
-    VIDEO.rectangle x_min,y_min to x_max,y_max;
+    VIDEO.rectangle (x_min,y_min) to (x_max,y_max);
     
     (top=NULL).if {
-      VIDEO.line_h x_min,y_min until x_max color 0FF6464h;
+      VIDEO.line_h (x_min,y_min) until x_max color 0FF6464h;
     };
     (bottom=NULL).if {
-      VIDEO.line_h x_min,y_max until x_max color 0FF6464h;
+      VIDEO.line_h (x_min,y_max) until x_max color 0FF6464h;
     };
     (left=NULL).if {
-      VIDEO.line_v x_min,y_min until y_max color 0FF6464h;
+      VIDEO.line_v (x_min,y_min) until y_max color 0FF6464h;
     };
     (right=NULL).if {
-      VIDEO.line_v x_max,y_min until y_max color 0FF6464h;
+      VIDEO.line_v (x_max,y_min) until y_max color 0FF6464h;
     }; 
        
 //    VIDEO.display_screen;
@@ -168,16 +162,16 @@ section PRIVATE
     //KEYBOARD.get_key;
     flag:=val;
     ((top!=NULL) && {top.flag!=val}).if { 
-      top.sub_display val,win; 
+      top.sub_display (val,win); 
     };
     ((bottom!=NULL) && {bottom.flag!=val}).if { 
-      bottom.sub_display val,win; 
+      bottom.sub_display (val,win); 
     };
     ((right!=NULL) && {right.flag!=val}).if { 
-      right.sub_display val,win; 
+      right.sub_display (val,win); 
     };
     ((left!=NULL) && {left.flag!=val}).if { 
-      left.sub_display val,win; 
+      left.sub_display (val,win); 
     };
   );
 

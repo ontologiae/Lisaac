@@ -1,167 +1,55 @@
-/***************************************************************************
-*                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Jerome BOUTET  - boutet@loria.fr                       *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-****************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := Expanded UREAL_26_6 -> REAL_32, REAL_64;
 
-section HEADER
+  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  * name        := UREAL_26_6; // Aucun Auto-Cast pour l'instant...(peu etre
-  // REAL ...)
+  - comment := "unsigned 26.6 fixed float.";
   
-  - comment     := "unsigned 26.6 fixed float.";
+  - type    := `unsigned long`;
+  - default := (0.to_raw_ureal_26_6);
   
-  - category    := MICRO;
+Section Insert
   
-  - bibliography:= "http://IsaacOS.com";
-  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  - parent_unsigned_fixed_real:UNSIGNED_FIXED_REAL := UNSIGNED_FIXED_REAL;
 
-  - type        := `unsigned long`;
-  - default     := 0;
+Section SELF
+
+  - shift_bits:INTEGER <- 6;
   
-section INHERIT
-  
-  - parent_unsigned:UNSIGNED := UNSIGNED;
-  
-section PUBLIC
-  
-  - object_size:INTEGER := 4;
-  
+Section Public
+    
   //
   // Range.
   //
   
-  - maximum:ULONGINT <- 67108863; // (2**26)-1
+  - maximum:UINTEGER_64 <- 3FF_FFFFh.to_raw_uinteger_64;
   
   //
   // Convertion format with test.
   //
   
-  - to_ulongint:ULONGINT   <- 
-  ( //? {in_range 0,(ULONGINT.maximum)};
-    floor    
-  );
-  
-  - to_uinteger:UINTEGER   <- 
-  ( //? {in_range 0,(UINTEGER.maximum)};
-    floor
-  );
-  
-  - to_ushortint:USHORTINT <- 
-  ( //? {in_range 0,(USHORTINT.maximum)};
-    floor.to_ushortint
-  );
-  
-  - to_usmallint:USMALLINT <- 
-  ( //? {in_range 0,(USMALLINT.maximum)};
-    floor.to_usmallint
-  );
-  
-  - to_longint:LONGINT     <- 
-  ( //? {in_range (LONGINT.minimum),(LONGINT.maximum)};
-    floor
-  );
-  
-  - to_integer:INTEGER     <- 
-  ( //? {in_range (INTEGER.minimum),(INTEGER.maximum)};
-    floor.to_integer
-  );
-  
-  - to_shortint:SHORTINT   <- 
-  ( //? {in_range (SHORTINT.minimum),(SHORTINT.maximum)};
-    floor.to_shortint
-  );
-  
-  - to_smallint:SMALLINT   <- 
-  ( //? {in_range (SMALLINT.minimum),(SMALLINT.maximum)};
-    floor.to_smallint
-  );
-  
-  - to_ureal_26_6:UREAL_26_6 <- self;
-  
-  - floor:UINTEGER <-
-  // Greatest integral value no greater than Current.
-  ( + result:UINTEGER;
-    
-    result:=to_raw_uinteger >> 6;
-    ? {self <= result.to_ureal_26_6};
-    ? {(self - result.to_ureal_26_6) < 1};
-    result
-  );
-  
-  - ceiling:UINTEGER <-
-  // Smallest integral value no smaller than Current.
-  ( + result:UINTEGER;
-    
-    result:=(to_raw_uinteger+63) >> 6;
-    ? {self >= result.to_ureal_26_6};
-    ? {(self - result.to_ureal_26_6) < 1};
-    result
-  );
-  
-  - rounded:UINTEGER <-
-  // Rounded integral value.
-  (
-    (to_raw_uinteger+32) >> 6
-  );
-  
-  - truncated_to_integer:UINTEGER <- floor;
-  // Integer part (largest absolute value no greater than Current).
-  
-  //
-  // binary operator :
-  //
-  
-  - '-'  left 80  other:SELF :SELF <- 
-  (
-    (to_raw_uinteger - other.to_raw_uinteger).to_raw_ureal_26_6
-  );
-
-  - '*#' left 100 other:UINTEGER :SELF <- 
-  (
-    (to_raw_uinteger * other).to_raw_ureal_26_6
-  );
-  
-  - '*'  left 100 other:SELF :SELF <- 
-  (
-    ((to_raw_ulongint * other.to_raw_ulongint)>>6).to_raw_ureal_26_6
-  );
-  
-  - '/#' left 100 other:UINTEGER :SELF <- 
-  (
-    (to_raw_uinteger / other).to_raw_ureal_26_6
-  );
-  
-  - '/'  left 100 other:SELF :SELF <- 
-  (
-    ((to_raw_ulongint<<6) / other.to_raw_ulongint).to_raw_ureal_26_6
-  );
-  
-  - '&'  left 100 other:SELF :SELF <-
-  (
-    (to_raw_uinteger & other.to_raw_uinteger).to_raw_ureal_26_6
-  );
-  
-  //
-  // Test binary operator :
-  //
-  
-  - '>'   right 60 other:SELF :BOOLEAN <- 
-  (
-    to_raw_uinteger > other.to_raw_uinteger
-  );
-  
-  //
-  // prefix : Unary operator
-  //
-  
-  - '~' :SELF <- 
-  (
-    (~ to_raw_uinteger).to_raw_ureal_26_6
-  );
+  - to_ureal_26_6:UREAL_26_6 <- Self;
   
   //
   // Convertion
@@ -170,12 +58,12 @@ section PUBLIC
   - append_in buffer:STRING <- 
   // Append in the `buffer' the equivalent of `to_string'. No new STRING
   // creation during the process.
-  ( + val:UINTEGER;
+  ( + val:UINTEGER_32;
     + old_count,new_count:INTEGER;
     ? {buffer!=NULL};
     
-    val:=to_raw_uinteger;
-    (val>>6).append_in buffer;
+    val := to_raw_uinteger_32;
+    (val >> 6).append_in buffer;
     buffer.extend '.';
     old_count:=buffer.count;
     //     1/64 = 0.015625 => 6 digit.    

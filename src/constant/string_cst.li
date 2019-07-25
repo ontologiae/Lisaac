@@ -1,0 +1,154 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name        := STRING_CST;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "String constant";
+  
+Section Inherit
+  
+  + parent_constant:Expanded CONSTANT;
+  
+Section Public
+  
+  - output:STRING := 
+  ( + result:STRING;
+    
+    result := STRING.create 256;
+    title "STRING CONSTANT" in result;
+    result
+  );
+  
+  - output_count:INTEGER;
+  
+  //
+  // Value.
+  //
+
+  + string:STRING_CONSTANT;
+
+  //
+  // Creation.
+  //
+
+  - create p:POSITION text n:STRING_CONSTANT :SELF<-
+  ( + result:SELF;
+    result := clone;
+    result.make p text n;
+    result
+  );
+  
+  - make p:POSITION text n:STRING_CONSTANT <-
+  (
+    position := p;
+    string   := n;
+    static_type := type_string_constant.default;
+  );
+
+  - my_copy:SELF <- SELF.create position text string;
+
+  //
+  // Comparaison.
+  //
+  
+  - '==' Right 60 other:EXPR :BOOLEAN <-  
+  ( + p:STRING_CST;
+    p ?= other;
+    (p != NULL) && {string = p.string}
+  );
+
+  //
+  // Generation.
+  //
+
+  - genere buffer:STRING <-
+  ( + idx,val,cur:INTEGER;    
+    - is_storage:INTEGER;
+    
+    (is_storage = 0).if {
+      (type_string_constant.get_local_slot (ALIAS_STR.slot_storage).slot_data_intern.ensure_count = 0).if {
+	is_storage := 1;
+      } else {
+	is_storage := 2;
+      };
+    };
+    
+    // BSBS: Franchement c'est trop bidouille ce truc ...
+    // Il vaudrait mieux parser la chaine plus rapidement sans calcul de
+    // la taille, et calculer la taille que pour ce qui sont vivant ...
+    
+    // Après, tu pourras eviter la bidouille du __id__ et genere ca plus tard.
+    
+    val := ITM_STRING.dico_string.fast_at string;
+    (val >= 0).if {
+      output_count := output_count + 1;
+      idx := output_count;
+      
+      cur := output.count-1;	
+      output.append "__STRING_CONSTANT __string_";
+      idx.append_in output;
+      output.append "={";
+      (static_type.is_late_binding).if {
+	output.append "__STRING_CONSTANT__,";	
+      };
+      val.append_in output;
+      (is_storage = 2).if {
+	output.append ",\"";            
+	output.append string;
+	{(output.count - cur) > 78}.while_do {
+	  output.insert_string "\\\n" to (cur+78);
+	  cur := cur + 78;
+	};            
+	output.add_last '"';
+      };
+      output.append "};\n";
+      ITM_STRING.dico_string.fast_put (-idx) to string;
+    } else {
+      idx := -val;
+    };
+    //
+    buffer.append "(&__string_";
+    idx.append_in buffer;
+    buffer.add_last ')';
+  );
+
+  //
+  // Display.
+  //
+
+  - display buffer:STRING <-
+  (
+    buffer.add_last '"';
+    buffer.append string;
+    buffer.add_last '"';
+    display_ref buffer;
+  );
+  
+  
+
+
+
+

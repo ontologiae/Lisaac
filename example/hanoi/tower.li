@@ -1,32 +1,42 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                             Lisaac Compiler                              *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
-  + name        := TOWER;
+  + name         := TOWER;
+   
+  - bibliography := "http://IsaacOS.com";
+  - author       := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment      := "The classic Tower of Hanoi game.";
   
-  - category    := MICRO;
-  
-  - bibliography:= "http://IsaacOS.com";
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "The classic Tower of Hanoi game.";
-  
-section INHERIT
+Section Inherit
   
   - parent_object:OBJECT := OBJECT;
 
-section PRIVATE
+Section Private
 
   + t:ARRAY[INTEGER];
 
   + top:INTEGER;
 
-section PUBLIC
+Section Public
   
   - full n:INTEGER :SELF <-
   ( + result:SELF;
@@ -38,7 +48,7 @@ section PUBLIC
   - full_make n:INTEGER <-
   ( ? {n >= 1};
     
-    t := ARRAY[INTEGER].create 1 to n;
+    t := ARRAY[INTEGER].create 1 to n;        
     n.downto 1 do { i:INTEGER;
       t.put (n-i+1) to i;
     };
@@ -64,7 +74,7 @@ section PUBLIC
     ? {top = 1};
   );
 
-section HANOI
+Section HANOI
 
   - nb:INTEGER <- t.upper;
 
@@ -90,6 +100,7 @@ section HANOI
 
   - remove_discus:INTEGER <-
   ( + result:INTEGER;
+    
     result := t.item top;
     t.put 0 to top;
     (top > 1).if {
@@ -110,5 +121,3 @@ section HANOI
     };
     ? { top <= nb };
   );
-  
-

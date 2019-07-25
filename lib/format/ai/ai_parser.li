@@ -1,28 +1,39 @@
-/***************************************************************************
-*                      Isaac Object Operating System                       *
-*                             Isaac                                        *
-*                      LORIA - UHP - INRIA - FRANCE                        *
-*                   Benoit SONNTAG - bsonntag@loria.fr                     *
-*                          http://www.IsaacOS.com                          *
-***************************************************************************/
-section HEADER
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
   
   + name    := AI_PARSER;
+
+
+  - copyright   := "2003-2005 JÃ©rome Boutet, 2003-2007 Benoit Sonntag";
   
-  - category:= MICRO;
-  
-  - bibliography:="http://IsaacOS.com";
-  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
   - comment     :="Startup system : First object.";
   
-  - version :="1.0";  
-  - date    :="2003/04";
+  - version := 1;  
   
-section INHERIT  
+Section Inherit  
   
   - parent_object:OBJECT := OBJECT;
   
-section PUBLIC
+Section Public
   
   - msg_err:STRING;
 
@@ -30,7 +41,7 @@ section PUBLIC
   
   + position:INTEGER;
   
-  + source:FIXED_ARRAY[CHARACTER];
+  + source:FAST_ARRAY[CHARACTER];
   
   - string_tmp:STRING;
   
@@ -336,7 +347,7 @@ section PUBLIC
   - x_cur:REAL_16_16;
   - y_cur:REAL_16_16;
   
-section PUBLIC
+Section Public
   
   + llx:REAL_16_16; // lower horizontal bound
   + urx:REAL_16_16; // upper horizontal bound
@@ -929,10 +940,10 @@ section PUBLIC
 	  k := last_real_16_16;
 	  (read_character 'k').if {
 	    result := TRUE;
-	    current_color.make_cmyk_fill c,m,y,k;
+	    current_color.make_cmyk_fill (c,m,y,k);
 	  }.elseif { read_character 'K'} then {
 	    result := TRUE;
-	    current_color.make_cmyk_stroke c,m,y,k;
+	    current_color.make_cmyk_stroke (c,m,y,k);
 	  }.elseif { read_character '('} then {
 	      (! read_string).if {
 		syntax_error "Incorrect String.";
@@ -945,11 +956,11 @@ section PUBLIC
 	    };
 	    g := last_real_16_16;
 	    (read_character 'x').if {
-	      current_color.make_cmykg_fill c,m,y,k,g;
+	      current_color.make_cmykg_fill (c,m,y,k,g);
 	      result := TRUE;
 	    }.elseif {read_character 'X'} then {
 	      result := TRUE;
-	      current_color.make_cmykg_fill c,m,y,k,g;
+	      current_color.make_cmykg_fill (c,m,y,k,g);
 	    };
           };                          
 	} else {                    
@@ -1146,7 +1157,7 @@ section PUBLIC
       (! read_character 'm').if {        
         missing_keyword "m";
       };
-      op := AI_MOVE.create last_x,last_y;
+      op := AI_MOVE.create (last_x,last_y);
       current_list.add_last op;
       x_cur := last_x;
       y_cur := last_y;
@@ -1182,7 +1193,7 @@ section PUBLIC
       y1 := last_y;
       ((read_character 'l') || {read_character 'L'}).if {
 	result := TRUE;
-	op := AI_LINE.create x1,y1;
+	op := AI_LINE.create (x1,y1);
         x_cur := x1;
         y_cur := y1;
       }.elseif {read_coord} then {
@@ -1190,12 +1201,12 @@ section PUBLIC
         y2 := last_y;
         ((read_character 'v') || {read_character 'V'}).if {
 	  result := TRUE;          
-	  op := AI_BEZIER.create_w1 x_cur,y_cur w2 x1,y1 to x2,y2; 
+	  op := AI_BEZIER.create_w1 (x_cur,y_cur) w2 (x1,y1) to (x2,y2); 
           x_cur := x2;
           y_cur := y2;
         }.elseif {(read_character 'y') || {read_character 'Y'}} then {
 	  result := TRUE;
-	  op := AI_BEZIER.create_w1 x1,y1 w2 x2,y2 to x2,y2; 
+	  op := AI_BEZIER.create_w1 (x1,y1) w2 (x2,y2) to (x2,y2); 
           x_cur := x2;
           y_cur := y2;
         }.elseif {read_coord} then {  
@@ -1203,7 +1214,7 @@ section PUBLIC
           y3 := last_y;
           ((read_character 'c') || {read_character 'C'}).if {
 	    result := TRUE;
-	    op := AI_BEZIER.create_w1 x1,y1 w2 x2,y2 to x3,y3;
+	    op := AI_BEZIER.create_w1 (x1,y1) w2 (x2,y2) to (x3,y3);
             x_cur := x3;
             y_cur := y3;
           } else {
@@ -1653,14 +1664,14 @@ section PUBLIC
   // Parser
   //
   
-  - create s:FIXED_ARRAY[CHARACTER] :SELF <-
+  - create s:FAST_ARRAY[CHARACTER] :SELF <-
   ( + result:SELF;
     result := clone;
     result.make s;
     result
   );    
   
-  - make s:FIXED_ARRAY[CHARACTER] <-
+  - make s:FAST_ARRAY[CHARACTER] <-
   (
     AI_ALIAS.make;
     source := s;
@@ -1683,8 +1694,8 @@ section PUBLIC
     height := (s *# height).ceiling;
     // BSBS: Avec b.make tu reallou de la mémoire, c'est à revoir ...
     ((width != b.width) || {height != b.height}).if {
-      b.make width,height;
-      b.rectangle_fill 0,0 to (width -1),(height - 1) color (b.gray);
+      b.make (width,height);
+      b.rectangle_fill (0,0) to ((width -1),(height - 1)) color (b.gray);
     };    
     (s <= 0).if {
       s := 1;

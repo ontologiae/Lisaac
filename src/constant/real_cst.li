@@ -64,7 +64,7 @@ Section Public
   // Comparaison.
   //
   
-  - '==' Right 60 other:EXPR :BOOLEAN <-
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-
   ( + p:REAL_CST;
     p ?= other;
     (p != NULL) && {value = p.value} && {static_type = p.static_type}

@@ -34,44 +34,75 @@ Section Inherit
   
 Section Public
   
-  - count:INTEGER <- ( deferred; 0);
+  - lower:INTEGER <- 0;
+  
+  - upper:INTEGER <- ( deferred; 0);
+  
+  - count:INTEGER <- upper + 1;
 
   //
   // Running.
   //
   
-  - get_type idx:INTEGER :TYPE_FULL <-
+  - item idx:INTEGER :ITM_TYPE_MONO <- 
   (
     deferred;
     NULL
   );
   
-  - to_run arg_lst:FAST_ARRAY[LOCAL] <-
+  - to_run_in arg_lst:FAST_ARRAY(LOCAL) for p:PARAMETER_TO_TYPE <-
   (
     deferred;
   );
   
-  /*
-  - to_run_type arg_lst:FAST_ARRAY[TYPE_FULL] <-
+  - get_index_type p:ITM_TYPE_PARAMETER :INTEGER <-
   (
     deferred;
   );
-  */
-   
-  //
-  // Display.
-  //
   
-  - display buffer:STRING <-
+  - check larg:FAST_ARRAY(EXPR) index idx:INTEGER for p:PARAMETER_TO_TYPE :INTEGER <-
   (
     deferred;
+    0
   );
   
   //
   // Comparaison.
   //
   
-  - is_equal other:ITM_ARGUMENT <- deferred;
-
+  - is_equal other:ITM_ARGUMENT <- 
+    ( + o:SELF;
+    + err:STRING_CONSTANT;
+    ? {other != Self};
+    
+    o ?= other;
+    (o = NULL).if {
+      err := "Invariance number vector argument invalid.";
+    }.elseif {name != o.name} then {
+      err := "Invariance name argument invalid.";
+    }.elseif {type != o.type} then {
+      err := "Invariance type argument invalid.";
+    };
+    (err != NULL).if {
+      POSITION.put_error semantic text err;
+      position.put_position;
+      (other.position).put_position;
+      POSITION.send_error;
+    };
+  );
+  
+  //
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    deferred;
+  );
+  
+  - shorter_in buf:STRING <-
+  (
+    deferred;
+  );
   
   

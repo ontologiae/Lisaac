@@ -105,7 +105,7 @@ Section Public
     + mul:EXPR_MUL;
     + div:EXPR_DIV;
     
-    (left == right).if {
+    (left ~= right).if {
       left.remove;
       right.remove;
       result := INTEGER_CST.create position value 0 type static_type;
@@ -114,7 +114,7 @@ Section Public
       (mul != NULL).if {
 	div ?= mul.left;
 	(div != NULL).if {
-	  ((left == div.left) && {div.right == mul.right}).if {
+	  ((left ~= div.left) && {div.right ~= mul.right}).if {
 	    div.remove;
 	    result := EXPR_MOD.create position with left and (mul.right);
 	  };

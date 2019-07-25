@@ -1,0 +1,63 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := RECTANGLE;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+
+Section Inherit
+
+  + parent_form:Expanded FORM;
+
+Section Public
+    
+  //
+  // Creation.
+  //
+
+  - create (x0,y0:INTEGER_32) to (x1,y1:INTEGER_32) 
+  color_border c_border:UINTEGER_32 
+  color_fill c_fill:UINTEGER_32 :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make (x0,y0) to (x1,y1) color_border c_border color_fill c_fill;
+    result
+  );
+
+  - make (x0,y0:INTEGER_32) to (x1,y1:INTEGER_32) 
+  color_border c_border:UINTEGER_32 
+  color_fill c_fill:UINTEGER_32 <-
+  ( 
+    color_border := c_border;
+    color_fill := c_fill;
+    points := LINKED_LIST(POINT).create;
+    points.add_last (MOVE.create (x0,y0));
+    points.add_last (LINE.create (x1,y0));
+    points.add_last (LINE.create (x1,y1));
+    points.add_last (LINE.create (x0,y1));    
+    points.add_last (LINE.create (x0,y0));
+  );
+
+
+  

@@ -107,5 +107,7 @@ Section Public
   (             
     buffer.append "goto ";
     buffer.append (loop.name);
+    
+    current_list_level := current_list_level - 1;        
   );
   

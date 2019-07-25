@@ -1,0 +1,110 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Library                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+
+  + name := FILE_INPUT_STREAM;
+
+  - author        := "Mildred <mildred593(at)online.fr>";
+  - bibliography  := "none";
+  - comment       := "Use files as streams";
+
+Section Inherit
+
+  - inherit_input_stream :INPUT_STREAM := INPUT_STREAM;
+
+Section Public
+
+  + file :FILE;
+
+  + is_connected:BOOLEAN;
+
+  + last_character :CHARACTER;
+
+  - end_of_input:BOOLEAN <-
+  ( + result :BOOLEAN;
+    result := real_end_of_input;
+    push_back_flag.if_true {
+      result := FALSE;
+    };
+    result
+  );
+
+Section Public
+
+  - make std_file:FILE <-
+  (
+    file := std_file;
+    is_connected := (file != NULL);
+  );
+
+  - create std_file:FILE :SELF <-
+  ( + result :SELF;
+    result := clone;
+    result.make std_file;
+    result
+  );
+
+Section Private
+
+  - tmp :NATIVE_ARRAY(UINTEGER_8) := NATIVE_ARRAY(UINTEGER_8).create 1;
+
+  + real_end_of_input :BOOLEAN;
+
+Section Public
+
+  - read_character <-
+  // Return last character from stream
+  ( + result:INTEGER;
+    
+    push_back_flag.if {
+      push_back_flag := FALSE;
+    } else {  
+      result := file.physical_read tmp size 1;
+      (result = 0).if {
+        // nothing was read
+        real_end_of_input := TRUE;
+      } else {
+        last_character := tmp.first.to_character;
+        //( + tmp2 :UINTEGER_8;
+        //  tmp2 := tmp.first;
+        //  `printf("Read '%c' (%02x)\n", @tmp2, @tmp2);`;
+        //);
+      };
+    };
+  );
+
+  - unread_character <- 
+  ( 
+    push_back_flag := TRUE;
+  );
+
+  - read_line_in buffer:STRING <-
+  // Return line from stream
+  (
+    read_character;
+    ((! end_of_input) && {last_character != '\n'}).if {
+      buffer.add_last last_character;
+      read_line_in buffer; // tail recursion
+    };
+  );
+
+// kate: hl Lisaac v0.2; indent-width 2; space-indent on; replace-tabs off;
+// kate: tab-width 8; remove-trailing-space on;

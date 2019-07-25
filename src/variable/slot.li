@@ -30,124 +30,43 @@ Section Header
   
 Section Inherit
   
-  - parent_itm_object:ITM_OBJECT := ITM_OBJECT;
+  + parent_itm_slot:ITM_SLOT := ITM_SLOT;
   
 Section Public
   
   - common_slot:SLOT <- Self;
   
-  + base_slot:ITM_SLOT;
-  
-  + receiver_type:TYPE;
-        
   + slot_id:SLOT_DATA;
   
-  - get_expr_result:EXPR <-
-  ( + result:EXPR;
-    + lst:FAST_ARRAY[EXPR];
-    + typ:TYPE_FULL;
-    + type_multiple:ITM_TYPE_MULTI;
-    + type_mono:ITM_TYPE_MONO;
-    
-    (id_section.is_interrupt).if {
-      typ := type_pointer.default;
-      result := typ.get_temporary_expr position;
-    }.elseif {(slot_data_intern != NULL) && {slot_data_list = NULL}} then {
-      result := slot_data_intern.type.get_temporary_expr position;
-    } else {
-      ITM_TYPE_SELF.set_self_up receiver_type;
-      type_multiple ?= base_slot.type;
-      (type_multiple != NULL).if { 
-	lst := FAST_ARRAY[EXPR].create_with_capacity (type_multiple.count);
-	0.to (type_multiple.upper) do { k:INTEGER;
-	  typ := type_multiple.item k.to_run;	
-	  lst.add_last (typ.get_temporary_expr position);
-	};
-	result := EXPR_MULTIPLE.create lst;
-      } else {
-	type_mono ?= base_slot.type;
-	typ := type_mono.to_run;	
-	result := typ.get_temporary_expr position;
-      };
-      ITM_TYPE_SELF.set_self_up (Old ITM_TYPE_SELF.self_up);
-    };
-    result
-  );
-    
-  - get_type_result:TYPE_FULL <-
-  ( + result:TYPE_FULL;
-    + tm:ITM_TYPE_MONO;
-    ? {slot_data_list = NULL};
-        
-    (slot_data_intern != NULL).if {
-      result := slot_data_intern.type;
-    } else {      
-      tm ?= base_slot.type;
-      (tm != NULL).if {
-	ITM_TYPE_SELF.set_self_up receiver_type;
-	result := tm.to_run;
-	ITM_TYPE_SELF.set_self_up (Old ITM_TYPE_SELF.self_up);
-      };
-    };
-    result
-  );
+  + receiver_type:TYPE;
   
-  - get_type_argument idx:INTEGER :TYPE_FULL <-  
-  ( + lst:FAST_ARRAY[ITM_ARGUMENT];
-    + i,n,cnt:INTEGER;    
-    + result:TYPE_FULL;
-    ? {idx.in_range 0 to (base_slot.argument_count)};
-    
-    ITM_TYPE_SELF.set_self_up receiver_type;
-    lst := base_slot.argument_list;
-    i := lst.lower;    
-    {
-      cnt := lst.item i.count;
-      (n + cnt > idx).if { 
-	result := lst.item i.get_type (idx - n);
-      } else {
-	n := n + cnt;
-      };
-      i := i + 1;
-    }.do_while {result = NULL};
-    ITM_TYPE_SELF.set_self_up (Old ITM_TYPE_SELF.self_up);
-    result
-  );
-  
-  - name:STRING_CONSTANT          <- base_slot.name;  
-  - id_section:SECTION_           <- base_slot.id_section;    
-  - priority_and_level:INTEGER    <- base_slot.priority_and_level;  
-  - priority:INTEGER              <- base_slot.priority;
-  - associativity:STRING_CONSTANT <- base_slot.associativity;  
-  - style:CHARACTER               <- base_slot.style;
-    
   //
   // Creation.
   //
   
   - create s:ITM_SLOT type t:TYPE :SLOT <-
   ( + result:SLOT;
-    
+        
     result := clone;
     result.make s type t    
   );
   
   - make s:ITM_SLOT type t:TYPE :SLOT <-
-  ( + styl:SLOT;
+  ( + result:SLOT;
         
-    base_slot := s;
+    parent_itm_slot := s;
     receiver_type := t;
-    position  := s.position;
     //
-    (s.affect = '<').if {
+    (affect = '<').if {
       // Code.      
-      styl := slot_code_intern := SLOT_CODE.create Self with (base_slot.value);      
+      result := slot_code_intern := SLOT_CODE.create Self with value;      
     } else {
       // Data      
       create_slot_data;
-      styl := slot_data_intern;
+      result := slot_data_intern;
     };    
-    styl
+    //
+    result
   );
     
   //
@@ -179,7 +98,7 @@ Section Public
     (slot_data_intern = NULL).if {
       create_slot_data;      
       (slot_id = NULL).if {
-	slot_id := SLOT_DATA.create common_slot type (TYPE_ID.get_index 1.default);
+	slot_id := SLOT_DATA.create common_slot type_full (TYPE_ID.get_index 1.default);
 	slot_id.init;
       };
     };
@@ -204,16 +123,16 @@ Section Public
     slot := SLOT_CODE.create common_slot with v;
     (slot_code_intern = NULL).if {
       slot_code_intern := slot;
-      slot_id := SLOT_DATA.create common_slot type (TYPE_ID.get_index 0.default);
+      slot_id := SLOT_DATA.create common_slot type_full (TYPE_ID.get_index 0.default);
       slot_id.init;
       result := 1;
     } else {
       (slot_code_list = NULL).if {
-	slot_code_list := FAST_ARRAY[SLOT_CODE].create_with_capacity 1;
+	slot_code_list := FAST_ARRAY(SLOT_CODE).create_with_capacity 1;
       };
       slot_code_list.add_last slot;
       (slot_id = NULL).if {
-	slot_id := SLOT_DATA.create common_slot type (TYPE_ID.get_index 1.default);
+	slot_id := SLOT_DATA.create common_slot type_full (TYPE_ID.get_index 1.default);
 	slot_id.init;
       };
       result := slot_code_list.upper + 2;
@@ -237,38 +156,27 @@ Section Public
   + slot_data_intern:SLOT_DATA; // Index 0
   + slot_code_intern:SLOT_CODE; // Index 1
   
-  + slot_code_list:FAST_ARRAY[SLOT_CODE]; // Index x+2
-  + slot_data_list:FAST_ARRAY[SLOT_DATA]; // Vector data slot  
+  + slot_code_list:FAST_ARRAY(SLOT_CODE); // Index x+2
+  + slot_data_list:FAST_ARRAY(SLOT_DATA); // Vector data slot  
   
   - create_slot_data <-
   ( + typ:TYPE_FULL;
-    + type_self:TYPE_FULL;
-    + type_multiple:ITM_TYPE_MULTI;
-    + type_mono:ITM_TYPE_MONO;
+    + tm:ITM_TYPE_MULTI;            
+    + ts:ITM_TYPE_MONO;
     
-    // Save Self context.
-    type_self := ITM_TYPE_SELF.run_value;        
-    ITM_TYPE_SELF.set_self_up receiver_type;
-    ITM_TYPE_SELF.set_run NULL;
-    last_position := position;
-    //
-    type_multiple ?= base_slot.type;
-    (type_multiple != NULL).if {            
-      0.to (type_multiple.upper - 1) do { k:INTEGER;
-	slot_data_list := FAST_ARRAY[SLOT_DATA].create_with_capacity (type_multiple.count - 1);
-	typ := type_multiple.item k.to_run;	
+    tm ?= result_type;    
+    (tm != NULL).if {            
+      slot_data_list := FAST_ARRAY(SLOT_DATA).create_with_capacity (tm.count-1);
+      (tm.lower).to (tm.upper-1) do { k:INTEGER;	
+	typ := tm.item k.to_run_for receiver_type;
 	slot_data_list.add_last (
-	  SLOT_DATA.create common_slot type typ
+	  SLOT_DATA.create common_slot type_full typ
 	);
-      };
-      typ := type_multiple.last.to_run;
-      slot_data_intern := SLOT_DATA.create common_slot type typ;    
+      };      
+      typ := tm.last.to_run_for NULL;
     } else {
-      type_mono ?= base_slot.type;
-      typ := type_mono.to_run;
-      slot_data_intern := SLOT_DATA.create common_slot type typ;    
+      ts ?= result_type;
+      typ := ts.to_run_for receiver_type;
     };
-    // Restore Self context.
-    ITM_TYPE_SELF.set_run type_self;
-    ITM_TYPE_SELF.set_self_up (Old ITM_TYPE_SELF.self_up);
+    slot_data_intern := SLOT_DATA.create common_slot type_full typ;    
   );

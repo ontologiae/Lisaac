@@ -63,17 +63,13 @@ Section Public
 
   - execute_access_unlink:INSTR <- 
   (
-    (global.value != NULL).if {
-      global.execute;
-    };
+    global.execute;
     NULL
   );
 
   - execute_access_link <- 
-  (
-    (global.value != NULL).if {
-      global.execute;
-    };    
+  (    
+    global.execute;
   );
 
   //
@@ -82,14 +78,16 @@ Section Public
   
   - genere buffer:STRING <-
   ( 
-    global.receiver_type.add_genere_list;
-    buffer.append (global.intern_name);
-    //
-    ((value.static_type.raw = TYPE_NULL) && {variable.type.raw = type_block}).if {
-      buffer.append ".__id=0";
-    } else {
-      buffer.add_last '=';    
-      genere_value buffer;
+    TYPE.add_genere_global global;
+    (quiet_generation).if_false {
+      buffer.append (global.intern_name);
+      //
+      ((value.static_type.raw = TYPE_NULL) && {variable.type.raw.is_block}).if {
+        buffer.append ".__id=0";
+      } else {
+        buffer.add_last '=';    
+        genere_value buffer;
+      };
     };
   );
   

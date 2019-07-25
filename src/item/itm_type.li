@@ -34,5 +34,24 @@ Section Inherit
   
 Section Public
   
-  - display buffer:STRING <- deferred;
-
+  - print <-
+  (
+    string_tmp.clear;
+    append_in string_tmp;
+    string_tmp.print;
+  );
+  
+  - append_in buffer:STRING <- deferred;
+  
+  - shorter_in buf:STRING <- deferred;
+  
+  - to_run_in lst:FAST_ARRAY(TYPE_FULL) for p:PARAMETER_TO_TYPE <-
+  (
+    deferred;
+  );
+  
+  - get_expr_for p:PARAMETER_TO_TYPE :EXPR <-
+  (
+    deferred;
+    NULL
+  );

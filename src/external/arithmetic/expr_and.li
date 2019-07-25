@@ -32,7 +32,7 @@ Section Inherit
   
   + parent_expr_binary:Expanded EXPR_BINARY;
   
-Section Private  
+Section Public
   
   - symbol:STRING_CONSTANT := "&";
   
@@ -74,7 +74,7 @@ Section Private
   //-- E & E -> E
   ( + result:EXPR;
     
-    (left == right).if {
+    (left ~= right).if {
       right.remove;
       result := left;
     };

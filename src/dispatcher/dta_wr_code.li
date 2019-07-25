@@ -52,12 +52,16 @@ Section Public
   
   - make p:POSITION slot sl:SLOT self arg:EXPR code v:ITM_CODE <-
   (
-    position := p;
-    context := profil_second;
+    position    := p;
     slot        := sl;
     self_arg    := arg;
-    result_expr := slot.get_expr_result;
+    result_expr := PROTOTYPE_CST.create (v.position) type (TYPE_VOID.default);
     code        := v;
+    (profil_current = NULL).if {
+      context := context_main;
+    } else {
+      context := profil_current.context;
+    };
   );
 
   //
@@ -74,7 +78,7 @@ Section Public
   // Service
   //
     
-Section DTA_RD  
+Section DTA  
   
   - finalise typ:TYPE with (expr:EXPR,s:SLOT) in lst:LIST <- 
   ( + id:PROTOTYPE_CST;

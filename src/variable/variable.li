@@ -77,11 +77,11 @@ Section Public
 
   - set_ensure_count c:INTEGER <-
   // Necessary for `context' local, `External' argument slot and `BLOCK' manager.
-  (
+  (        
     ensure_count := c;
   );
   
-  + require_list:FAST_ARRAY[WRITE];
+  + require_list:FAST_ARRAY(WRITE);
   + require_first:WRITE;
   - require_count:INTEGER <- 
   ( + result:INTEGER;
@@ -127,18 +127,19 @@ Section Public
 	}).if {	  
 	  level_type := level_pass;
 	  tmp_type := TYPES_TMP.new;      
-	  (require_first != NULL).if {	
+          (require_first != NULL).if {	
+                        
 	    require_first.get_type tmp_type;		
 	    (require_list != NULL).if {
 	      (require_list.lower).to (require_list.upper) do { j:INTEGER;	    
 		require_list.item j.get_type tmp_type;
 	      };  
-	    };
+            };                       
 	  };	  
 	  type_list := tmp_type.update type_list;
 	};
       };
-    };
+    };    
     t.union type_list;
   );
   
@@ -193,7 +194,7 @@ Section Public
       require_first := e;      
     } else {
       (require_list = NULL).if {
-	require_list := FAST_ARRAY[WRITE].create_with_capacity 1; 
+	require_list := FAST_ARRAY(WRITE).create_with_capacity 1; 
       };
       require_list.add_last e;
     };
@@ -214,7 +215,6 @@ Section Public
     
   - unwrite e:WRITE <-
   ( + idx:INTEGER;
-    
     (! e.is_create).if {
       crash;
     };
@@ -291,35 +291,89 @@ Section Public
         
     result := new_read position with r;   
     ensure_count := ensure_count + 1;    
-        
+    /*
+    (intern_name == "k__ELZH").if {
+      "Create : ".print;
+      result.object_id.print;
+      '\n'.print;      
+      //(result.object_id = 1).if {
+        crash;
+      //};
+      IO.read_character;      
+    };
+    */
     result
   );
   //[ ? {ensure_count := Old ensure_count + 1}; ];
   
   - unread e:READ <-
   (    
-        
+    /*
+    (intern_name == "k__ELZH").if {
+      "Delete : ".print;
+      e.object_id.print;
+      '\n'.print;
+      IO.read_character;
+    };
+    */    
     ensure_count := ensure_count - 1;
     (ensure_count < 0).if {
       "C'est : ".print;
       e.debug_display;
       "\n dans :\n".print;
-      list_current.debug_display;
+      //list_current.debug_display;
       '\n'.print;
-      crash;
+      //crash;
     };
-    ? {ensure_count >= 0};
+  /*  
+    (intern_name == "Result__ID").if {
+      "VARIABLE delete :".print;
+      e.debug_display;
+    };
+*/
+    
+//    ? {ensure_count >= 0};
   );
     
   //
   // Display.
   //
+  
+  - display_require buffer:STRING <-
+  ( + rd:READ;
+    
+    (require_first != NULL).if {
+      buffer.append indent;      
+      require_first.display buffer;
+      buffer.add_last '\n';
+      rd ?= require_first.value;
+      (rd != NULL).if {
+        indent.append "  ";
+        rd.variable.display_require buffer;
+        indent.remove_last 2;
+      };
+      (require_list != NULL).if {
+        (require_list.lower).to (require_list.upper) do { i:INTEGER;
+          buffer.append indent;      
+          require_list.item i.display buffer;
+          buffer.add_last '\n';
+          rd ?= require_list.item i.value;
+          (rd != NULL).if {
+            indent.append "  ";
+            rd.variable.display_require buffer;
+            indent.remove_last 2;
+          };
+        };
+      };
+    };
+  );
 
   - display buffer:STRING <-
   (
     buffer.append intern_name;
     buffer.add_last ':';
-    buffer.append (type.intern_name);
+    type.append_name_in buffer;
+    //buffer.append (type.intern_name);
   );
   
   - display_type buffer:STRING <-
@@ -329,7 +383,7 @@ Section Public
       (type_list.lower).to (type_list.upper - 1) do { j:INTEGER;
 	buffer.append (type_list.item j.intern_name);
 	buffer.add_last 'x';
-      };
+      };      
       buffer.append (type_list.last.intern_name);
     };
     buffer.add_last '}';

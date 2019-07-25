@@ -8,59 +8,34 @@ The first compiler for Object Prototype Language !
 Install.
 ========
 
-* Linux/Unix:
--------------
+  make ;-)
 
-For a userland installation in your system, simply use : 
-
-    make interactive_userland
-
-For a full system installation : 
-	
-    make
-		make install (as root)
-
-Run `lisaac' to compile.
-
-* Windows/Dos:
---------------
-
-1- Download from our site:
-   * mingw.zip, for C compiler and binutils (GCC for Windows)
-   * emacs_207.zip, for Lisaac editor facilities
-   * last lisaac compiler version (>= 0.11)
-
-2- Uncompress mingw to c:\ and emacs...
-
-3- Install mingw package.
-
-4- Update your C:\AUTOEXEC.BAT:
-Append with good path:
-
-REM **** MINGW ****
-set path=d:/mingw\bin;%path%
-
-5- Reboot or reloaded AUTOEXEC.BAT
-
-6- In lisaac directory, run 'make interactive_userland'
-
-7- Run 'install_lisaac' to finish the installation
-
-8- Reboot or reloaded AUTOEXEC.BAT
+Note for Windows/Dos: read our wiki at http://wiki.lisaac.org
 
 Directory description.
 ======================
 
-  ./lib      : Standard Library for Lisaac.
-  ./lib_os   : Library for Unix and Windows and Dos (Input/Output,FileSystem)
-  ./lib_html : Library documentation.
-  ./src      : Source compiler.
-  ./bin      : Executable file compiler (and C source).
-  ./editor   : Lisaac mode for Editor (Emacs, Kate, Vim).
-  ./manual   : Manual reference Lisaac language (PS format).
-  ./shorter  : Mode for shorter program.
-  ./example  : Example Lisaac source code. 
-
+doc				: Documentation (library, man pages, manual, ...)
+src      			: Source compiler
+bin                             : Compiler's executable files (and C source)
+editor                          : Lisaac mode for editors (Emacs, Kate, Vim, ...)
+shorter                         : Mode for shorter program
+example                         : Lisaac's source code examples
+lib                             : Library description
+|-- internal			: Used only by The Guru
+`-- standard			: Standard library
+    |-- boolean			
+    |-- collection
+    |-- file_system
+    |-- io
+    |-- kernel
+    |-- number
+    |   |-- fixed_real
+    |   |-- integer
+    |   `-- real
+    |-- property
+    |-- string
+    `-- time
 
 Good luck,
 Best regards,

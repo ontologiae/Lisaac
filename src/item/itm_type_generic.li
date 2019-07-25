@@ -33,9 +33,9 @@ Section Inherit
   
 Section Private
   
-  - dico:FAST_ARRAY[ITM_TYPE_GENERIC] := FAST_ARRAY[ITM_TYPE_GENERIC].create_with_capacity 32;
+  - dico_tg:FAST_ARRAY(ITM_TYPE_GENERIC) := FAST_ARRAY(ITM_TYPE_GENERIC).create_with_capacity 32;
 
-  - create n:STRING_CONSTANT style s:STRING_CONSTANT with lt:FAST_ARRAY[ITM_TYPE_MONO] :SELF <-
+  - create n:STRING_CONSTANT style s:STRING_CONSTANT with lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
   ( + result:SELF;
     
     result := clone;
@@ -43,7 +43,7 @@ Section Private
     result
   );
   
-  - make n:STRING_CONSTANT style s:STRING_CONSTANT with lt:FAST_ARRAY[ITM_TYPE_MONO] <-
+  - make n:STRING_CONSTANT style s:STRING_CONSTANT with lt:FAST_ARRAY(ITM_TYPE_MONO) <-
   (
     name      := n;
     style     := s;
@@ -54,60 +54,84 @@ Section Public
   
   - hash_code:INTEGER <- name.hash_code; 
 
-  + list_type:FAST_ARRAY[ITM_TYPE_MONO];
+  + list_type:FAST_ARRAY(ITM_TYPE_MONO);
   
   - get n:STRING_CONSTANT style s:STRING_CONSTANT 
-  with lt:FAST_ARRAY[ITM_TYPE_MONO] :ITM_TYPE_GENERIC <-
-  ( + result:ITM_TYPE_GENERIC;
+  with lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
+  ( + result:SELF;
     + idx:INTEGER;
     
-    idx := dico.lower;
+    idx := dico_tg.lower;
     {
-      (idx <= dico.upper) && {
-	(dico.item idx.name      != n ) || 
-	{dico.item idx.style     != s } || 
-	{dico.item idx.list_type != lt}
+      (idx <= dico_tg.upper) && {
+	(dico_tg.item idx.name      != n ) || 
+	{dico_tg.item idx.style     != s } || 
+	{dico_tg.item idx.list_type != lt}
       }
     }.while_do {
       idx := idx + 1;
     };    
-    (idx <= dico.upper).if {
-      result := dico.item idx;
+    (idx <= dico_tg.upper).if {
+      result ?= dico_tg.item idx;
     } else {
       result := create n style s with lt;
-      dico.add_last result;
+      dico_tg.add_last result;
     };
     result
   );
   
-  - to_run:TYPE_FULL <-
-  ( + lst:FAST_ARRAY[TYPE_FULL];
+  - to_run_for p:PARAMETER_TO_TYPE :TYPE_FULL <-
+  ( + lst:FAST_ARRAY(TYPE_FULL);
     + t:TYPE_FULL;
-        
-    lst := ALIAS_ARRAY[TYPE_FULL].new;
-    (list_type.lower).to (list_type.upper) do { j:INTEGER;
-      t := list_type.item j.to_run;      
-      ? {t != NULL};
+    + j:INTEGER;    
+    + result:TYPE_FULL;
+    
+    lst := ALIAS_ARRAY(TYPE_FULL).new;
+    j := list_type.lower;    
+    {
+      t := list_type.item j.to_run_for p;                  
       lst.add_last t;
+      j := j + 1;
+    }.do_while {(j <= list_type.upper) && {t != NULL}};
+    (t = NULL).if {
+      ALIAS_ARRAY(TYPE_FULL).free lst;
+    } else {            
+      lst := ALIAS_ARRAY(TYPE_FULL).alias lst;      
+      result := TYPE_GENERIC.get Self with lst;
     };
-    lst := ALIAS_ARRAY[TYPE_FULL].alias lst;
-    TYPE_GENERIC.get Self with lst 
+    result
   );
   
-  - display buffer:STRING <-
+  - append_in buffer:STRING <-
   (
     (style != NULL).if {
       buffer.append style;
       buffer.add_last ' ';
     };
     buffer.append name;
-    buffer.add_last '[';
+    buffer.add_last '(';
     (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
-      list_type.item j.display buffer;
+      list_type.item j.append_in buffer;
       buffer.add_last ',';
     };
-    list_type.last.display buffer;
-    buffer.add_last ']';
+    list_type.last.append_in buffer;
+    buffer.add_last ')';
+  );
+  
+  - shorter_in buf:STRING <-
+  (
+    (style != NULL).if {
+      put style to buf like (ALIAS_STR.short_keyword);
+      buf.add_last ' ';
+    };
+    put name to buf like (ALIAS_STR.short_prototype);
+    buf.add_last '(';
+    (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
+      list_type.item j.shorter_in buf;
+      buf.add_last ',';
+    };
+    list_type.last.shorter_in buf;
+    buf.add_last ')';
   );
   
   //

@@ -1,0 +1,181 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := ROTOZOOM;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "DemoMaker (La nostalgie d'un temps passé 07/08/1994-2008)";
+  
+Section Inherit  
+  
+  + parent_area:Expanded AREA;
+  
+  + parent_g_expr:Expanded G_EXPR;
+  
+Section Public
+  
+  - filename:ABSTRACT_STRING := "cobaye.bmp";
+  
+  - bitmap:ABSTRACT_BITMAP;
+  
+  - angle:UINTEGER_8;
+  - zoom:UINTEGER_8;
+  
+  - sin:FAST_ARRAY(INTEGER_32) :=
+  ( + result:FAST_ARRAY(INTEGER_32);
+    + r:REAL;
+    result := FAST_ARRAY(INTEGER_32).create_with_capacity 256;
+    0.to 255 do { i:INTEGER;
+      r := (REAL.pi/128*i).sin * 65536;
+      result.add_last (r.to_integer);
+    };
+    result
+  );
+  
+  - bmp_line:ABSTRACT_BMP_LINE := BMP_LINE(PIXEL_32).create 2048;
+  
+  //
+  // Width / Height
+  //
+  
+  - width_min:INTEGER  := 640;
+  
+  - height_min:INTEGER := 480;
+  
+  //
+  // Creation.
+  //  
+  - string_tmp:STRING := STRING.create 40;
+  
+  - init p:ABSTRACT_STRING :G_EXPR <-
+  ( + entry:ENTRY;
+    + fmt:FORMAT_IMG;
+    + f:FILE;
+    + w,h:INTEGER;
+    
+    string_tmp.copy p;
+    string_tmp.append filename;
+    // Initialization bitmap.
+    entry := FILE_SYSTEM.get_entry string_tmp;
+    ((entry = NULL) || {! entry.is_file}).if {
+      VIDEO.message ("ERROR: File '" + filename + "' not found.\n");
+      die_with_code exit_failure_code;
+    };    
+    entry.open;    
+    f ?= entry;
+    fmt := FORMAT_BMP.create_with_file f;    
+    (fmt = NULL).if {
+      VIDEO.message "Error: BMP format invalid.\n";
+      die_with_code exit_failure_code;      
+    };
+    w := fmt.width;
+    h := fmt.height;
+    bitmap := BITMAP(PIXEL_24).create_size (w,h);
+    fmt.put_image_in bitmap;    
+    f.close;
+    TIMER.add_client Self;
+    // Init Sin.    
+    G_RAW.create (Self.fix_height.fix_width)
+  );
+  
+  - run p:ABSTRACT_STRING :G_WIN_OUT <-
+  ( 
+    G_WIN_OUT.create "Rotozoom" with (init p)
+  );
+  
+  - main <-
+  (     
+    // Init window.
+    VIDEO.make_size (width_min+64,height_min+64);
+    DESK.make VIDEO with (
+      G_OUT.create "Rotozoom" justify (G_OUT.center) / init "./"
+    );        
+  );
+  
+  //
+  // Update position.
+  //
+  
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  ( 
+    update rac from (x,y) size (w,h);
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-  
+  ( + col:UINTEGER_32;
+    + plx,ply:INTEGER_32;
+    + px,py,ax,ay,aax,aay:INTEGER_32;
+        
+    clipping (x0,y0) to (x1,y1);
+        
+    ax := sin.item angle - (sin.item zoom);
+    ay := sin.item ((angle+64) & 0FFh) - (sin.item zoom);
+    0.to height do { y:INTEGER;      
+      plx := px;
+      ply := py;
+      aax := ax + y << 5;
+      aay := ay + y << 5;
+      0.to width do { x:INTEGER;
+        plx := plx + aay;
+        ply := ply - aax;
+        col := bitmap.get_color_hard ((plx>>16) & 0FFh,(ply>>16) & 0FFh);
+        bmp_line.put col to x;
+      };            
+      line_h (0,y) until width image bmp_line; // offset 0;
+      px := px + ax; //+ sin.item zoom;
+      py := py + ay; // + sin.item zoom;
+    };        
+    
+  );
+  
+  //
+  // Events.
+  //
+  
+  - receive msg:EVENT <-
+  ( + evt_time:EVENT_TIMER;
+    + evt_mouse:EVENT_MOUSE;
+    + win:AREA;
+    
+    evt_mouse ?= msg;
+    (evt_mouse != NULL).if {    
+      win := DESK.get_object (evt_mouse.x_current,evt_mouse.y_current);
+      (win != Self).if {
+        DESK.receive msg;
+      };
+    };
+    
+    evt_time ?= msg;    
+    ((evt_time != NULL) && {evt_time.destination = NULL}).if {
+      angle := angle + 1;
+      zoom := zoom + 2;
+      refresh;
+    };    
+    
+  );
+

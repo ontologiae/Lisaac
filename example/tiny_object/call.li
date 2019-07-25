@@ -1,0 +1,132 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := CALL;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The call";
+
+Section Inherit
+
+  + parent_expr:Expanded EXPR;
+  
+Section Private
+  
+  - call_list:LINKED_LIST(CALL) := LINKED_LIST(CALL).create;
+  
+Section Public
+  
+  + receiver:LOCAL;
+  
+  + message:STRING_CONSTANT; // -- Not used with VFT
+  
+  // -- VFT --
+  + index:INTEGER;
+  // -- VFT --
+    
+  //
+  // Creation.
+  //
+
+  - create p:INTEGER receiver r:LOCAL message m:STRING_CONSTANT :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make p receiver r message m;
+    result
+  );
+
+  - make p:INTEGER receiver r:LOCAL message m:STRING_CONSTANT <-
+  ( 
+    position := p;
+    receiver := r;
+    message  := m;
+    // -- VFT --
+    call_list.add_last Self;
+    // -- VFT --
+  );
+  
+  //
+  // VFT
+  //
+  
+  - compute_index <-
+  ( 
+    (call_list.lower).to (call_list.upper) do { i:INTEGER;
+      call_list.item i.search_index;      
+    };
+  );
+  
+  - search_index <-
+  ( + slot:SLOT;
+    slot := receiver.type.get_slot message;
+    (slot = NULL).if {
+      string_tmp.copy "Message '";
+      string_tmp.append message;
+      string_tmp.append "' not found in ";
+      string_tmp.append (receiver.type.name);
+      semantic_error position message string_tmp;
+    };
+    index := slot.index;
+  );
+  
+  //
+  // Run.
+  //
+  
+  - run <-
+  ( + slot:SLOT;
+    
+    (receiver.the_dynamic_type = NULL).if {
+      semantic_error position message "Call on NULL.";
+    };
+    
+    (is_vft).if {
+      // -- VFT --
+      slot := receiver.the_dynamic_type.vft.item index;
+      // -- VFT --
+    } else {  
+      slot := receiver.the_dynamic_type.get_slot message;
+      (slot = NULL).if {
+        string_tmp.copy "Message '";
+        string_tmp.append message;
+        string_tmp.append "' not found in ";
+        string_tmp.append (receiver.type.name);
+        semantic_error position message string_tmp;
+      };      
+    };
+    slot.run (receiver.the_dynamic_type);
+  );
+  
+  //
+  // Display.
+  //
+  
+  - print <-
+  (
+    receiver.name.print;
+    '.'.print;
+    message.print;    
+  );
+
+  

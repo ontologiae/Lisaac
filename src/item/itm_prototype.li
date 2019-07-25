@@ -35,7 +35,7 @@ Section Inherit
 Section Public
 
   + type:ITM_TYPE_MONO;
-
+  
   //
   // Constructor
   //
@@ -48,9 +48,9 @@ Section Public
   );
     
   - make p:POSITION type n:ITM_TYPE_MONO <-
-  (
+  ( 
     position := p;
-    type := n;
+    type := n;    
   );
 
   //
@@ -59,46 +59,39 @@ Section Public
 
   - to_run_expr:EXPR <- 
   ( + t:TYPE_FULL;
-    + tb:PROFIL_BLOCK;
-    + loc,my_self:LOCAL;    
-    + result,val,rec:EXPR;
-    + wrt:WRITE;
-    
-    t := type.to_run;
-    tb ?= t.raw;
-    (tb != NULL).if {
-      // BLOCK :
-      loc := t.get_temporary position;	
-      // tmp.id := id_block;
-      rec := loc.read position;
-      val := PROTOTYPE_CST.create position type t;      
-      wrt := tb.slot_value.write position with rec value val;
-      list_current.add_last wrt;
-      // tmp.self := Self;
-      rec := loc.read position;
-      my_self := lookup (ALIAS_STR.variable_self);
-      val := my_self.read position;
-      wrt := tb.slot_self.write position with rec value val;
-      list_current.add_last wrt;
-      // tmp
-      result := loc.read position;
-    } else {
-      // TYPE Classic.
-      (
-	(t.is_expanded_c) && 
-	{t.raw != type_boolean} && 
-	{t.raw != type_true} && 
-	{t.raw != type_false}
-      ).if {
-	result := t.default_value position;
-	result := result.check_type t with position;
-      } else {      
-	result := PROTOTYPE_CST.create position type t;
-      };
+    + result:EXPR;
+        
+    last_position := position;                
+    t := type.to_run_for profil_slot;        
+    (t = NULL).if {
+      string_tmp.copy "Type `";
+      type.append_in string_tmp;
+      string_tmp.append "' not found (Undefine type parameter).";      
+      semantic_error (position,string_tmp);
+    };
+    // TYPE Classic.    
+    (
+      (t.is_expanded_c) && 
+      {t.raw != type_boolean} && 
+      {t.raw != type_true} && 
+      {t.raw != type_false}
+    ).if {
+      result := t.default_value position;
+      result := result.check_type t with position;
+    } else {      
+      result := PROTOTYPE_CST.create position type t;
     };
     result
   );
-
+  
+  //
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    type.append_in buffer;
+  );
 
 
 

@@ -1,0 +1,187 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := FIRE;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "DemoMaker (La nostalgie d'un temps passé 07/08/1994-2008)";
+  
+Section Inherit  
+  
+  + parent_area:Expanded AREA;
+  
+  + parent_g_expr:Expanded G_EXPR;
+  
+Section Public
+  
+  - palette:FAST_ARRAY(UINTEGER_32) :=
+  ( + result:FAST_ARRAY(UINTEGER_32);
+    
+    result := FAST_ARRAY(UINTEGER_32).create_with_capacity 256;
+    // Gray.
+    0.to 31 do { i:INTEGER;
+      result.add_last (((i*1)<<16) | ((i*1)<<8) | i*1);
+    };
+    0.to 31 do { i:INTEGER;
+      result.add_last ((((31-i)*1)<<16) | (((31-i)*1)<<8) | (31-i)*1);
+    };
+    // Red.
+    0.to 63 do { i:INTEGER;
+      result.add_last ((i*4)<<16);
+    };
+    // Yellow.
+    0.to 63 do { i:INTEGER;
+      result.add_last ((255<<16) | ((i*4)<<8));
+    };    
+    // White.
+    0.to 63 do { i:INTEGER;
+      result.add_last ((255<<16) | (255<<8) | i*4);
+    };    
+    result
+  );
+  
+  - background:ABSTRACT_BITMAP;  
+  
+  - bg:FAST_ARRAY2(UINTEGER_8);
+    
+  - bmp_line:ABSTRACT_BMP_LINE := BMP_LINE(PIXEL_32).create 2048;
+  
+  //
+  // Width / Height
+  //
+  
+  - width_min:INTEGER  := 640;
+  
+  - height_min:INTEGER := 480;
+  
+  //
+  // Creation.
+  //  
+  
+  - init:G_EXPR <-
+  ( 
+    // Initialization bitmap.    
+    background := BITMAP(PIXEL_32).create_size (width_min,height_min);
+    bg := FAST_ARRAY2(UINTEGER_8).create (width_min>>2,height_min>>2+2);
+    TIMER.add_client Self;
+    G_RAW.create (Self.fix_height.fix_width)
+  );
+  
+  - run:G_WIN_OUT <-
+  ( 
+    G_WIN_OUT.create "Fire" with init
+  );
+  
+  - main <-
+  (     
+    // Init window.
+    VIDEO.make_size (width_min+64,height_min+64);
+    DESK.make VIDEO with (
+      G_OUT.create "Fire" justify (G_OUT.center) / init      
+    );        
+  );
+  
+  //
+  // Update position.
+  //
+  
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  ( 
+    update rac from (x,y) size (w,h);
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-  
+  ( + color:UINTEGER_32;
+   
+    clipping (x0,y0) to (x1,y1);
+    
+    (is_new).if {
+      (bg.lower2).to (bg.upper2-2) do { y:INTEGER;
+        (bg.lower1).to (bg.upper1) do { x:INTEGER;        
+          color := palette.item (bg.item (x,y));
+          bmp_line.put color to (x<<2);        
+          bmp_line.put color to (x<<2+1);        
+          bmp_line.put color to (x<<2+2);        
+          bmp_line.put color to (x<<2+3);        
+        };
+        background.line_h_hard (0,y<<2)   until x_max image bmp_line offset 0;
+        background.line_h_hard (0,y<<2+1) until x_max image bmp_line offset 0;
+        background.line_h_hard (0,y<<2+2) until x_max image bmp_line offset 0;
+        background.line_h_hard (0,y<<2+3) until x_max image bmp_line offset 0;
+      };
+    };
+    put_bitmap background to (0,0);
+  );
+  
+  //
+  // Events.
+  //
+    
+  - receive msg:EVENT <-
+  ( + evt_time:EVENT_TIMER;
+    + evt_mouse:EVENT_MOUSE;
+    + win:AREA;   
+    
+    evt_mouse ?= msg;
+    (evt_mouse != NULL).if {
+      win := DESK.get_object (evt_mouse.x_current,evt_mouse.y_current);
+      (win != Self).if {
+        DESK.receive msg;
+      };
+    };
+    
+    evt_time ?= msg;    
+    ((evt_time != NULL) && {evt_time.destination = NULL}).if {      
+      step_time;
+      step_time;
+      is_new := TRUE;
+      refresh;
+      is_new := FALSE;
+    };    
+  );
+  
+  - step_time <-
+  ( + col,col0,col1,col2:UINTEGER_32;    
+        
+    0.to 10 do { x:INTEGER;
+      bg.put 255 to (bg.count1.random_upper%bg.upper1,bg.upper2);
+      bg.put 0 to (bg.count1.random_upper%bg.upper1,bg.upper2);
+    };
+    
+    (bg.upper2).downto (bg.lower2+2) do { y:INTEGER;
+      (bg.lower1+2).to (bg.upper1-2) do { x:INTEGER;
+        col0 := bg.item (x,y);
+        col1 := bg.item (x-1/*-2.random_upper*/,y-1);
+        col2 := bg.item (x+1/*+2.random_upper*/,y-1);        
+        col := ((col0 << 1) + col1 + col2) / 4;
+        bg.put (col.to_uinteger_8) to (x,y-1);        
+      };      
+    };        
+  );
+    
+  - is_new:BOOLEAN;

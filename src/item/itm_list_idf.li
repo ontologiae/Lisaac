@@ -41,20 +41,20 @@ Section Public
   // Data
   //
 
-  + list_name:FAST_ARRAY[STRING_CONSTANT];
+  + list_name:FAST_ARRAY(STRING_CONSTANT);
 
   //
   // Constructor
   //
 
-  - create p:POSITION with lst:FAST_ARRAY[STRING_CONSTANT] :SELF <-
+  - create p:POSITION with lst:FAST_ARRAY(STRING_CONSTANT) :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p with lst;
     result
   );
   
-  - make p:POSITION with lst:FAST_ARRAY[STRING_CONSTANT] <-
+  - make p:POSITION with lst:FAST_ARRAY(STRING_CONSTANT) <-
   (
     position  := p;
     list_name := lst;

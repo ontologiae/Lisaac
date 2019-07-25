@@ -123,7 +123,7 @@ Section Public
   // Comparaison.
   //
   
-  - '==' Right 60 other:EXPR :BOOLEAN <-
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-
   ( + p:INTEGER_CST;
     p ?= other;
     (p != NULL) && {value = p.value} && {static_type = p.static_type}
@@ -135,7 +135,7 @@ Section Public
 
   - cast_type p:TYPE_FULL <-
   (
-    ? { p.raw != type_integer };
+   // ? { p.raw != type_integer };
     static_type := p;
     check_type;
   );

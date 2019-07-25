@@ -22,8 +22,7 @@ Section Header
   
   + name    := TYPE_FULL;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
+  - copyright := "2003-2007 Benoit Sonntag";
   
   - author  := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment := "Type with attribute flags.";
@@ -32,32 +31,32 @@ Section Inherit
   
   - parent_any:ANY := ANY;
   
-Section Private
+Section TYPE, TYPE_FULL // Private after fuck bug 
     
-  + parent_type:TYPE;
+  + the_parent_type:TYPE; // BSBS: Passer en héritage + Insert mode.
   
 Section TYPE, TYPE_FULL
   
-  - get_with flg:UINTEGER_8 :TYPE_FULL <- parent_type.get_with flg;
+  - get_with flg:UINTEGER_8 :TYPE_FULL <- the_parent_type.get_with flg;
   
 Section Public  
   
-  - get_slot n:STRING_CONSTANT :SLOT <- parent_type.get_slot n;
+  - get_slot n:STRING_CONSTANT :SLOT <- the_parent_type.get_slot n;
     
   - hash_code:INTEGER <- raw.name.hash_code;
   
-  - size:INTEGER <- parent_type.size;
+  - size:INTEGER <- the_parent_type.size;
   
-  - prototype:PROTOTYPE <- parent_type.prototype;
+  - prototype:PROTOTYPE <- the_parent_type.prototype;
   
-  - is_sub_type other:TYPE_FULL :BOOLEAN <- parent_type.is_sub_type (other.raw);
+  - is_sub_type other:TYPE_FULL :BOOLEAN <- the_parent_type.is_sub_type (other.raw);
       
-  - slot_run:FAST_ARRAY[SLOT] <- parent_type.slot_run;
+  - slot_run:FAST_ARRAY(SLOT) <- the_parent_type.slot_run;
   
-  - is_late_binding:BOOLEAN <- parent_type.is_late_binding;
+  - is_late_binding:BOOLEAN <- the_parent_type.is_late_binding;
 
 Section TYPE
-    
+      
   + flag:UINTEGER_8;
   // 7 6 5 4 3 2 1 0
   //     | | | | | +- 0:Reference / 1:Expanded
@@ -72,6 +71,9 @@ Section TYPE
   //
   
   - create typ:TYPE with code:UINTEGER_8 :SELF <-
+  [ 
+    -? {typ != NULL}; 
+  ]
   ( + result:SELF;
     
     result := clone;
@@ -81,15 +83,17 @@ Section TYPE
   
   - make typ:TYPE with code:UINTEGER_8 <-
   (
-    parent_type := typ;
+    the_parent_type := typ;
     flag := code;       
     ? {is_expanded -> (! is_strict)};
   );
   
 Section Public
-
-  - raw:TYPE <- parent_type;
   
+  - is_parameter_type:BOOLEAN <- FALSE;
+  
+  - raw:TYPE <- the_parent_type;
+   
   //
   // Set.
   //
@@ -108,18 +112,19 @@ Section Public
   - is_expanded          :BOOLEAN <- (flag & expanded_bit        ) != 0;
   - is_default_expanded  :BOOLEAN <- (flag & default_expanded_bit) != 0;
   - is_strict            :BOOLEAN <- (flag & strict_bit          ) != 0;
-  - is_default_strict    :BOOLEAN <- (flag & default_expanded_bit) != 0;
+  - is_default_strict    :BOOLEAN <- (flag & default_strict_bit  ) != 0;
   - is_expanded_ref      :BOOLEAN <- (flag & expanded_ref_bit    ) != 0;
   - is_generic           :BOOLEAN <- (flag & generic_bit         ) != 0;
   
   - is_expanded_c:BOOLEAN <- (is_expanded) && {raw.type_c != NULL};
   
-  - '==' Right 60 other:TYPE_FULL :BOOLEAN <-
-  (
-    (Self = other) || {(raw = other.raw) && {(flag & 01111b) = (other.flag & 01111b)}}
+  - Self:SELF '==' Right 60 other:OBJECT :BOOLEAN <-  
+  ( + same:SELF;
+    same ?= other;    
+    (same != NULL) && {
+      (Self = same) || {(raw = same.raw) && {(flag & 01111b) = (same.flag & 01111b)}}
+    }
   );
-  
-  - '!==' Right 60 other:TYPE_FULL :BOOLEAN <- ! (Self == other);
   
   - append_name_in buffer:STRING <-
   (
@@ -129,16 +134,17 @@ Section Public
     (is_expanded).if {
       buffer.append "Expanded ";
     };    
-    buffer.append (raw.name);
+    raw.append_name_in buffer;
+  //  buffer.append (raw.name);
   );
   
   //
   // Operation.
   //
   
-  - '+' other:UINTEGER_8 :TYPE_FULL <- get_with (flag | other);
+  - Self:SELF '+' other:UINTEGER_8 :TYPE_FULL <- get_with (flag | other);
   
-  - '-' other:UINTEGER_8 :TYPE_FULL <- get_with (flag & ~other);
+  - Self:SELF '-' other:UINTEGER_8 :TYPE_FULL <- get_with (flag & ~other);
   
   - to_strict:TYPE_FULL <-
   ( + result:TYPE_FULL;
@@ -165,7 +171,15 @@ Section Public
   //
   // Variable product.
   //
-  
+
+  - new_local p:POSITION
+      name    n:STRING_CONSTANT
+      style   s:CHARACTER
+      result  r:BOOLEAN         :LOCAL <-
+  (
+    LOCAL.create p name n style s type Self result r
+  );
+
   - new_local p:POSITION name n:STRING_CONSTANT style s:CHARACTER :LOCAL <-
   (
     LOCAL.create p name n style s type Self
@@ -188,13 +202,14 @@ Section Public
   );  
 
   - get p:POSITION result n:INTEGER :LOCAL <-
-  (     
+  ( + intern:STRING_CONSTANT;
     string_tmp.copy (ALIAS_STR.keyword_result);
     (n != 0).if {
       string_tmp.add_last '_';
       n.append_in string_tmp;
     };
-    new_local p name (ALIAS_STR.get string_tmp) style '+'
+    intern := ALIAS_STR.get string_tmp;    
+    new_local p name intern style '+'
   );  
     
   //
@@ -219,22 +234,27 @@ Section Public
         
     (other == Self).if {
       result := TRUE;
-    } else {      
-      (other != NULL).if {
-	(is_strict).if {
-	  // A: Strict.
-	  result := other.raw = TYPE_NULL;
-	}.elseif {is_expanded} then {
-	  // A: Expanded.
-	  result := 
-	  ((other.is_strict)    && {raw == other.raw      }) ||
-	  {(raw = type_boolean) && {other.is_sub_type Self}} ||
-	  {(raw = type_pointer) && {other.raw = TYPE_NULL }};	  
-	} else {
-	  // A: Reference.
-	  result := ((! other.is_expanded) || {raw = type_block}) && {other.is_sub_type Self}; 
-	};	
-      };
+    } else {            
+      (is_strict).if {
+        // A: Strict.
+        result := other.raw = TYPE_NULL;
+      }.elseif {is_expanded} then {
+        // A: Expanded.
+        result := 
+        ((other.is_strict)    && {raw ~= other.raw      }) ||
+        {(raw = type_boolean) && {other.is_sub_type Self}} ||
+        {(raw = type_pointer) && {other.raw = TYPE_NULL }};	  
+      } else {
+        // A: Reference.
+        result := 
+        (
+          (! other.is_expanded) || 
+          { + tb:TYPE_BLOCK;
+            tb ?= raw;            
+            (tb != NULL)
+          }
+        ) && {other.is_sub_type Self}; 
+      };	
     };
     result
   );
@@ -242,29 +262,32 @@ Section Public
   //
   // Import / Export manager.
   //
-  
-  - last_cast_name:STRING := STRING.create 32;
-  
-  - is_export_to t:TYPE_FULL :BOOLEAN <- 
-  (         
-    is_cast (ALIAS_STR.slot_to) to t in (prototype.export_list)
-  );
+    
+  - is_export_to t:TYPE_FULL :BOOLEAN <- raw.is_export_to t;
       
-  - is_import_to t:TYPE_FULL :BOOLEAN <-
-  (     
-    is_cast (ALIAS_STR.slot_from) to t in (prototype.import_list)
-  );
+  - is_import_to t:TYPE_FULL :BOOLEAN <- raw.is_import_to t;
   
   //
   // Default value.
   //
-  
+  + recursivity_test:BOOLEAN;
   - default_value p:POSITION :EXPR <- 
   ( + result:EXPR;
     
     ((prototype != NULL) && {prototype.default_value != NULL}).if {
-      // Prototype User definition.	      
-      result := prototype.default_value.to_run_expr;
+      // Prototype User definition.	            
+      (recursivity_test).if {
+        crash;
+        POSITION.put_error semantic text 
+        "Recursivity without end (default used default, ...).";
+        list_current.position.put_position;
+        prototype.default_value.position.put_position;
+        POSITION.send_error;        
+      } else {
+        recursivity_test := TRUE;
+        result := prototype.default_value.to_run_expr;
+        recursivity_test := FALSE;
+      };
     } else {
       (is_expanded).if {      
 	// Copy of model prototype.
@@ -283,7 +306,7 @@ Section Public
  
   - genere_declaration buffer:STRING <-
   ( 
-    (is_expanded).if {
+    (is_expanded).if {      
       raw.put_expanded_declaration buffer;
     }.elseif {is_strict} then {
       raw.put_reference_declaration buffer;
@@ -294,8 +317,8 @@ Section Public
       
   - genere_star_declaration buffer:STRING <-
   ( 
-    ((! is_expanded) || {is_expanded_ref}).if {
-      raw.put_reference_star_declaration buffer;
+    ((! is_expanded) || {is_expanded_ref}).if {      
+      raw.put_reference_star_declaration buffer;      
     };
   );
   
@@ -366,32 +389,3 @@ Section Public
     string_tmp.print;
   );
   
-Section Private
-  
-  - is_cast n:STRING_CONSTANT to t:TYPE_FULL in lst:FAST_ARRAY[ITM_TYPE_MONO] :BOOLEAN <-
-  ( + j:INTEGER;
-    + result:BOOLEAN;
-    + old_self_up:TYPE;
-    
-    (lst != NULL).if {
-      old_self_up := ITM_TYPE_SELF.self_up;
-      ITM_TYPE_SELF.set_self_up raw;
-      
-      j := lst.lower;
-      {
-	(j <= lst.upper) && 
-	{lst.item j.to_run != t}
-      }.while_do {
-	j := j + 1;
-      };
-      
-      ITM_TYPE_SELF.set_self_up old_self_up;
-      
-      (j <= lst.upper).if {
-	result := TRUE;
-	last_cast_name.copy n;
-	lst.item j.append_cast_name_in last_cast_name;	
-      };
-    };
-    result
-  );

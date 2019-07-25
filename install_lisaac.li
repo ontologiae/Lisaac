@@ -33,26 +33,28 @@ Section Inherit
   
 Section Private  
   
+  - is_release:BOOLEAN := TRUE;
+  
   //
   // Independance File System 
   //
-  
+    
   - open_read n:ABSTRACT_STRING :POINTER <- 
-  ( + buf:NATIVE_ARRAY[CHARACTER];
+  ( + buf:NATIVE_ARRAY(CHARACTER);
     string_tmp.copy n;
     buf := string_tmp.to_external;
     `fopen((char*)@buf,"rb")`:(POINTER)    
   );
 
   - open_write n:ABSTRACT_STRING :POINTER <- 
-  ( + buf:NATIVE_ARRAY[CHARACTER];
+  ( + buf:NATIVE_ARRAY(CHARACTER);
     string_tmp.copy n;
     buf := string_tmp.to_external;
     `fopen((char*)@buf,"wb")`:(POINTER)
   );
   
   - read f:POINTER in buf:STRING size sz:INTEGER :INTEGER <-   
-  ( + ptr:NATIVE_ARRAY[CHARACTER];
+  ( + ptr:NATIVE_ARRAY(CHARACTER);
     + result:INTEGER;
     ptr := buf.to_external;    
     result := `fread((void *)(@ptr),(size_t)(1), (size_t)(@sz),(FILE*)(@f))`:(INTEGER);
@@ -61,7 +63,7 @@ Section Private
   );
 
   - write f:POINTER with buf:STRING size sz:INTEGER :INTEGER <-   
-  ( + ptr:NATIVE_ARRAY[CHARACTER];
+  ( + ptr:NATIVE_ARRAY(CHARACTER);
     + result:INTEGER;
     ptr := buf.to_external;    
     result := `fwrite((void *)(@ptr),(size_t)(1), (size_t)(@sz),(FILE*)(@f))`:(INTEGER);
@@ -79,7 +81,7 @@ Section Private
   );
 
   - make_file new_path:STRING :BOOLEAN <-
-  ( + p:NATIVE_ARRAY[CHARACTER];
+  ( + p:NATIVE_ARRAY(CHARACTER);
     + stream:POINTER;
     + result:BOOLEAN;
     
@@ -92,8 +94,11 @@ Section Private
   );
   
   //
+  // Tools management.
   //
-  //
+  
+  - string_tmp:STRING := STRING.create 256;
+  - string_tmp2:STRING := STRING.create 256;
   
   - error st:ABSTRACT_STRING <-
   (
@@ -103,20 +108,25 @@ Section Private
   );
   
   - step_count:INTEGER;  
-  - step_max  :INTEGER := 10;
   
-  - title str:STRING_CONSTANT <-
+  - title str:ABSTRACT_STRING count mx:INTEGER <-
   (
     step_count := step_count + 1;
-    "Step ".print;
-    step_count.print;
-    '/'.print;
-    step_max.print;
-    " : ".print;
-    str.print;
     '\n'.print;
-    1.to (str.count + 11) do { j:INTEGER;
-      "=".print;
+    (mx = 0).if {
+      string_tmp2.copy str;
+    } else {
+      string_tmp2.copy "Step ";
+      step_count.append_in string_tmp2;
+      string_tmp2.add_last '/';
+      mx.append_in string_tmp2;
+      string_tmp2.append " : ";
+      string_tmp2.append str;
+    };
+    string_tmp2.add_last '\n';
+    string_tmp2.print;
+    1.to (string_tmp2.count-1) do { j:INTEGER;
+      '='.print;
     };
     '\n'.print;
   );    
@@ -129,6 +139,32 @@ Section Private
     {(result != 'y') && {result != 'n'}}.while_do {
       result := IO.read_character;
     };
+    IO.read_character;
+    result
+  );
+  
+  - menu t:ABSTRACT_STRING text txt:ABSTRACT_STRING count n:INTEGER :INTEGER <-
+  ( + result,tmp:INTEGER;
+    '\n'.print;
+    title t count 0;
+    txt.print;
+    "\n\nChoice:\n".print;
+    result := -1;
+    {
+      IO.read_line;
+      (IO.last_string.is_integer).if {
+        tmp := IO.last_string.to_integer;
+        (tmp.in_range 0 to n).if {
+          result := tmp;
+        } else {          
+          "Incorrect range [0-".print;
+          n.print;
+          "]\n".print;
+        };
+      } else {
+        "Incorrect number.\n".print;
+      };
+    }.do_while {result = -1};
     result
   );
   
@@ -155,12 +191,14 @@ Section Private
         // Update configuration.
         old_buffer := STRING.create 200;
         1.to (new_text.occurrences '\n') do { j:INTEGER;
-          {input.item index != '\n'}.while_do {
+          {(index < input.upper) && {input.item index != '\n'}}.while_do {
             old_buffer.add_last (input.item index);
             input.remove index;
           };
-          old_buffer.add_last (input.item index);
-          input.remove index;
+          (index <= input.upper).if {
+            old_buffer.add_last (input.item index);
+            input.remove index;
+          };
         };
         (old_buffer == new_text).if {
           "' file has no need to change. Current version is:\n".print;
@@ -199,6 +237,18 @@ Section Private
     };
   );
   
+  - execute str:ABSTRACT_STRING :BOOLEAN <-  
+  ( + result:BOOLEAN;
+    (ENVIRONMENT.execute_command str != 0).if {
+      "Error: execute `".print;
+      str.print;
+      "'\n".print;
+    } else {
+      result := TRUE;
+    };
+    result
+  );    
+  
   //
   // Global variable.
   //
@@ -207,7 +257,11 @@ Section Private
   - path_home   :STRING;
   - shell       :STRING;
   - system      :STRING_CONSTANT;
-  
+  - file        :STRING;    
+  - comment     :STRING_CONSTANT;
+  - path        :STRING_CONSTANT;
+  - path_next   :STRING_CONSTANT;
+    
   //
   // Constant for environment variable & path.
   //
@@ -241,15 +295,9 @@ Section Private
   // Detect system and install environment variables.
   //
   
-  - install_variable <-
-  ( + std_file  :POINTER;
-    + new_text  :STRING;
-    + file      :STRING;    
-    + comment   :STRING_CONSTANT;
-    + path      :STRING_CONSTANT;
-    + path_next :STRING_CONSTANT;
-    + len       :INTEGER;
-                
+  - detect_system <-
+  ( + std_file  :POINTER;    
+                    
     //
     // Detect system
     //    
@@ -305,31 +353,41 @@ Section Private
     
     "  System detect: ".print;
     system.print;
-    '\n'.print;
+  );
+    
+  - install_variable <-    
+  ( + new_text  :STRING;
+            
     (system != system_unknown).if {
+      title "Fix target variable in `make.lip'." count 5;
       (system = system_windows).if {
-        update "path.li" idf "  + target" with "  + target := WINDOWS;\n" confirmation FALSE;
+        ENVIRONMENT.execute_command "copy make.lip.sample make.lip";            
+        update "make.lip" idf "  + target" with 
+        "  + target:STRING := \"windows\";\n" confirmation FALSE;        
+        //
         "\n  Note: Use `mingw' for Windows.\n".print; 
       } else {
-        update "path.li" idf "  + target" with "  + target := UNIX;\n" confirmation FALSE;
-        //
-        "\n  Search path for `libX11.a' : (please wait...)\n".print;
-        ENVIRONMENT.execute_command "find /usr/lib/ -name \"libX11.a\" 2> /dev/null > xlib_path.txt";
-        std_file := open_read "xlib_path.txt";	
-        len := file_size std_file;
-        (len = 0).if {
-          " Error : `libX11.a' not found !\n\n".print;
-        } else {
-          new_text := STRING.create len;
-          read std_file in new_text size len;	  	  	  
-          new_text.remove_last 10;
-          new_text.prepend "  + path_lib_x11 := \"";
-          new_text.append "\";\n";
-          update "path.li" idf "  + path_lib_x11" with new_text confirmation FALSE;
-        };
-        close std_file;
-        ENVIRONMENT.execute_command "rm -f xlib_path.txt";
+        ENVIRONMENT.execute_command "cp make.lip.sample make.lip";            
+        update "make.lip" idf "  + target" with 
+        "  + target:STRING := \"unix\";\n" confirmation FALSE;        
       };      
+      (is_release).if_false {
+        "\n  Directory for library repository: ".print;
+        IO.read_line;                 
+        '\n'.print;
+        string_tmp2.copy "  + lib_extra:STRING := \"";
+        string_tmp2.append (IO.last_string);
+        (string_tmp2.last = '/').if {
+          string_tmp2.add_last '*';
+        } else {
+          string_tmp2.append "/*";
+        };
+        string_tmp2.append "\";\n";
+        update "make.lip" idf "  + lib_extra" with 
+        string_tmp2 confirmation TRUE;
+        update "make.lip" idf "  + lib_unstable" with 
+        "  + lib_unstable:STRING := \"\";\n" confirmation FALSE;
+      };
     };
     '\n'.print;    
         
@@ -337,7 +395,7 @@ Section Private
     // Installation environment variable
     //
         
-    title "Installation of environment variables.";
+    title "Installation of environment variables." count 5;
     
     (system = system_unknown).if {
       // Fail.
@@ -359,12 +417,9 @@ Section Private
     // Installation Library path
     //
         
-    title "Installation of Lisaac library path.";
+    title "Installation of Lisaac library path." count 5;
     new_text := STRING.create_from_string path_current;
-    (system = system_windows).if {
-      //      (new_text.item 2 = ':').if {
-      //	new_text.remove_first 2;
-      //      };
+    (system = system_windows).if {      
       new_text.replace_all '\\' with '/';
     };
     new_text.prepend "#define LISAAC_DIRECTORY \"";
@@ -376,7 +431,7 @@ Section Private
   );
   
   //
-  // Install for Emacs.
+  // Install Editor.
   //
   
   - lisaac_mode_comment :STRING_CONSTANT := ";; **** LISAAC MODE ****";
@@ -384,6 +439,7 @@ Section Private
   - lisaac_mode_path_end:STRING_CONSTANT := "/editor/emacs/\" load-path))\n"; 
   - lisaac_mode         :STRING_CONSTANT := 
   "(add-to-list 'auto-mode-alist '(\"\\\\.li\\\\'\" . lisaac-mode))\n\
+  \(add-to-list 'auto-mode-alist '(\"\\\\.lip\\\\'\" . lisaac-mode))\n\
   \(autoload 'lisaac-mode \"lisaac-mode\" \"Major mode for Lisaac Programs\" t)\n\n";
     
   - lisaac_vim:STRING_CONSTANT :=
@@ -393,55 +449,42 @@ Section Private
   \au BufNewFile,BufRead *.li setf lisaac\n";
     
   - install_emacs <-
-  ( + char:CHARACTER;
-    + file_name, new_text:STRING;
-    
-    char := question "  Do you want to install the `lisaac-mode' for Emacs editor ?";
-    (char = 'n').if {
-      "  Not install `lisaac-mode' for Emacs editor.\n\n".print;
+  ( + file_name, new_text:STRING;
+        
+    file_name := STRING.create 100;
+    (path_home = NULL).if {
+      file_name.copy "C:";
     } else {
-      file_name := STRING.create 100;
-      (path_home = NULL).if {
-        file_name.copy "C:";
-      } else {
-        file_name.copy path_home;
-      };
-      file_name.append "/.emacs";
-      new_text := STRING.create_from_string lisaac_mode_comment;
-      new_text.append lisaac_mode_path;
-      new_text.append path_current;
-      (system = system_windows).if {
-        new_text.replace_all '\\' with '/';
-      };
-      new_text.append lisaac_mode_path_end;
-      new_text.append lisaac_mode;
-      update file_name idf lisaac_mode_comment with new_text confirmation TRUE;
+      file_name.copy path_home;
     };
+    file_name.append "/.emacs";
+    new_text := STRING.create_from_string lisaac_mode_comment;
+    new_text.append lisaac_mode_path;
+    new_text.append path_current;
+    (system = system_windows).if {
+      new_text.replace_all '\\' with '/';
+    };
+    new_text.append lisaac_mode_path_end;
+    new_text.append lisaac_mode;
+    update file_name idf lisaac_mode_comment with new_text confirmation TRUE;
   );
 
   - install_kate <-
-  ( + char:CHARACTER;
-    
+  ( 
     (system = system_windows).if {
-      "  Sorry, not Kate editor for windows.\n\n".print;
+      "  Sorry, not Kate editor for windows.".print;
     } else {
-      char := question "  Do you want to install the `lisaac_v2.xml' for Kate editor ?";
-      (char = 'n').if {
-        "  Not install `lisaac_v2.xml' for Kate editor.\n\n".print;
+      ENVIRONMENT.execute_command "mkdir -p ~/.kde/share/apps/katepart/syntax";            
+      string_tmp.copy "cp -f editor/kate/lisaac_v2.xml ~/.kde/share/apps/katepart/syntax/.";
+      "  `".print;
+      string_tmp.print;
+      "'\t".print;
+      (ENVIRONMENT.execute_command string_tmp != 0).if {	
+        "\n  Sorry, auto-install fail !\n\
+        \  You can to read the `editor/kate/README' file.".print;
       } else {
-        ENVIRONMENT.execute_command "mkdir -p ~/.kde/share/apps/katepart/syntax";            
-        string_tmp.copy "cp -f editor/kate/lisaac_v2.xml ~/.kde/share/apps/katepart/syntax/.";
-        "  `".print;
-        string_tmp.print;
-        "'\t".print;
-        (ENVIRONMENT.execute_command string_tmp != 0).if {	
-          "\n  Sorry, auto-install fail !\n\
-          \  You can to read the `editor/kate/README' file.\n".print;
-        } else {
-          "OK.\n".print;  
-        };	
-      };
-      '\n'.print;
+        "OK.".print;  
+      };	
     };
   );
 
@@ -452,18 +495,53 @@ Section Private
     // TODO: Fix this since gvim exists on windows system
     (system = system_windows).if {
       "  Sorry, not Vim editor for windows.\n\n".print;
-    } else {
-      char := question "  Do you want to install the Lisaac support for Vim editor ?"; 
-      (char = 'n').if {
-        "  Not install `lisaac.vim' for Vim editor.\n\n".print;
-      } else {
-        ENVIRONMENT.execute_command "mkdir -p ~/.vim/syntax";
-        ENVIRONMENT.execute_command "mkdir -p ~/.vim/indent";
-        ENVIRONMENT.execute_command "mkdir -p ~/.vim/backup"; 
-        ENVIRONMENT.execute_command "mkdir -p ~/.vim/temp"; 
+    } else {      
+      ENVIRONMENT.execute_command "mkdir -p ~/.vim/syntax";
+      ENVIRONMENT.execute_command "mkdir -p ~/.vim/indent";
+      ENVIRONMENT.execute_command "mkdir -p ~/.vim/backup"; 
+      ENVIRONMENT.execute_command "mkdir -p ~/.vim/temp"; 
         
-        // Syntax hilightning support
-        string_tmp.copy "cp -f editor/vim/syntax/lisaac.vim ~/.vim/syntax/";
+      // Syntax hilightning support
+      string_tmp.copy "cp -f editor/vim/syntax/lisaac.vim ~/.vim/syntax/";
+      "  `".print;
+      string_tmp.print;
+      "'\t".print;
+      (ENVIRONMENT.execute_command string_tmp != 0).if {	
+        "\n  Sorry, auto-install fail !\n\
+        \  You can read the `editor/vim/install_vim_plugin.sh' file.\n".print;
+      } else {
+        "OK.\n".print;  
+      };
+
+      // Syntax indentation support
+      string_tmp.copy "cp -f editor/vim/indent/lisaac.vim ~/.vim/indent/";
+      "  `".print;
+      string_tmp.print;
+      "'\t".print;
+      (ENVIRONMENT.execute_command string_tmp != 0).if {	
+        "\n  Sorry, auto-install fail !\n\
+        \  You can read the `editor/vim/install_vim_plugin.sh' file.\n".print;
+      } else {
+        "OK.\n".print;  
+      };
+
+      // Install ~/.vimrc file
+      char := question
+      "\n  It is recommanded to install the default vimrc file provided by the   \n\
+      \  lisaac installer.                                                     \n\n\
+      \  If you choose not doing this action, your vimrc will only be updated    \n\
+      \  Do you want to install the default config provided by lisaac installer ?";        
+      (char = 'n').if {
+        file_name := STRING.create 100;
+        (path_home = NULL).if {
+          file_name.copy "C:";
+        } else {
+          file_name.copy path_home;
+        };
+        file_name.append "/.vimrc";	
+        update file_name idf lisaac_vim with lisaac_vim confirmation TRUE;
+      } else {
+        string_tmp.copy "cp -f editor/vim/vimrc ~/.vimrc";
         "  `".print;
         string_tmp.print;
         "'\t".print;
@@ -472,51 +550,38 @@ Section Private
           \  You can read the `editor/vim/install_vim_plugin.sh' file.\n".print;
         } else {
           "OK.\n".print;  
-        };
-
-        // Syntax indentation support
-        string_tmp.copy "cp -f editor/vim/indent/lisaac.vim ~/.vim/indent/";
-        "  `".print;
-        string_tmp.print;
-        "'\t".print;
-        (ENVIRONMENT.execute_command string_tmp != 0).if {	
-          "\n  Sorry, auto-install fail !\n\
-          \  You can read the `editor/vim/install_vim_plugin.sh' file.\n".print;
-        } else {
-          "OK.\n".print;  
-        };
-
-        // Install ~/.vimrc file
-        char := question
-        "\n  It is recommanded to install the default vimrc file provided by the   \n\
-        \  lisaac installer.                                                     \n\n\
-        \  If you choose not doing this action, your vimrc will only be updated    \n\
-        \  Do you want to install the default config provided by lisaac installer ?";        
-        (char = 'n').if {
-          file_name := STRING.create 100;
-          (path_home = NULL).if {
-            file_name.copy "C:";
-          } else {
-            file_name.copy path_home;
-          };
-          file_name.append "/.vimrc";	
-          update file_name idf lisaac_vim with lisaac_vim confirmation TRUE;
-        } else {
-          string_tmp.copy "cp -f editor/vim/vimrc ~/.vimrc";
-          "  `".print;
-          string_tmp.print;
-          "'\t".print;
-          (ENVIRONMENT.execute_command string_tmp != 0).if {	
-            "\n  Sorry, auto-install fail !\n\
-            \  You can read the `editor/vim/install_vim_plugin.sh' file.\n".print;
-          } else {
-            "OK.\n".print;  
-          };
         };
       };
-      '\n'.print;
     };
   );
+  
+  - install_hippoedit <-
+  (
+    (system = system_windows).if {
+      string_tmp.copy 
+      "copy editor/hippoedit/lisaac_spec.xml \"C:\\Program Files\\HippoEDIT\\data\\syntax\"";
+      //
+      "  Execute: `".print;
+      string_tmp.print;
+      "'\t".print;        
+      (ENVIRONMENT.execute_command string_tmp != 0).if {	
+        "Fail!".print;
+      } else {
+        "Ok.".print;          
+      };
+    } else {
+      "  Sorry, Hippoedit editor is only for Windows.".print;
+    };
+  );
+   
+  - install_eclipse <-
+  ( 
+    " Prerequisite: you need the Eclipse package installed.\n\
+    \ Use the Eclipse Update Manager to install the Lisaac Mode with the URL:\n\
+    \    http://isaacproject.u-strasbg.fr/eclipse/update/\n\n\
+    \ Please, read `editor/eclipse/README' file for further information.\n".print;  
+  );
+ 
   
   //
   // Install Compiler
@@ -540,39 +605,181 @@ Section Private
     '\n'.print;
   );    
   
+  - compile_shorter <-
+  ( + rm,compile:STRING_CONSTANT;
+    
+    "  Compile `shorter' tools for your system (please wait ...)\n".print;
+    (system = system_windows).if {
+      rm := "del bin\\shorter.c";
+      compile := "bin\\lisaac src/make.lip -shorter -q -boost -o bin/shorter -gcc -Isrc/.";
+    } else {
+      rm := "rm bin/shorter.c";
+      compile := "bin/lisaac src/make.lip -shorter -q -boost -o bin/shorter -gcc -Isrc/.";
+    };
+    (ENVIRONMENT.execute_command compile = 0).if {    
+      "  Shorter ok!\n".print;      
+      ENVIRONMENT.execute_command rm; 
+    } else {
+      "  Sorry, `shorter' not ready...\n".print;
+    };
+    '\n'.print;
+  );
+  
   //
   // Build lib doc.
   //
   
   - build_lib <-
-  ( + char:CHARACTER;
-        
-    char := question "  Do you want to build a HTML librarie documentation ?";
-    (char = 'n').if {
-      "  Not install librarie documentation.\n\n".print;
-    } else {      
-      string_tmp.clear;
-      (system = system_windows).if {
-        string_tmp.copy "bin\\shorter -r -f html lib -o lib_html";
-      } else {
-        string_tmp.copy "bin/shorter -r -f html lib -o lib_html";
-      };      
-      "  Execute: `".print;
-      string_tmp.print;
-      "'\n".print;
-      ENVIRONMENT.execute_command string_tmp;		
-      "  OK, you found this documentation in `lib_html/index.html'\n".print;  
+  (             
+    string_tmp.clear;    
+    (system = system_windows).if {
+      ENVIRONMENT.execute_command "mkdir doc\\html";		
+      string_tmp.copy "bin\\shorter -d -f belinda lib\\standard -o doc\\html";
+      // BSBS: A ajouter internal mais sur le meme run shorter
+    } else {
+      ENVIRONMENT.execute_command "mkdir -p doc/html";		
+      string_tmp.copy "bin/shorter -d -f belinda lib/standard -o doc/html";
+    };      
+    "  Execute: `".print;
+    string_tmp.print;
+    "'\t".print;
+    (ENVIRONMENT.execute_command string_tmp = 0).if {
+      "  OK\n\n\
+      \  Note: you'll find this documentation in `doc/html/index.html'".print;  
+    } else {
+      "  Fail!".print;
     };
-    '\n'.print;
   );
   
-  - string_tmp:STRING := STRING.create 256;
+  - user_install <-
+  ( + choice,choice2:INTEGER;
+    
+    {
+      choice := menu "Menu." text 
+      "1- Compiler & Shorter Installation.\n\
+      \2- Editor Installation.\n\    
+      \3- Build the librarie documentation (HTML).\n\
+      \0- Exit." count 3;
+          
+      choice      
+      .when 1 then {          
+        step_count := 0;
+        
+        install_variable;      
+        
+        title "Compilation of Lisaac compiler." count 5; 
+        compile_file "lisaac";
+        
+        title "Compilation of Shorter tool." count 5; 
+        
+        compile_shorter;
+        
+        "Welcome to the Lisaac World !                           \n\
+        \=============================                           \n\
+        \  Installation successfull.                             \n\
+        \  Run `lisaac' to compile.                              \n".print;
+        "*---------------------------------------------------------*\n\
+        \| Note: You'll have to reboot or reloaded environnement   |\n\
+        \|       to acknowledge the changes.                       |\n\
+        \|    OR for bash users, doing a `source ~/.bashrc' should |\n\
+        \|       do the job.                                       |\n\
+        \*---------------------------------------------------------*\n".print;
+
+      }
+      .when 2 then {
+        {
+          choice2 := menu "Editor mode for Lisaac." text
+          "1- Emacs.\n\
+          \2- Vim.\n\
+          \3- Kate.\n\
+          \4- Hippoedit.\n\
+          \5- eFTE.\n\
+          \6- Eclipse.\n\
+          \0- Exit menu." count 6;
+          choice2          
+          .when 1 then {
+            title "Installation of `lisaac-mode' for Emacs." count 0;
+            install_emacs;      
+          }
+          .when 2 then {
+            title "Installation of `lisaac.vim' for Vim." count 0;
+            install_vim;      
+          }
+          .when 3 then {
+            title "Installation of `lisaac_v2.xml' for Kate." count 0;
+            install_kate;      
+          }
+          .when 4 then {
+            title "Installation of `lisaac_spec.xml' for Hippoedit." count 0;
+            install_hippoedit;
+          }        
+          .when 5 then {
+            title "Installation of eFTE mode." count 0;
+            "  Note: eFTE Lisaac mode is native.\n\
+            \        See: `http://efte.cowgar.com'".print;
+          }
+          .when 6 then {
+            title "Installation of Eclipse mode." count 0;
+            install_eclipse;
+          };
+        }.do_while {choice2 != 0};
+      }
+      .when 3 then {
+        title "Build the librarie documentation with Shorter (HTML format)." count 0; 
+        build_lib;
+      };
+    }.do_while {choice != 0};
+  );
   
+  - path_bin:ABSTRACT_STRING := "/usr/bin";
+  - path_doc:ABSTRACT_STRING := "/usr/share/lisaac";
+  - path_man:ABSTRACT_STRING := "/usr/share/man/man1";
+  
+  - ask_path msg:ABSTRACT_STRING default val:ABSTRACT_STRING :ABSTRACT_STRING <-
+  ( + result:ABSTRACT_STRING;
+    msg.print;
+    " [".print;
+    val.print;
+    "] ? ".print;
+    IO.read_word;
+    (IO.last_string.is_empty).if {
+      result := val;
+    } else {
+      result := IO.last_string;
+    };
+    result
+  );    
+    
+  - system_install <-
+  ( + path:ABSTRACT_STRING;
+    + create:{ (ABSTRACT_STRING,ABSTRACT_STRING,ABSTRACT_STRING,BOOLEAN); };
+    compile_file "lisaac";
+    compile_shorter;
+    build_lib;
+    create := { (msg,cpy,dft:ABSTRACT_STRING,ask:BOOLEAN); 
+      (ask).if {
+        path := ask_path msg default dft;
+      } else {
+        path := dft;
+      };
+      string_tmp.copy "mkdir -p ";
+      string_tmp.append path;
+      execute string_tmp;
+      string_tmp.copy cpy;
+      string_tmp.append path;    
+      execute string_tmp;            
+    };
+    create.value (" binary path","cp bin/lisaac ",path_bin,TRUE);
+    create.value (NULL,"cp bin/shorter ",path_bin,FALSE);
+    create.value ("Documentation path","cp -rf doc/html/* ",path_doc,TRUE);
+    create.value ("Man path","cp -rf doc/man/* ",path_man,TRUE);
+  );
+    
 Section Public
   
   - main <-
-  ( + cwd:NATIVE_ARRAY[CHARACTER];
-    
+  ( + cwd:NATIVE_ARRAY(CHARACTER);
+    + choice:INTEGER;    
     "\t\t================================\n\
     \\t\t= Auto-Install Lisaac Compiler =\n\ 
     \\t\t================================\n\n".print;
@@ -585,34 +792,24 @@ Section Public
     path_current.copy string_tmp; 
     path_home    := ENVIRONMENT.get_environment_variable "HOME";
     shell        := ENVIRONMENT.get_environment_variable "SHELL";
-        
-    title "Detection system.";
-    install_variable;
-
-    title "Installation of `lisaac-mode' for Emacs.";
-    install_emacs;      
-
-    title "Installation of `lisaac_v2.xml' for Kate.";
-    install_kate;      
-
-    title "Installation of `lisaac.vim' for Vim.";
-    install_vim;      
     
-    title "Compilation of Lisaac compiler."; 
-    compile_file "lisaac";
+    title "Detection system." count 0;
+    detect_system;
     
-    title "Compilation of Shorter tool."; 
-    compile_file "shorter";
-
-    title "Build a librarie documentation."; 
-    build_lib;
-        
-    title "Welcome to the Lisaac World !";
-    
-    "  Installation successfull.                               \n\
-    \  Run `lisaac' to compile.                              \n\n\
-    \  Note: You'll have to reboot or reloaded environnement   \n\
-    \        to acknowledge the changes.                       \n\
-    \  Note: For bash users, doing a `source ~/.bashrc' should \n\
-    \        do the job.\n".print;
+    (system != system_windows).if {
+      choice := menu "Menu." text 
+      "1- User installation.\n\
+      \2- System installation.\n\
+      \0- Exit." count 2;
+      choice
+      .when 1 then { 
+        user_install;
+      }
+      .when 2 then {
+        system_install;
+      };
+    } else {
+      user_install;
+    };    
+    "\nBye.\n\n".print;
   );

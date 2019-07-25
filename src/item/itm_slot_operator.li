@@ -1,0 +1,127 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name    := ITM_SLOT_OPERATOR;
+
+  - copyright   := "2003-2007 Benoit Sonntag";
+
+  
+  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment := "Slot item";
+  
+Section Inherit
+  
+  + parent_itm_slot:Expanded ITM_SLOT;
+  
+Section Public
+  
+  + pretty_name:STRING_CONSTANT;
+  
+  - set_pretty_name n:STRING_CONSTANT <-
+  (
+    pretty_name := n;
+  );
+  
+  //
+  // Access associativity & priority level.
+  //
+
+  + priority_and_level:INTEGER;
+
+  - associativity:STRING_CONSTANT <-
+  ( + result:STRING_CONSTANT;
+    (priority_and_level >= 0).if {
+      result := ALIAS_STR.keyword_left;
+    } else {
+      result := ALIAS_STR.keyword_right;
+    };
+    result
+  );
+  
+  - priority:INTEGER <-
+  (
+    priority_and_level.abs
+  );
+
+  - set_associativity p:STRING_CONSTANT priority l:INTEGER <-
+  (
+    (p = ALIAS_STR.keyword_left).if {
+      priority_and_level := l;
+    } else {
+      priority_and_level := -l;
+    };
+  );
+  
+  //
+  // Display.
+  //
+    
+  - pretty_name_in buffer:STRING <-
+  ( 
+    (name.has_prefix (ALIAS_STR.slot_postfix)).if {
+      buffer.append "Postfix '";
+    }.elseif {name.has_prefix (ALIAS_STR.slot_infix)} then {
+      buffer.append "Infix '";
+    } else {
+      buffer.append "Prefix '";
+    };          
+    buffer.append pretty_name;
+    buffer.add_last '\'';
+  );
+  
+Section ITM_SLOT
+  
+  - shorter_profile_intern_in buf:STRING <-
+  ( 
+    (name.has_prefix (ALIAS_STR.slot_postfix)).if {
+      argument_list.first.shorter_in buf;
+      buf.add_last ' ';
+      buf.add_last '\'';
+      put pretty_name to buf like (ALIAS_STR.short_slot);
+      buf.add_last '\'';
+      buf.add_last ' ';
+    }.elseif {name.has_prefix (ALIAS_STR.slot_infix)} then {
+      argument_list.first.shorter_in buf;
+      buf.add_last ' ';
+      buf.add_last '\'';
+      put pretty_name to buf like (ALIAS_STR.short_slot);
+      buf.add_last '\'';
+      (priority_and_level != 0).if {
+        buf.add_last ' ';
+        put associativity to buf like (ALIAS_STR.short_keyword);
+        buf.add_last ' ';
+        string_tmp.clear;
+        priority.append_in string_tmp;
+        put string_tmp to buf like (ALIAS_STR.short_keyword);
+      };
+      buf.add_last ' ';
+      argument_list.second.shorter_in buf;
+      buf.add_last ' ';
+    } else {
+      buf.add_last '\'';
+      put pretty_name to buf like (ALIAS_STR.short_slot);
+      buf.add_last '\'';
+      buf.add_last ' ';
+      argument_list.first.shorter_in buf;
+      buf.add_last ' ';
+    };    
+  );

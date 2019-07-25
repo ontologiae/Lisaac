@@ -68,6 +68,9 @@ Section Public
     
     new_val := value.my_copy;
     result ?= variable.write position with (receiver.my_copy) value new_val;
+    (quiet_generation).if {
+      result.set_quiet_generation;
+    };
     result
   );
   
@@ -76,18 +79,14 @@ Section Public
   //
 
   - execute_access_unlink:INSTR <- 
-  (
-    (slot.value != NULL).if {
-      slot.execute;
-    };
+  (    
+    slot.execute;
     receiver.execute_unlink
   );
     
   - execute_access_link <- 
   ( 
-    (slot.value != NULL).if {
-      slot.execute;
-    };
+    slot.execute;
     receiver := receiver.execute_link;        
   );
   
@@ -104,34 +103,42 @@ Section Public
   - genere buffer:STRING <-
   ( + tf:TYPE_FULL;
     + t:TYPE;
-                   
-    slot.receiver_type.add_genere_list;
-    // Receiver.
-    tf := receiver.static_type;    
-    ((tf.is_strict) || {tf.is_expanded_ref}).if {
-      receiver.genere buffer;
-      buffer.append "->";
-    }.elseif {tf.is_expanded} then {      
-      receiver.genere buffer;
-      buffer.add_last '.';          
-    } else {
-      buffer.append "((";
-      t := slot.receiver_type;
-      t.put_reference_declaration buffer;	
-      buffer.add_last ' ';
-      t.put_reference_star_declaration buffer;	
-      buffer.add_last ')';
-      receiver.genere buffer;
-      buffer.append ")->";
-    };
-    //
-    buffer.append (variable.intern_name);
-    //
-    ((value.static_type.raw = TYPE_NULL) && {variable.type.raw = type_block}).if {
-      buffer.append ".__id=0";
-    } else {
-      buffer.add_last '=';    
-      genere_value buffer;
+    
+    t := slot.receiver_type;
+    t.add_genere_list;            
+    ((! quiet_generation) && {t.alias_slot != variable}).if {
+      // Receiver.            
+      (is_java).if {
+        receiver.genere buffer;
+        buffer.add_last '.';          
+      } else {
+        tf := receiver.static_type;    
+        ((tf.is_strict) || {tf.is_expanded_ref}).if {
+          receiver.genere buffer;
+          buffer.append "->";
+        }.elseif {tf.is_expanded} then {      
+          receiver.genere buffer;
+          buffer.add_last '.';          
+        } else {
+          buffer.append "((";
+          t := slot.receiver_type;
+          t.put_reference_declaration buffer;	
+          buffer.add_last ' ';
+          t.put_reference_star_declaration buffer;	
+          buffer.add_last ')';
+          receiver.genere buffer;
+          buffer.append ")->";          
+        };
+      };
+      //
+      buffer.append (variable.intern_name);
+      //
+      ((value.static_type.raw = TYPE_NULL) && {variable.type.raw.is_block}).if {
+        buffer.append ".__id=0";
+      } else {
+        buffer.add_last '=';    
+        genere_value buffer;        
+      };
     };
   );
   

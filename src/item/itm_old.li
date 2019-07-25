@@ -64,13 +64,13 @@ Section Public
     + lst:LIST;
     + old_upper,diff:INTEGER;
     + node:NODE_TYPE;
-    + old_stack_local:FAST_ARRAY[LOCAL];
-    + old_profil_second:PROFIL;
+    + old_stack_local:FAST_ARRAY(LOCAL);
+    + old_profil:PROFIL;
     
-    old_stack_local   := stack_local;
-    old_profil_second := profil_second;
-    stack_local   := stack_local_empty;    
-    profil_second := profil_first;
+    old_stack_local := stack_local;
+    old_profil      := profil_current;
+    stack_local     := stack_local_empty;    
+    profil_current  := profil_slot;
     ? {stack_local.is_empty};    
     //
     old_upper  := list_current.upper;
@@ -79,7 +79,7 @@ Section Public
     list_current.add_last (result_old.write position value expr_old);
     diff := list_current.upper - old_upper;
     // Move instr to up.   
-    lst := profil_first.code;
+    lst := profil_slot.code;
     {diff != 0}.while_do {      
       instr := list_current.last;
       //
@@ -104,12 +104,22 @@ Section Public
       diff := diff - 1;
     };    
     //
-    profil_second := old_profil_second;
-    stack_local   := old_stack_local;
+    profil_current := old_profil;
+    stack_local := old_stack_local;
     //
     result_old.read position
   );
   
+  //
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    buffer.append "Old ";
+    value.append_in buffer;
+  );
+  
 Section Private
   
-  - stack_local_empty:FAST_ARRAY[LOCAL] := FAST_ARRAY[LOCAL].create 0;
+  - stack_local_empty:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create 0;

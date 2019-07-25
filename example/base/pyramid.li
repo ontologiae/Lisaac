@@ -124,7 +124,7 @@ Section Private
     result
   );
 
-  + elem:ARRAY[INTEGER];
+  + elem:ARRAY(INTEGER);
   
   + case_empty:INTEGER;  // = 0 by default
 
@@ -148,6 +148,8 @@ Section Private
       elem.put case_empty to (indice (line,(col-line+1)));
     };
   ); // clear_column
+  	 
+Section Public
   
   - print <-
   ( + line,col:INTEGER;
@@ -168,8 +170,6 @@ Section Private
     };
     '\n'.print;
   );
-	 
-Section Public
   
   - main <-
   ( 
@@ -187,7 +187,7 @@ Section Public
     }.elseif {size > biggest_one} then {
       "Value too big for this method.\n".print;
     } else {
-      elem := ARRAY[INTEGER].create 1 to max;
+      elem := ARRAY(INTEGER).create 1 to max;
       (fill_up 1).if {
         "Full pyramid:\n".print;
         print;

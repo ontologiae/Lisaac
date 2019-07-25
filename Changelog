@@ -1,10 +1,16 @@
-Version 0.12 :
-==============
-2007/07/22
- * Append '-i' option for define inline level.
-
-Version 0.13 :
-==============
+Version 0.39 beta:
+==================
+2009/11/07
+ * Change syntax for block type
+ * Change syntax for genericity
+ * Add parametric type without genericity
+ * Add Lip (Lisaac Project)
+ * Add 64 bits support
+ * Add C89 backend support
+ * Update Shorter belinda mode
+	
+Version 0.13:
+=============
 2007/09/26
  * Change syntax for import/export
  * Export/Import with parameter type
@@ -12,3 +18,9 @@ Version 0.13 :
  * Update library
  * Update Makefile
  * Add Lisaac & shorter manpages
+
+Version 0.12:
+=============
+2007/07/22
+ * Append '-i' option for define inline level.
+

@@ -47,17 +47,6 @@ Section Public
   // Runnable.
   // 
     
-  - to_run_extern <-
-  ( + i:INSTR;
-    
-    (profil_first.result_last != NULL).if {
-      i := to_run_expr.put_result FALSE;
-    } else {
-      i := to_run;
-    };
-    list_current.add_last i;
-  );
-  
   - to_run:INSTR <-
   (
     to_run_expr
@@ -70,7 +59,24 @@ Section Public
     NULL
   );
   
-
+  //
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    "ITM_CODE : Type:".print;
+    type_id_intern.print; 
+    '\n'.print;
+    deferred;
+  );
+  
+  - print <-
+  (
+    string_tmp.clear;
+    append_in string_tmp;
+    string_tmp.print;
+  );
 
 
 

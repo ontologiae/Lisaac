@@ -1,0 +1,187 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := LIP_CODE;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+  
+  + parent_itm_object:Expanded ITM_OBJECT;
+
+Section Public
+  
+  - list_parent:FAST_ARRAY(STRING_CONSTANT) := FAST_ARRAY(STRING_CONSTANT).create_with_capacity 1;
+  
+  - list_method:FAST_ARRAY(LIP_SLOT_CODE) := FAST_ARRAY(LIP_SLOT_CODE).create_with_capacity 32;  
+  
+  - list_data:HASHED_DICTIONARY(LIP_SLOT_DATA,STRING_CONSTANT) :=
+  HASHED_DICTIONARY(LIP_SLOT_DATA,STRING_CONSTANT).create;
+  
+  - stack:FAST_ARRAY(LIP_SLOT_DATA) := FAST_ARRAY(LIP_SLOT_DATA).create_with_capacity 8;
+  
+  - get_data n:STRING_CONSTANT :LIP_SLOT_DATA <-
+  (
+    list_data.fast_reference_at n
+  );
+  
+  - get_method n:STRING_CONSTANT :LIP_SLOT_CODE <-
+  ( + j:INTEGER;
+    + result:LIP_SLOT_CODE;
+    
+    j := list_method.lower;
+    {(j <= list_method.upper) && {list_method.item j.name != n}}.while_do {
+      j := j + 1;
+    };
+    (j <= list_method.upper).if {
+      result := list_method.item j;
+    };
+    result
+  );
+  
+  - print_usage <-
+  ( + slot:LIP_SLOT_CODE;
+    + is_ok:BOOLEAN;
+    
+    (list_method.lower).to (list_method.upper) do { j:INTEGER;
+      slot := list_method.item j;
+      (slot.section = ALIAS_STR.section_public).if {
+        is_ok := TRUE;
+        slot.print;
+      };
+    };
+    (is_ok).if_false {
+      "\t Sorry, no option (see `make.lip').\n".print;
+    };
+  );
+  
+  - get_integer n:STRING_CONSTANT :INTEGER <-
+  ( + d:LIP_SLOT_DATA;
+    + int:LIP_INTEGER;
+    + result:INTEGER;
+    
+    d := get_data n;
+    (d = NULL).if {
+      "Warning: Slot `".print;
+      n.print;
+      "' not found.\n".print;
+    } else {
+      int ?= d.value;
+      (int = NULL).if {
+        semantic_error (d.position,"INTEGER type is needed.");
+      };
+      result := int.value;
+    };
+    result
+  );
+  
+  - get_boolean n:STRING_CONSTANT :BOOLEAN <-
+  ( + d:LIP_SLOT_DATA;
+    + bool:LIP_BOOLEAN;
+    + result:BOOLEAN;
+    
+    d := get_data n;
+    (d = NULL).if {
+      "Warning: Slot `".print;
+      n.print;
+      "' not found.\n".print;
+    } else {
+      bool ?= d.value;
+      (bool = NULL).if {
+        semantic_error (d.position,"BOOLEAN type is needed.");
+      };
+      result := bool.value;
+    };
+    result
+  );
+  
+  - get_string n:STRING_CONSTANT :STRING_CONSTANT <-
+  ( + d:LIP_SLOT_DATA;
+    + str:LIP_STRING;
+    + result:STRING_CONSTANT;
+    
+    d := get_data n;
+    (d = NULL).if {
+      "Warning: Slot `".print;
+      n.print;
+      "' not found.\n".print;
+    } else {
+      str ?= d.value;
+      (str = NULL).if {
+        semantic_error (d.position,"STRING type is needed.");
+      };
+      result := str.value;
+    };
+    result
+  );
+  
+  - put_string v:STRING_CONSTANT to n:STRING_CONSTANT <-
+  ( + d:LIP_SLOT_DATA;
+    + str:LIP_STRING;
+    
+    d := get_data n;
+    (d = NULL).if {
+      "Warning: Slot `".print;
+      n.print;
+      "' not found.\n".print;      
+    } else {
+      str ?= d.value;
+      (str = NULL).if {
+        semantic_error (d.position,"STRING type is needed.");
+      };
+      str.set_value v;
+    };    
+  );
+  
+  - put_boolean v:BOOLEAN to n:STRING_CONSTANT <-
+  ( + d:LIP_SLOT_DATA;
+        
+    d := get_data n;
+    (d = NULL).if {
+      "Warning: Slot `".print;
+      n.print;
+      "' not found.\n".print;      
+    } else {      
+      (d.set_value (LIP_BOOLEAN.get v)).if_false {
+        semantic_error (d.position,"BOOLEAN type is needed.");
+      };      
+    };    
+  );
+   
+  //
+  // Run.
+  //
+  
+  - run <-
+  (
+    warning_error (position,"Unreachable code.");
+  );
+  
+  - run_expr:LIP_CONSTANT <-
+  (
+    semantic_error (position,"No expression result.");
+    NULL
+  );
+  

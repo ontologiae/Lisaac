@@ -44,7 +44,7 @@ Section Public
   // Comparison.
   //
   
-  - '==' Right 60 other:EXPR :BOOLEAN <- 
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <- 
   ( + rd:READ_LOCAL;
     
     rd ?= other;
@@ -80,18 +80,23 @@ Section Public
   //
   // Genere
   //
-  
+    
   - genere buffer:STRING <-
   ( + tb:PROFIL_BLOCK;
-    (variable.ensure_count = -1).if {
+    + idf:STRING_CONSTANT;
+    
+    idf := ALIASER_LOCAL.read Self;
+    (local.is_result /*ensure_count = -100*/).if {
       buffer.add_last '*';
     };
-    buffer.append (variable.intern_name);     
+    buffer.append idf;
     //
-    tb ?= local.type.raw;
+    
+    tb ?= local.type.raw;    
     (tb != NULL).if {
-      add_var_size local;
+      ALIASER_LOCAL.add_var_size local;
     };
+    
   );
   
 

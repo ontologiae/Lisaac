@@ -28,13 +28,149 @@ Section Header
   
 Section Inherit
   
-  - parent_object:OBJECT := OBJECT;
+  - parent_any:ANY := ANY;
   
-Section Public  
+Section Private
+  
+  - current_directory:STRING := STRING.create 256;
+  
+  //
+  // File manager.
+  //
     
+Section Private
+  
+  // BSBS: A mettre en lib.
+  
+  - path:G_IN; // BUG COMPILER !!!!!
+  - dir_w:G_WIN_IN;
+  - fil_w:G_WIN_IN;    
+
+  - scan_directory_filter typ:ABSTRACT_STRING action_select select:{ABSTRACT_STRING; }
+  directory_widget d_w:G_WIN_IN 
+  file_widget f_w:G_WIN_IN
+  path_widget p_bug:G_IN <-
+  ( + bt:G_BUTTON;
+    + entry:ENTRY;
+    + dir,file:G_EXPR;
+    + new_dir:{G_BUTTON; };
+    + background:G_RAW;
+    + directory:DIRECTORY;
+    
+    new_dir := { b:G_BUTTON;
+      + name:G_OUT;      
+      name ?= b.root;      
+      path.text.keep_head (path.text.fast_last_index_of '/');
+      path.text.append (name.text);            
+      scan_directory_filter typ action_select select
+      directory_widget dir_w file_widget fil_w path_widget path;
+    };
+    
+    directory ?= FILE_SYSTEM.get_entry (path.text);
+    (directory.open).if_false {
+      "Directory : ".print;
+      directory.path.print; 
+      " not open!\n".print;
+      die_with_code 0;
+    };
+    path.text.copy (directory.path);
+    path.text.add_last '/';
+    path.refresh;
+    /*
+    dir := G_BUTTON.create (G_OUT.create "..") action new_dir;    
+    (directory.lower).to (directory.upper) do { j:INTEGER;
+      entry := directory.item j;
+      (entry.is_directory).if {        
+        bt := G_BUTTON.create (G_OUT.create (entry.name)) action new_dir;
+        dir := dir / bt;
+      }.elseif {(typ = NULL) || {entry.name.has_suffix typ}} then {
+        bt := G_BUTTON.create (G_OUT.create (entry.name)) action { b:G_BUTTON;
+          + name:G_OUT;
+          name ?= b.root;
+          path.text.keep_head (path.text.fast_last_index_of '/');
+          path.text.append (name.text);          
+          path.refresh;
+          select.value (path.text);
+        };
+        (file = NULL).if {
+          file := bt;
+        } else {
+          file := file / bt;
+        };
+      };      
+    };    
+    (file = NULL).if {
+      file := G_OUT.create "no file" justify (G_OUT.center);
+    };
+    background ?= dir_w.win_in.root;
+    background.delete;
+    background.make (dir.fix_height);        
+    background ?= fil_w.win_in.root;
+    background.delete;
+    background.make (file.fix_height);    
+    dir_w.refresh_in;
+    fil_w.refresh_in;
+    */
+  );
+  
+Section Public
+  
+  - filesystem_window dir:ABSTRACT_STRING 
+  filter suffix:ABSTRACT_STRING
+  with add_widget:G_EXPR 
+  action_select select:{ABSTRACT_STRING; } action_ok ok:{ABSTRACT_STRING; } <-
+  ( + win:G_WIN_OUT;    
+    + body:G_EXPR;    
+
+    dir_w := G_WIN_IN.create (160,240) with (G_RAW.create (G_OUT.create ""));
+    fil_w := G_WIN_IN.create (160,240) with (G_RAW.create (G_OUT.create ""));
+    path := G_IN.create (64,1);
+    path.text.copy dir; 
+    body := 
+    (
+      (
+        G_RAW.create (
+          G_OUT.create "Directory" /            
+          dir_w
+        )
+      ) | (
+        G_RAW.create (
+          G_OUT.create "File" /
+          fil_w
+        )
+      ) 
+    ) / (
+      G_RAW.create (
+        G_OUT.create " File name : " | path 
+      )
+    ) / (
+      G_BUTTON.create (G_OUT.create " OK " justify (G_OUT.center)) action { b:G_BUTTON;
+        + p:G_WIN_OUT;
+        p ?= b.parent;          
+        p.close;
+        ok.value (path.text);          
+      } |
+      G_BUTTON.create (G_OUT.create "Cancel" justify (G_OUT.center)) action { b:G_BUTTON;
+        + p:G_WIN_OUT;
+        p ?= b.parent;          
+        p.close;
+      }
+    );
+    (add_widget != NULL).if {
+      body := body | add_widget;
+    };
+    win := G_WIN_OUT.create "Open" with body;        
+    win.open_by DESK;
+    scan_directory_filter suffix action_select select directory_widget dir_w 
+    file_widget fil_w path_widget path;
+  );
+  
+Section Public
+  
   - main <-
   ( + menu_bar:G_EXPR;
     + tools_bar:G_EXPR;
+    + select,zoom,line,rectangle,ellipse,text,paint:G_CHECK;
     //
     + zoom_bar:G_WIN_OUT;
     //    
@@ -44,92 +180,61 @@ Section Public
     + dispo_menu:G_WIN_OUT;
     + window_menu:G_WIN_OUT;
     + help_menu:G_WIN_OUT;
-    //
-    + open_win:G_WIN_OUT;
+    //    
     + align_win:G_WIN_OUT;
     //
     + t,m,b:G_CHECK;
     + r,c,l:G_CHECK;
     //
-    + action1:BLOCK;
-    + action2:BLOCK;
+    + action_not_yet_implemented:{G_BUTTON; };
+    
+    current_directory.copy (FILE_SYSTEM.path);
+    current_directory.append "/TravCUT";
     
     // Init window.
-    VIDEO.make (640,400);
+    VIDEO.make_size (800,600);
     
-    action1 := { bt:G_BUTTON;     
-      + w:G_WIN_OUT;
-      w ?= bt.parent;
-      w.close;
-      "Action\n".print;
+    action_not_yet_implemented := { bt:G_BUTTON;     
+      /*+ w:G_WIN_OUT;
+      + g:AREA;
+      
+      g := bt.parent;
+      {
+        w ?= g;
+        g := g.parent;
+      }.do_while {(w = NULL) && {g != NULL}};     
+      (w != NULL).if {
+        w.close;
+      };
+      message_not_yet_implemented;
+      */
     };
 
-    action2 := { bt:G_BUTTON;     
-      + w:G_WIN_OUT;
-      w ?= bt.parent.parent;
-      w.close;
-      "Action\n".print;
-    };
-    
-    // Open Window :
-    open_win := G_WIN_OUT.create "Open" with (
-      (
-        (
-          G_OUT.create "Directory" /
-          G_WIN_IN.create (80,140) with (
-            G_BUTTON.create (G_OUT.create "Foo") /
-            G_BUTTON.create (G_OUT.create "This long long long file name ...") /
-            G_BUTTON.create (G_OUT.create "Foo1") /
-            G_BUTTON.create (G_OUT.create "Foo2") /
-            G_BUTTON.create (G_OUT.create "Foo3") /
-            G_BUTTON.create (G_OUT.create "Foo4") /
-            G_BUTTON.create (G_OUT.create "Foo5") /
-            G_BUTTON.create (G_OUT.create "Foo6") /
-            G_BUTTON.create (G_OUT.create "Foo7") /
-            G_BUTTON.create (G_OUT.create "Foo8") /
-            G_BUTTON.create (G_OUT.create "Foo9") /
-            G_BUTTON.create (G_OUT.create "FooA") /
-            G_BUTTON.create (G_OUT.create "FooB") /
-            G_BUTTON.create (G_OUT.create "FooC") /
-            G_BUTTON.create (G_OUT.create "FooD") /
-            G_BUTTON.create (G_OUT.create "FooE") /
-            G_BUTTON.create (G_OUT.create "FooF") 
-          )
-        ) | (
-          G_OUT.create "File" /
-          G_WIN_IN.create (80,140) with (
-            G_BUTTON.create (G_OUT.create "Bar")
-          )
-        )
-      ) / (
-        G_OUT.create "File name : " |
-        G_IN.create (16,1)
-      ) / (
-	      G_BUTTON.create (G_OUT.create " Open " justify (G_OUT.center)) action action1 |
-	      G_BUTTON.create (G_OUT.create "Cancel" justify (G_OUT.center)) action action1 
-      )
-    );
-    
     // Align Window :
     align_win := G_WIN_OUT.create "Alignment" with (
       (
 	(
-	  (t := G_CHECK.create (G_OUT.create "Top "))    /
-	  (m := G_CHECK.create (G_OUT.create "Medium ")) /
-	  (b := G_CHECK.create (G_OUT.create "Bottom ")) 
+	  (t := G_CHECK.create_with_check (G_OUT.create "Top "))    /
+	  (m := G_CHECK.create_with_check (G_OUT.create "Medium ")) /
+	  (b := G_CHECK.create_with_check (G_OUT.create "Bottom ")) 
 	) | (
 	  (
-	    (l := G_CHECK.create (G_OUT.create "Left "))   |
-	    (c := G_CHECK.create (G_OUT.create "Center ")) |
-	    (r := G_CHECK.create (G_OUT.create "Right "))
+	    (l := G_CHECK.create_with_check (G_OUT.create "Left "))   |
+	    (c := G_CHECK.create_with_check (G_OUT.create "Center ")) |
+	    (r := G_CHECK.create_with_check (G_OUT.create "Right "))
 	  ).fix_height /
 	  (
-	    G_RAW.create ((G_CHECK.create (G_OUT.create "In page ").fix_height.fix_width))
+	    G_RAW.create ((G_CHECK.create_with_check (G_OUT.create "In page ").fix_height.fix_width))
 	  )
 	)
       ) / (
-	G_BUTTON.create (G_OUT.create "  OK  " justify (G_OUT.center)) action action1 |
-	G_BUTTON.create (G_OUT.create "Cancel" justify (G_OUT.center)) action action1 
+	G_BUTTON.create (G_OUT.create "  OK  " justify (G_OUT.center)) action 
+        action_not_yet_implemented |
+        G_BUTTON.create (G_OUT.create "Cancel" justify (G_OUT.center)) action { bt:G_BUTTON;     
+          + w:G_WIN_OUT;
+          w ?= bt.parent;
+          w.close;          
+        }
       )
     );
     t ^ m ^ b;
@@ -138,74 +243,108 @@ Section Public
     // File menu :    
     file_menu := G_WIN_OUT.create (
       G_RAW.create (
-	G_BUTTON.create (G_OUT.create "New") action action2
+	G_BUTTON.create (G_OUT.create "New") action action_not_yet_implemented
       ) / 
       G_RAW.create (
-	G_BUTTON.create (G_OUT.create "Open ...")    connect open_win /
-	G_BUTTON.create (G_OUT.create "Save")        action action2 / 
-	G_BUTTON.create (G_OUT.create "Save as ...") action action2
+        G_BUTTON.create (G_OUT.create "Open ...")    action { bt:G_BUTTON; 
+          + w:G_WIN_OUT;
+          w ?= bt.parent.parent;
+          w.close;
+          filesystem_window current_directory filter NULL
+          with NULL action_select 
+          { name:ABSTRACT_STRING;
+            "select ".print;
+            name.print; 
+            '\n'.print;
+          } action_ok 
+          { name:ABSTRACT_STRING;
+            + f:FILE;
+            + e:ENTRY;
+      
+            e := FILE_SYSTEM.get_entry name;
+            (e = NULL).if {
+              "Error file!\n".print;
+            } else {
+              f ?= e.open;
+              (f = NULL).if {
+                "Error open\n".print;
+              } else {
+                /*
+                (FORMAT_BCT.load f).if {
+                  f.close;
+                  page.refresh;
+                } else {
+                  "Error format\n".print;
+                };
+                */
+              };
+            };
+          };
+        } /
+	G_BUTTON.create (G_OUT.create "Save")        action action_not_yet_implemented / 
+	G_BUTTON.create (G_OUT.create "Save as ...") action action_not_yet_implemented
       ) /
       G_RAW.create (
-	G_BUTTON.create (G_OUT.create "Import ...") action action2 /
-	G_BUTTON.create (G_OUT.create "Export ...") action action2
+	G_BUTTON.create (G_OUT.create "Import ...") action action_not_yet_implemented /
+	G_BUTTON.create (G_OUT.create "Export ...") action action_not_yet_implemented
       ) /
       G_RAW.create (
-	G_BUTTON.create (G_OUT.create "Print ...") action action2
+	G_BUTTON.create (G_OUT.create "Print ...") action action_not_yet_implemented
       ) /
       G_RAW.create (
-	G_BUTTON.create (G_OUT.create "Exit")      action action2  
+	G_BUTTON.create (G_OUT.create "Exit")      action action_not_yet_implemented  
       )
     );
     
     // Edit menu :    
     edit_menu := G_WIN_OUT.create (
       G_RAW.create (
-	G_BUTTON.create (G_OUT.create "Undo") action action2 /
-	G_BUTTON.create (G_OUT.create "Redo") action action2     
+	G_BUTTON.create (G_OUT.create "Undo") action action_not_yet_implemented /
+	G_BUTTON.create (G_OUT.create "Redo") action action_not_yet_implemented     
       ) /
       G_RAW.create (
-	G_BUTTON.create (G_OUT.create "Delete")     action action2 / 
-	G_BUTTON.create (G_OUT.create "Duplicate")  action action2 /
-	G_BUTTON.create (G_OUT.create "Select all") action action2 
+	G_BUTTON.create (G_OUT.create "Delete")     action action_not_yet_implemented / 
+	G_BUTTON.create (G_OUT.create "Duplicate")  action action_not_yet_implemented /
+	G_BUTTON.create (G_OUT.create "Select all") action action_not_yet_implemented 
       )
     );
     
     // Present menu :    
     present_menu := G_WIN_OUT.create (
-      G_CHECK.create (G_OUT.create "Magnetic locate") /
-      G_CHECK.create (G_OUT.create "Contour")         
+      G_CHECK.create_with_check (G_OUT.create "Magnetic locate") /
+      G_CHECK.create_with_check (G_OUT.create "Contour")         
     );
     
     // Dispo menu :    
     dispo_menu := G_WIN_OUT.create (      
       G_RAW.create (
-	G_BUTTON.create (G_OUT.create "Text editor...") action action2 /
+	G_BUTTON.create (G_OUT.create "Text editor...") action action_not_yet_implemented /
 	G_BUTTON.create (G_OUT.create "Alignment") connect align_win   /
-	G_BUTTON.create (G_OUT.create "to curve") action action2       
+	G_BUTTON.create (G_OUT.create "to curve") action action_not_yet_implemented       
       ) /
       G_RAW.create (	    
-	G_BUTTON.create (G_OUT.create "First plan") action action2     / 
-	G_BUTTON.create (G_OUT.create "Last plan") action action2      
+	G_BUTTON.create (G_OUT.create "First plan") action action_not_yet_implemented     / 
+	G_BUTTON.create (G_OUT.create "Last plan") action action_not_yet_implemented      
       ) /
       G_RAW.create (
-	G_BUTTON.create (G_OUT.create "Group") action action2          /
-	G_BUTTON.create (G_OUT.create "Degroup") action action2        /
-	G_BUTTON.create (G_OUT.create "Combine") action action2        /
-	G_BUTTON.create (G_OUT.create "Decombine") action action2      /        
-	G_BUTTON.create (G_OUT.create "Auto-combine") action action2
+	G_BUTTON.create (G_OUT.create "Group") action action_not_yet_implemented          /
+	G_BUTTON.create (G_OUT.create "Degroup") action action_not_yet_implemented        /
+	G_BUTTON.create (G_OUT.create "Combine") action action_not_yet_implemented        /
+	G_BUTTON.create (G_OUT.create "Decombine") action action_not_yet_implemented      /        
+	G_BUTTON.create (G_OUT.create "Auto-combine") action action_not_yet_implemented
       )
     );
 
     // Window menu :    
     window_menu := G_WIN_OUT.create (
-      G_BUTTON.create (G_OUT.create "Refresh draw") action action1
+      G_BUTTON.create (G_OUT.create "Refresh draw") action action_not_yet_implemented
     );
 
     // Help menu :    
     help_menu := G_WIN_OUT.create (
-      G_BUTTON.create (G_OUT.create "About ...") action action1       /
-      G_BUTTON.create (G_OUT.create "Bugs report ...") action action1 /
-      G_BUTTON.create (G_OUT.create "News ...") action action1 
+      G_BUTTON.create (G_OUT.create "About ...") action action_not_yet_implemented /
+      G_BUTTON.create (G_OUT.create "Bugs report ...") action action_not_yet_implemented /
+      G_BUTTON.create (G_OUT.create "News ...") action action_not_yet_implemented
     );
 
     // Menu Bar :
@@ -230,18 +369,29 @@ Section Public
     
     // Tools bar.
     tools_bar := (
-      G_BUTTON.create (G_IMG.create "select.bmp")    /
-      G_BUTTON.create (G_IMG.create "zoom.bmp")      connect zoom_bar /
-      G_BUTTON.create (G_IMG.create "line.bmp")      /
-      G_BUTTON.create (G_IMG.create "rectangle.bmp") /
-      G_BUTTON.create (G_IMG.create "ellipse.bmp")   /
-      G_BUTTON.create (G_IMG.create "text.bmp")      /
-      G_BUTTON.create (G_IMG.create "paint.bmp")
+      (select    := G_CHECK.create (G_IMG.create "select.bmp"))    /
+      (zoom      := G_CHECK.create (G_IMG.create "zoom.bmp") connect zoom_bar) /
+      (line      := G_CHECK.create (G_IMG.create "line.bmp"))      /
+      (rectangle := G_CHECK.create (G_IMG.create "rectangle.bmp")) /
+      (ellipse   := G_CHECK.create (G_IMG.create "ellipse.bmp"))   /
+      (text      := G_CHECK.create (G_IMG.create "text.bmp"))      /
+      (paint     := G_CHECK.create (G_IMG.create "paint.bmp"))
     ).fix_width.fix_height;
-
+    select ^ zoom ^ line ^ rectangle ^ ellipse ^ text ^ paint;
+    
     // Screen definition.
-    INTERFACE.make VIDEO size (VIDEO.width,VIDEO.height) with (             
-      menu_bar / (tools_bar | G_PAGE.create) 
+    DESK.make VIDEO with (             
+      menu_bar  / (
+        tools_bar | (
+          RULER_HORIZONTAL.create / (
+            RULER_VERTICAL.create | G_WIN_IN.create (320,200) with page
+          )
+        ) 
+      ) / (
+        G_RAW.create (
+          G_OUT.create " Context Information ..."
+        ).fix_height
+      )
     );
     
     // +---------------------+
@@ -253,6 +403,4 @@ Section Public
     // | l |                 |
     // | s |                 |
     // +---+-----------------+
-            
-    INTERFACE.run;    
   );

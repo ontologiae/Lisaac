@@ -1,0 +1,75 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := PRINT;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The print";
+
+Section Inherit
+
+  + parent_expr:Expanded EXPR;
+
+Section Public
+  
+  + text:STRING_CONSTANT;
+    
+  //
+  // Creation.
+  //
+
+  - create p:INTEGER text t:STRING_CONSTANT :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make p text t;
+    result
+  );
+
+  - make p:INTEGER text t:STRING_CONSTANT <-
+  ( 
+    position := p;
+    text     := t;
+  );
+
+  //
+  // Run.
+  //
+  
+  - run <-
+  (
+    text.print; '\n'.print;
+  );
+  
+  //
+  // Display.
+  //
+  
+  - print <-
+  (
+    '\"'.print;
+    text.print;
+    "\".print".print;    
+  );
+
+  

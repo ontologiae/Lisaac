@@ -35,6 +35,31 @@ Section Inherit
 Section Public
   
   //
+  // Shorter information.
+  //
+  
+  + comment:STRING_CONSTANT;
+  
+  - set_comment str:STRING_CONSTANT <-
+  (
+    comment := str;
+  );
+  
+  + comment_chapter:STRING_CONSTANT;
+  
+  - set_comment_chapter c:STRING_CONSTANT <-
+  (
+    comment_chapter := c;
+  );
+  
+  + stat_shorter:INTEGER_8;
+  
+  - set_stat_shorter s:INTEGER_8 <-
+  (
+    stat_shorter := s;
+  );
+  
+  //
   // Profil
   //
   
@@ -48,30 +73,39 @@ Section Public
     };
     result
   );
-  
-  - result_is_void:BOOLEAN <- type = ITM_TYPE_MONO.type_void;
-  
-Section SLOT, ITM_READ, ITM_WRITE_VALUE, PROFIL
-  
-  + argument_list:FAST_ARRAY[ITM_ARGUMENT];
+      
+  + argument_list:FAST_ARRAY(ITM_ARGUMENT);
 
-  + type:ITM_TYPE;
+  + result_type:ITM_TYPE;
   
-Section Public  
-  
-  - set_type t:ITM_TYPE <-
+  - set_result_type t:ITM_TYPE <-
   ( + tm:ITM_TYPE_MONO;
     
     (id_section.is_inherit_or_insert).if {
       tm ?= t;
-      ((tm = NULL) || {tm = ITM_TYPE_SELF} || {tm = ITM_TYPE_MONO.type_void}).if {
+      (
+        (tm = NULL) || 
+        {tm = ITM_TYPE_SIMPLE.type_self} || 
+        {tm = ITM_TYPE_SIMPLE.type_void}
+      ).if {
 	semantic_error (position,"Incorrect type for inheritance slot.");
       };
     };
-    type := t;
+    /*
+    "ITM_SLOT : ".print;
+    name.print; ' '.print;
+    ( +tmu:ITM_TYPE_MULTI;
+      tmu ?= t;
+      (tmu != NULL).if {
+        tmu.count.print;
+      };
+    );
+    '\n'.print;
+    */
+    result_type := t;
   );
   
-  - set_argument_list p:FAST_ARRAY[ITM_ARGUMENT] <-
+  - set_argument_list p:FAST_ARRAY(ITM_ARGUMENT) <-
   ( 
     ((p.count > 1) || {p.first.count > 1}).if {    
       (id_section.is_interrupt).if {
@@ -84,10 +118,22 @@ Section Public
     argument_list := p;
   );
   
+  - get_argument_type i:INTEGER :ITM_TYPE_MONO <-
+  ( + idx,j:INTEGER;
+    + arg:ITM_ARGUMENT;
+    
+    {
+      arg := argument_list.item j;
+      idx := idx + arg.count;
+      j := j + 1;
+    }.do_while {idx <= i};
+    arg.item (i-(idx - arg.count))    
+  );  
+  
   - is_equal_profil other:ITM_SLOT <-
   (         
-    (Self != other).if {
-      (type != other.type).if {
+    (Self != other).if {            
+      (result_type != other.result_type).if {
 	string_tmp.copy "Invariance type result invalid."; // (";
 	//type.to_run.append_name_in string_tmp;
 	//string_tmp.append " != ";
@@ -105,11 +151,21 @@ Section Public
 	(other.position).put_position;
 	POSITION.send_error;
       };
-      (argument_list != NULL).if {
-	? {argument_list.count = other.argument_list.count};
-	(argument_list.lower).to (argument_list.upper) do { j:INTEGER;
-	  argument_list.item j.is_equal (other.argument_list.item j);
-	};	  
+      (
+        ((other.argument_list = NULL) ^ (argument_list = NULL)) || 
+        {(argument_list != NULL) && {argument_list.count != other.argument_list.count}}
+      ).if {
+        POSITION.put_error warning text 
+        "Invariance argument number.";
+        position.put_position;
+        (other.position).put_position;
+        POSITION.send_error;
+      } else {
+        (argument_list != NULL).if {        
+          (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
+            argument_list.item j.is_equal (other.argument_list.item j);
+          };	  
+        };
       };
     };
   );
@@ -135,31 +191,23 @@ Section Public
   //
   // Access associativity & priority level.
   //
-
-  + priority_and_level:INTEGER;
-
+  
+  - priority_and_level:INTEGER <-
+  ( 
+    crash_with_message "ITM_SLOT.priority_and_level.";
+    0
+  );
+  
   - associativity:STRING_CONSTANT <-
-  ( + result:STRING_CONSTANT;
-    (priority_and_level >= 0).if {
-      result := ALIAS_STR.keyword_left;
-    } else {
-      result := ALIAS_STR.keyword_right;
-    };
-    result
+  ( 
+    crash_with_message "ITM_SLOT.associativity.";
+    NULL
   );
   
   - priority:INTEGER <-
   (
-    priority_and_level.abs
-  );
-
-  - set_associativity p:STRING_CONSTANT priority l:INTEGER <-
-  (
-    (p = ALIAS_STR.keyword_left).if {
-      priority_and_level := l;
-    } else {
-      priority_and_level := -l;
-    };
+    crash_with_message "ITM_SLOT.priority.";
+    0
   );
 
   //
@@ -171,10 +219,18 @@ Section Public
   
   + value:ITM_CODE;
 
-  - set_value e:ITM_CODE <-
+  - set_value e:ITM_CODE type p:PROTOTYPE <-
   // Static definition.
+  [ 
+    -? {affect != '\0'};
+  ]
   ( 
-    value := e;
+    (affect = '<').if {
+      value := e;
+    } else {
+      //semantic_error (position,"not_yet_implemented");
+      value := default_value e in p;
+    };
   );    
 
   - set_require e:ITM_LIST <-
@@ -204,22 +260,155 @@ Section Public
     position    := p;    
     id_section  := sec;
   );
-      
+  
+  //
+  // Runnable.
+  //
+  
+  - get_index_argument_type p:ITM_TYPE_PARAMETER :INTEGER <-
+  ( + i,result,max:INTEGER;
+    + arg:ITM_ARGUMENT;
+    
+    i := argument_list.lower;    
+    {(i <= argument_list.upper) && {result = max}}.while_do {
+      arg    := argument_list.item i;
+      max    := max    + arg.count;
+      result := result + arg.get_index_type p;
+      i := i +1;
+    };
+    (result = max).if {
+      result := -1;
+    };
+    result
+  );
+  
+  - check_argument_type larg:FAST_ARRAY(EXPR) for p:PARAMETER_TO_TYPE <-  
+  ( + idx:INTEGER;
+    + a:ITM_ARGUMENT;
+    
+    (argument_list.lower).to (argument_list.upper) do { i:INTEGER;
+      a := argument_list.item i;
+      idx := a.check larg index idx for p;
+    };
+  );    
+  
   //
   // Display.
   //
   
-  - display buffer:STRING <-
+  - append_in buffer:STRING <-
   (
     buffer.append name;
     (argument_list.lower).to (argument_list.upper) do { j:INTEGER;       
       buffer.add_last ' ';
-      argument_list.item j.display buffer;
+      argument_list.item j.append_in buffer;
     }; 
     buffer.add_last ' ';
     buffer.add_last ':';
-    type.display buffer;    
+    result_type.append_in buffer;    
   );    
   
-
+  - pretty_name:STRING_CONSTANT <-
+  (
+    crash_with_message "ITM_SLOT.pretty_name.";
+    NULL
+  );
   
+  - pretty_name_in buffer:STRING <-
+  ( + j:INTEGER;
+    
+    j := name.lower;
+    {j < name.upper}.while_do {    
+      ((name.item j = '_') && {name.item (j+1) = '_'}).if {
+        buffer.add_last ' ';
+        j := j + 2;
+      } else {
+        buffer.add_last (name.item j);
+        j := j + 1;
+      };      
+    };
+    buffer.add_last (name.last);
+  );
+  
+  - shorter_profile_in buf:STRING <-
+  ( 
+    // style.
+    (style = '+').if {
+      put "+" to buf like (ALIAS_STR.short_slot_style);
+    } else {
+      put "-" to buf like (ALIAS_STR.short_slot_style);
+    };    
+    shorter_profile_intern_in buf;
+    // Result.
+    (result_type != ITM_TYPE_SIMPLE.type_void).if {      
+      buf.add_last ':';      
+      result_type.shorter_in buf;
+    };
+  );
+  
+Section ITM_SLOT
+  
+  - shorter_profile_intern_in buf:STRING <-
+  ( + j,i:INTEGER;
+    // Name + arguments.
+    string_tmp.clear;
+    j := name.lower;
+    argument_list.first.shorter_in buf;
+    buf.add_last '.';
+    i := argument_list.lower+1;    
+    {j < name.upper}.while_do {    
+      ((name.item j = '_') && {name.item (j+1) = '_'}).if {
+        put string_tmp to buf like (ALIAS_STR.short_slot);
+        buf.add_last ' ';
+        argument_list.item i.shorter_in buf;
+        buf.add_last ' ';
+        string_tmp.clear;        
+        j := j + 2;
+        i := i + 1;
+      } else {
+        string_tmp.add_last (name.item j);
+        j := j + 1;
+      };      
+    };
+    string_tmp.add_last (name.last);
+    put string_tmp to buf like (ALIAS_STR.short_slot);
+    (i <= argument_list.upper).if {
+      buf.add_last ' ';
+      argument_list.last.shorter_in buf;
+      buf.add_last ' ';
+    };
+  );
+  
+Section Private
+  
+  - default_value v:ITM_CODE in t:PROTOTYPE :ITM_CODE <-
+  ( //+ lst:ITM_LIST;
+    + s:ITM_SLOT;
+    + n:STRING_CONSTANT;
+    + sec:SECTION_;
+    + larg:FAST_ARRAY(ITM_ARGUMENT);
+    + a:ITM_CODE;
+        
+    // Add function for init.
+    string_tmp.copy "__init_";      
+    string_tmp.append name;
+    n := ALIAS_STR.get string_tmp;
+    sec := SECTION_.get_name (ALIAS_STR.section_public);
+    larg := FAST_ARRAY(ITM_ARGUMENT).create_with_capacity 1;
+    larg.add_last (
+      ITM_ARG.create (v.position)
+      name (ALIAS_STR.variable_self) 
+      type (ITM_TYPE_SIMPLE.type_self)
+    );
+    s := ITM_SLOT.create (v.position) name n feature sec;
+    s.set_affect '<';
+    ? {result_type != NULL};
+    s.set_value v type t;      
+    s.set_argument_list larg;      
+    s.set_result_type result_type;
+    t.slot_list.fast_put s to (s.name);      
+    (t.generic_count = 0).if {
+      a := ITM_PROTOTYPE.create (v.position) type (ITM_TYPE_SIMPLE.get (t.name));            
+    };
+    ITM_READ_ARG1.create (v.position) name n arg a
+  );

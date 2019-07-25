@@ -65,4 +65,13 @@ Section Public
     INTEGER_CST.create position value value type (type_integer.default)    
   );
   
+  //
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    value.append_in buffer;
+  );
+  
 

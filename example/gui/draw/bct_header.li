@@ -1,0 +1,53 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := BCT_HEADER;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Mapping
+  
+  + version:UINTEGER_8;
+  
+  + width_sheet:INTEGER_32;
+  + height_sheet:INTEGER_32;
+  
+  + red_sheet:UINTEGER_8;
+  + green_sheet:UINTEGER_8;
+  + blue_sheet:UINTEGER_8;
+  
+  + origin_x:INTEGER_32;
+  + origin_y:INTEGER_32;
+  
+  + zoom:REAL_32;
+  
+  + ruler_x:INTEGER_32;
+  + ruler_y:INTEGER_32;
+  
+  + size_img:UINTEGER_16;

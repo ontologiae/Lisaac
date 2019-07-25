@@ -34,6 +34,8 @@ Section Inherit
   
 Section Public
 
+  - type:STRING_CONSTANT <- ":=";
+
   //
   // Runnable 
   //
@@ -43,19 +45,19 @@ Section Public
     + val:EXPR;
     + val_multiple:EXPR_MULTIPLE;
     + j:INTEGER;
-    + lst_idf:FAST_ARRAY[STRING_CONSTANT];
+    + lst_idf:FAST_ARRAY(STRING_CONSTANT);
     + itm_read:ITM_READ;
-    + lst_exp:FAST_ARRAY[EXPR];
+    + lst_exp:FAST_ARRAY(EXPR);
     + result:EXPR;
         
     val := value.to_run_expr;
             
-    val_multiple ?= val;
+    val_multiple ?= val;        
     (val_multiple != NULL).if {
       //
       // Assignment Vector.      
       //
-      lst_exp := FAST_ARRAY[EXPR].create_with_capacity (val_multiple.count);
+      lst_exp := FAST_ARRAY(EXPR).create_with_capacity (val_multiple.count);
       ass_multiple ?= assign;
       (ass_multiple != NULL).if {	
 	lst_idf := ass_multiple.list_name;
@@ -76,7 +78,7 @@ Section Public
       //
       // Assignment simple.
       //      
-      itm_read ?= assign;
+      itm_read ?= assign;      
       ? {itm_read != NULL};      
       result := affect (itm_read.name) with val;
     };
@@ -86,12 +88,12 @@ Section Public
 Section Private
   
   - affect idf:STRING_CONSTANT with val:EXPR_MULTIPLE 
-  index n:INTEGER in lst:FAST_ARRAY[EXPR] :INTEGER <-
+  index n:INTEGER in lst:FAST_ARRAY(EXPR) :INTEGER <-
   ( + loc:LOCAL;
     + result:INTEGER;
     + slot:SLOT;
     + typ_multi:ITM_TYPE_MULTI;
-    + lst_expr:FAST_ARRAY[EXPR];
+    + lst_expr:FAST_ARRAY(EXPR);
     
     (n > val.upper).if {
       semantic_error (position,"Incorrect size vector.");
@@ -102,23 +104,23 @@ Section Private
       lst.add_last (affect_local loc with (val.item n));
       result := n + 1;
     } else {
-      slot := ITM_TYPE_SELF.to_run.get_slot idf;
+      slot := profil_slot.type_self.get_slot idf;
       (slot = NULL).if {
 	string_tmp.copy "Slot `";
 	string_tmp.append idf;
 	string_tmp.append "' not found in static type ";
-	ITM_TYPE_SELF.to_run.append_name_in string_tmp;
+	profil_slot.type_self.append_name_in string_tmp;
 	string_tmp.add_last '.';
 	semantic_error (position,string_tmp);
       };
-      typ_multi ?= slot.base_slot.type;
+      typ_multi ?= slot.result_type;
       (typ_multi != NULL).if {
 	result := n + typ_multi.count;
 	(result > val.count).if {
 	  semantic_error (position,"Incorrect size vector.");
 	};
 	//BSBS: Recycle les EXPR_MULTIPLE
-	lst_expr := FAST_ARRAY[EXPR].create_with_capacity (typ_multi.count);	
+	lst_expr := FAST_ARRAY(EXPR).create_with_capacity (typ_multi.count);	
 	0.to (typ_multi.upper) do { i:INTEGER;
 	  lst_expr.add_last (val.item (n+i));
 	};	

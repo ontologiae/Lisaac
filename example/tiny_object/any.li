@@ -1,0 +1,180 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name := ANY;
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Public
+   
+  - input_name:STRING_CONSTANT;
+  
+  - source:STRING;
+  
+  - string_tmp:STRING := STRING.create 250;
+  
+  //
+  // Program
+  //
+  
+  - program:HASHED_DICTIONARY(CLASS,STRING_CONSTANT) := 
+  HASHED_DICTIONARY(CLASS,STRING_CONSTANT).create;  
+  
+  - class_master:CLASS;
+  
+  //
+  // Error manager.
+  //
+    
+  - syntax_error p:INTEGER message msg:ABSTRACT_STRING <-
+  (
+    error p style "--SYNTAX---------\n" message msg;
+    die_with_code exit_failure_code;
+  );
+
+  - semantic_error p:INTEGER message msg:ABSTRACT_STRING <-
+  (
+    error p style "--SEMANTIC-------\n" message msg;
+    die_with_code exit_failure_code;
+  );
+  
+  - warning_error p:INTEGER message msg:ABSTRACT_STRING <-
+  (
+    error p style "--WARNING--------\n" message msg;
+  );
+    
+  - error p:INTEGER style s:STRING_CONSTANT message msg:ABSTRACT_STRING <-
+  ( + l,c,pos:INTEGER;
+    + char:CHARACTER;
+    - msg_error:STRING;
+    
+    (msg_error = NULL).if {
+      msg_error := STRING.create 256;
+    };
+    
+    (l,c) := current_position p;
+    msg_error.copy s;
+    msg_error.append msg;    
+    msg_error.append "\nLine ";
+    l.append_in msg_error;    
+    msg_error.append " column ";
+    c.append_in msg_error;
+    msg_error.add_last '\n';
+    // Search begin line :    
+    pos := source.lower;
+    1.to (l-1) do { line:INTEGER;
+      {source.item pos = '\n'}.until_do {
+	pos := pos + 1;
+      };
+      pos := pos + 1;
+    };
+    // copy line :        
+    string_tmp.clear;
+    {(pos > source.upper) || {source.item pos='\n'}}.until_do {
+      char := source.item pos;
+      msg_error.add_last char;
+      (c > 1).if {
+	(char = '\t').if {
+	  string_tmp.add_last '\t';
+	} else {
+	  string_tmp.add_last ' ';
+	};
+      };
+      c   := c - 1;
+      pos := pos + 1;
+    };
+    msg_error.add_last '\n';
+    msg_error.append string_tmp;
+    msg_error.append "^\n";
+    //
+    STD_ERROR.put_string msg_error;
+  );
+
+  //
+  // String aliaser.
+  //
+  
+  - get_alias str:ABSTRACT_STRING :STRING_CONSTANT <-
+  ( + result:STRING_CONSTANT;
+    + tmp:ABSTRACT_STRING;
+    ? {str != NULL};
+       
+    tmp := aliaser_string.reference_at str;
+    (tmp = NULL).if {
+      result := STRING_CONSTANT.create_copy str;
+      aliaser_string.fast_add result;
+    } else {
+      result ?= tmp;      
+    };
+    ? {result == str};
+    result
+  );
+  
+  - keyword_inherit:STRING_CONSTANT := "Inherit";
+  - keyword_print:STRING_CONSTANT   := "print";
+  - keyword_new:STRING_CONSTANT     := "New";
+  - keyword_master:STRING_CONSTANT  := "master";
+  - keyword_this:STRING_CONSTANT    := "This";
+  
+  //
+  // Flags.
+  //
+  
+  // -- VFT --
+  - is_vft:BOOLEAN := TRUE;
+  // -- VFT --
+  
+Section Private
+  
+  //
+  // Aliaser string.
+  //
+  
+  - aliaser_string:HASHED_SET(ABSTRACT_STRING) := 
+  ( + result:HASHED_SET(ABSTRACT_STRING);
+    
+    result := HASHED_SET(ABSTRACT_STRING).create;
+    result.fast_add keyword_inherit;
+    result.fast_add keyword_print;
+    result.fast_add keyword_new;
+    result.fast_add keyword_master;
+    result.fast_add keyword_this;
+    result
+  );
+  
+  - current_position pos:INTEGER :(INTEGER,INTEGER) <-
+  ( + p,line,col:INTEGER;
+    
+    p := source.lower;
+    {p = pos}.until_do {
+      (source.item p = '\n').if {
+	col  := 0;
+	line := line + 1;
+      } else {
+	col := col + 1;
+      };
+      p := p + 1;
+    };
+    line+1,col+1
+  );

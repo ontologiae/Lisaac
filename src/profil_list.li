@@ -32,9 +32,9 @@ Section Inherit
   
   + parent_any:Expanded ANY; 
   
-Section Private
+Section LISAAC
   
-  - profil_list:FAST_ARRAY[PROFIL] := FAST_ARRAY[PROFIL].create_with_capacity 65536;  
+  - profil_list:FAST_ARRAY(PROFIL) := FAST_ARRAY(PROFIL).create_with_capacity 65536;  
   
   - life_limit:INTEGER;
   
@@ -51,7 +51,7 @@ Section Private
   (
     reduce_profil := profil_list.upper >= life_limit;
     {profil_list.upper >= life_limit}.while_do {
-      profil_list.last.remove;	
+      profil_list.last.remove;	             
       ! {profil_list.last.set_life_index (-1)};
       profil_list.remove_last;
     };
@@ -69,6 +69,10 @@ Section Public
   
   - set_life p:PROFIL <-
   [ 
+    (p.life_index = -1).if {
+      p.name.print;
+      semantic_error (p.slot.position,"LA");
+    };
     -? { p.life_index != -1 };
     -? { profil_list.item (p.life_index) = p };
   ]
@@ -120,18 +124,21 @@ Section Public
       swap idx with (profil_list.upper);
     };
     profil_list.remove_last;
-    // Debug.
+    // Debug.    
     ! {p.set_life_index (-1)};
   );
     
   - execute_pass_recursive <-
   (
+    (profil_list.lower).to (profil_list.upper) do { i:INTEGER;
+      profil_list.item i.reset_recursive;
+    };
     VARIABLE.update;
     life_limit := 0;
     PROFIL.set_mode_recursive TRUE;
-    profil_first := profil_second := NULL;
+    profil_current := profil_slot := NULL;
     list_current   := NULL;          
-    list_main.execute_link;    
+    list_main.execute;    
     PROFIL.set_mode_recursive FALSE;
     clean;
     reduce_profil := TRUE;
@@ -140,15 +147,16 @@ Section Public
   - inline_level_current:INTEGER := 3;
   
   - execute_pass <-
-  ( 
+  (     
     VARIABLE.update;
     life_limit := 0;
-    profil_first := profil_second := NULL;
+    profil_slot := NULL;
     list_current   := NULL; 
-    list_main.execute_link;      
+    list_main.execute;      
     current := profil_list.lower;
     {current < life_limit}.while_do {			            
-      profil_list.item current.execute inline_level_current;
+      profil_current := profil_list.item current;
+      profil_current.execute inline_level_current;
       current := current + 1;
     };      
     current := 0;
@@ -156,6 +164,10 @@ Section Public
     ((! reduce_profil) && {inline_level_current < inline_level}).if {
       inline_level_current := inline_level_current + 3;
       new_execute_pass;
+    };
+    (TYPE.is_alias_struct).if {
+      TYPE.detect_alias;
+      TYPE_GENERIC.detect_alias;
     };
   );
   
@@ -167,8 +179,6 @@ Section Public
   (
     (profil_list.lower).to (profil_list.upper) do { j:INTEGER;
       profil_list.item j.genere_handler buffer;            
-      buffer.add_last ';';      
-      buffer.add_last '\n';
     };
   );
   
@@ -178,7 +188,7 @@ Section Public
       profil_list.item j.genere buffer;            
     };
   );
-    
+
   //
   // Display.
   //

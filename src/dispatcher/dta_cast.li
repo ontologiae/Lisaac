@@ -51,6 +51,11 @@ Section Public
   - make p:POSITION type t:TYPE_FULL <-
   (
     result_expr := t.get_temporary_expr p;
+    (profil_current = NULL).if {
+      context := context_main;
+    } else {
+      context := profil_current.context;
+    };
   );
 
   //
@@ -68,7 +73,7 @@ Section Public
   
 Section NODE_TYPE, DTA  
   
-  - product t:TYPE with e:EXPR :LIST <-
+  - product t:TYPE with e:EXPR self type_self:TYPE_FULL :LIST <-
   ( + cast:LOCAL;
     + rd:READ;
     + new_value:EXPR;
@@ -94,7 +99,7 @@ Section NODE_TYPE, DTA
     result
   );
   
-  - update_branch l:LIST :BOOLEAN <-
+  - update_branch l:LIST self type_self:TYPE_FULL :BOOLEAN <-
   (
     TRUE
   );

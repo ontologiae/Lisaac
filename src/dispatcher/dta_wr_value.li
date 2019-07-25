@@ -54,12 +54,16 @@ Section Public
   
   - make p:POSITION slot sl:SLOT self arg:EXPR value v:EXPR <-
   (
-    position := p;    
-    context  := profil_second;
+    position    := p;    
     slot        := sl;
     self_arg    := arg;
-    result_expr := v.my_copy; //slot.get_expr_result;
+    result_expr := v.my_copy; 
     value       := v;
+    (profil_current = NULL).if {
+      context := context_main;
+    } else {
+      context := profil_current.context;
+    };
   );
 
   //
@@ -86,24 +90,24 @@ Section Public
   
 Section NODE_TYPE, DTA 
 
-  - product t:TYPE with e:EXPR :LIST <-
+  - product t:TYPE with e:EXPR self type_self:TYPE_FULL :LIST <-
   ( + result:LIST;
     
     result := LIST.create (e.position);
     (t = TYPE_NULL).if {
-      TYPE_NULL.product_error position for NULL in result with context;
+      TYPE_NULL.product_error position in result with context;
     } else {
       lookup t with e in result;
     };
     result    
   );  
 
-  - update_branch l:LIST :BOOLEAN <-
+  - update_branch l:LIST self type_self:TYPE_FULL :BOOLEAN <-
   ( + result:BOOLEAN;   
     + wrt_slot:WRITE_SLOT;
     + wrt_glob:WRITE_GLOBAL;
     
-    result := parent_dta.update_branch l;
+    result := parent_dta.update_branch l self type_self;
     (l.count < 3).if {
       wrt_slot ?= l.first;	
       wrt_glob ?= l.first;	
@@ -124,7 +128,7 @@ Section NODE_TYPE, DTA
     result
   );    
   
-Section DTA_RD  
+Section DTA
   
   - finalise typ:TYPE with (expr:EXPR,s:SLOT) in lst:LIST <- 
   ( + new_value:EXPR;

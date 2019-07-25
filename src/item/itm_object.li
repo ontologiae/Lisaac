@@ -30,7 +30,7 @@ Section Header
   
 Section Inherit
   
-  - parent_any:ANY := ANY;
+  + parent_any:Expanded ANY;
   
   - parent_hashable:HASHABLE := HASHABLE;
   
@@ -38,28 +38,35 @@ Section Public
   
   - context_extern:LOCAL;
   
-  - set_context_extern l:LOCAL <-
+  - bottom_index:INTEGER;
+  
+  - clean_bottom_index <-
   (
-    context_extern := l;
-  );
-      
+    bottom_index := stack_local.upper + 1;
+    context_extern := NULL;
+  );      
+  
   - lookup n:STRING_CONSTANT :LOCAL <-
   ( + result:LOCAL;
     + j:INTEGER;
     ? {n = ALIAS_STR.get n};
         
     j := stack_local.upper;
-    {(j < stack_local_lower) || {stack_local.item j.name = n}}.until_do {	
+    {(j < stack_local.lower) || {stack_local.item j.name = n}}.until_do {	
       j := j - 1;
     };
-    (j >= stack_local_lower).if {
+    (j >= stack_local.lower).if {
       result := stack_local.item j;
-      ((j < CONTEXT.limit_context) && {result.style != '-'}).if {
-	context_extern := result;
+      
+      ((j < bottom_index) && {result.style != '-'}).if {
+        bottom_index := j;
+        context_extern := result;
       };
-    }.elseif {profil_first != NULL} then {
-      result := profil_first.lookup n;            
+
+    }.elseif {profil_slot != NULL} then {
+      result := profil_slot.lookup n;            
       ((result != NULL) && {result.name != ALIAS_STR.variable_self}).if {
+        bottom_index := -1;
 	context_extern := result;
       };
     };

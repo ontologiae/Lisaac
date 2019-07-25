@@ -27,16 +27,32 @@ Section Header
   - author   := "Benoit Sonntag (bsonntag@loria.fr)";
   
 Section Inherit  
+    
+  + parent_area:Expanded AREA;
   
-  - parent_object:OBJECT := OBJECT;
+  + parent_g_expr:Expanded G_EXPR;
+  
+Section Public
+  //
+  // Width / Height
+  //
+  
+  - width_min:INTEGER  := 224;
+  
+  - height_min:INTEGER := 224 + 14;
+  
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  ( 
+    update rac from (x,y) size (w,h);
+  );
   
 Section Private
-
+  
   //
   // Data.
   //
 
-  - table:FAST_ARRAY2[UINTEGER_8];
+  - table:FAST_ARRAY2(UINTEGER_8);
 
   // 
   // Consultation.
@@ -192,7 +208,58 @@ Section Private
   //
   // Display.
   //
+  
+Section Public
+  
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-  
+  ( + col:UINTEGER_32;
+    + cx,cy:INTEGER;
     
+    clipping (x0,y0) to (x1,y1);
+   
+    poly_move_to (  0,  0);
+    poly_line_to (223,  0);
+    poly_line_to (223,223);
+    poly_line_to (  0,223);
+    poly_line_to (  0,  0);
+    
+    0.to 6 do { y:INTEGER;
+      0.to 6 do { x:INTEGER;
+	cx := (x << 5) + 16;
+        cy := (y << 5) + 16;
+	poly_ellipse (cx,cy) rays (14,14);
+      };
+    };    
+    
+    poly_trace_color 08080C0h;
+
+    // Display Game.
+    0.to 6 do { y:INTEGER;
+      0.to 6 do { x:INTEGER;
+	table.item (x,y)
+	.when 0 then { col := black; }
+	.when 1 then { col := red;   }
+	.when 2 then { col := blue;  };	
+	cx := (x << 5) + 16;
+        cy := (y << 5) + 16;
+	circle_fill (cx,cy) rayon 14 color col;
+      };
+    };
+    
+    // Information.
+    rectangle_fill (0,224) to (223,237) color gray;
+    stat
+    .when 0 then { string_tmp.copy "Player red ?"; }
+    .when 1 then { string_tmp.copy "Player blue ..."; }
+    .when 2 then { string_tmp.copy "Winner: Player red."; } 
+    .when 3 then { string_tmp.copy "Winner: Player blue."; }
+    .when 4 then { string_tmp.copy "Winner: Match null."; };
+    color black;
+    print string_tmp to (2,222);
+  );
+  
+Section Private
+  
   - display_text <-  
   (     
     
@@ -232,13 +299,24 @@ Section Private
   
 Section Public  
   
+  - init <-
+  (
+    table := FAST_ARRAY2(UINTEGER_8).create (7,7);        
+    string_tmp := STRING.create 80;    
+  );
+  
+  - run:G_WIN_OUT <-
+  ( 
+    init;
+    G_WIN_OUT.create "Power 4" with (Self.fix_width.fix_height)
+  );
+    
   - main <-
   ( + catch:CHARACTER;
     + col,line:INTEGER;
         
     // Initialisation.
-    table := FAST_ARRAY2[UINTEGER_8].create (7,7);        
-    string_tmp := STRING.create 80;
+    init;
     
     display_text;    
     {stat < 2}.while_do {
@@ -293,3 +371,69 @@ Section Public
       };
     };        
   );  
+
+  //
+  // Event.
+  //
+  
+  - receive msg:EVENT <-
+  ( + col,line:INTEGER;
+    + evt_mouse:EVENT_MOUSE;
+    + win:AREA;
+    
+    evt_mouse?=msg;
+    (evt_mouse != NULL).if {
+      win := DESK.get_object (evt_mouse.x_current,evt_mouse.y_current);
+      (win != Self).if {
+	DESK.receive msg;
+      } else {
+	(evt_mouse.left_down).if {      
+	  (stat = 0).if {
+	    //
+	    // Humain player.
+	    //
+	    col := evt_mouse.x_relative >> 5;
+	    (table.item (col,0) = 0).if {	
+	      // Put.
+	      line:=table_line col;
+	      table.put 1 to (col,line);	  
+	      // Detect success.
+	      (is_success (col,line)).if {
+		stat := 2;
+		refresh;
+	      }.elseif {match_null} then {
+		stat := 4;
+		refresh;
+	      } else {
+		//
+		// Computer player.
+		//
+		stat := 1;
+		refresh;
+		col := play_computer;
+		// Put.
+		line:=table_line col;	    
+		table.put 2 to (col,line);	  
+		// Detect success.
+		(is_success (col,line)).if {
+		  stat := 3;
+		}.elseif {match_null} then {
+		  stat := 4;	      
+		} else {
+		  stat := 0;
+		};
+		refresh;
+	      };
+	    };
+	  } else {
+	    //
+	    // New game.
+	    //
+	    table.clear_all;
+	    stat := 0;
+	    refresh;
+	  };
+	};
+      };
+    };
+  );

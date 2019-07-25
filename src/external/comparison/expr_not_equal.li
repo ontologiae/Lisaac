@@ -61,7 +61,7 @@ Section Public
   ( + result:PROTOTYPE_CST;
     + r:PROTOTYPE_CST;
     
-    (left == right).if {
+    (left ~= right).if {
       result := PROTOTYPE_CST.create position type (type_false.default);
       left .remove;
       right.remove;
@@ -73,6 +73,8 @@ Section Public
 	{left.static_type.is_expanded}  &&
 	{left.static_type.raw != type_pointer}
       ).if {
+        left .remove;
+        right.remove;
 	result := PROTOTYPE_CST.create position type (type_true.default);	
       };
     };    
@@ -80,6 +82,34 @@ Section Public
     result
   );
 
+  //
+  // Genere
+  //
+    
+  - genere buffer:STRING <- // BSBS: a factoriser avec EXPR_EQUAL
+  (
+    (
+      (left.static_type.is_expanded)  && 
+      {right.static_type.is_expanded} && 
+      {right.static_type.raw.type_c = NULL}
+    ).if {
+      buffer.append "(memcmp(";
+      (left.static_type.is_expanded_ref).if_false {
+        buffer.add_last '&';
+      };
+      left.genere buffer;
+      buffer.add_last ',';
+      (right.static_type.is_expanded_ref).if_false {
+        buffer.add_last '&';
+      };
+      right.genere buffer;
+      buffer.append ",sizeof(";
+      left.static_type.raw.put_expanded_declaration buffer;      
+      buffer.append ")) != 0)";
+    } else {
+      parent_expr_binary_cmp.genere buffer;
+    };    
+  );
   
   
 

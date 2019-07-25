@@ -1,8 +1,0 @@
-
-[Xavier Oswald]
-
- * script for building lisaac.zip, lisaac.tar.gz & debian package when we want
-	 to release. 
- * improve vertical and horizontal inheritance benchmarks and commit them.
- * script that check for svn commit each 10hours and launch a benchmark
-	 game on several architecture and generate a html page on the website.

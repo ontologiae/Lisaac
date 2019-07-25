@@ -32,7 +32,7 @@ Section Inherit
   
   + parent_expr_unary:Expanded EXPR_UNARY;
   
-Section Private  
+Section Public
   
   - symbol:CHARACTER <- '~';
     

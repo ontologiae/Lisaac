@@ -1,0 +1,55 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//                             MPEG2 Decode Video                             //
+//                                                                            //
+//                     LORIA - UHP - INRIA - ST - FRANCE                      //
+//               (c) INRIA (see `licence.txt' for more details)               //
+//                     Benoit SONNTAG - bsonntag@loria.fr                     //
+//                           http://www.IsaacOS.com                           //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name         := PMV;
+  
+  - bibliography := "http://IsaacOS.com";
+  - author       := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment      := "Simple struct for table.";
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Private
+  
+  - buffer:NATIVE_ARRAY(INTEGER) := NATIVE_ARRAY(INTEGER).create 8;
+  
+  - get_index (i0,i1,i2:INTEGER) :INTEGER <-
+  (
+    ? {i0.in_range 0 to 1};
+    ? {i1.in_range 0 to 1};
+    ? {i2.in_range 0 to 1};
+    (i0 << 2) | (i1 << 1) | i2
+  );
+  
+Section Public
+    
+  
+  //
+  // Manager.
+  //
+  
+  - clear <-
+  (
+    buffer.clear_all 7;
+  );
+  
+  - item (i0,i1,i2:INTEGER) :INTEGER <-
+  ( 
+    buffer.item (get_index (i0,i1,i2))
+  );
+
+  - put elt:INTEGER to (i0,i1,i2:INTEGER) <-
+  (
+    buffer.put elt to (get_index (i0,i1,i2))    
+  );

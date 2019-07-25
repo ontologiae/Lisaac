@@ -31,35 +31,85 @@ Section Header
 Section Inherit
   
   + parent_type:Expanded TYPE;
-
+    
 Section Private  
   
   // BSBS: Vu que les ITM_TYPE sont aliaser, il n'est pas necessary d'aliaser les TYPE !
   // Mais attention au pb des TYPE_GENERIC et de leur alias de slot_run...
   
-  - dicog_type:HASHED_DICTIONARY[TYPE_GENERIC,STRING_CONSTANT] := 
-  HASHED_DICTIONARY[TYPE_GENERIC,STRING_CONSTANT].create;
+  - dicog_type:HASHED_DICTIONARY(TYPE_GENERIC,STRING_CONSTANT) := 
+  HASHED_DICTIONARY(TYPE_GENERIC,STRING_CONSTANT).create;
     
 Section Public
   
   + name:STRING_CONSTANT;
   
-  + intern_name:STRING_CONSTANT;
+  + key:STRING_CONSTANT;
   
-  + generic_list:FAST_ARRAY[TYPE_FULL];  
+  + generic_list:FAST_ARRAY(TYPE_FULL);  
   
-  - generic_to_type char:CHARACTER :TYPE_FULL <-
+  - parameter_to_type p:ITM_TYPE_PARAMETER :TYPE_FULL <-
   ( + idx:INTEGER;
+    + tab:FAST_ARRAY(ITM_TYPE_PARAMETER);
     + result:TYPE_FULL;
-    + tab:FAST_ARRAY[CHARACTER];
-    
+        
     tab := prototype.idf_generic_list;
-    idx := tab.fast_first_index_of char;
+    idx := tab.fast_first_index_of p;
     (idx <= tab.upper).if {
       result := generic_list.item idx;
     };
     result
   );
+  
+  //
+  // Detect Alias.
+  //  
+  
+  - detect_alias <-
+  (
+    (dicog_type.lower).to (dicog_type.upper) do { j:INTEGER;
+      dicog_type.item j.detect_alias_struct;
+    };      
+  );
+
+  
+  //
+  // Import / Export
+  //
+    
+  - is_export_to t:TYPE_FULL :BOOLEAN <-
+  (         
+    is_cast t with (ALIAS_STR.slot_to) on export_list and (prototype.import_list)
+  );
+
+  - is_import_to t:TYPE_FULL :BOOLEAN <-
+  (         
+    is_cast t with (ALIAS_STR.slot_from) on import_list and (prototype.import_list)
+  );
+  
+Section Private
+  
+  + export_list:FAST_ARRAY(TYPE_FULL);
+  + import_list:FAST_ARRAY(TYPE_FULL);
+  
+  - is_cast t:TYPE_FULL with msg:STRING_CONSTANT 
+  on  lst:FAST_ARRAY(TYPE_FULL) 
+  and lstp:FAST_ARRAY(ITM_TYPE_MONO) :BOOLEAN <-
+  ( + result:BOOLEAN; 
+    + j:INTEGER;
+            
+    (lst != NULL).if {
+      j := lst.fast_first_index_of t;      
+      (j <= lst.upper).if {
+	result := TRUE;
+	last_cast_name.copy msg;
+	lstp.item j.append_cast_name_in last_cast_name;	
+      };      
+    };
+    result      
+  );
+  
+Section Public
   
   //
   // Get
@@ -71,28 +121,28 @@ Section Public
     NULL
   );
   
-  - get itm_typ:ITM_TYPE_SIMPLE with gen:FAST_ARRAY[TYPE_FULL] :TYPE_FULL <-
-  ( + base:TYPE_GENERIC;
-    + key:STRING_CONSTANT;
-    + result:TYPE_FULL;
-    + styl:STRING_CONSTANT;
+  - get itm_typ:ITM_TYPE_SIMPLE with gen:FAST_ARRAY(TYPE_FULL) :TYPE_FULL <-
+  ( + base:TYPE_GENERIC;    
+    + result,t:TYPE_FULL;
+    + styl,k:STRING_CONSTANT;
+    + proto:PROTOTYPE;
     
-    string_tmp.copy (itm_typ.name);
-    string_tmp.add_last '[';    
+    proto := load_prototype (itm_typ.name) generic_count (gen.count);    
+    string_tmp.copy (proto.filename);    
+    (gen.lower).to (gen.upper) do { j:INTEGER;
+      string_tmp.add_last ' ';
+      t := gen.item j;
+      (t.flag & 1111b).append_in string_tmp;
+      string_tmp.append (t.raw.key);  // BSBS: transformer la key par un numero de fichier...
+      // BSBS: parce que la, tu as des key immense !
+    };
+    k := ALIAS_STR.get string_tmp;
     //
-    (gen.lower).to (gen.upper - 1) do { j:INTEGER;      
-      gen.item j.append_name_in string_tmp;
-      string_tmp.add_last ',';
-    };    
-    gen.last.append_name_in string_tmp;
-    string_tmp.add_last ']';        
-    key := ALIAS_STR.get string_tmp;
-    //
-    base := dicog_type.fast_reference_at key;
+    base := dicog_type.fast_reference_at k;
     (base = NULL).if {      
       base := TYPE_GENERIC.clone;
-      dicog_type.fast_put base to key;
-      base.make (itm_typ,key) with gen;
+      dicog_type.fast_put base to k;
+      base.make itm_typ with proto generic gen key k;
     };
     //            
     styl := itm_typ.style;
@@ -114,12 +164,12 @@ Section Public
   // il faudrai plutot stocker ca ailleurs... ou? chépa!
   //
   
-  + put_to_list:FAST_ARRAY[PUT_TO];
+  + put_to_list:FAST_ARRAY(PUT_TO);
   
   - add_put_to n:PUT_TO <-
   (    
     (put_to_list = NULL).if {
-      put_to_list := FAST_ARRAY[PUT_TO].create_with_capacity 16;
+      put_to_list := FAST_ARRAY(PUT_TO).create_with_capacity 16;
     };
     put_to_list.add_last n;
   );
@@ -181,7 +231,11 @@ Section Public
       (prototype.name = ALIAS_STR.prototype_native_array) ||
       {prototype.name = ALIAS_STR.prototype_native_array_volatile}
     ).if {      
-      buffer.add_last '*';
+      (is_java).if {
+        buffer.append "[]";
+      } else {
+        buffer.add_last '*';
+      };
       generic_list.first.genere_star_declaration buffer;
     } else {
       parent_type.put_reference_star_declaration buffer;
@@ -195,23 +249,35 @@ Section Public
     crash_with_message "TYPE_GENERIC.make";
   );
 
-  - make (itm_typ:ITM_TYPE_SIMPLE,n:STRING_CONSTANT) with gen:FAST_ARRAY[TYPE_FULL] <-
+  - make itm_typ:ITM_TYPE_SIMPLE with proto:PROTOTYPE 
+  generic gen:FAST_ARRAY(TYPE_FULL) key k:STRING_CONSTANT <-
   ( + mask_bit:UINTEGER_8;    
     
     index        := index_count;
     index_count  := index_count + 1;
-    name         := n;
-    generic_list := gen;
-    string_tmp.copy n;
-    string_tmp.replace_all ',' with 'x';
-    string_tmp.replace_all '[' with 'o';
-    string_tmp.replace_all ']' with 'o';
-    string_tmp.replace_all ' ' with '_';
-    intern_name := ALIAS_STR.get string_tmp;
     //
-    prototype   := load_prototype (itm_typ.name) generic_count (gen.count);
+    string_tmp.copy (itm_typ.name);
+    string_tmp.add_last '(';    
+    (gen.lower).to (gen.upper - 1) do { j:INTEGER;      
+      gen.item j.append_name_in string_tmp;
+      string_tmp.add_last ',';
+    };    
+    gen.last.append_name_in string_tmp;
+    string_tmp.add_last ')';            
+    name := ALIAS_STR.get string_tmp;
+    key := k;
+    generic_list := gen;
+    string_tmp.copy name;
+    string_tmp.replace_all ',' with 'x';
+    string_tmp.replace_all '(' with 'o';
+    string_tmp.replace_all ')' with 'o';
+    string_tmp.replace_all ' ' with '_';
+    string_tmp.replace_all '.' with '_';
+    intern_name := ALIAS_STR.get_intern string_tmp;
+    //
+    prototype   := proto;
     itm_type    := itm_typ;    
-    slot_run    := FAST_ARRAY[SLOT].create_with_capacity 10; // BSBS: A voir.    
+    slot_run    := FAST_ARRAY(SLOT).create_with_capacity 10; // BSBS: A voir.    
     (prototype.type_style = ALIAS_STR.keyword_expanded).if {
       // Expanded.
       mask_bit := TYPE_FULL.expanded_bit | TYPE_FULL.default_expanded_bit;
@@ -222,9 +288,24 @@ Section Public
     default := TYPE_FULL.create Self with mask_bit;
     prototype.init_slot_for Self;    
     //
-    subtype_list := HASHED_SET[TYPE].create;
+    subtype_list := HASHED_SET(TYPE).create;
     subtype_list.fast_add TYPE_NULL;
     add_subtype Self;
+    // BSBS: Size ???
+    
+    // Import / Export.
+    (prototype.export_list != NULL).if {
+      export_list := FAST_ARRAY(TYPE_FULL).create_with_capacity (prototype.export_list.count);
+      (prototype.export_list.lower).to (prototype.export_list.upper) do { j:INTEGER;
+        export_list.add_last (prototype.export_list.item j.to_run_for Self);
+      };
+    };
+    (prototype.import_list != NULL).if {
+      import_list := FAST_ARRAY(TYPE_FULL).create_with_capacity (prototype.import_list.count);
+      (prototype.import_list.lower).to (prototype.import_list.upper) do { j:INTEGER;
+        import_list.add_last (prototype.import_list.item j.to_run_for Self);
+      };
+    };
   );
 
  

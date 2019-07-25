@@ -34,9 +34,9 @@ Section Inherit
   
 Section Private
   
-  - dico:FAST_ARRAY[ITM_TYPE_MULTI] := FAST_ARRAY[ITM_TYPE_MULTI].create_with_capacity 32;
+  - dico:FAST_ARRAY(ITM_TYPE_MULTI) := FAST_ARRAY(ITM_TYPE_MULTI).create_with_capacity 32;
 
-  - create lt:FAST_ARRAY[ITM_TYPE_MONO] :SELF <-
+  - create lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
   ( + result:SELF;
     
     result := clone;
@@ -44,16 +44,18 @@ Section Private
     result
   );
   
-  - make lt:FAST_ARRAY[ITM_TYPE_MONO] <-
+  - make lt:FAST_ARRAY(ITM_TYPE_MONO) <-
   (
     list_type := lt;
   );
  
 Section Public
   
-  + list_type:FAST_ARRAY[ITM_TYPE_MONO];
+  + list_type:FAST_ARRAY(ITM_TYPE_MONO);
   
   - count:INTEGER <- list_type.count;
+  
+  - lower:INTEGER <- list_type.lower;
   
   - upper:INTEGER <- list_type.upper;
   
@@ -72,8 +74,8 @@ Section Public
     list_type.first
   );
   
-  - get lt:FAST_ARRAY[ITM_TYPE_MONO] :ITM_TYPE_MULTI <-
-  ( + result:ITM_TYPE_MULTI;
+  - get lt:FAST_ARRAY(ITM_TYPE_MONO) :SELF <-
+  ( + result:SELF;
     + idx:INTEGER;
     
     idx := dico.lower;
@@ -81,7 +83,7 @@ Section Public
       idx := idx + 1;
     };    
     (idx <= dico.upper).if {
-      result := dico.item idx;
+      result ?= dico.item idx;
     } else {
       result := create lt;
       dico.add_last result;
@@ -89,13 +91,63 @@ Section Public
     result
   );
   
-  - display buffer:STRING <-
+  //
+  // Runnable.
+  //
+  
+  - get_expr_for p:PARAMETER_TO_TYPE :EXPR <-
+  ( + lst:FAST_ARRAY(EXPR);
+    + t:TYPE_FULL;
+    
+    lst := FAST_ARRAY(EXPR).create_with_capacity count;
+    lower.to upper do { i:INTEGER;
+      t := item i.to_run_for p;
+      lst.add_last (t.get_temporary_expr (p.position));
+    };
+    EXPR_MULTIPLE.create lst
+  );
+  
+  - to_run_in lst:FAST_ARRAY(TYPE_FULL) for p:PARAMETER_TO_TYPE <-
+  ( + t:TYPE_FULL;
+    
+    lower.to upper do { i:INTEGER;
+      t := item i.to_run_for p;
+      lst.add_last t;
+    };
+  );
+  
+  //
+  // Display.
+  //  
+  
+  - append_in buffer:STRING <-
   (    
     buffer.add_last '(';
+    display_raw buffer;
+    buffer.add_last ')';
+  );
+  
+  - shorter_in buf:STRING <-
+  (
+    buf.add_last '(';
+    shorter_raw_in buf;
+    buf.add_last ')';
+  );
+    
+  - display_raw buffer:STRING <-
+  (    
     (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
-      list_type.item j.display buffer;
+      list_type.item j.append_in buffer;
       buffer.add_last ',';
     };
-    list_type.last.display buffer;
-    buffer.add_last ')';
+    list_type.last.append_in buffer;
+  );
+  
+  - shorter_raw_in buf:STRING <-
+  (    
+    (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
+      list_type.item j.shorter_in buf;
+      buf.add_last ',';
+    };
+    list_type.last.shorter_in buf;
   );

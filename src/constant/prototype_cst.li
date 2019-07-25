@@ -63,7 +63,7 @@ Section Public
   // Comparaison.
   //
 
-  - '==' Right 60 other:EXPR :BOOLEAN <-    
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-    
   ( + p:PROTOTYPE_CST;
     p ?= other;
     (p != NULL) && {static_type = p.static_type}

@@ -79,18 +79,18 @@ Section Public
     new_body := body.my_copy;
     result := LOOP.create position name (ALIAS_STR.get_intern name) body new_body;
     //
-    switch ?= new_body.item (new_body.upper - 1);
+    switch ?= new_body.last; 
     (switch.list.lower).to (switch.list.upper) do { k:INTEGER;
       case := switch.list.item k.code;
-      (case.count > 1).if {
-	loop_end ?= case.item (case.upper - 1);
+      (! case.is_empty).if {
+	loop_end ?= case.last;
 	(loop_end != NULL).if {	  
 	  ? {loop_end.loop = Self};
 	  (loop_end.loop != Self).if {
 	    semantic_error (position,"LOOP.my_copy BUG!!!");
 	  };
 	  loop_end := LOOP_END.create (loop_end.position) loop result;
-	  case.put loop_end to (case.upper - 1);
+	  case.put loop_end to (case.upper);
 	};
       };
     };
@@ -102,9 +102,10 @@ Section Public
       " copy:".print;
       result.link_count.print;
       '\n'.print;
+      
+      body.debug_display;
+      
       semantic_error (position,"LOOP: Bug in copy.");
-    } else {
-     // "c\n".print;
     };
     
     ? {result.link_count = link_count};
@@ -127,7 +128,7 @@ Section Public
     + cur_seq_call_and_loop:INTEGER;
     
     (link_count = 0).if {
-      result := body.execute_unlink;
+      result := body.execute;
       new_execute_pass;
     } else {      
       cur_seq_call_local_and_loop := 
@@ -176,6 +177,9 @@ Section Public
   - genere buffer:STRING <-
   (         
     (! genere_while buffer).if {
+      
+      current_list_level := current_list_level + link_count;        
+      
       buffer.append name;
       buffer.append ":\n";
       buffer.append indent;
@@ -189,10 +193,10 @@ Section Public
     + inverse:BOOLEAN;
     + result:BOOLEAN;
     
-    (body.upper - 1 < body.lower).if {        
+    (body.is_empty).if {        
       semantic_error (position,"LOOP BUG: Body loop empty !");
     };
-    switch ?= body.item (body.upper-1);
+    switch ?= body.last;
     (
       (switch != NULL) && 
       {switch.list.count = 2} &&
@@ -207,8 +211,11 @@ Section Public
 	  lst := lst_true;
 	  lst_true := lst_false;
 	  lst_false := lst;
-	};
-	(body.count = 2).if {
+        };
+        
+        current_list_level := current_list_level + 1;        
+        
+	(body.count = 1).if {
 	  //
 	  // While (...) do {...}.
 	  //
@@ -221,15 +228,15 @@ Section Public
 	  switch.expr.genere buffer;
 	  //
 	  buffer.append ") ";
-	  lst_true.remove_index (lst_true.upper - 1);
+	  lst_true.remove_last; 
 	  lst_true.genere buffer;
-	}.elseif {lst_true.count = 2} then {
+	}.elseif {lst_true.count = 1} then {
 	  //
 	  // Do {...} while (...).
 	  //
 	  result := TRUE;
 	  buffer.append "do ";
-	  body.remove_index (body.upper - 1);
+	  body.remove_last;
 	  body.genere buffer;
 	  inverse.if {
 	    buffer.append " while (!";	    
@@ -239,7 +246,10 @@ Section Public
 	  //
 	  switch.expr.genere buffer;
 	  buffer.add_last ')';
-	};	
+        };	
+        
+        current_list_level := current_list_level - 1;        
+        
       };
     };
     result

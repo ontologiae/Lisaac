@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="syntax.xslt"?>
+<XMLConfigSettings>
+  <FILEINFO author="Jeremy Cowgar" type="LangSpec"/>
+  <SYNTAX id="eu" name="Lisaac" inherit="def_source" inherit_url="defsource_spec.xml">
+    <SPECIFICATION>
+      <FilePattern mask="*.li;*.lip;"/>
+      <CaseSensitive>true</CaseSensitive>
+      <OpenClose>()[]{}''""</OpenClose>
+      <EscapeChar>\</EscapeChar>
+      <Operators>?*-+/&amp;*=&lt;&gt;!{}()[].</Operators>
+      <Words>0-9A-Za-z_</Words>
+      <Encoding default="866"/>
+      <HierarchySeparator>
+        <Separator text=":"/>
+      </HierarchySeparator>
+      <Bars navigation="true"/>
+    </SPECIFICATION>
+    <FORMAT>
+      <DefaultIndent>2</DefaultIndent>
+    </FORMAT>
+    <SCOPES>
+    </SCOPES>
+    <LABELS>
+      <Label group="Function" match="^\t(\-|\+)\s+(\w+)[^\n]*<-" name="Slot \2" descr="\1 \2" scope="1" image="9"/>
+      <Label group="Variable" match="^\t(\-|\+)\s+(\w+)[ \t]*:" name="Var \2" descr="\1 \2" scope="1" image="8"/>
+    </LABELS>
+    <STYLES>
+      <Style id="url" extend="true">
+        <Containers>
+          <Open id="normal" exclude="true"/>
+          <Open id="string"/>
+          <Open id="comment"/>
+          <Open id="char"/>
+        </Containers>
+      </Style>
+      <Style id="comment" name="Comments" text="1" bold="0" italic="1" underline="0" clr="#FF0000" bkclr="#FFFFFFFF">
+        <Blocks>
+          <Block open="//" close="\n"/>
+        </Blocks>
+      </Style>
+      <Style id="string" name="Strings" text="1" bold="0" italic="0" underline="0" clr="#009900" bkclr="#FFFFFFFF">
+        <Blocks>
+          <Block open="&quot;" close="&quot;"/>
+        </Blocks>
+      </Style>
+      <Style id="char" name="Char" text="1" bold="0" italic="0" underline="0" clr="#009900" bkclr="#FFFFFFFF">
+        <Blocks>
+          <Block open="'" close="'"/>
+        </Blocks>
+      </Style>
+    <Style name="Sections" text="1" bold="0" italic="0" underline="0" clr="#CC00CC" bkclr="#FFFFFF">
+      <Keywords>
+        <Keyword text="Section" />
+        <Keyword text="Header" />
+        <Keyword text="Insert" />
+        <Keyword text="Inherit" />
+        <Keyword text="Public" />
+        <Keyword text="Private" />
+        <Keyword text="Mapping" />
+        <Keyword text="Interrput" />
+        <Keyword text="Right" />
+        <Keyword text="Left" />
+        <Keyword text="Self" />
+        <Keyword text="Old" />
+        <Keyword text="Expanded" />
+        <Keyword text="Strict" />
+    </Keywords>
+    </Style>
+      <Style id="keywords" name="Keywords" image="13" bold="1" italic="0" underline="0" clr="#0000AA" bkclr="#FFFFFFFF">
+        <Keywords>
+        <Keyword text="while" />
+        <Keyword text="while_do" />
+        <Keyword text="if" />
+        <Keyword text="else" />
+        <Keyword text="when" />
+        <Keyword text="elseif" />
+        <Keyword text="then" />
+        <Keyword text="self" />
+        <Keyword text="by" />
+        <Keyword text="to" />
+        <Keyword text="do" />
+        <Keyword text="or" />
+        <Keyword text="downto" />
+        <Keyword text="if" />
+        <Keyword text="if_true" />
+        <Keyword text="if_false" />
+        <Keyword text="shrink" />
+        </Keywords>
+      </Style>
+      <Style id="script" name="C" include="cpp:normal" bold="0" italic="0" underline="0" clr="#66666600" bkclr="Embedded Language 2 Back" overview="1">
+        <Containers>
+          <Close id="cpp:normal"/>
+          <Close id="cpp:comment"/>
+        </Containers>
+        <Blocks>
+          <Block open="`" close="`" />
+        </Blocks>
+      </Style>
+      <Style name="TODOs" text="1" bold="1" italic="1" underline="0" clr="TODOs" bkclr="#FFFFFFFF">
+        <Containers>
+          <Open id="comment"/>
+        </Containers>
+        <Blocks>
+          <Block open="TODO" close="\n"/>
+          <Block open="todo" close="\n"/>
+        </Blocks>
+      </Style>
+    </STYLES>
+  </SYNTAX>
+</XMLConfigSettings>

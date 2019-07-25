@@ -1,0 +1,454 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name         := MPEG2DEC;
+  
+  - bibliography := "http://IsaacOS.com";
+  - author       := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment      := "main(), initialization, option processing.";
+  
+  // C vs Lisaac difficulty:
+  // =======================
+  // - `goto' used.
+  // - `return()' used in middle function.
+  // - adress argument for multiple result => Lisaac V0.2
+  // - Allocation array in the stack       => Lisaac V0.3 ?
+  // - ptr2 = ptr + 10; (pointeur) => idx := 10; (pointeur + index)
+  // - (short *)tab[2] = (int)2; => Pas de pb pour C ???!!!
+  //
+  // Blague : ld->Bfr |= *ld->Rdptr++ << (24 - Incnt);
+  //
+  // Blindé de `if' => permet pas d'avoir une vue d'ensemble.
+  //
+  // Parlé de la Classification Objet <-> C :
+  // -> C Par theme.
+  // -> Data + Function.
+  
+Section Inherit
+    
+  + parent_area:Expanded AREA;
+  
+  + parent_g_expr:Expanded G_EXPR;
+
+  - parent_any_mpg2:ANY_MPG2 := ANY_MPG2;
+
+Section Public
+  
+  - init p:ABSTRACT_STRING :G_EXPR <-
+  (    
+    TIMER.add_client Self;
+    (page := G_RAW.create (Self.fix_height.fix_width)) /
+    G_BUTTON.create (G_OUT.create "Play" justify (G_OUT.center)) action {
+      b:G_BUTTON;
+      (stat_mpg = 4).if {
+        stat_mpg := 0;
+      };
+    }.fix_height 
+  );
+
+  - run p:ABSTRACT_STRING :G_WIN_OUT <-
+  ( 
+    is_isaacos := TRUE;
+    load_default p;
+    stat_mpg := 0; //4
+    page := G_WIN_OUT.create "Video" with (init "./")
+  );
+  
+  - main <-
+  (     
+    // decode command line arguments 
+    process_options;    
+    
+    (output_type = 0).if {
+      VIDEO.make_size (640,480);              
+      DESK.make VIDEO with (
+        G_OUT.create "Video" justify (G_OUT.center).fix_height / (init "./")
+      ); 
+    } else {  
+      LAYER_DATA.make main_bitstream_filename;    
+      ld := LAYER_DATA;    
+      decode_bitstream;       
+    };
+  );
+  
+Section Private
+
+  - initialize_sequence <-
+  // mostly IMPLEMENTAION specific rouintes
+  ( + size:INTEGER;
+
+    // force MPEG-1 parameters for proper decoder behavior 
+    // see ISO/IEC 13818-2 section D.9.14 
+    (! ld.mpeg2_flag).if {
+      progressive_sequence := TRUE;
+      progressive_frame    := TRUE;
+      picture_structure    := frame_picture;
+      frame_pred_frame_dct := TRUE;
+      chroma_format        := chroma420;
+      matrix_coefficients  := 5;
+    };    
+    
+    // round to nearest multiple of coded macroblocks 
+    // ISO/IEC 13818-2 section 6.3.3 sequence_header() 
+    mb_width := (horizontal_size + 0Fh) >> 4;
+    (ld.mpeg2_flag && {!progressive_sequence}).if {
+      mb_height := ((vertical_size + 1Fh) >> 5) << 1;
+    } else {
+      mb_height := (vertical_size + 0Fh) >> 4;
+    };
+
+    coded_picture_width  := mb_width  << 4;
+    coded_picture_height := mb_height << 4;
+        
+    // ISO/IEC 13818-2 sections 6.1.1.8, 6.1.1.9, and 6.1.1.10 
+    (chroma_format = chroma444).if {
+      chroma_width := coded_picture_width;
+    } else {
+      chroma_width := coded_picture_width >> 1;
+    };
+    (chroma_format != chroma420).if {
+      chroma_height := coded_picture_height;
+    } else {
+      chroma_height := coded_picture_height >> 1;
+    };
+  
+    // derived based on Table 6-20 in ISO/IEC 13818-2 section 6.3.17     
+    (chroma_format)
+    .when 1 then { block_count :=  6; }
+    .when 2 then { block_count :=  8; }
+    .when 3 then { block_count := 12; };
+    
+    backward_reference_frame := NATIVE_ARRAY(NATIVE_ARRAY(UINTEGER_8)).create 3;
+    forward_reference_frame  := NATIVE_ARRAY(NATIVE_ARRAY(UINTEGER_8)).create 3;
+    current_frame            := NATIVE_ARRAY(NATIVE_ARRAY(UINTEGER_8)).create 3;
+    auxframe                 := NATIVE_ARRAY(NATIVE_ARRAY(UINTEGER_8)).create 3;
+    llframe0                 := NATIVE_ARRAY(NATIVE_ARRAY(UINTEGER_8)).create 3;
+    llframe1                 := NATIVE_ARRAY(NATIVE_ARRAY(UINTEGER_8)).create 3;
+    0.to 2 do { cc:INTEGER;
+      (cc = 0).if {
+        size := coded_picture_width * coded_picture_height;
+      } else {
+        size := chroma_width * chroma_height;
+      };
+      backward_reference_frame.put (NATIVE_ARRAY(UINTEGER_8).create size) to cc;
+      forward_reference_frame.put (NATIVE_ARRAY(UINTEGER_8).create size) to cc;
+      auxframe.put (NATIVE_ARRAY(UINTEGER_8).create size) to cc;
+      
+      (ld.scalable_mode = sc_spat).if {
+        // this assumes lower layer is 4:2:0 
+        size := lower_layer_prediction_horizontal_size*lower_layer_prediction_vertical_size;
+	(cc != 0).if {
+	  size := size / 4;
+	};	
+	llframe0.put (NATIVE_ARRAY(UINTEGER_8).create size) to cc;
+	llframe1.put (NATIVE_ARRAY(UINTEGER_8).create size) to cc;
+      };
+    };
+
+    // SCALABILITY: Spatial 
+    (ld.scalable_mode = sc_spat).if {
+      lltmp := NATIVE_ARRAY(INTEGER_16).create
+      (lower_layer_prediction_horizontal_size*(
+	(lower_layer_prediction_vertical_size*vertical_subsampling_factor_n)/
+        vertical_subsampling_factor_m
+      ));
+    };
+  );
+  
+  - load_default p:ABSTRACT_STRING <-
+  (
+    main_bitstream_filename := STRING.create 40;
+    main_bitstream_filename.copy p;
+    main_bitstream_filename.append "anim.mpe";
+    output_type := 0;
+  );
+  
+  - process_options <-
+  // option processing
+  ( + i:INTEGER; 
+    + is_read:BOOLEAN;
+    + display_option:{};
+    
+    display_option := {
+      "MPEG2 Decoder V1.0, 2005, Isaac/Lisaac project\n\n\
+      \Usage:   mpeg2dec {options} \n\n\
+      \Options: file      main bitstream (base or spatial enhancement layer)\n\      
+      \         -on file  output format (0:Screen 1:YUV 2:SIF 3:TGA 4:PPM)\n\n\
+      \Example:        mpeg2dec bitstream.mpg -o0 rec\n\n".print;      
+    };
+    
+    // at least one argument should be present 
+    (COMMAND_LINE.count < 2).if {
+      load_default "./";
+    } else {
+      i := 1;    
+      // command-line options are proceeded by '-'     
+      {i <= COMMAND_LINE.upper}.while_do {
+        
+        // second character, [1], after '-' is the switch 
+        (COMMAND_LINE.item i.first = '-').if {	
+          is_read := FALSE;
+          (COMMAND_LINE.item i.item 2)	
+          .when 'o' then {
+            is_read := TRUE;
+            output_type := COMMAND_LINE.item i.item 3.decimal_value;
+            
+            (output_type.in_range 0 to 4).if_false {
+              display_option.value;
+              error "ERROR: Invalid output type.";              
+            };
+            (output_type != 0).if {
+              ((COMMAND_LINE.upper = i) || {COMMAND_LINE.item (i+1).first = '-'}).if {
+                display_option.value;
+                error "ERROR: -o must be followed by filename\n";
+              } else {
+                // filename is separated by space, so it becomes the next argument 
+                i := i + 1;
+                output_picture_filename := COMMAND_LINE.item i;
+              };
+            };
+          };
+          (! is_read).if {
+            display_option.value;
+            error_text.copy "undefined option -";
+            error_text.add_last (COMMAND_LINE.item i.item 2);
+            error_text.append " ignored. Exiting program\n"; 
+            error error_text;
+          };	
+        } else {	
+          main_bitstream_filename := COMMAND_LINE.item i;
+        };
+        
+        i := i + 1;
+    
+        // check for bitstream filename argument (there must always be one, at the very end
+        // of the command line arguments 
+      };
+        
+      // options sense checking 
+      (
+        (main_bitstream_filename = NULL) || 
+        {main_bitstream_filename.is_empty}
+      ).if {
+        display_option.value;
+        error "There must be a main bitstream specified\n";
+      };
+    };
+  );
+
+  - decode_bitstream <-
+  ( + bitstream_framenum:INTEGER;    
+    + sequence_framenum:INTEGER;        
+    
+    {GETHDR.get_hdr}.while_do { 
+      // Video sequence.
+      initialize_sequence;
+
+      // decode picture whose header has already been parsed in 
+      // Decode_Bitstream() 
+      GETPIC.decode_picture (bitstream_framenum, sequence_framenum);
+      
+      // update picture numbers 
+      (! second_field).if {
+	bitstream_framenum := bitstream_framenum + 1;
+	sequence_framenum  := sequence_framenum  + 1;
+      };
+      
+      // loop through the rest of the pictures in the sequence 
+      {GETHDR.get_hdr}.while_do {
+	GETPIC.decode_picture (bitstream_framenum, sequence_framenum);
+	
+	(! second_field).if {
+	  bitstream_framenum := bitstream_framenum + 1;
+	  sequence_framenum  := sequence_framenum  + 1;
+	};
+      };
+      
+      // put last frame 
+      (sequence_framenum != 0).if {
+	GETPIC.output_last_frame_of_sequence bitstream_framenum;
+      };
+      
+      // deinitialize sequence
+      ld.set_mpeg2_flag FALSE;      
+    };
+  );
+  
+  - stat_mpg:INTEGER_8;
+  - bitstream_framenum:INTEGER;    
+  - sequence_framenum:INTEGER;        
+      
+  - decode_picture <-
+  ( 
+    (stat_mpg = 0).if {
+      LAYER_DATA.make main_bitstream_filename;
+      ld := LAYER_DATA;
+      stat_mpg := 1;
+    }.elseif {stat_mpg = 1} then {
+      //
+      // Begin sequence.
+      //      
+      (GETHDR.get_hdr).if {
+        // Video sequence.
+        initialize_sequence;
+
+        // decode picture whose header has already been parsed in 
+        // Decode_Bitstream() 
+        GETPIC.decode_picture (bitstream_framenum, sequence_framenum);
+      
+        // update picture numbers 
+        (! second_field).if {
+          bitstream_framenum := bitstream_framenum + 1;
+          sequence_framenum  := sequence_framenum  + 1;
+        };
+        stat_mpg := 2;
+      } else {
+        stat_mpg := 4;
+      };
+    }.elseif {stat_mpg = 2} then {
+      //
+      // Next picture.
+      //
+      
+      // loop through the rest of the pictures in the sequence 
+      (GETHDR.get_hdr).if {
+        GETPIC.decode_picture (bitstream_framenum, sequence_framenum);
+        
+        (! second_field).if {
+          bitstream_framenum := bitstream_framenum + 1;
+          sequence_framenum  := sequence_framenum  + 1;
+        };
+      } else {
+        stat_mpg := 3;
+      };      
+    }.elseif {stat_mpg = 3} then {
+      //
+      // Last picture
+      //
+      
+      // put last frame 
+      (sequence_framenum != 0).if {
+	GETPIC.output_last_frame_of_sequence bitstream_framenum;
+      };
+      
+      // deinitialize sequence
+      ld.set_mpeg2_flag FALSE;      
+      stat_mpg := 1;
+    }.elseif {stat_mpg = 4} then {
+      //
+      // End of sequence.
+      //
+      stat_mpg := 0;
+    };
+  );
+  
+Section Public
+  //
+  // Update position.
+  //
+  
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  ( 
+    update rac from (x,y) size (w,h);
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-  
+  (
+    clipping (x0,y0) to (x1,y1);
+    (screen = NULL).if {
+      rectangle_fill (x0,y0) to (x1,y1) color black;
+    } else {
+      put_bitmap screen to (0,0);
+    };
+  );
+  
+  //
+  // Width / Height
+  //
+  
+  - width_min:INTEGER  <-
+  ( + result:INTEGER;
+    
+    (screen = NULL).if {
+      result := 100;
+    } else {
+      result := screen.width;
+    };
+    result
+  );
+  
+  - height_min:INTEGER <-
+  ( + result:INTEGER;
+    
+    (screen = NULL).if {
+      result := 80;
+    } else {
+      result := screen.height;
+    };
+    result
+  );
+  
+  //
+  // Events.
+  //
+  
+  - is_isaacos:BOOLEAN;
+  - page:G_GROUP;
+  
+  - receive msg:EVENT <-
+  ( + evt_time:EVENT_TIMER;
+    + evt_mous:EVENT_MOUSE;
+    + win:AREA;
+        
+    evt_time ?= msg;    
+    evt_mous ?= msg;
+    (evt_mous != NULL).if {
+      win := DESK.get_object (evt_mous.x_current,evt_mous.y_current);
+      (win != Self).if {     
+        DESK.receive msg;
+      };
+    }.elseif {(evt_time != NULL) && {evt_time.destination = NULL}} then {
+      // Decode Picture...
+      decode_picture;
+      (
+        (page != NULL) && {page.parent != NULL} && {
+          (width != width_min) || {height != height_min}
+        }
+      ).if {
+        (is_isaacos).if {          
+          page.set_position (page.parent) 
+          at   (page.get_x_window,page.get_y_window) 
+          size (page.width_min,page.height_min);
+        } else {
+          page.set_position (page.parent) 
+          at   (page.get_x_window,page.get_y_window) 
+          size (page.width,page.height);
+        };
+      } else {
+        refresh;
+      };
+    };
+  );

@@ -31,7 +31,7 @@ Section Inherit
   
 Section Private  
   
-  - action n:INTEGER if_odd odd_block:BLOCK if_even even_block:BLOCK <-
+  - action n:INTEGER if_odd odd_block:{} if_even even_block:{} <-
   (
     (n.is_even).if {
       even_block.value;

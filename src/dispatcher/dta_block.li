@@ -30,55 +30,39 @@ Section Header
     
 Section Inherit
   
-  - parent_dta:DTA := DTA;
+  + parent_dta_rd_args:Expanded DTA_RD_ARGS;
   
 Section Public
-  
-  + context:PROFIL;
   
   + result_expr:EXPR;
     
   // Add.
   
-  + model:PROFIL_BLOCK;
-  
-  + argument_list:FAST_ARRAY[EXPR];
-  
-  + copy_argument:BOOLEAN;
+  + model:TYPE_BLOCK;
   
   //
   // Creation.
   //
   
-  - create mod:PROFIL_BLOCK with larg:FAST_ARRAY[EXPR] :SELF <-
+  - create mod:TYPE_BLOCK with larg:FAST_ARRAY(EXPR) :SELF <-
   ( + result:SELF;
-    context := profil_second;    
     result := clone;    
     result.make mod with larg;
     result    
   );
   
-  - make mod:PROFIL_BLOCK with larg:FAST_ARRAY[EXPR] <-
+  - make mod:TYPE_BLOCK with larg:FAST_ARRAY(EXPR) <-
   (    
+    (profil_current = NULL).if {
+      context := context_main;
+    } else {
+      context := profil_current.context;
+    };    
     model         := mod;
     argument_list := larg;
-    result_expr   := mod.get_expr_result;    
+    result_expr   := mod.get_expr_for (mod.position);    
   );
-  
-  //
-  // Service
-  //
-  
-  - remove <-
-  (
-    (! copy_argument).if {
-      (argument_list.lower).to (argument_list.upper) do { j:INTEGER;
-	argument_list.item j.remove;
-      };
-      copy_argument := TRUE;
-    };
-  );
-
+    
   //
   // Display.
   //
@@ -90,11 +74,11 @@ Section Public
 
 Section NODE_STYLE, SELF  
   
-  - get_argument:FAST_ARRAY[EXPR] <-  
-  ( + result:FAST_ARRAY[EXPR];
+  - get_argument:FAST_ARRAY(EXPR) <-  
+  ( + result:FAST_ARRAY(EXPR);
     + rd:READ_SLOT;
     (copy_argument).if {
-      result := FAST_ARRAY[EXPR].create_with_capacity (argument_list.count);            
+      result := FAST_ARRAY(EXPR).create_with_capacity (argument_list.count);            
       rd ?= argument_list.first;
       result.add_last (rd.receiver.my_copy);
       (argument_list.lower+1).to (argument_list.upper) do { j:INTEGER;		
@@ -109,11 +93,11 @@ Section NODE_STYLE, SELF
 
 Section NODE_TYPE, DTA  
   
-  - product t:TYPE with e:EXPR :LIST <-
+  - product t:TYPE with e:EXPR self type_self:TYPE_FULL :LIST <-
   ( + result:LIST;
     + t_block:PROFIL_BLOCK;
     + wrt:WRITE;  
-    + wrt_larg:FAST_ARRAY[WRITE];
+    + wrt_larg:FAST_ARRAY(WRITE);
     + call:CALL_SLOT;
     + em:EXPR_MULTIPLE;
     + rd:READ;
@@ -121,39 +105,48 @@ Section NODE_TYPE, DTA
     
     result := LIST.create (e.position);
     (t = TYPE_NULL).if {                 
-      TYPE_NULL.product_error (e.position) for result_expr in result with context;
-    } else {
+      TYPE_NULL.product_error (e.position) in result with context;
+    } else {            
       t_block ?= t;                  
+      
+      
+      (t_block = NULL).if { // BSBS: debug        
+        "<<<".print;
+        t.print;
+        ">>>".print; '\n'.print;
+        list_current.debug_display;
+        syntax_error (argument_list.first.position,"Block not found");        
+      };
+      
       wrt_larg := t_block.write_argument get_argument;
-      call := CALL_SLOT.create (e.position) profil t_block with wrt_larg;      
+      call := CALL_SLOT.create (e.position) profil t_block with wrt_larg cop NULL;      
       (result_expr.static_type.raw != TYPE_VOID).if {	
 	em ?= result_expr;
 	(em != NULL).if {
-	  (em.lower).to (em.upper - 1) do { j:INTEGER;
+	  (em.lower).to (em.upper) do { j:INTEGER;
 	    rd ?= em.item j;
 	    ? {rd != NULL};
 	    result_var := rd.variable;	    
 	    rd  := call.profil.result_list.item j.read (e.position);
 	    wrt := result_var.write (e.position) value rd;
-	    call.result_list.add_last wrt;	    
-	  };
-	  rd ?= em.last;
+	    call.result_list.add_last (RESULT.create wrt);	    
+	  };	  
 	} else {
-	  rd ?= result_expr;
-	};
-	? {rd != NULL};
-	result_var := rd.variable;	
-	result.add_last (result_var.write (e.position) value call);
-      } else {
-	result.add_last call;
+          rd ?= result_expr;
+          result_var := rd.variable;	    
+          rd  := call.profil.result_list.first.read (e.position);
+          wrt := result_var.write (e.position) value rd;
+          call.result_list.add_last (RESULT.create wrt);	    
+	};	
       };
+      result.add_last call;
     };
-    result.add_last (PROTOTYPE_CST.create (e.position) type (TYPE_VOID.default)); // BSBS : Alias
     result    
   );  
   
-  - update_branch l:LIST :BOOLEAN <-
+  - update_branch l:LIST self type_self:TYPE_FULL :BOOLEAN <-
   (
     TRUE
   );
   
+

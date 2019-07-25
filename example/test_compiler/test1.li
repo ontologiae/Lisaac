@@ -1,0 +1,50 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := TEST1;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+  
+  - method (a,b,c:INTEGER) :(INTEGER,INTEGER,BOOLEAN) <-
+  (
+    a,a-b,a=c
+  );
+  
+  - main <-
+  ( + r1,r2:INTEGER;
+    + r3:BOOLEAN;
+    
+    (r1,r2,r3) := method (1,2,3);
+    `/* @r1, @r2,@r3*/`;    
+    (r1,r2,r3) := method (2,3,4);
+    `/* @r1, @r2,@r3*/`;        
+  );
+

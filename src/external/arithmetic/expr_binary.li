@@ -79,11 +79,11 @@ Section Public
   // Comparaison.
   //
     
-  - '==' Right 60 other:EXPR :BOOLEAN <-
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-
   ( + same:SELF;
     
     same ?= other;
-    (same != NULL) && {left == same.left} && {right == same.right}
+    (same != NULL) && {left ~= same.left} && {right ~= same.right}
   );
   
   //

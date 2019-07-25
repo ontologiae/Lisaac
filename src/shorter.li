@@ -26,11 +26,11 @@ Section Header
 
   
   - bibliography:= "http://IsaacOS.com";
-  - author      := "Matthieu Brehier, Sonntag Benoit (bsonntag@loria.fr)";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Shorter source code.";
   
   - external := `#include "path.h"`;
-  
+    
 Section Inherit
   
   - parent_any:ANY := ANY;
@@ -87,6 +87,7 @@ Section Private
   \  -r               : recursive builder documentation        \n\
   \  -f <format_file> : formatting description file            \n\
   \                     (see `/lisaac/shorter/')               \n\
+  \  -d               : Lisaac doc style (no -c, -r)           \n\
   \                                                            \n\
   \Examples:                                                   \n\
   \  * Output format file:                                     \n\
@@ -94,6 +95,9 @@ Section Private
   \                                                            \n\
   \  * Build html documentation:                               \n\
   \    shorter -r -f html ~/lisaac/lib                         \n\
+  \                                                            \n\
+  \  * Build html documentation style JavaDoc:                 \n\
+  \    shorter -d -f belinda ~/lisaac/lib                      \n\
   \                                                            \n\
   \Bug report:                                                 \n\
   \            post in : https://gna.org/bugs/?group=isaac     \n\
@@ -113,9 +117,10 @@ Section Private
   ( + cmd:STRING;
     + j:INTEGER;
     + var_lisaac:STRING_CONSTANT;
-    + path:NATIVE_ARRAY[CHARACTER];
+    + path:NATIVE_ARRAY(CHARACTER);
     
     // Read argument.
+    is_shorter := TRUE;
     j := 1;
     {j > COMMAND_LINE.upper}.until_do {
       cmd := COMMAND_LINE.item j;
@@ -141,7 +146,11 @@ Section Private
 	}.elseif {cmd.item 2 = 'p'} then {
 	  is_short_private := TRUE;
 	}.elseif {cmd.item 2 = 'r'} then {
-	  is_short_recursive := TRUE;
+          is_short_recursive := TRUE;
+        }.elseif {cmd.item 2 = 'd'} then {
+          is_shorter  := FALSE;          
+          is_shorter2 := TRUE;
+          is_short_recursive := TRUE;
 	} else {
 	  display_usage;
 	};
@@ -163,7 +172,7 @@ Section Private
     };
     
     (format_name != NULL).if {
-      path := `LISAAC_DIRECTORY`:NATIVE_ARRAY[CHARACTER];
+      path := `LISAAC_DIRECTORY`:NATIVE_ARRAY(CHARACTER);
       var_lisaac := STRING_CONSTANT.new_intern path
       count (path.fast_first_index_of '\0' until 1024);
       //var_lisaac := ENVIRONMENT.get_environment_variable "LISAAC";
@@ -217,18 +226,22 @@ Section Private
   );
   
   - save_file n:STRING_CONSTANT with buf:STRING <-
-  ( + file:STD_FILE;
+  ( + file:FILE;
     + entry:ENTRY;
     
-    (output_name != NULL).if {
-      string_tmp.copy output_name;
-      ((string_tmp.last != '/') || {string_tmp.last != '\\'}).if {
-	string_tmp.add_last '/';
+    (is_short_recursive).if {
+      (output_name != NULL).if {
+        string_tmp.copy output_name;
+        ((string_tmp.last != '/') || {string_tmp.last != '\\'}).if {
+          string_tmp.add_last '/';
+        };
+      } else {
+        string_tmp.clear;
       };
+      string_tmp.append n;
     } else {
-      string_tmp.clear;
+      string_tmp.copy output_name;
     };
-    string_tmp.append n;
     entry := FILE_SYSTEM.make_file string_tmp;
     (entry = NULL).if {
       STD_ERROR.put_string "Error: File ";
@@ -236,7 +249,13 @@ Section Private
       STD_ERROR.put_string " is not created !\n";
       die_with_code exit_failure_code;
     };
-    file ?= entry.open;
+    (! entry.open).if {
+      STD_ERROR.put_string "Error: File ";
+      STD_ERROR.put_string string_tmp;
+      STD_ERROR.put_string " is not open !\n";
+      die_with_code exit_failure_code;
+    };
+    file ?= entry;
     file.write buf from (buf.lower) size (buf.count);
     file.close;
   );
@@ -244,17 +263,15 @@ Section Private
   - check_in entry:ENTRY begin n:INTEGER <-
   ( + name:STRING_CONSTANT;
     + tok:STRING_CONSTANT;
-    + tok_lst:LINKED_LIST[STRING_CONSTANT];
-    + dir:DIRECTORY;
-    + tmp_entry:ENTRY;
+    + tok_lst:LINKED_LIST(STRING_CONSTANT);
+    + dir:DIRECTORY;    
 
-    tmp_entry := entry.open;
-    (tmp_entry = NULL).if {
+    (! entry.open).if {
       "Warning: directory `".print;
       entry.path.print;
       "\' not open.\n".print;
     } else {            
-      dir ?= tmp_entry;
+      dir ?= entry;
       // Directory
       (dir.lower).to (dir.upper) do { i:INTEGER;
 	(dir.item i.is_directory).if {
@@ -296,8 +313,10 @@ Section Private
 	    };
 	    proto_input := PROTOTYPE.create (dir.item i.path) name tok generic_count 0;
 	    //
-	    PARSER.go_on proto_input;
-	    save_file (add_ext tok) with output_code;	    
+            PARSER.go_on proto_input;
+            (is_shorter).if {
+              save_file (add_ext tok) with output_code;	    
+            };
 	  };
 	}; // Lisaac file `.li'
       };     
@@ -346,6 +365,7 @@ Section Public
 
   - main <-
   ( + txt:STRING_CONSTANT;    
+    + p:PROTOTYPE;
     
     ALIAS_STR.make;
     
@@ -366,18 +386,18 @@ Section Public
       file_list      := STRING.create 100;
       current_list   := STRING.create 100;
       
-      ent := FILE_SYSTEM.get input_name;
+      ent := FILE_SYSTEM.get_entry input_name;
       ((ent = NULL) || {! ent.is_directory}).if {
 	"Error: directory `".print;
 	input_name.print;
 	"\' not found.\n".print;
 	die_with_code exit_failure_code;
       };
-      ent := ent.open;
-      (ent = NULL).if {
-	"Error: directory `".print;
+      (! ent.open).if {
+        "Error: directory `".print;
 	input_name.print;
-	"\' not open.\n".print; 
+	"\' not open.\n".print;
+	die_with_code exit_failure_code;
       };
       dir ?= ent;
       check_in dir begin (dir.path.count + 1);
@@ -427,9 +447,18 @@ Section Public
             
       (output_name = NULL).if {
 	output_name := add_ext (proto_input.name);
-      };
-      
+      };    
       save_file output_name with output_code;	
+    };
+    (is_shorter2).if {
+      (PROTOTYPE.prototype_list.lower).to (PROTOTYPE.prototype_list.upper) do { j:INTEGER;
+        p := PROTOTYPE.prototype_list.item j;
+        output_code.clear;
+        put "" to output_code like (ALIAS_STR.short_begin);
+        p.shorter_out output_code;
+        put "" to output_code like (ALIAS_STR.short_end);
+        save_file (add_ext (p.name)) with output_code;        
+      };
     };
   );
 

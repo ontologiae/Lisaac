@@ -1,0 +1,61 @@
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+
+Section Header
+
+  + name := BOTTLES;
+
+  - author := "Luis Araujo <araujo@gentoo.org>";
+  
+  - comment := "The cool song 99 bottles of beer!";
+
+Section Private
+
+  - b:STRING_CONSTANT := " bottles ";
+
+Section Public
+
+  - main <-
+  ( + v:INTEGER;
+    
+    99.downto 1 do { i:INTEGER;
+      i.print;
+      b.print;
+      "of beer on the wall, ".print;
+      i.print;
+      b.print;
+      "of beer.\nTake one down and pass it around, ".print;
+
+      v := i - 1;
+      (v = 0).if {
+        "no more bottles of beer on the wall.\n\n\
+        \No more bottles of beer on the wall, no more bottles of beer.\n\
+        \Go to the store and buy some more, 99 bottles of beer on the wall.\n".print;
+      } else {
+        v.print;
+        (v = 1).if_true {
+          b := " bottle ";
+        };
+        b.print;
+        "of beer on the wall.\n\n".print;
+      };
+    };
+  );

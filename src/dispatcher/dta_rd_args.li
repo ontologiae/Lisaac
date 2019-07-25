@@ -30,7 +30,7 @@ Section Header
     
 Section Inherit
   
-  + parent_dta:Expanded DTA;
+  + parent_dta_rd:Expanded DTA_RD;
   
 Section Public
   
@@ -38,31 +38,69 @@ Section Public
   
   // Add.
   
-  + argument_list:FAST_ARRAY[EXPR];
+  + argument_list:FAST_ARRAY(EXPR);
   
   + copy_argument:BOOLEAN;
   
+  - parameter_to_type p:ITM_TYPE_PARAMETER :TYPE_FULL <-
+  ( + result:TYPE_FULL;
+    + idx:INTEGER;
+    // For Genericity.    
+    result := slot.receiver_type.parameter_to_type p;
+    (result = NULL).if {
+      // For Self + type parametric.
+      idx := slot.get_index_argument_type p;
+      (idx != - 1).if {      
+        result := argument_list.item idx.static_type;
+      };
+    };
+    result
+  );
+
   //
   // Creation.
   //
   
-  - create p:POSITION call sl:SLOT with args:FAST_ARRAY[EXPR] :SELF <-
+  - create p:POSITION call sl:SLOT with args:FAST_ARRAY(EXPR) intern flag:BOOLEAN :SELF <-
   ( + result:SELF;
     
     result := clone;
-    result.make p call sl with args;
+    result.make p call sl with args intern flag;
     result
   );
   
-  - make p:POSITION call sl:SLOT with args:FAST_ARRAY[EXPR] <-
+  - make p:POSITION call sl:SLOT with args:FAST_ARRAY(EXPR) intern flag:BOOLEAN <-
   (
-    position := p;    
-    context := profil_second;    
+    position      := p;    
     slot          := sl;
     argument_list := args;
-    result_expr   := slot.get_expr_result;
+    result_expr   := get_expr_result;
+    is_intern     := flag;    
+    (profil_current = NULL).if {
+      context := context_main;
+    } else {
+      context := profil_current.context;
+    };
   );
   
+  //
+  // Just for ITM_EXPRESSION
+  //
+  
+  - create_partial p:POSITION call sl:SLOT :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make_partial p call sl;
+    result
+  );
+  
+  - make_partial p:POSITION call sl:SLOT <-
+  (
+    position := p;
+    slot := sl;
+  );
+
   //
   // Display.
   //
@@ -89,11 +127,11 @@ Section Public
     
 Section NODE_STYLE, SELF  
   
-  - get_argument:FAST_ARRAY[EXPR] <-  
-  ( + result:FAST_ARRAY[EXPR];
+  - get_argument:FAST_ARRAY(EXPR) <-  
+  ( + result:FAST_ARRAY(EXPR);
     
     (copy_argument).if {
-      result := FAST_ARRAY[EXPR].create_with_capacity (argument_list.count);            
+      result := FAST_ARRAY(EXPR).create_with_capacity (argument_list.count);            
       (argument_list.lower).to (argument_list.upper) do { j:INTEGER;		
 	result.add_last (argument_list.item j.my_copy);
       };            

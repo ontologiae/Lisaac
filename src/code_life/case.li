@@ -83,11 +83,33 @@ Section Public
   );
   
   //
+  // Comparaison.
+  //
+  
+  - Self:SELF '~=' other:CASE :BOOLEAN <-
+  // BSBS : Naive implantation...
+  ( + result:BOOLEAN;
+    + wrt1,wrt2:WRITE_LOCAL;
+    
+    ((code.count = 1) && {code.count = other.code.count}).if {
+      wrt1 ?= code.first;
+      wrt2 ?= other.code.first;
+      result := (
+        (wrt1 != NULL) && 
+        {wrt2 != NULL} && 
+        {wrt1.variable = wrt2.variable} && 
+        {wrt1.value ~= wrt2.value}
+      );
+    };
+    result
+  );
+  
+  //
   // Execute
   //
   
   - execute <-
-  (             
+  (                 
     id.set_late_binding;
     code.execute_case;
   );

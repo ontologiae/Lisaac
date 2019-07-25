@@ -1,0 +1,37 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//                             MPEG2 Decode Video                             //
+//                                                                            //
+//                     LORIA - UHP - INRIA - ST - FRANCE                      //
+//               (c) INRIA (see `licence.txt' for more details)               //
+//                     Benoit SONNTAG - bsonntag@loria.fr                     //
+//                           http://www.IsaacOS.com                           //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name         := DCTTAB;
+  
+  - bibliography := "http://IsaacOS.com";
+  - author       := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment      := "Simple struct for table.";
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Mapping
+  
+  + map_run:INTEGER_8;
+  
+  + map_level:INTEGER_8;
+
+  + map_len:INTEGER_8;
+
+Section Public
+  
+  - run:INTEGER_8 <- map_run;
+  
+  - level:INTEGER_8 <- map_level;
+
+  - len:INTEGER_8 <- map_len;

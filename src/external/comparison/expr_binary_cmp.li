@@ -40,6 +40,12 @@ Section Public
   
   + right:EXPR;
   
+  - set_left l:EXPR and_right r:EXPR <-
+  (
+    left  := l;
+    right := r;
+  );
+  
   - symbol:STRING_CONSTANT <- 
   (
     deferred;
@@ -79,11 +85,11 @@ Section Public
   // Comparaison.
   //
     
-  - '==' Right 60 other:EXPR :BOOLEAN <-
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-
   ( + same:SELF;
     
     same ?= other;
-    (same != NULL) && {left == same.left} && {right == same.right}
+    (same != NULL) && {left ~= same.left} && {right ~= same.right}
   );  
   
   //
@@ -172,36 +178,43 @@ Section Public
   
   - genere buffer:STRING <-
   (
-    (static_type.raw = type_pointer).if { 
-      buffer.append "(void *)";
-    };        
     buffer.add_last '(';
-    (static_type.raw = type_pointer).if {
+    (
+      (left.static_type.raw = type_pointer) && 
+      {ALIAS_STR.is_integer (right.static_type.raw.name)}
+    ).if {
       buffer.append "(unsigned long)";
-    }.elseif {! left.static_type.is_expanded} then {
+    }.elseif {! left.static_type.is_expanded} then {    
       buffer.append "(void *)"; // BSBS: A virer quand tu auras optim '=='
     };
-    ((left.static_type.raw = TYPE_NULL) && {right.static_type.raw = type_block}).if {
+    ((left.static_type.raw = TYPE_NULL) && {right.static_type.raw.is_block}).if {
       buffer.add_last '0';
     } else {
+      (left.static_type.raw.is_block).if {
+        buffer.append "(long)";
+      };
       left.genere buffer;
-      (left.static_type.raw = type_block).if {
+      (left.static_type.raw.is_block).if {
 	buffer.append ".__id";
       };
     };    
     buffer.add_last ' ';
     buffer.append symbol;
     buffer.add_last ' ';
-    (static_type.raw = type_pointer).if {      
+        
+    (
+      (ALIAS_STR.is_integer (left.static_type.raw.name)) && 
+      {right.static_type.raw = type_pointer}
+    ).if {      
       buffer.append "(unsigned long)";
     }.elseif {! right.static_type.is_expanded} then {
       buffer.append "(void *)"; // BSBS: A virer quand tu auras optim '=='
     };
-    ((right.static_type.raw = TYPE_NULL) && {left.static_type.raw = type_block}).if {
+    ((right.static_type.raw = TYPE_NULL) && {left.static_type.raw.is_block}).if {
       buffer.add_last '0';
     } else {
       right.genere buffer;
-      (right.static_type.raw = type_block).if {
+      (right.static_type.raw.is_block).if {
 	buffer.append ".__id";
       };
     };    

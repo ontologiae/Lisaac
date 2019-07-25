@@ -20,13 +20,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name        := SLOT_CODE;
+  + name      := SLOT_CODE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
+  - copyright := "2003-2007 Benoit Sonntag";
 
   
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Slot with method";
+  - author    := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment   := "Slot with method";
   
 Section Inherit
   
@@ -36,8 +36,6 @@ Section Public
   
   - common_slot:SLOT <- parent_slot;
 
-  - position:POSITION <- base_slot.position;
-  
   + index:INTEGER;
   
   //
@@ -50,25 +48,28 @@ Section Public
   // Dynamic profil.
   //
 
-  + profil:FAST_ARRAY[PROFIL_SLOT];
+  + profil:FAST_ARRAY(PROFIL_SLOT);
     
-  - get_profil args:FAST_ARRAY[EXPR] :(PROFIL, FAST_ARRAY[WRITE]) <-
+  - get_profil args:FAST_ARRAY(EXPR) self type_self:TYPE_FULL :(PROFIL, FAST_ARRAY(WRITE)) <-
+  [
+    -? {type_self != NULL};
+  ]
   ( + result:PROFIL_SLOT;    
-    + res_lst:FAST_ARRAY[WRITE];
+    + res_lst:FAST_ARRAY(WRITE);
     + pro:PROFIL_SLOT;
     + j,i:INTEGER;
     + loc:LOCAL;
     + typ:TYPE_FULL;
     + typ_block:PROFIL_BLOCK;
     + typ_list:TYPES_TMP;
-    + pro_list:FAST_ARRAY[PROFIL_SLOT];    
+    + pro_list:FAST_ARRAY(PROFIL_SLOT);    
     + is_new:BOOLEAN;
         
     // Block Detect.
     j := args.lower;
-    {(j <= args.upper) && {(typ = NULL) || {! (typ.raw == type_block)}}}.while_do {
+    {(j <= args.upper) && {(typ = NULL) || {! typ.raw.is_block}}}.while_do {
       typ := args.item j.static_type;
-      (typ.raw == type_block).if {
+      (typ.raw.is_block).if {
 	typ_list := TYPES_TMP.new;
 	args.item j.get_type typ_list;
 	(typ_list.first = TYPE_NULL).if {
@@ -92,7 +93,7 @@ Section Public
 	pro := pro_list.item i;
 	(
 	  (pro.slot = Self) && {
-	    (pro.type_self = NULL) || {pro.type_self == ITM_TYPE_SELF.to_run}
+	    (pro.type_self = NULL) || {pro.type_self == type_self}
 	  } // BSBS: il fo aussi tester les args comme plus bas...
 	).if {
 	  result := pro; // Rmq. : It's limit for dispatching (See...)
@@ -108,10 +109,22 @@ Section Public
       };
     } else {	    
       // Select classic Profil (no block).
+     /* 
+      (name == "__infix_equal_equal").if {
+        "SELF : ".print;
+        type_self.raw.print; 
+        ' '.print;
+        args.second.static_type.raw.print;
+        (type_self.raw.name == "STRING_CONSTANT").if {
+          crash;
+        };
+        '\n'.print;
+      };
+      */
       j := profil.lower;      
       {(j <= profil.upper) && {result = NULL}}.while_do {
 	pro := profil.item j;					
-	((pro.type_self = NULL) || {pro.type_self == ITM_TYPE_SELF.to_run}).if {
+	((pro.type_self = NULL) || {pro.type_self == type_self}).if {
 	  result := pro;
 	  i := args.lower + 1;
 	  {(i <= args.upper) && {result != NULL}}.while_do {
@@ -138,10 +151,8 @@ Section Public
 	is_new := TRUE;
       };
     };
-    (is_new).if {      
-      ITM_TYPE_SELF.set_self_up receiver_type;
-      res_lst := result.make Self with args verify (profil.count = 1);      
-      ITM_TYPE_SELF.set_self_up (Old ITM_TYPE_SELF.self_up);
+    (is_new).if {            
+      res_lst := result.make Self with (type_self, args) verify (profil.count = 1);      
     } else {
       res_lst := result.write_argument args;
     };
@@ -163,7 +174,7 @@ Section Public
   ( 
     parent_slot := base;
     value := val;
-    profil := FAST_ARRAY[PROFIL_SLOT].create_with_capacity 1;    
+    profil := FAST_ARRAY(PROFIL_SLOT).create_with_capacity 1;    
   );
       
   //
@@ -195,68 +206,86 @@ Section Public
   
   - create_code is_first:BOOLEAN <-
   ( + contract:ITM_LIST;
-    + slot:ITM_SLOT;
-    + instr:INSTR;
-        
-    //ITM_TYPE_SELF.set_self_up receiver_type;
-    
+    + slot:ITM_SLOT; 
+    + result:EXPR;
+    + mul:EXPR_MULTIPLE;
+    + nb_result_list:INTEGER;
+                
     verify := is_first;
-    
     // Require
     is_require := TRUE;
-    contract := base_slot.require;
+    contract := require;
     last_type_contract := receiver_type;
     (contract = NULL).if {
       slot := receiver_type.search_require name;
       (slot != NULL).if {
 	(verify).if {
-	  base_slot.is_equal_profil slot;
+	  is_equal_profil slot;
 	};
 	contract := slot.require;
 	last_type_contract := receiver_type.last_type_contract;
       };      
     };
     (contract != NULL).if {      
-      list_current.add_last (contract.to_run_contract);
+      contract.to_run_expr;
     };
     
     // Body.
-    value.to_run_extern;
+    result := value.to_run_expr;
+    (result.static_type.raw != TYPE_VOID).if {      
+      mul ?= result;
+      (mul != NULL).if {
+        nb_result_list := mul.count;
+      } else {
+        nb_result_list := 1;
+      };
+    } else {
+      list_current.add_last result;
+    };
+    (profil_slot.result_list.count != nb_result_list).if {
+      string_tmp.copy "Incorrect value result (slot:";
+      profil_slot.result_list.count.append_in string_tmp;
+      string_tmp.append ", list:";
+      nb_result_list.append_in string_tmp;
+      string_tmp.append ").";
+      semantic_error (result.position,string_tmp);
+    };
+    (nb_result_list = 1).if {
+      put_result result in (profil_slot.result_list.first);
+    }.elseif {nb_result_list > 1} then {
+      (mul.lower).to (mul.upper) do { j:INTEGER;
+        put_result (mul.item j) in (profil_slot.result_list.item j);
+      };      
+    };
     
     // Ensure
     is_require := FALSE;
-    contract := base_slot.ensure;
+    contract := ensure;
     last_type_contract := receiver_type;
     (contract = NULL).if {
       slot := receiver_type.search_ensure name;
       (slot != NULL).if {
 	(verify).if {
-	  base_slot.is_equal_profil slot;
+	  is_equal_profil slot;
 	};
 	contract := slot.ensure;
 	last_type_contract := receiver_type.last_type_contract;
       };      
     };
     (contract != NULL).if {            
-      list_current.add_last (contract.to_run_contract);
+      contract.to_run_expr;
     };
     // Result.
-    (profil_first.result_last != NULL).if {
-      instr := profil_first.result_last.read position;    
-    } else {
-      (id_section.is_interrupt).if {
-	list_current.add_first (
-	  EXTERNAL_C.create position text "__BEGIN_INTERRUPT__" access NULL
-	  persistant TRUE type (TYPE_VOID.default)
-	);
-	list_current.add_last (
-	  EXTERNAL_C.create position text "__END_INTERRUPT__" access NULL
-	  persistant TRUE type (TYPE_VOID.default)
-	);
-      };
-      instr := PROTOTYPE_CST.create position type (TYPE_VOID.default);
-    };
-    list_current.add_last instr;
+    (id_section.is_interrupt).if {
+      list_current.add_first (
+        EXTERNAL_C.create position text "__BEGIN_INTERRUPT__" access NULL
+        persistant TRUE type (TYPE_VOID.default)
+      );
+      list_current.add_last (
+        EXTERNAL_C.create position text "__END_INTERRUPT__" access NULL
+        persistant TRUE type (TYPE_VOID.default)
+      );
+    };      
   );
   
   - remove_profil prof:PROFIL_SLOT <-
@@ -297,5 +326,13 @@ Section Public
     string_tmp.print;
   );
   
-
+Section Private
+  
+  - put_result e:EXPR in v:LOCAL <-
+  ( + val:EXPR;
+    + wrt:WRITE;
+    val := e.check_type (v.type) with (v.position);
+    wrt := v.write position value val;
+    list_current.add_last wrt;    
+  );
   

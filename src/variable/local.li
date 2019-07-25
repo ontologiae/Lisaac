@@ -34,6 +34,15 @@ Section Inherit
   
 Section Public  
   
+  // BSBS: Doit pas etre utile.
+  
+  + is_result :BOOLEAN := FALSE;
+
+  - set_result r:BOOLEAN <- 
+  (
+    is_result := r;
+  );
+  
   //
   // Copy alias manager.
   //
@@ -54,7 +63,7 @@ Section Public
     is_alias := FALSE;
   );
   
-  - list_alias:FAST_ARRAY[LOCAL] := FAST_ARRAY[LOCAL].create_with_capacity 64;
+  - list_alias:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 64;
   
   - get_alias:LOCAL <-
   (
@@ -71,6 +80,13 @@ Section Public
   - set_my_alias new_loc:LOCAL <-
   (
     my_alias := new_loc;
+  );
+  
+  + list_level:INTEGER;
+  
+  - set_list_level lev:INTEGER <-
+  (
+    list_level := lev;
   );
     
   - write p:POSITION with r:EXPR value val:EXPR :WRITE <-
@@ -91,9 +107,11 @@ Section Public
         
     (my_alias != NULL).if {      
       result := my_alias.read_direct p with NULL;
-    }.elseif {is_alias} then {
-      result := get_alias.read_direct p with NULL;
+    }.elseif {is_alias} then { 
+      // Case : Argument function (see CALL_SLOT)
+      result := get_alias.read_direct p with NULL; 
     } else {
+      //? {! is_alias};
       result := read_direct p with NULL;
     };        
     result
@@ -121,6 +139,8 @@ Section Public
   (                
     (last_seq = NULL).if {
       LOCAL_SEQ.new Self;
+      //"LOCAL:".print;
+      //intern_name.print; '\n'.print;
     };
     (
       (! PROFIL.mode_recursive) &&
@@ -169,11 +189,33 @@ Section Public
     + rd:READ;
     + l:LOCAL;
     + g:SLOT_DATA;
-        
+    /*
+    + bug:BOOLEAN;
+    
+    (intern_name == "__tmp__TC").if {
+      bug:=TRUE;
+      "0\n".print;
+      (last_seq = NULL).if {
+        "last seq NULL\n".print;
+        crash;
+      } else {
+        (last_seq.last_write = NULL).if {
+          "last_write null\n".print;
+        };
+      };
+    };
+     */ 
+    
+    
     (
       (! PROFIL.mode_recursive) && {loop_invariant = NULL} && 
       {last_seq != NULL} && {last_seq.last_write != NULL}
     ).if {      
+      /*
+      (bug).if {
+        "1\n".print;
+      };
+      */
       (
 	(is_seq_list (last_seq.last_list_current)) &&
 	{
@@ -244,41 +286,53 @@ Section Public
   //
     
   - create p:POSITION name n:STRING_CONSTANT 
+  style c:CHARACTER type t:TYPE_FULL result r:BOOLEAN :SELF<-
+  ( + result:SELF;
+    result := clone;    
+    result.make p name n style c type t result r;
+    result
+  );
+    
+  - create p:POSITION name n:STRING_CONSTANT 
   style c:CHARACTER type t:TYPE_FULL :SELF<-
   ( + result:SELF;
     result := clone;    
-    result.make p name n style c type t;        
+    result.make p name n style c type t result FALSE;
     result
   );
   
   - make p:POSITION name n:STRING_CONSTANT 
-  style c:CHARACTER type t:TYPE_FULL <-
+  style c:CHARACTER type t:TYPE_FULL result r:BOOLEAN <-
   ( + tmp:TYPES_TMP;
     ? {p.code != 0};
     ? {t != NULL};
 
     position    := p;
     name        := n;
+    is_result   := r;
     intern_name := ALIAS_STR.get_intern n; 
+            
     ((t.is_expanded) && {! t.is_expanded_c}).if {
       type := t + TYPE_FULL.expanded_ref_bit;
     } else {
       type := t;
     };
-    style       := c;
+    style := c;
     
     (is_static).if {      
-      tmp := TYPES_TMP.new;      
-      tmp.add (t.raw);
-      type_list := tmp.to_types;
+      tmp := TYPES_TMP.new;            
+      tmp.add (t.raw);      
+      type_list := tmp.to_types;                  
     } else {
       type_list := TYPES_TMP.types_empty;
-    };
+    };    
   );
   
   - my_copy:LOCAL <-
-  ( 
-    LOCAL.create position name name style style type type
+  ( + result:LOCAL;
+    
+    result := LOCAL.create position name name style style type type;
+    result
   );
   
   //
@@ -312,14 +366,15 @@ Section VARIABLE
   
   - new_read p:POSITION with r:EXPR :READ <- 
   [ -? {r = NULL}; ]
-  (
+  (             
     READ_LOCAL.create p with Self
   );
   
   - new_write p:POSITION with r:EXPR value v:EXPR :WRITE <-
   [ -? {r = NULL}; ]
-  (
-    WRITE_LOCAL.create p with v in Self
+  ( + result:WRITE;
+    result := WRITE_LOCAL.create p with v in Self;    
+    result    
   );
   
   /*

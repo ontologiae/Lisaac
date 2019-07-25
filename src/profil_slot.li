@@ -20,20 +20,23 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := PROFIL_SLOT;
+  + name      := PROFIL_SLOT;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
+  - copyright := "2003-2007 Benoit Sonntag";
   
-  - author  := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment := "Method with costumization";
+  - author    := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment   := "Method with costumization";
   
 Section Inherit
   
   + parent_profil:Expanded PROFIL; 
   
+  - parent_parameter_to_type:Expanded PARAMETER_TO_TYPE;
+  
 Section Public
-    
+  
+  - position:POSITION <- slot.position;
+  
   - slot:SLOT <- slot_code;
   
   - is_interrupt:BOOLEAN <- slot_code.id_section.is_interrupt;  
@@ -54,31 +57,76 @@ Section Public
   // Creation.
   //
   
-  - make s:SLOT_CODE with call_lst:FAST_ARRAY[EXPR] verify is_first:BOOLEAN :FAST_ARRAY[WRITE] <-
+  - arg_type_tmp:FAST_ARRAY(EXPR);
+  - parameter_to_type p:ITM_TYPE_PARAMETER :TYPE_FULL <-
+  ( + idx:INTEGER;
+    + result:TYPE_FULL;
+    
+    (p.name = ALIAS_STR.prototype_self).if {
+      // For Self.
+      result := type_self;                
+    } else {
+      // For Genericity.    
+      //result := type_self.raw.parameter_to_type p;
+      result := slot_code.receiver_type.parameter_to_type p;
+      (result = NULL).if {            
+        // For Type parametric.
+        idx := slot_code.get_index_argument_type p;
+        (idx != - 1).if {
+          result := arg_type_tmp.item idx.static_type;
+        };
+      };
+    };
+    result
+  );
+  
+  - make s:SLOT_CODE 
+  with (typ_self:TYPE_FULL,call_lst:FAST_ARRAY(EXPR)) 
+  verify is_first:BOOLEAN :FAST_ARRAY(WRITE) <-
+  [ 
+    -? {typ_self != NULL};
+  ]
   ( + loc:LOCAL;
-    + typ:TYPE_FULL;    
-    + item_lst:FAST_ARRAY[ITM_ARGUMENT];       
-    + idx_result:INTEGER;
-    + type_multiple:ITM_TYPE_MULTI;
-    + type_mono:ITM_TYPE_MONO;
-    + result:FAST_ARRAY[WRITE];
+    + typ:TYPE_FULL;
+    + item_lst:FAST_ARRAY(ITM_ARGUMENT);         
+    + result:FAST_ARRAY(WRITE);
+    + tm:ITM_TYPE_MULTI;
+    + ts:ITM_TYPE_MONO;
     
     PROFIL_LIST.add Self;
-    
+    (is_graph).if {
+      set_call := HASHED_DICTIONARY(INTEGER,PROFIL).create;
+      set_back := HASHED_SET(PROFIL).create;
+    };    
     (s.id_section.is_external).if {
       name := s.name;
     } else {
       name := ALIAS_STR.get_intern (s.name);    
     };
-    slot_code   := s;
-    type_self   := ITM_TYPE_SELF.to_run;
-            
-    // Arguments.    
-    item_lst := s.base_slot.argument_list;    
-    argument_list := FAST_ARRAY[LOCAL].create_with_capacity (s.base_slot.argument_count); 
-    (item_lst.lower).to (item_lst.upper) do { j:INTEGER;
-      item_lst.item j.to_run argument_list;
+    slot_code := s;
+    type_self := typ_self;
+    //
+    list_current := LIST.create (s.position);
+    profil_current := profil_slot := Self;    
+    //
+    (debug_level_option != 0).if {
+      // Debug mode : Add context local.
+      context := TYPE_CONTEXT.default.new_local (s.position) 
+      name (ALIAS_STR.variable_context) style '+';
+      context.set_ensure_count 1;      
+      list_current.add_last (PUSH.create (slot_code.position) context context first TRUE);
     };
+    //
+    code := list_current;
+    arg_type_tmp := call_lst;
+    //
+    // Arguments.    
+    item_lst := s.argument_list;    
+    argument_list := FAST_ARRAY(LOCAL).create_with_capacity (s.argument_count); 
+    (item_lst.lower).to (item_lst.upper) do { j:INTEGER;
+      item_lst.item j.to_run_in argument_list for Self;
+    };
+    
     ((s.id_section.is_external) && {argument_list.count > 1}).if {
       (argument_list.lower+1).to (argument_list.upper) do { j:INTEGER;      
 	loc := argument_list.item j;
@@ -89,33 +137,27 @@ Section Public
 	);
       };
     };    
-    
+            
     // Results
-    (s.base_slot.type != ITM_TYPE_MONO.type_void).if {
-      type_multiple ?= s.base_slot.type;
-      (type_multiple != NULL).if {  
-	result_list := FAST_ARRAY[LOCAL].create_with_capacity (type_multiple.count - 1);	
-	idx_result := 1;
-	0.to (type_multiple.upper - 1) do { k:INTEGER;	  
-	  typ := type_multiple.item k.to_run;	
-	  loc := typ.get (s.position) result idx_result;
-	  result_list.add_last loc;
-	  idx_result := idx_result + 1;
-	};
-	typ := type_multiple.last.to_run;	
-      } else {
-	type_mono ?= s.base_slot.type;
-	typ := type_mono.to_run;
+    tm ?= s.result_type;        
+    (tm != NULL).if {    
+      result_list.make_with_capacity (tm.count);      
+      (tm.lower).to (tm.upper) do { k:INTEGER;	  
+        typ := tm.item k.to_run_for Self;	
+        loc := typ.get (s.position) result (k+1);
+        result_list.add_last loc;        
+      };      
+    } else {      
+      ts ?= s.result_type;      
+      (ts != ITM_TYPE_SIMPLE.type_void).if {
+        typ := ts.to_run_for Self;	                
+        result_list.add_last (typ.get (s.position) result 0);         
       };
-      result_last := typ.get (s.position) result idx_result;
-    };
+    };           
     //
     result := write_argument call_lst;
-    //    
-    context := CONTEXT.push_extern (slot_code.position) profil Self;
-    code := list_current;
-    slot_code.create_code is_first;    
-    CONTEXT.pop_extern;    
+    //        
+    slot_code.create_code is_first;       
     //
     result
   );

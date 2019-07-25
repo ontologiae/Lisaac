@@ -80,6 +80,8 @@ Section Private
     };
   );
   
+Section Public
+  
   - print <-
   (
     '\n'.print;

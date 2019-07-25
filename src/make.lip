@@ -1,0 +1,105 @@
+///////////////////////////////////////////////////////////////////////////////
+//                            Lisaac Compiler                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Inherit
+  
+  + parent:STRING;
+
+Section Private
+  
+  + is_valid:BOOLEAN;
+  
+  - src_path <-
+  ( 
+    path_li "src/";
+    path_li "src/tools/";
+    path_li "src/type/";
+    path_li "src/item/";
+    path_li "src/constant/";
+    path_li "src/variable/";
+    path_li "src/external/";
+    path_li "src/external/logic/";
+    path_li "src/external/arithmetic/";
+    path_li "src/external/comparison/";
+    path_li "src/dispatcher/";
+    path_li "src/code_life/";    
+    path_li "src/lip/";    
+  );
+  
+  - compiler_path <-
+  (
+    src_path;    
+    input_file := "lisaac";
+    path_li "src/compiler_any/";
+  );
+    
+  - shorter_path <-
+  (
+    src_path;    
+    input_file := "shorter";
+    path_li "src/shorter_any/";
+  );
+    
+  //
+  // Execute function.
+  //
+  
+  - front_end <-
+  (    
+    general_front_end;        
+    ((input_file = "") | (input_file = "lisaac")).if {    
+      compiler_path;
+      (is_valid).if {
+        boost;
+      };
+    };                 
+  );
+  
+  - back_end <-
+  (
+    general_back_end;
+    (is_valid).if {
+      execute "cp lisaac.c ../bin/.";
+      execute "cp lisaac ../bin/.";
+    };    
+  );
+  
+Section Public
+  
+  - compiler <-
+  // Compile the Lisaac compiler.
+  (
+    compiler_path;
+  );
+  
+  - shorter <-
+  // Compile the shorter.
+  (
+    shorter_path;
+  );
+  
+  - valid <-
+  // Compile the Lisaac compiler with `-boost' option and 
+  // update your `/bin' compiler version.
+  (
+    is_valid := TRUE;    
+  );
+  
+  

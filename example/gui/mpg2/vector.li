@@ -1,0 +1,65 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//                             MPEG2 Decode Video                             //
+//                                                                            //
+//                     LORIA - UHP - INRIA - ST - FRANCE                      //
+//               (c) INRIA (see `licence.txt' for more details)               //
+//                     Benoit SONNTAG - bsonntag@loria.fr                     //
+//                           http://www.IsaacOS.com                           //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name         := VECTOR;
+  
+  - bibliography := "http://IsaacOS.com";
+  - author       := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment      := "Simple struct for table.";
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Public
+  
+  + first:INTEGER;
+  
+  + second:INTEGER;
+  
+  //
+  // Creation.
+  //
+  
+  - create f:INTEGER and s:INTEGER :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make f and s;
+    result
+  );
+  
+  - make f:INTEGER and s:INTEGER <-
+  (
+    first  := f;
+    second := s;
+  );
+  
+  //
+  // Manager.
+  //
+  
+  - clear <-
+  (
+    first  := 0;
+    second := 0;
+  );
+  
+  - put_first n:INTEGER <-
+  (
+    first := n;
+  );
+
+  - put_second n:INTEGER <-
+  (
+    second := n;
+  );

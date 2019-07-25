@@ -36,7 +36,7 @@ Section Public
   
   - is_invariant:BOOLEAN <- TRUE;  
   
-  + receiver:EXPR;
+  + receiver:TYPE_FULL;
     
   - static_type:TYPE_FULL <- type_integer.default;
   
@@ -49,7 +49,7 @@ Section Public
   // Creation.
   //
   
-  - create p:POSITION receiver e:EXPR :SELF <-
+  - create p:POSITION receiver e:TYPE_FULL :SELF <-
   ( + result:SELF;
     
     result := clone;
@@ -57,13 +57,14 @@ Section Public
     result
   );
   
-  - make p:POSITION receiver e:EXPR <-
+  - make p:POSITION receiver e:TYPE_FULL <-
   (
     position := p;            
     receiver := e; 
   );
   
-  - my_copy:SELF <- SELF.create position receiver (receiver.my_copy);
+  - my_copy:SELF <- SELF.create position receiver receiver; 
+  // BSBS: Tu peux meme juste renvoyer Self! Non ?
   
   //
   // Remove
@@ -71,7 +72,7 @@ Section Public
   
   - remove <-
   (
-    receiver.remove;
+    // Nothing.
   );
   
   //
@@ -80,12 +81,11 @@ Section Public
   
   - execute_unlink:INSTR <-
   (     
-    receiver.execute_unlink
+    NULL
   );
   
   - execute_link:EXPR <-
-  (   
-    receiver := receiver.execute_link;
+  (       
     Self
   );
     
@@ -94,11 +94,10 @@ Section Public
   //
   
   - genere buffer:STRING <-
-  ( + t:TYPE_FULL;
-    buffer.append "sizeof(";
-    t := receiver.static_type;
-    t.raw.put_expanded_declaration buffer;
-    buffer.add_last ')';    
+  ( 
+    buffer.append "sizeof(";    
+    receiver.raw.put_expanded_declaration buffer;
+    buffer.add_last ')';        
   );
   
   //

@@ -1,0 +1,107 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := SLIM_ARRAY(E); // BSBS: A mettre en Expanded.
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Insert
+
+  - parent_object:OBJECT := OBJECT;
+  
+Section Private
+  
+  + list:FAST_ARRAY(E);
+  
+Section Public
+  
+  + first:E;
+  
+  - last:E <-
+  ( + result:E;
+    (list != NULL).if {
+      result := list.last;
+    } else {
+      result := first;
+    };
+    result
+  );
+  
+  - lower:INTEGER <- 0;
+  
+  - upper:INTEGER <- 
+  ( + result:INTEGER;
+    (first = NULL).if {
+      result := -1;
+    }.elseif {list != NULL} then {
+      result := list.count;
+    };
+    result
+  );
+  
+  - count:INTEGER <- upper + 1;
+  
+  - is_empty:BOOLEAN <- first = NULL;
+  
+  - item i:INTEGER :E <-
+  ( + result:E;
+    
+    (i = 0).if {
+      result := first;
+    } else {
+      result := list.item (i-1);
+    };
+    result
+  );
+      
+  - put e:E to i:INTEGER <-
+  (
+    (i = 0).if {
+      first := e;
+    } else {
+      list.put e to (i-1);
+    };
+  );  
+      
+  - add_last e:E <-
+  (
+    (first = NULL).if {
+      first := e;
+    } else {
+      (list = NULL).if {
+        list := FAST_ARRAY(E).create_with_capacity 4;
+      };
+      list.add_last e;
+    };
+  );
+    
+  - make_with_capacity n:INTEGER <-
+  (
+    first := NULL;
+    (n > 1).if {
+      list := FAST_ARRAY(E).create_with_capacity (n-1);
+    };
+  );
+  

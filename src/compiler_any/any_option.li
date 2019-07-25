@@ -36,6 +36,8 @@ Section Public
     
   - is_shorter :BOOLEAN := FALSE;
   
+  - is_shorter2:BOOLEAN := FALSE;
+  
   //
   // Option du Shorter.
   // 

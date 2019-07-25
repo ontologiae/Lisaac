@@ -48,7 +48,7 @@ Section Public
     };
     result
   );
-  
+
   - receiver_type:TYPE <-
   ( + result:TYPE;
     
@@ -59,7 +59,6 @@ Section Public
     };
     result
   );
-  
   
   //
   
@@ -176,7 +175,7 @@ Section Public
 	  is_rec_ok := TRUE;	
 	}.elseif {rec.is_constant} then {	
 	  wrt_slot ?= last_write;
-	  is_rec_ok := rec == wrt_slot.receiver;
+	  is_rec_ok := rec ~= wrt_slot.receiver;
 	} else {
 	  rd ?= rec;
 	  (rd != NULL).if {
@@ -285,7 +284,7 @@ Section Public
   // Constructeur.
   //
   
-  - create b:SLOT type t:TYPE_FULL :SELF <-
+  - create b:SLOT type_full t:TYPE_FULL :SELF <-
   ( 
     create (b.position) name (b.name) style (b.style) base b type t
   );
@@ -306,7 +305,7 @@ Section Public
     position    := pos;
     name        := n;
     style       := s;
-    intern_name := ALIAS_STR.get_intern name;
+    intern_name := ALIAS_STR.get_intern name;       
     //    
     type := t;      
     (is_static).if {
@@ -323,59 +322,64 @@ Section Public
   // Context
   //  
   
-  + value:LIST;
+  + value_init:LIST;
   
   - init <-
-  ( + self_var:LOCAL;
-    + val,rec:EXPR;
-    + wrt:WRITE;
-    + type_self:TYPE_FULL;
-    + type_self_up:TYPE;
-    + old_profil_first:PROFIL_SLOT;
-        
-    ((value = NULL) && {(base_slot.affect != '<') || {Self = slot_id}}).if {                  
+  ( + val,rec:EXPR;
+    + wrt:WRITE;    
+    + old_list:LIST;
+    + rd:ITM_READ_ARG1;
+    + old_profil_current:PROFIL;
+   /* 
+    string_tmp.copy "init : ";
+    string_tmp.append name; 
+    warning_error (position,string_tmp);
+     */       
+    ((value_init = NULL) && {(affect != '<') || {Self = slot_id}}).if {
       // Context.      
-      type_self    := ITM_TYPE_SELF.run_value;
-      type_self_up := ITM_TYPE_SELF.self_up;	
-      ITM_TYPE_SELF.set_run (receiver_type.default.to_strict) self_up receiver_type;
-      //
-      old_profil_first := profil_first;
-      profil_first := NULL;
-      CONTEXT.push_extern position profil NULL;
-      value := list_current;      
+      old_list := list_current;
+      old_profil_current := profil_current;
+      profil_current := NULL;
+      value_init := list_current := LIST.create position;      
+      
       (Self = slot_id).if {
 	val := PROTOTYPE_CST.create position type type;
-      } else {
-	// Self argument.
-	self_var := LOCAL.create position name (ALIAS_STR.variable_self) 
-	style '+' type (receiver_type.default);
-	stack_local.add_last self_var;
-	val := PROTOTYPE_CST.create position type (receiver_type.default);
-	wrt := self_var.write position value val;
-	list_current.add_last wrt;      
-	// Code.
-	(base_slot.value = NULL).if {	  	  	  
-	  val := type.default_value position;
-	} else {
-	  val := base_slot.value.to_run_expr;
-	};
+      } else {		
+        // Code.	
+        (value != NULL).if {
+          rd ?= value;
+          ((rd != NULL) && {rd.arg = NULL}).if {
+            rec := PROTOTYPE_CST.create position type (receiver_type.default);
+            val := rd.to_run_with_self (rec,FALSE,FALSE) args NULL;
+          } else {
+            val := value.to_run_expr;
+          };
+        } else {
+          val := type.default_value position;
+        };
 	val := val.check_type type with position;		
       };      
       (style = '+').if {
 	rec := PROTOTYPE_CST.create position type (receiver_type.default);
-      };      
-      (debug_level_option != 0).if {
-	list_current.add_last (
-	  PUSH.create position context context_main first FALSE 
-	);
+      } else {
+        rec := NULL;
       };
+      
+      (debug_level_option != 0).if {
+        list_current.add_last (
+          PUSH.create position context context_main first FALSE 
+        );
+      };
+      
       wrt := write position with rec value val;
+      (is_zero val).if {
+        wrt.set_quiet_generation;
+      };            
       list_current.add_last wrt;    
-      list_current.add_last (PROTOTYPE_CST.create position type (TYPE_VOID.default)); // BSBS: Alias
-      // Context.
-      CONTEXT.pop_extern;
-      profil_first := old_profil_first;
-      ITM_TYPE_SELF.set_run type_self self_up type_self_up;    
+      list_current.add_last (PROTOTYPE_CST.create position type (TYPE_VOID.default)); // BSBS:Alias
+      
+      list_current := old_list;
+      profil_current := old_profil_current;
     };
   );
   
@@ -384,7 +388,7 @@ Section Public
   //
   
   - execute <-
-  ( + lst:FAST_ARRAY[SLOT];
+  ( + lst:FAST_ARRAY(SLOT);
     + slot:SLOT_DATA;
     + s:SLOT;
     + val:LIST;
@@ -392,40 +396,42 @@ Section Public
     //+ old_profil_current:PROFIL_SLOT;
     + insert_index:INTEGER;
     
-    val := value;
-    value := NULL;    
-    insert_index := list_main.index;
-    list_main.add val to insert_index;
-    
-    (type.is_expanded).if {      
-      lst := type.slot_run;
-      (lst != NULL).if {
-	(lst.lower).to (lst.upper) do { j:INTEGER;
-	  s := lst.item j;
-	  (s.style = '+').if {
-	    slot := s.slot_data_intern;	    
-	    ((slot != NULL) &&  {slot.value != NULL}).if {
-	      slot.execute;
-	    };
-	    slot := s.slot_id;
-	    ((slot != NULL) &&  {slot.value != NULL}).if {
-	      slot.execute;
-	    };
-	  };
-	};
-      };     
+    (value_init != NULL).if {
+      val := value_init;
+      value_init := NULL;    
+      insert_index := list_main.index;
+      list_main.add val to insert_index;
+      
+      (type.is_expanded).if {      
+        lst := type.slot_run;
+        (lst != NULL).if {
+          (lst.lower).to (lst.upper) do { j:INTEGER;
+            s := lst.item j;
+            (s.style = '+').if {
+              slot := s.slot_data_intern;	    
+              (slot != NULL).if {
+                slot.execute;
+              };
+              slot := s.slot_id;
+              (slot != NULL).if {
+                slot.execute;
+              };
+            };
+          };
+        };     
+      };
+      
+      old_list_current   := list_current;
+      //old_profil_current := profil_current;
+      list_current   := NULL;
+      //profil_current := NULL;
+      
+      val.execute;
+      list_main.inc_index;
+      
+      list_current   := old_list_current;
+      //profil_current := old_profil_current;        
     };
-      
-    old_list_current   := list_current;
-    //old_profil_current := profil_current;
-    list_current   := NULL;
-    //profil_current := NULL;
-        
-    val.execute_link;
-    list_main.inc_index;
-      
-    list_current   := old_list_current;
-    //profil_current := old_profil_current;        
   );  
 
   //
@@ -497,5 +503,18 @@ Section VARIABLE
     };
     result
   );
-*/
-  
+  */
+  - is_zero e:EXPR :BOOLEAN <-
+  ( + pro:PROTOTYPE_CST;
+    + int:INTEGER_CST;
+    (
+      pro ?= e;
+      (pro != NULL) && {
+        (pro.static_type.raw = TYPE_NULL) ||
+        {pro.static_type.raw = type_false}
+      }
+    ) || {
+      int ?= e;
+      (int != NULL) && {int.value = 0}
+    }
+  );

@@ -31,7 +31,7 @@ Section Inherit
   
 Section Public  
   
-  + children:LINKED_LIST[NODE];
+  + children:LINKED_LIST(NODE);
   
   - add n:NODE <-
   (
@@ -45,7 +45,7 @@ Section Public
   - make lab:ABSTRACT_STRING <-
   ( 
     parent_node.make lab;
-    children := LINKED_LIST[NODE].create;
+    children := LINKED_LIST(NODE).create;
   );
   
   //

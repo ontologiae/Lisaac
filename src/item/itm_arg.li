@@ -38,7 +38,7 @@ Section Public
   
   + type:ITM_TYPE_MONO;
   
-  - count:INTEGER := 1;
+  - upper:INTEGER := 0;
   
   //
   // Creation.
@@ -62,54 +62,61 @@ Section Public
   //
   // Running.
   //
+  
+  - item idx:INTEGER :ITM_TYPE_MONO <- 
+  ( ? {idx = 0};
+    type
+  );  
 
-  - get_type idx:INTEGER :TYPE_FULL <-
-  (
-    ? {idx = 0};
-    type.to_run
+  - to_run_in arg_lst:FAST_ARRAY(LOCAL) for p:PARAMETER_TO_TYPE <-
+  ( + t:ITM_TYPE_MONO;
+            
+    (name = ALIAS_STR.variable_self).if {
+      t := ITM_TYPE_SIMPLE.type_self;
+    } else {
+      t := type;
+    };    
+    arg_lst.add_last (
+      LOCAL.create position name name style ' ' type (t.to_run_for p)
+    );    
   );
 
-  - to_run arg_lst:FAST_ARRAY[LOCAL] <-
-  ( + loc:LOCAL;
-    + t:TYPE_FULL;
-    
-    t := type.to_run;    
-    loc := LOCAL.create position name name style ' ' type t;
-    arg_lst.add_last loc;
+  - get_index_type p:ITM_TYPE_PARAMETER :INTEGER <-
+  ( + result:INTEGER;
+    (type != p).if {
+      result := 1;
+    };
+    result
   );
   
+  - check larg:FAST_ARRAY(EXPR) index idx:INTEGER for p:PARAMETER_TO_TYPE :INTEGER <-
+  ( + new_expr:EXPR;
+    
+    new_expr := larg.item idx.check_type (type.to_run_for p) with position;
+    larg.put new_expr to idx;
+    idx + 1
+  );    
+
   //
   // Display.
   //
   
-  - display buffer:STRING <-
+  - append_in buffer:STRING <-
   (
     buffer.append name;
     buffer.add_last ':';
-    type.display buffer;    
+    type.append_in buffer;    
+  );
+
+  - shorter_in buf:STRING <-
+  (
+    (name = ALIAS_STR.variable_self).if {
+      put name to buf like (ALIAS_STR.short_keyword);
+    } else {
+      put name to buf like (ALIAS_STR.short_local);
+    };
+    buf.add_last ':';
+    type.shorter_in buf;    
   );
   
-  //
-  // Comparaison.
-  //
   
-  - is_equal other:ITM_ARGUMENT <-
-  ( + o:ITM_ARG;
-    + err:STRING_CONSTANT;
-    ? {other != Self};
-    
-    o ?= other;
-    (o = NULL).if {
-      err := "Invariance number vector argument invalid.";
-    }.elseif {name != o.name} then {
-      err := "Invariance name argument invalid.";
-    }.elseif {type != o.type} then {
-      err := "Invariance type argument invalid.";
-    };
-    (err != NULL).if {
-      POSITION.put_error semantic text err;
-      position.put_position;
-      (other.position).put_position;
-      POSITION.send_error;
-    };
-  );

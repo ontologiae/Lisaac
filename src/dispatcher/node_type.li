@@ -33,7 +33,7 @@ Section Inherit
   + parent_node:Expanded NODE;
   
 Section Public
-    
+        
   - result_expr:EXPR <- data.result_expr;
   
   + is_self:BOOLEAN;
@@ -41,7 +41,7 @@ Section Public
   //
   // Creation.
   //
-  
+    
   - create e:EXPR with d:DTA :SELF <-
   // Create with back-link.
   ( + result:SELF;
@@ -53,9 +53,26 @@ Section Public
       
   - make e:EXPR with d:DTA <-
   (
-    expr     := e;
-    data     := d;
+    expr := e;
+    data := d;
     late_binding_counter := late_binding_counter + 1;
+  );
+  
+  //
+  // Just for ITM_EXPRESSION
+  //
+  
+  - create_partial d:DTA :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make_partial d;    
+    result
+  );
+  
+  - make_partial d:DTA <-
+  (
+    data := d;
   );
     
 Section Public
@@ -74,60 +91,60 @@ Section Public
   
   - update:BOOLEAN <-
   (
-    update_case & update_depth TRUE    
+    update_case NULL & update_depth NULL
   );
   
 Section NODE, DTA
   
-  - update_link:BOOLEAN <-
+  - update_link self_type:TYPE_FULL :BOOLEAN <-
   (     
-    update_case & update_depth FALSE    
+    update_case self_type & update_depth self_type    
   );
   
-Section Public
-/*  
-  - count_flat:INTEGER;
-  - count_not_flat:INTEGER;
-  
-  - reset_count_flat <-
-  (
-    count_not_flat := 0;
-    count_flat := 0;
-  );
-*/
 Section Private  
     
-  - update_case:BOOLEAN <-
+  - update_case type_self:TYPE_FULL :BOOLEAN <-
   ( + typ_f:TYPE_FULL;
     + typ:TYPE;
     + lst_typ:TYPES_TMP;
-    + list:FAST_ARRAY[CASE];
+    + list:FAST_ARRAY(CASE);
     + case:CASE;
     + result:BOOLEAN;
-    + tb:PROFIL_BLOCK;
-            
+    
     typ_f := expr.static_type;
-    tb ?= typ_f.raw;
-    (
-      (typ_f.is_expanded && {typ_f.raw != type_boolean}) || 
-      {tb != NULL}
-    ).if {
+    
+    (typ_f.is_expanded && {typ_f.raw != type_boolean}).if {
       (first_code = NULL).if {
 	first_type := typ_f.raw;
-	first_code := data.product first_type with expr;
-      };
+	first_code := data.product first_type with expr self type_self;
+      };      
       result := TRUE;
     }.elseif {(typ_f.raw = type_boolean) && {count = 2}} then {
       result := TRUE;
     } else {	
-      ((typ_f.raw = type_block) || {typ_f.raw.subtype_list.count != count}).if {
+      ((typ_f.raw.is_block) || {typ_f.raw.subtype_list.count != count}).if {
 	lst_typ := TYPES_TMP.new;      
-	expr.get_type lst_typ;      
+        expr.get_type lst_typ;      
+                
+        /*
+        ((typ_f.raw = type_boolean) && {! lst_typ.is_empty}).if {                    
+          expr.debug_display; '\n'.print;
+          (lst_typ.first = type_boolean).if {
+            
+            crash_with_message "NODE_TYPE : BUG";
+          };
+          /*
+          lst_typ.print;
+          '\n'.print;
+          warning_error (position,"ICI");
+          */
+        };
+        */
 	(! lst_typ.is_empty).if {
 	  (lst_typ.count = 1).if {
 	    (first_code = NULL).if {
 	      first_type := lst_typ.first;
-	      first_code := data.product first_type with expr;
+	      first_code := data.product first_type with expr self type_self;
 	    };
 	  } else {
 	    (switch = NULL).if {
@@ -140,12 +157,12 @@ Section Private
 		((j > list.upper) || {typ != list.item j.id}).if {
 		  add_stack_type typ;
 		  //
-		  case := CASE.create typ with (data.product typ with expr);		
+		  case := CASE.create typ with (data.product typ with expr self type_self);
 		  list.add case to j;
 		  //
 		  stack_type.remove_last;
 		};	    
-	      };	  	  	  
+	      };
 	    };
 	  };
 	};
@@ -153,37 +170,42 @@ Section Private
       } else {
 	//count_flat := count_flat + 1;
 	//"Yes\n".print;
-      };
+      };      
     };    
     result
   );
   
-  - update_depth is_first:BOOLEAN :BOOLEAN <-
+  - update_depth self_type:TYPE_FULL :BOOLEAN <- 
   ( + result:BOOLEAN;
-    + list:FAST_ARRAY[CASE];
-    + typ:TYPE_FULL;
-    
+    + list:FAST_ARRAY(CASE);
+    + new_type_self:TYPE_FULL;
+        
     (switch = NULL).if {
       (first_code != NULL).if {
-	(is_first).if {	  
-	  typ := expr.static_type;
-	  (! typ.is_expanded).if {
-	    typ := first_type.default.to_strict;
-	  };
-	  ITM_TYPE_SELF.set_run typ;
-	};
+	(self_type = NULL).if {	  
+	  new_type_self := expr.static_type;
+	  ((! new_type_self.is_expanded) || {new_type_self.raw = type_boolean}).if {
+	    new_type_self := first_type.default.to_strict;
+	  };	  
+	} else {
+	  new_type_self := self_type;
+        };
+        
 	add_stack_type first_type;
-	result := data.update_branch first_code;
+	result := data.update_branch first_code self new_type_self;
 	stack_type.remove_last;
       };
     } else {
       list := switch.list;
+      
       (list.lower).to (list.upper) do { j:INTEGER;
-	(is_first).if {
-	  ITM_TYPE_SELF.set_run (list.item j.id.default.to_strict);
+	(self_type = NULL).if {
+          new_type_self := list.item j.id.default.to_strict;                    
+	} else {
+	  new_type_self := self_type;
 	};
 	add_stack_type (list.item j.id);
-	data.update_branch (list.item j.code);
+	data.update_branch (list.item j.code) self new_type_self;
 	stack_type.remove_last;
       };
     };
@@ -192,7 +214,7 @@ Section Private
   
 Section Private 
   
-  - stack_type:FAST_ARRAY[TYPE] := FAST_ARRAY[TYPE].create_with_capacity 16;
+  - stack_type:FAST_ARRAY(TYPE) := FAST_ARRAY(TYPE).create_with_capacity 16;
   
   - add_stack_type t:TYPE <-
   (

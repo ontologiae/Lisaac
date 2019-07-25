@@ -41,7 +41,13 @@ Section Public
   + assign:ITM_CODE;
 
   + value:ITM_CODE;
-
+  
+  - type:STRING_CONSTANT <-
+  (
+    deferred;
+    NULL
+  );
+  
   //
   // Constructor
   //
@@ -75,6 +81,17 @@ Section Public
       semantic_error (position,"ITM_WRITE: Not yet implemented.");
     };
     result
+  );
+  
+  //
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    assign.append_in buffer;
+    buffer.append type;
+    value.append_in buffer;
   );
   
 Section Private
@@ -124,7 +141,7 @@ Section Private
     + type:TYPE;
     + em:EXPR_MULTIPLE;
     + new_val:EXPR;
-    + lst:FAST_ARRAY[EXPR];
+    + lst:FAST_ARRAY(EXPR);
     
     loc := lookup (ALIAS_STR.variable_self);
     rec := loc.read position;
@@ -135,7 +152,7 @@ Section Private
       string_tmp.copy "Slot `";
       string_tmp.append name;
       string_tmp.append "' not found in static type ";
-      string_tmp.append (type.intern_name);
+      type.append_name_in string_tmp;
       string_tmp.add_last '.';
       semantic_error (position,string_tmp);
     };

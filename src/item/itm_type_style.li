@@ -34,7 +34,7 @@ Section Inherit
   
 Section Private 
   
-  - dico:FAST_ARRAY[ITM_TYPE_STYLE] := FAST_ARRAY[ITM_TYPE_STYLE].create_with_capacity 32;
+  - dico_ts:FAST_ARRAY(ITM_TYPE_STYLE) := FAST_ARRAY(ITM_TYPE_STYLE).create_with_capacity 32;
   
   - create n:STRING_CONSTANT style s:STRING_CONSTANT :SELF <-
   ( + result:SELF;
@@ -50,43 +50,30 @@ Section Private
     style := s;
   );
   
-Section Public
-    
-  - hash_code:INTEGER <- name.hash_code;
+Section Public  
   
   + style:STRING_CONSTANT;
   
-  - get n:STRING_CONSTANT style s:STRING_CONSTANT :ITM_TYPE_STYLE <-
-  ( + result:ITM_TYPE_STYLE;
+  - get n:STRING_CONSTANT style s:STRING_CONSTANT :SELF <-
+  ( + result:SELF; 
     + idx:INTEGER;
     
-    idx := dico.lower;
+    idx := dico_ts.lower;
     {
-      (idx <= dico.upper) && {
-	(dico.item idx.name  != n) || 
-	{dico.item idx.style != s}
+      (idx <= dico_ts.upper) && {
+	(dico_ts.item idx.name  != n) || 
+	{dico_ts.item idx.style != s}
       }
     }.while_do {
       idx := idx + 1;
     };
-    (idx <= dico.upper).if {
-      result := dico.item idx;
+    (idx <= dico_ts.upper).if {
+      result ?= dico_ts.item idx;
     } else {
       result := create n style s;
-      dico.add_last result;
+      dico_ts.add_last result;
     };
     result
   );
-
-  + to_run:TYPE_FULL <-
-  (
-    to_run := TYPE.get Self 
-  );
-
-  - display buffer:STRING <-
-  (
-    buffer.append style;
-    buffer.add_last ' ';
-    buffer.append name;
-  );
+  
 

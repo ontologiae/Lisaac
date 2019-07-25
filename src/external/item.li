@@ -111,7 +111,7 @@ Section Public
   
   - genere buffer:STRING <-
   (
-    receiver.genere buffer;
+    receiver.genere buffer;   
     buffer.add_last '[';
     index.genere buffer;
     buffer.add_last ']';    

@@ -1,0 +1,134 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := ANY;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+
+Section Inherit
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - color_fill_current:UINTEGER_32;
+  - color_border_current:UINTEGER_32;
+  
+  - page:PAGE := PAGE.create (64_000,18_800);
+  
+  - ecrx x:INTEGER_32 :INTEGER <- 
+  (
+    (page.zoom*(x+page.origin_x).to_real_32).to_integer + 1
+  );
+  
+  - ecry y:INTEGER_32 :INTEGER <- 
+  (
+    (page.zoom*(page.origin_y-y).to_real_32).to_integer
+  );
+  
+  - realx x:INTEGER :INTEGER_32 <-
+  (
+    (x.to_real_32 / page.zoom).to_integer_32 - page.origin_x
+  );
+
+  - realy y:INTEGER :INTEGER_32 <-
+  (
+    page.origin_y - (y.to_real_32 / page.zoom).to_integer_32
+  );
+  
+  //
+  // Service.
+  //
+  
+  - read_integer_32 buf:FAST_ARRAY(UINTEGER_8) at pos:INTEGER :INTEGER_32 <-
+  ( + storage_8:NATIVE_ARRAY(UINTEGER_8);
+    + storage_32:NATIVE_ARRAY(INTEGER_32);
+    
+    storage_8  := buf.storage + pos;
+    storage_32 := CONVERT(NATIVE_ARRAY(UINTEGER_8),NATIVE_ARRAY(INTEGER_32)).on storage_8;
+    storage_32.item 0
+  );
+
+  - read_uinteger_16 buf:FAST_ARRAY(UINTEGER_8) at pos:INTEGER :INTEGER_32 <-
+  ( + storage_8:NATIVE_ARRAY(UINTEGER_8);
+    + storage_16:NATIVE_ARRAY(UINTEGER_16);
+    
+    storage_8  := buf.storage + pos;
+    storage_16 := CONVERT(NATIVE_ARRAY(UINTEGER_8),NATIVE_ARRAY(UINTEGER_16)).on storage_8;
+    storage_16.item 0
+  );
+
+  - read_real_32 buf:FAST_ARRAY(UINTEGER_8) at pos:INTEGER :REAL_32 <-
+  ( + storage_8:NATIVE_ARRAY(UINTEGER_8);
+    + storage_32:NATIVE_ARRAY(REAL_32);
+    
+    storage_8  := buf.storage + pos;
+    storage_32 := CONVERT(NATIVE_ARRAY(UINTEGER_8),NATIVE_ARRAY(REAL_32)).on storage_8;
+    storage_32.item 0
+  );
+
+  - read_string buf:FAST_ARRAY(UINTEGER_8) at pos:INTEGER :STRING <-
+  ( + result:STRING;
+    + p:INTEGER;
+    
+    result := STRING.create 64; // BSBS: Alias...
+    p := pos;
+    {buf.item p != 0}.while_do {
+      result.add_last (buf.item p.to_character);
+      p := p + 1;
+    };
+    result
+  );
+  
+  //
+  // Service window.
+  //
+  
+  - warning msg:ABSTRACT_STRING help msg_help:ABSTRACT_STRING <-
+  ( + win:G_WIN_OUT;
+    
+    win := G_WIN_OUT.create "Warning" with ( 
+      G_RAW.create (
+        G_OUT.create "Message :" /
+        G_OUT.create msg justify (G_OUT.center)
+      ) / 
+      G_RAW.create (
+        G_OUT.create "Note :" /
+        G_OUT.create msg_help justify (G_OUT.center)
+      ) /
+      G_BUTTON.create (
+        G_OUT.create "OK" justify (G_OUT.center)
+      ) action { b:G_BUTTON;
+        + p:G_WIN_OUT;
+        p ?= b.parent;          
+        p.close;
+      }
+    );
+    win.open_by DESK;
+  );
+  
+  - message_not_yet_implemented <-
+  ( 
+    warning "Sorry, not yet implemented." help "This is the demo version.";
+  );

@@ -32,7 +32,7 @@ Section Inherit
 
 Section Private
 
-  + t:ARRAY[INTEGER];
+  + t:ARRAY(INTEGER);
 
   + top:INTEGER;
 
@@ -48,7 +48,7 @@ Section Public
   - full_make n:INTEGER <-
   ( ? {n >= 1};
     
-    t := ARRAY[INTEGER].create 1 to n;        
+    t := ARRAY(INTEGER).create 1 to n;        
     n.downto 1 do { i:INTEGER;
       t.put (n-i+1) to i;
     };
@@ -68,7 +68,7 @@ Section Public
   
   - empty_make n:INTEGER <-
   ( ? {n >= 1};
-    t := ARRAY[INTEGER].create 1 to n;
+    t := ARRAY(INTEGER).create 1 to n;
     top := 1;
     ? {nb = n};
     ? {top = 1};

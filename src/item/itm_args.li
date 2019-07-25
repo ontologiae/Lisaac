@@ -34,17 +34,17 @@ Section Inherit
   
 Section Public
 
-  + name:FAST_ARRAY[STRING_CONSTANT];
+  + name:FAST_ARRAY(STRING_CONSTANT);
   
   + type:ITM_TYPE_MULTI;
   
-  - count:INTEGER <- name.count;
+  - upper:INTEGER <- name.upper;
   
   //
   // Creation.
   //
   
-  - create p:POSITION name n:FAST_ARRAY[STRING_CONSTANT] 
+  - create p:POSITION name n:FAST_ARRAY(STRING_CONSTANT) 
   type t:ITM_TYPE_MULTI :SELF <-
   ( + result:SELF;
     
@@ -53,7 +53,7 @@ Section Public
     result
   );
 
-  - make p:POSITION name n:FAST_ARRAY[STRING_CONSTANT] 
+  - make p:POSITION name n:FAST_ARRAY(STRING_CONSTANT) 
   type t:ITM_TYPE_MULTI <-
   (
     position := p;
@@ -65,72 +65,78 @@ Section Public
   // Running.
   //
 
-  - get_type idx:INTEGER :TYPE_FULL <-
-  (
-    ? {idx.in_range 0 to (count-1)};
-    type.item idx.to_run
+  - item idx:INTEGER :ITM_TYPE_MONO <- 
+  ( ? {idx.in_range 0 to upper};
+    type.item idx
   );
-
-  - to_run arg_lst:FAST_ARRAY[LOCAL] <-
+  
+  - to_run_in arg_lst:FAST_ARRAY(LOCAL) for p:PARAMETER_TO_TYPE <-
   ( + t:TYPE_FULL;
-    + loc:LOCAL;
     
     (name.lower).to (name.upper) do { j:INTEGER;
-      t := type.item j.to_run;      
-      loc := LOCAL.create position name (name.item j) style ' ' type t;
-      arg_lst.add_last loc;
+      t := type.item j.to_run_for p;      
+      arg_lst.add_last (
+	LOCAL.create position name (name.item j) style ' ' type t
+      );
     };
   );
   
-  /*
-  - to_run_type arg_lst:FAST_ARRAY[TYPE_FULL] <-
-  (    
-    (name.lower).to (name.upper) do { j:INTEGER;
-      arg_lst.add_last (type.item j.to_run);
+  - get_index_type p:ITM_TYPE_PARAMETER :INTEGER <-
+  ( + i:INTEGER;
+    
+    i := name.lower;
+    {(i <= name.upper) && {type.item i != p}}.while_do {
+      i := i + 1;
     };
+    i
   );
-  */
+
+  - check larg:FAST_ARRAY(EXPR) index idx:INTEGER for p:PARAMETER_TO_TYPE :INTEGER <-
+  ( + new_expr:EXPR;
+    
+    (type.lower).to (type.upper) do { i:INTEGER;
+      new_expr := larg.item (idx+i).check_type (type.item i.to_run_for p) with position;
+      larg.put new_expr to (idx+i);
+    };
+    idx + type.count
+  );    
   
   //
   // Display.
   //
   
-  - display buffer:STRING <-
+  - append_in buffer:STRING <-
   ( 
     buffer.add_last '(';
     (name.lower).to (name.upper - 1) do { j:INTEGER;      
       buffer.append (name.item j);
       buffer.add_last ':';
-      type.item j.display buffer;
+      type.item j.append_in buffer;
       buffer.add_last ',';
     };
     buffer.append (name.last);
     buffer.add_last ':';
-    type.last.display buffer;    
+    type.last.append_in buffer;    
     buffer.add_last ')';
   );
-
-  //
-  // Comparaison.
-  //
   
-  - is_equal other:ITM_ARGUMENT <-
-  ( + o:ITM_ARGS;
-    + err:STRING_CONSTANT;
-    ? {other != Self};
-    
-    o ?= other;
-    (o = NULL).if {
-      err := "Invariance number vector argument invalid.";
-    }.elseif {name != o.name} then {
-      err := "Invariance name argument invalid.";
-    }.elseif {type != o.type} then {
-      err := "Invariance type argument invalid.";
+  - shorter_in buf:STRING <-
+  (
+    buf.add_last '(';
+    (name.lower).to (name.upper - 1) do { j:INTEGER;      
+      (name.item j = ALIAS_STR.variable_self).if {
+        put (name.item j) to buf like (ALIAS_STR.short_keyword);
+      } else {
+        put (name.item j) to buf like (ALIAS_STR.short_local);
+      };
+      buf.add_last ':';
+      type.item j.shorter_in buf;
+      buf.add_last ',';
     };
-    (err != NULL).if {
-      POSITION.put_error semantic text err;
-      position.put_position;
-      (other.position).put_position;
-      POSITION.send_error;
-    };
+    put (name.last) to buf like (ALIAS_STR.short_local);
+    buf.add_last ':';
+    type.last.shorter_in buf;    
+    buf.add_last ')';
   );
+  
+

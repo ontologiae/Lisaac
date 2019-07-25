@@ -79,11 +79,11 @@ Section Public
   // Comparaison.
   //
   
-  - '==' Right 60 other:EXPR :BOOLEAN <-
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-
   ( + same:SELF;
     
     same ?= other;
-    (same != NULL) && {left == same.left} && {right == same.right}
+    (same != NULL) && {left ~= same.left} && {right ~= same.right}
   );  
     
   //
@@ -189,7 +189,7 @@ Section Public
   
   - genere buffer:STRING <-
   (
-    buffer.add_last '(';
+    buffer.add_last '(';    
     left.genere buffer;
     buffer.add_last ' ';
     buffer.append symbol;

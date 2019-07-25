@@ -1,3 +1,0 @@
-gcc ./lisaac.c  -o ./lisaac -O2
-cp -f lisaac.c ../bin/.
-cp -f lisaac ../bin/.

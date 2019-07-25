@@ -65,4 +65,12 @@ Section Public
     REAL_CST.create position value value type (type_real.default)    
   );
   
+  //
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    buffer.append value;
+  );
 

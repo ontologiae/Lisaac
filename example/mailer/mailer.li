@@ -34,7 +34,7 @@ Section Public
   
   - buffer:STRING := STRING.create 2048;
   
-  - mail:HASHED_SET[STRING] := HASHED_SET[STRING].create;
+  - mail:HASHED_SET(STRING) := HASHED_SET(STRING).create;
   
   - extract_mail <-
   ( + idx,begin,end:INTEGER;
@@ -79,7 +79,7 @@ Section Public
    
   - main <-
   ( + e:ENTRY;
-    + file:STD_FILE;
+    + file:FILE;
     + dir:DIRECTORY;
     
     //
@@ -96,18 +96,9 @@ Section Public
     // Open directory.
     //
     dir := FILE_SYSTEM;    
-    e := dir.get (COMMAND_LINE.item 1);
-    ((e != NULL) && {e.is_directory}).if {      
-      e := e.open;
-      (e != NULL).if {
-	dir.close;
-	dir ?= e;
-      } else {
-	'`'.print;
-	COMMAND_LINE.item 2.print;
-	"\': Permission denied.\n".print;
-	die_with_code exit_failure_code;
-      };
+    e := dir.get_entry (COMMAND_LINE.item 1);
+    ((e != NULL) && {e.is_directory} && {e.open}).if {            
+      dir ?= e;      
     } else {
       '`'.print;
       COMMAND_LINE.item 2.print;
@@ -122,9 +113,8 @@ Section Public
       e := dir.item i;
       ((e.is_file) && {e.name.has_suffix ".txt"}).if {
 	"Parse : ".print;
-	e.path.print;	
-	e := e.open;
-	(e = NULL).if {
+	e.path.print;		
+	(! e.open).if {
 	  " : Not open.".print;          
 	} else {
 	  file ?= e;          
@@ -152,16 +142,20 @@ Section Public
 	"`mail.txt' : File exists, cannot create file.\n".print;
 	die_with_code exit_failure_code;
       };
-      file ?= e.open;
-      buffer.clear;
-      (mail.lower).to (mail.upper - 1) do { j:INTEGER;
-	buffer.append (mail.item j);
-	buffer.add_last ';';
-	buffer.add_last ' ';            
+      (e.open).if {
+        file ?= e;
+        buffer.clear;
+        (mail.lower).to (mail.upper - 1) do { j:INTEGER;
+          buffer.append (mail.item j);
+          buffer.add_last ';';
+          buffer.add_last ' ';            
+        };
+        buffer.append (mail.last);
+        file.write buffer from 1 size (buffer.count);
+        file.close;          
+        "Write `mail.txt' ok !\n".print;
+      } else {
+        "Error!\n".print;
       };
-      buffer.append (mail.last);
-      file.write buffer from 1 size (buffer.count);
-      file.close;          
-      "Write `mail.txt' ok !\n".print;
     };
   );

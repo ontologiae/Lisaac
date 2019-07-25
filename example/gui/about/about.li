@@ -1,0 +1,187 @@
+Section Header
+  
+  + name     := ABOUT;
+  
+  - comment  := "About Isaac OS";
+  
+  - author   := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+Section Inherit  
+  
+  + parent_area:Expanded AREA;
+  
+  + parent_g_expr:Expanded G_EXPR;
+    
+Section Private
+  
+  - string_tmp:STRING := STRING.create 128;
+  
+  - picture:ABSTRACT_BITMAP; 
+  
+  - h_pic:INTEGER;
+  
+  - a_pic:INTEGER;
+  
+  - display_logo <-
+  ( + y_inc,y_pic,y_max:INTEGER;
+    + y0,y1,x:INTEGER;
+    
+    x := picture.width - 1;
+    (h_pic > 0).if {      
+      y0 := (picture.height - h_pic) >> 1;
+      y1 := y0 + h_pic - 1;
+      
+      y_pic := 0;
+      y_max := (picture.height - 1) << 8;
+      y_inc := y_max / h_pic; 
+    }.elseif {h_pic = 0} then {
+      y0 := picture.height >> 1;
+      y1 := y0 - 1;      
+    } else {
+      y0 := (picture.height + h_pic) >> 1;
+      y1 := y0 - h_pic - 1;
+            
+      y_max := (picture.height - 1) << 8;
+      y_pic := y_max;
+      y_inc := y_max / h_pic;       
+    };    
+    rectangle_fill (0,0) to (x,y0-1) color color_back;
+    y0.to y1 do { y:INTEGER;
+      line_h (0,y) until x image (picture.get_y_line (y_pic >> 8));
+      y_pic := y_pic + y_inc;
+    };      
+    rectangle_fill (0,y1+1) to (x,y_max) color color_back;      
+  );
+  
+  - init p:ABSTRACT_STRING :G_EXPR <-
+  ( + cur_dir:DIRECTORY;
+    + f:FILE;
+    // Read picture file.
+    
+    cur_dir := FILE_SYSTEM;
+    (cur_dir != NULL).if {
+      + ai_file:AI_FILE;
+      + e:ENTRY;
+      string_tmp.copy p;
+      string_tmp.append "isaac.ai";
+      e := cur_dir.get_entry string_tmp;
+      (e != NULL).if {
+        e.open;
+        f ?= e;        
+        (f != NULL).if {
+          ai_file := AI_FILE.clone;
+          picture := BITMAP(PIXEL_24).create_size (10,10);	
+          ai_file.fill_bitmap f in picture scale 1.5;	
+          f.close;
+        };
+      };
+    };
+    (picture = NULL).if {
+      // Error manager.
+      picture := BITMAP(PIXEL_24).create_size (100,80);
+      picture.color (picture.red);
+      picture.print "Error: Not found !" to (2,2);
+    };
+    
+    // Initialization.    
+    h_pic := picture.height;
+    a_pic := - 2;    
+    TIMER.add_client Self;
+    
+    (
+      G_RAW.create (Self.fix_height.fix_width) |
+      (G_RAW.create (
+          G_OUT.create 
+          "ISAAC - Object Operating System\n\
+          \Version: 0.07 (04/2008)\n\
+          \Copyright (C) 2001-2006: INRIA-LORIA\n\
+          \Copyright (C) 2007-2009: CNRS-LSIIT-ICPS\n\          
+          \Sonntag Benoit (sonntag@icps.u-strasbg.fr)\n\
+          \http://isaacproject.u-strasbg.fr/" justify (G_OUT.center)
+        ) / G_RAW.create (
+          G_OUT.create
+          "2003-2005 Jerome Boutet (Cisaac to Lisaac version)\n\
+          \2008 Jerome Hilbert (Lisaac 0.1 to 0.2 and liveCD)\n\
+          \2008 Simon Fuhlhaber (Lisaac 0.1 to 0.2 and liveCD)"
+        )
+      )
+    )
+  );
+  
+Section Public  
+
+  //
+  // Width / Height
+  //
+  
+  - width_min:INTEGER  <- picture.width;
+  
+  - height_min:INTEGER <- picture.height;
+  
+  //
+  // Update position.
+  //
+  
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  ( 
+    update rac from (x,y) size (w,h);
+  );
+  
+  - run p:ABSTRACT_STRING :G_WIN_OUT <-
+  (         
+    G_WIN_OUT.create "About" with (init p)
+  );
+  
+  - main <-
+  (     
+    // Init window.
+    VIDEO.make_size (540,160);
+        
+    //init "./";
+    // Screen definition.
+    DESK.make VIDEO with (init "./");    
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-  
+  ( 
+    clipping (x0,y0) to (x1,y1);        
+    display_logo;
+    //put_bitmap picture to (0,0);    
+  );
+  
+  //
+  // Events.
+  //
+  
+  - receive msg:EVENT <-
+  ( + my_evt:EVENT_TIMER;
+    
+    my_evt ?= msg;
+    ((my_evt != NULL) && {my_evt.destination = NULL}).if {
+      0.to (my_evt.delay) do { step:INTEGER;
+	h_pic := h_pic + a_pic;
+	(h_pic > picture.height).if {
+	  a_pic := - a_pic;
+	  h_pic := picture.height;
+	};
+	(h_pic < -picture.height).if {
+	  a_pic := - a_pic;
+	  h_pic := - picture.height;
+	};
+      };      
+      refresh;
+    } else {
+      parent_area.receive msg;
+    };
+  );
+
+
+
+
+
+
+

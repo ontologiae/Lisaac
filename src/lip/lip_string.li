@@ -1,0 +1,149 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := LIP_STRING;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  + parent_lip_constant:Expanded LIP_CONSTANT;
+  
+Section Private
+  
+  - storage:FAST_ARRAY(LIP_STRING) := FAST_ARRAY(LIP_STRING).create_with_capacity 10;
+    
+Section Public
+  
+  + value:STRING_CONSTANT;
+
+  - set_value v:STRING_CONSTANT <-
+  (
+    value := v;
+  );
+
+  //
+  // Creation.
+  //
+  
+  - get str:STRING_CONSTANT :LIP_STRING <-
+  ( + result:LIP_STRING;
+    (storage.is_empty).if {
+      result := clone;
+    } else {
+      result := storage.last;
+      storage.remove_last;            
+    };
+    result.set_value str;
+    result
+  );
+  
+  - free <-
+  (    
+    storage.add_last Self;
+  );
+    
+  //
+  // Operation.
+  //
+  
+  - name:STRING_CONSTANT <- "STRING";
+  
+  - copy:LIP_CONSTANT <-
+  (
+    get value
+  );
+  
+  - print <-
+  ( 
+    string_tmp.clear;    
+    append_in string_tmp;
+    string_tmp.print;
+  );
+  
+  - append_in str:STRING <-
+  ( + i:INTEGER;
+    + car:CHARACTER;
+     
+    i := value.lower;
+    {i <= value.upper}.while_do {
+      car := value.item i;
+      (car = '\\').if {        
+        i := i + 1;
+        (i <= value.upper).if {
+          car := value.item i;
+          (car)
+          .when 'a'  then { str.add_last '\a'; }
+          .when 'b'  then { str.add_last '\b'; }
+          .when 'f'  then { str.add_last '\f'; }  
+          .when 'n'  then { str.add_last '\n'; }  
+          .when 'r'  then { str.add_last '\r'; }  
+          .when 't'  then { str.add_last '\t'; }  
+          .when 'v'  then { str.add_last '\v'; }  
+          .when '\\' then { str.add_last '\\'; } 
+          .when '?'  then { str.add_last '\?'; }  
+          .when '\'' then { str.add_last '\''; } 
+          .when '\"' then { str.add_last '\"'; };
+        } else {
+          str.add_last car;
+        };
+      } else {
+        str.add_last car;
+      };
+      i := i + 1;
+    };
+  );
+  
+Section LIP_CONSTANT
+    
+  - my_copy other:SELF :LIP_CONSTANT <-
+  (
+    value := other.value;
+    Self
+  );
+  
+  - Self:SELF '=#'  other:SELF :LIP_CONSTANT <- 
+  ( 
+    other.free;
+    free;
+    LIP_BOOLEAN.get (value = other.value)
+  );
+  
+  - Self:SELF '!=#' other:SELF :LIP_CONSTANT <- 
+  (   
+    other.free;
+    free;
+    LIP_BOOLEAN.get (value != other.value)
+  );
+  
+  - Self:SELF '+#'  other:SELF :LIP_CONSTANT <-
+  (         
+    string_tmp.copy value;
+    string_tmp.append (other.value);
+    value := ALIAS_STR.get string_tmp;
+    other.free;
+    Self
+  );
+  

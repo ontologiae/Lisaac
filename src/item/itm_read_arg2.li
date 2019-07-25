@@ -80,9 +80,10 @@ Section Public
   
   - to_run_expr:EXPR <-
   ( + result:EXPR; 
-    + l_arg:FAST_ARRAY[ITM_CODE];    
+    + l_arg:FAST_ARRAY(ITM_CODE);    
     + v1,v2:EXPR;
     + t1,t2:TYPE_FULL;
+    + em1,em2:EXPR_MULTIPLE;
     
     (
       (name = ALIAS_STR.operator_equal) || 
@@ -107,20 +108,40 @@ Section Public
 	  warning_error (position,string_tmp);
 	};
       };
-      (name = ALIAS_STR.operator_equal).if {
-	result := EXPR_EQUAL.create position with v1 and v2;
+      em1 ?= v1;
+      (em1 != NULL).if {
+        em2 ?= v2;
+        result := product_cmp (em1.first) with (em2.first);
+        (em1.lower+1).to (em1.upper) do { j:INTEGER;          
+          v2 := product_cmp (em1.item j) with (em2.item j);
+          (name = ALIAS_STR.operator_equal).if {
+            result := EXPR_AND_AND_LOGIC.create position with result and v2;
+          } else {
+            result := EXPR_OR_OR_LOGIC.create position with result and v2;
+          };
+        };        
       } else {
-	result := EXPR_NOT_EQUAL.create position with v1 and v2;
-      };            
+        result := product_cmp v1 with v2;
+      };
     } else {
-      l_arg := ALIAS_ARRAY[ITM_CODE].new;      
+      l_arg := ALIAS_ARRAY(ITM_CODE).new;      
       l_arg.add_last arg_second;            
       result := to_run_with arg_first args l_arg;
     };
     result
   );  
   
-
+Section Private
+  
+  - product_cmp v1:EXPR with v2:EXPR :EXPR <- 
+  ( + result:EXPR;
+    (name = ALIAS_STR.operator_equal).if {
+      result := EXPR_EQUAL.create position with v1 and v2;
+    } else {
+      result := EXPR_NOT_EQUAL.create position with v1 and v2;
+    };            
+    result
+  );
 
 
 

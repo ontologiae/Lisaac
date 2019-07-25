@@ -116,7 +116,7 @@ Section Public
     } then {
       result := value;
       new_execute_pass;
-    } else {       
+    } else {
       lst_typ := TYPES_TMP.new;
       value.get_type lst_typ;
       ((lst_typ.count = 1) && {lst_typ.first = static_type.raw}).if {

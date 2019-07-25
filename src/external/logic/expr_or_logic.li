@@ -83,14 +83,14 @@ Section Public
     + sup:EXPR_SUP;
     + eq:EXPR_EQUAL;
 
-    (left == right).if {
+    (left ~= right).if {
       result := left;
       right.remove;
     } else {
       sup ?= left;
       eq  ?= right;
       ((sup != NULL) && {eq != NULL}).if {
-	((sup.left == eq.left) && {sup.right == eq.right}).if {
+	((sup.left ~= eq.left) && {sup.right ~= eq.right}).if {
 	  result := EXPR_SUP_EQ.create position with (sup.left) and (sup.right);
 	  right.remove;
 	};

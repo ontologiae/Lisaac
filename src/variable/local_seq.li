@@ -34,9 +34,9 @@ Section Inherit
   
 Section Private
   
-  - list_busy:FAST_ARRAY[LOCAL] := FAST_ARRAY[LOCAL].create_with_capacity 512;
+  - list_busy:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 512;
   
-  - list_free:FAST_ARRAY[LOCAL_SEQ] := FAST_ARRAY[LOCAL_SEQ].create_with_capacity 512;
+  - list_free:FAST_ARRAY(LOCAL_SEQ) := FAST_ARRAY(LOCAL_SEQ).create_with_capacity 512;
   
   - clean <-
   (

@@ -32,7 +32,7 @@ Section Inherit
   
   + parent_expr_binary:Expanded EXPR_BINARY;
   
-Section Private  
+Section Public
   
   + symbol:STRING_CONSTANT := "%";
   
@@ -66,7 +66,7 @@ Section Private
   //-- E % E -> 0
   ( + result:EXPR;
     
-    (left == right).if {
+    (left ~= right).if {
       result := INTEGER_CST.create position value 0 type static_type;
       left.remove;
       right.remove;

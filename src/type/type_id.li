@@ -34,7 +34,7 @@ Section Inherit
   
 Section Private  
   
-  - list_id:FAST_ARRAY[TYPE_ID];
+  - list_id:FAST_ARRAY(TYPE_ID);
   
   - create i:INTEGER :SELF <-
   ( + result:SELF;
@@ -53,7 +53,9 @@ Section Private
 Section Public    
     
   - name:STRING_CONSTANT <- ALIAS_STR.prototype_type_id;
-        
+  
+  - intern_name:STRING_CONSTANT <- name;
+  
   - get_index idx:INTEGER :TYPE_ID <-
   ( + result:TYPE_ID;
     
@@ -69,7 +71,7 @@ Section Public
 
   - make_type_id <-  
   ( 
-    list_id := FAST_ARRAY[TYPE_ID].create_with_capacity 3;
+    list_id := FAST_ARRAY(TYPE_ID).create_with_capacity 3;
     list_id.add_last (create 0);
     list_id.add_last (create 1);
   );

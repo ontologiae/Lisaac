@@ -59,7 +59,7 @@ Section Public
   //
   
   + code:STRING_CONSTANT;
-  + access_list:FAST_ARRAY[EXPR];
+  + access_list:FAST_ARRAY(EXPR);
 
   //
   // Creation.
@@ -67,7 +67,7 @@ Section Public
   
   - create p:POSITION 
   text c:STRING_CONSTANT
-  access ac:FAST_ARRAY[EXPR] 
+  access ac:FAST_ARRAY(EXPR) 
   persistant per:BOOLEAN 
   type t:TYPE_FULL :SELF <-
   ( + result:SELF;
@@ -78,7 +78,7 @@ Section Public
 
   - make p:POSITION 
   text c:STRING_CONSTANT
-  access ac:FAST_ARRAY[EXPR] 
+  access ac:FAST_ARRAY(EXPR) 
   persistant per:BOOLEAN 
   type t:TYPE_FULL <-
   (
@@ -91,11 +91,11 @@ Section Public
 
   - my_copy:SELF <-
   ( + result:SELF;
-    + new_access:FAST_ARRAY[EXPR];
+    + new_access:FAST_ARRAY(EXPR);
     + val:EXPR;    
         
     (access_list != NULL).if {
-      new_access := FAST_ARRAY[EXPR].create_with_capacity (access_list.count);
+      new_access := FAST_ARRAY(EXPR).create_with_capacity (access_list.count);
       (access_list.lower).to (access_list.upper) do { j:INTEGER;
 	val := access_list.item j.my_copy;	
 	new_access.add_last val;
@@ -156,6 +156,15 @@ Section Public
 
   - genere buffer:STRING <-
   ( + idx,beg:INTEGER;
+
+    ((is_graph) && {is_persistant}).if {
+      (profil_current != NULL).if {
+        profil_current.set_external_present TRUE;
+      } else {
+        profil_main.set_external_present TRUE;
+      };
+      buffer.append "/* PERSISTANT */";
+    };    
      
     (static_type.raw != TYPE_VOID).if {
       buffer.append "((";

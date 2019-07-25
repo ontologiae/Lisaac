@@ -55,6 +55,8 @@ Section Public
 
   - cmp other:INSTR :BOOLEAN := FALSE;
   
+  - i_am_the_last i:INSTR :BOOLEAN <- (i = Self);
+  
   - execute:INSTR <- 
   ( 
     debug_display;

@@ -23,7 +23,6 @@ Section Header
   + name        := WRITE;
 
   - copyright   := "2003-2007 Benoit Sonntag";
-
   
   - author      := "Sonntag Benoit (bsonntag@loria.fr)";
   - comment     := "Write local, global or slot";
@@ -56,11 +55,18 @@ Section Public
   // Fin debug !!!!
   //
   
+  + quiet_generation:BOOLEAN;
+  
+  - set_quiet_generation <-
+  (
+    quiet_generation := TRUE;
+  );
+  
   - is_invariant:BOOLEAN <- value.is_invariant;
   
   - variable:VARIABLE <-
   (
-    deferred;
+    deferred;    
     NULL
   );
   
@@ -69,7 +75,7 @@ Section Public
     variable.type
   );
   
-  + value : EXPR;
+  + value:EXPR;
 
   - set_value new:EXPR <-
   (
@@ -111,16 +117,18 @@ Section Public
     + read:READ;
     + val:INSTR;
     + slot:SLOT_DATA;
-    //+ old_loop_invariant:LOOP;
     
     ? { variable != NULL };
     ? { value    != NULL };
     
+    //debug_display;
+    
     slot ?= variable;
-    (
-      // No link.
-      ((ensure_count = 0) && {(slot = NULL) || {! slot.id_section.is_mapping}}) || 
-      {
+    (      
+      ( // First case : No link.
+        (ensure_count = 0) && {(slot = NULL) || {! slot.id_section.is_mapping}}
+      ) || 
+      { // Second case : a := a;
 	read ?= value;
 	(read != NULL) && 
 	{variable = read.variable} &&
@@ -160,7 +168,8 @@ Section Public
 	result := NOP;
 	count_invariant := count_invariant + 1;
       } else { */
-	execute_access_link;      
+        
+        execute_access_link;              
 	value := value.execute_link;      
 	seq_index := seq_index + 1;
 	variable.set_write Self;
@@ -174,84 +183,46 @@ Section Public
   (
     variable.unwrite Self;
     value.remove;
-    //free_allocation_memory;
   );
   
   //
   // Genere
   //
-  
-  - genere buffer:STRING <-
-  ( + loc:LOCAL;
-    + slo:SLOT;
-           
-    (is_local).if { // BSBS: Pour finir, il faut spécialiser les READ, WRITE avec multiheritage
-      loc ?= variable;
-      add_var_size loc;
-    } else {
-      slo ?= variable;
-      slo.receiver_type.add_genere_list;
-    };
-    genere_access buffer;
-    buffer.add_last '=';    
-    genere_value buffer;
-  );
-  
+    
   - genere_value buffer:STRING <-
   (            
-    (
-      (static_type.is_expanded_ref) && 
-      {! value.static_type.is_expanded_ref}
-    ).if {
-      ? {value.static_type.is_expanded};
-      buffer.append "&(";
+    (is_java).if {
       value.genere buffer;    
-      buffer.add_last ')';
-    }.elseif {
-      (static_type.is_expanded) && {! static_type.is_expanded_ref} &&
-      {(! value.static_type.is_expanded) || {value.static_type.is_expanded_ref}} &&
-      {value.static_type.raw != TYPE_NULL} // For Pointer := NULL
-    } then {
-      buffer.append "*(";
-      value.genere buffer;    
-      buffer.add_last ')';
-    } else {
-      value.genere buffer;
-    };
-      
-    /*
-    ((static_type.is_expanded) && {! static_type.is_expanded_c}).if {
-      ((static_type.is_expanded_ref) && {! value.static_type.is_expanded_ref}).if {
-	buffer.append "&(";
-	value.genere buffer;    
-	buffer.add_last ')';
-      }.elseif {(! static_type.is_expanded_ref) && {value.static_type.is_expanded_ref}} then {
-	buffer.append "*(";
-	value.genere buffer;
-	buffer.add_last ')';
+    } else {    
+      (
+        (static_type.is_expanded_ref) && 
+        {! value.static_type.is_expanded_ref}
+      ).if {
+        ? {value.static_type.is_expanded};
+        buffer.append "&(";
+        value.genere buffer;    
+        buffer.add_last ')';
+      }.elseif {
+        (static_type.is_expanded) && {! static_type.is_expanded_ref} &&
+        {(! value.static_type.is_expanded) || {value.static_type.is_expanded_ref}} &&
+        {value.static_type.raw != TYPE_NULL} // For Pointer := NULL
+      } then {
+        buffer.append "*(";
+        value.genere buffer;    
+        buffer.add_last ')';
       } else {
-	value.genere buffer;    
+        value.genere buffer;
       };
-    } else {
-      value.genere buffer;    
-    };*/
+    };
   );
-  
-  - genere_argument_result buffer:STRING <-
-  ( + loc:LOCAL;
-    buffer.add_last '&';
-    buffer.append (variable.intern_name);
-    loc ?= variable;
-    loc.set_ensure_count 1; // BSBS: Bidouille !
-    add_var_size loc;
-  );
-  
+    
   //
   // Display.
   //
 
   - display buffer:STRING <-
   (    
+    //crash;
     buffer.append (variable.intern_name);
     
     buffer.add_last '[';

@@ -1,0 +1,227 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+Section Header
+  
+  + name    := VIEWER;
+    
+  - bibliography:="http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+  - comment     :="Viewer of files for Isaac Presentation.";
+    
+Section Inherit  
+  
+  + parent_area:Expanded AREA;
+  
+  + parent_g_expr:Expanded G_EXPR;
+  
+Section Private
+  
+  - buffer:FAST_ARRAY(UINTEGER_8) := FAST_ARRAY(UINTEGER_8).create_with_capacity (128.kb);
+  
+  - list:FAST_ARRAY(ABSTRACT_STRING) := FAST_ARRAY(ABSTRACT_STRING).create_with_capacity 128;
+  
+  - bitmap:ABSTRACT_BITMAP := 
+  ( + result:ABSTRACT_BITMAP;
+    
+    result := BITMAP(PIXEL_24).create_size (90,30);
+    result.color (result.red);
+    result.print "No image" to (10,10);
+    result
+  );
+  
+  - file_index:INTEGER; // Index of the file in the directory
+  
+  - directory:DIRECTORY;
+  
+  - box_directory:G_IN;
+  
+  - page:G_GROUP;
+  
+  - is_isaacos:BOOLEAN;
+  
+  - open_directory n:ABSTRACT_STRING <-
+  // n is the name of the directory of the images
+  ( + file:FILE;
+    + dir:DIRECTORY;
+    + i:INTEGER;
+    + e:ENTRY;
+    // Open File            
+    list.clear;
+    e := FILE_SYSTEM.get_entry n;
+    ((e != NULL) && {e.is_directory} && {e.open}).if {      
+      dir ?= e;
+      (dir != NULL).if {      
+        i := dir.lower;
+        {i > dir.upper}.until_do {
+          e := dir.item i;  
+          (e.is_file && {e.path.has_suffix ".bmp"}).if {
+            list.add_last (e.path);
+          };
+          i := i + 1;
+        };
+        
+        list.bubble_sort_with { (e1,e2:ABSTRACT_STRING); e1 ~> e2};
+        /*
+        (list.lower).to (list.upper) do { j:INTEGER;
+          list.item j.print; '\n'.print;
+        };
+        '\n'.print;
+        */
+        (list.is_empty).if_false {                
+          file_index := list.lower;
+          directory  := dir;
+          file ?= FILE_SYSTEM.get_entry (list.first);
+          fill_with_file file;       
+        }; 
+      };
+    };
+  );
+  
+  - fill_with_file f:FILE <-
+  ( + bmp:FORMAT_IMG;
+    ? {f != NULL};
+    f.open;
+    buffer.clear;
+    f.read buffer size (f.size);
+    f.close;
+    bmp := FORMAT_BMP.create_with buffer;
+    (bmp != NULL).if {      
+      ((bmp.width != bitmap.width) || {bmp.height != bitmap.height}).if {
+        bitmap.make_size (bmp.width,bmp.height);	  
+      };      
+      bmp.put_image_in bitmap;
+      ((page != NULL) && {page.parent != NULL} && {page.width != width_min}).if {
+        (is_isaacos).if {          
+          page.set_position (page.parent) 
+          at   (page.get_x_window,page.get_y_window) 
+          size (page.width_min,page.height_min);
+        } else {
+          page.set_position (page.parent) 
+          at   (page.get_x_window,page.get_y_window) 
+          size (page.width,page.height);
+        };
+      };
+      refresh;
+    };        
+  );
+    
+  - previous_picture <-
+  ( + file:FILE;    
+        
+    // Back
+    (file_index != 0).if {
+      file_index := file_index - 1;
+      file ?= FILE_SYSTEM.get_entry (list.item file_index);
+      fill_with_file file;
+    };
+  );
+  
+  - next_picture <-
+  ( + file:FILE;    
+        
+    // next picture of directory :)
+    (file_index != list.upper).if {
+      file_index := file_index + 1;
+      file ?= FILE_SYSTEM.get_entry (list.item file_index);
+      fill_with_file file;
+    };
+  );
+  
+  - init:G_EXPR <-
+  (
+    box_directory := G_IN.create (30,1) action { b:G_IN; 
+      (box_directory.text.last = '\n').if {
+        box_directory.text.remove_last 1;
+      };
+      open_directory (box_directory.text);
+    };
+    box_directory.text.copy "/";
+    open_directory (box_directory.text);
+    //
+    (G_RAW.create (G_OUT.create " Directory : ".fix_width | box_directory)).fix_height /      
+    (page := G_RAW.create (Self.fix_height.fix_width))
+  );
+  
+Section Public  
+  
+  //
+  // Width / Height
+  //
+  
+  - width_min:INTEGER  <- bitmap.width;
+  
+  - height_min:INTEGER <- bitmap.height;
+  
+  //
+  // Update position.
+  //
+  
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  ( 
+    update rac from (x,y) size (w,h);
+  );
+  
+  - run:G_WIN_OUT <-
+  (     
+    is_isaacos := TRUE;
+    page := G_WIN_OUT.create "Viewer" with init
+  );
+  
+  - main <-
+  (     
+    // Init window.
+    VIDEO.make_size (980,800);
+            
+    // Screen definition.
+    DESK.make VIDEO with init;
+  );
+  
+  //
+  // Event.
+  //
+  
+  - receive msg:EVENT <-  
+  ( + evt_mouse:EVENT_MOUSE;
+    + evt_keyb:EVENT_KEYBOARD;
+    + win:AREA;
+    
+    evt_keyb  ?= msg;
+    (evt_keyb != NULL).if {
+      ((evt_keyb.key & 0FFh).to_character = ' ').if {
+        next_picture;
+      };
+    };
+    evt_mouse ?= msg;
+    (evt_mouse != NULL).if {      
+      win := DESK.get_object (evt_mouse.x_current,evt_mouse.y_current);
+      (win != Self).if {
+        DESK.receive msg;
+      } else {
+        (evt_mouse.right_down).if {
+          // Back
+          previous_picture;
+        }.elseif {evt_mouse.left_down} then {
+	  // Foreward
+          next_picture;
+        };
+      };
+    };
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-
+  (
+    clipping (x0,y0) to (x1,y1);    
+    put_bitmap bitmap to (0,0);      
+  );

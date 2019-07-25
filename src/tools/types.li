@@ -30,11 +30,11 @@ Section Header
   
 Section Inherit  
   
-  - parent_object:OBJECT := OBJECT;
+  - parent_any:ANY := ANY;
   
 Section TYPES
   
-  + storage:NATIVE_ARRAY[TYPE];
+  + storage:NATIVE_ARRAY(TYPE);
   // Internal access to storage location.
   
 Section LISAAC
@@ -76,7 +76,7 @@ Section Public
   )
   [ +? {Result != NULL};            ];
 
-  - '==' Right 60 other:TYPES :BOOLEAN <-
+  - Self:SELF '~=' Right 60 other:TYPES :BOOLEAN <-
   ( 
     (Self = other) || 
     {
@@ -85,7 +85,7 @@ Section Public
     }
   );
 
-  - '<=' Right 60 other:TYPES :BOOLEAN <-
+  - Self:SELF '<=' Right 60 other:TYPES :BOOLEAN <-
   // True, if `Self' is include in `other'.
   ( + result:BOOLEAN;
     + j1,j2:INTEGER;
@@ -119,22 +119,29 @@ Section Public
   // Display.
   //
   
-  - print <-
+  - append_in buf:STRING <-
   (
     (! is_empty).if {
       (lower).to (upper - 1) do { j:INTEGER;
-	item j.print; 
-	'('.print;
-	item j.index.print;     
-	") x ".print;
+	item j.append_name_in buf;
+	buf.add_last '(';
+	item j.index.append_in buf;
+	buf.append ") x ";
       };
-      last.print;
-      '('.print;
-      last.index.print;     
-      ')'.print;
+      last.append_name_in buf;
+      buf.add_last '(';
+      last.index.append_in buf;     
+      buf.add_last ')';
     } else {
-      "<Vide>".print;
+      buf.append "<Vide>";
     };
+  );
+  
+  - print <-
+  (
+    string_tmp.clear;
+    append_in string_tmp;
+    string_tmp.print;
   );
   
 Section TYPES_TMP
@@ -151,7 +158,7 @@ Section TYPES_TMP
   ( + up:INTEGER;
     
     up := tab.upper;
-    storage := NATIVE_ARRAY[TYPE].calloc_intern (up + 1);
+    storage := NATIVE_ARRAY(TYPE).calloc_intern (up + 1);
     storage.copy_from (tab.storage) until up;
     upper := up;    
     size := size + count * 4;    

@@ -36,9 +36,9 @@ Section Public
 
   - main <-
   ( + button:G_BUTTON;
-    + action1:BLOCK;
+    + action1:{G_BUTTON;};
 
-    VIDEO.make(150,80);
+    VIDEO.make_size (150,80);
     
     action1 := { b:G_BUTTON;
       die_with_code exit_success_code;
@@ -47,10 +47,9 @@ Section Public
     button := 
     G_BUTTON.create (G_OUT.create "Exit" justify (G_OUT.center)) action action1;
 
-    INTERFACE.make VIDEO size (VIDEO.width,VIDEO.height) with 
+    DESK.make VIDEO with 
     (
       G_OUT.create "Lisaac is GREAT !!!" justify (G_OUT.center) /
       button.fix_height
     );
-    INTERFACE.run;
   );

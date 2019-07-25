@@ -34,6 +34,8 @@ Section Inherit
   
 Section Public
 
+  - type:STRING_CONSTANT <- "<-";
+
   //
   // Runnable 
   //

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cheatsheet
+      title="Create a Hello World application">
+   <intro>
+      <description>
+         This cheat sheet shows you how to create a &quot;Hello World&quot; Lisaac application.
+
+ The application will print &quot;Hello World&quot; in the console when run.
+ Enter Lisaac World!
+      </description>
+   </intro>
+   <item
+         title="Open the Lisaac perspective">
+      <description>
+         If you&apos;re not already in a Lisaac perspective, in the main menu select <b>Window &gt; Open Perspective &gt; Lisaac</b>.
+         
+      </description>
+      <command
+            required="false"
+            serialization="org.eclipse.ui.perspectives.showPerspective"/>
+   </item>
+   <item
+         title="Create a Lisaac Project">
+      <description>
+         We need a project to create an application. Click on the <b>New Lisaac Project</b> button, or click on the link below. Enter <b>HelloWorld</b> for the project name, then click <b>Finish</b>.
+         
+      </description>
+      <command
+            required="false"
+            serialization="org.eclipse.ui.newWizard"/>
+   </item>
+  
+   <item
+         skip="false"
+         title="Create your HelloWorld Prototype">
+  	  <description>
+  	  The next step is to create a new prototype.
+If the project wizard has not created a main prototype, click on the <b>New Prototype</b> button, select the checkbox to create the <b>main</b> slot.
+  	  </description>
+   	  <command
+            required="false"
+            serialization="org.eclipse.ui.newWizard"/> 
+   </item>
+   <item
+         title="Add a print statement">
+      <description>
+         Now that you have your HelloWorld prototype, in the <b>main</b> slot, add the following statement:
+&quot;Hello World!&quot;.print;
+then <b>save</b> your changes, the prototype will automatically compile.
+      </description>
+   </item>
+   <item
+         title="Run your Lisaac application">
+      <description>
+         To run your application, select <b>Run-&gt; Run configurations</b> menu, select <b>Lisaac Application</b>.
+The <b>Console</b> view should appear at the bottom and display the &quot;Hello, world!&quot; output.
+
+Congratulations! You have successfully created a Lisaac Hello World application!
+      </description>
+   </item>
+   
+</cheatsheet>

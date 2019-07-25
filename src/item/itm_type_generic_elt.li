@@ -33,11 +33,11 @@ Section Inherit
   
 Section Private
   
-  - list:FAST_ARRAY[ITM_TYPE_GENERIC_ELT] := 
+  - list:FAST_ARRAY(ITM_TYPE_GENERIC_ELT) := 
   // 'A' to 'Z'
-  ( + result:FAST_ARRAY[ITM_TYPE_GENERIC_ELT];
+  ( + result:FAST_ARRAY(ITM_TYPE_GENERIC_ELT);
     
-    result := FAST_ARRAY[ITM_TYPE_GENERIC_ELT].create_with_capacity 26; 
+    result := FAST_ARRAY(ITM_TYPE_GENERIC_ELT).create_with_capacity 26; 
     'A'.to 'Z' do { c:CHARACTER;
       result.add_last (create c);
     };
@@ -74,6 +74,13 @@ Section Public
     buffer.add_last ('A' +# index);    
     buffer.add_last ']';
   );
+  
+  - shorter_in buf:STRING <-
+  (
+    string_tmp.clear;
+    string_tmp.add_last ('A' +# index);    
+    put string_tmp to buf like (ALIAS_STR.short_keyprototype);
+  );    
   
   - string_tmp:STRING := STRING.create 100;
   

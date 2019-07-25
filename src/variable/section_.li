@@ -36,7 +36,7 @@ Section Public
 
   + name:STRING_CONSTANT;
   
-  + type_list:FAST_ARRAY[ITM_TYPE_MONO];
+  + type_list:FAST_ARRAY(ITM_TYPE_MONO);
   
   //
   // Creation.
@@ -54,7 +54,7 @@ Section Public
     result
   );
   
-  - get_type_list l:FAST_ARRAY[ITM_TYPE_MONO] :SECTION_ <-
+  - get_type_list l:FAST_ARRAY(ITM_TYPE_MONO) :SECTION_ <-
   ( + result:SECTION_;
     
     result := bucket_list.fast_reference_at l;
@@ -101,16 +101,16 @@ Section Public
   //
   
   - append_in buf:STRING <-
-  (
+  ( 
     (name != NULL).if {
       buf.append name;
     } else {
       (type_list.lower).to (type_list.upper - 1) do { j:INTEGER;
-	buf.append (type_list.item j.intern_name);
-	buf.add_last ',';
-	buf.add_last ' ';	
-      };
-      buf.append (type_list.last.intern_name);
+        type_list.item j.append_in buf;
+        buf.add_last ',';
+        buf.add_last ' ';	
+      };      
+      type_list.last.append_in buf;
     };
   );
   
@@ -159,13 +159,13 @@ Section SECTION_
   
   // BSBS: Tu devrais créer deux sous-proto section_name, section_list.
   
-  - bucket_name:HASHED_DICTIONARY[SECTION_,STRING_CONSTANT] := 
-  HASHED_DICTIONARY[SECTION_,STRING_CONSTANT].create;
+  - bucket_name:HASHED_DICTIONARY(SECTION_,STRING_CONSTANT) := 
+  HASHED_DICTIONARY(SECTION_,STRING_CONSTANT).create;
   
-  - bucket_list:HASHED_DICTIONARY[SECTION_,FAST_ARRAY[ITM_TYPE_MONO]] := 
-  HASHED_DICTIONARY[SECTION_,FAST_ARRAY[ITM_TYPE_MONO]].create;
+  - bucket_list:HASHED_DICTIONARY(SECTION_,FAST_ARRAY(ITM_TYPE_MONO)) := 
+  HASHED_DICTIONARY(SECTION_,FAST_ARRAY(ITM_TYPE_MONO)).create;
   
-  - make n:STRING_CONSTANT list t:FAST_ARRAY[ITM_TYPE_MONO] <-
+  - make n:STRING_CONSTANT list t:FAST_ARRAY(ITM_TYPE_MONO) <-
   (
     name      := n;
     type_list := t;

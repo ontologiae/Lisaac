@@ -1,0 +1,62 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := LIP_VALUE;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  + parent_lip_code:Expanded LIP_CODE;
+
+Section Public
+  
+  + value:LIP_CONSTANT;
+  
+  //
+  // Creation.
+  //
+
+  - create p:POSITION with v:LIP_CONSTANT :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make p with v;
+    result
+  );
+
+  - make p:POSITION with v:LIP_CONSTANT <-
+  ( 
+    position := p;
+    value := v;
+  );
+  
+  //
+  // Run.
+  //
+  
+  - run_expr:LIP_CONSTANT <-
+  (
+    value.copy
+  );

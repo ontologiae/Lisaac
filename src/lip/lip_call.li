@@ -1,0 +1,232 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := LIP_CALL;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  + parent_lip_code:Expanded LIP_CODE;
+
+Section Public
+  
+  + receiver:LIP_CODE;
+  
+  + name:STRING_CONSTANT;
+  
+  + argument:LIP_CODE;
+  
+  //
+  // Creation.
+  //
+
+  - create p:POSITION receiver rec:LIP_CODE name n:STRING_CONSTANT with arg:LIP_CODE :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make p receiver rec name n with arg;
+    result
+  );
+
+  - make p:POSITION receiver rec:LIP_CODE name n:STRING_CONSTANT with arg:LIP_CODE <-
+  [
+    -? {p.code != 0};
+  ]
+  ( 
+    position := p;
+    receiver := rec;
+    name := n;
+    argument := arg;
+  );
+
+  //
+  // Run.
+  //
+  
+  - run <-
+  ( + slot:LIP_SLOT_CODE;
+    + val,rec:LIP_CONSTANT;    
+    + str:LIP_STRING;    
+    + int:LIP_INTEGER;
+    + path:STRING_CONSTANT;
+    + is_rec:BOOLEAN;
+    + idx:INTEGER;
+    
+    
+    (receiver != NULL).if {
+      rec := receiver.run_expr;
+    };
+    (argument != NULL).if {
+      val := argument.run_expr;    
+    };    
+    (name = ALIAS_STR.slot_print).if {
+      (rec = NULL).if {
+        semantic_error (position,"Incorrect type.");
+      };      
+      (val != NULL).if {        
+        warning_error (position,"No argument for `print' method.");
+      };
+      rec.print;      
+    }.elseif {name = ALIAS_STR.slot_die_with_code} then {      
+      int ?= val;
+      (int = NULL).if {        
+        semantic_error (position,"Integer argument needed.");
+      };
+      die_with_code (int.value);
+    }.elseif {name = ALIAS_STR.slot_help_command} then {
+      (val != NULL).if {
+        warning_error (position,"No argument for `help_command' method.");
+      };
+      LISAAC.print_help;
+    }.elseif {name = ALIAS_STR.slot_compiler_version} then {
+      (val != NULL).if {
+        warning_error (position,"No argument for `version' method.");
+      };
+      LISAAC.print_version;
+    }.elseif {name = ALIAS_STR.slot_path} then {
+      str ?= val;
+      (str = NULL).if {
+        semantic_error (position,"String argument needed.");
+      };
+      path := str.value;     
+      ((! path.is_empty) && {path.last = '*'}).if {
+        string_tmp.copy path; 
+        string_tmp.remove_last 1;        
+        path := ALIAS_STR.get string_tmp;
+        is_rec := TRUE;
+      };        
+      ((path.is_empty) || {path.first != '/'}).if {
+        string_tmp.copy (position.prototype.filename);        
+        idx := last_index_str (string_tmp,'/');
+        (idx < string_tmp.lower).if {
+          string_tmp.copy "./";
+        } else {
+          string_tmp.remove_last (string_tmp.upper-idx);
+        };
+        string_tmp.append path;                 
+        path := ALIAS_STR.get string_tmp;
+      };
+      (path.is_empty).if_false {
+        load_directory path is_recursive is_rec;
+      };
+    }.elseif {name = ALIAS_STR.slot_run} then {
+      str ?= val;
+      (str = NULL).if {
+        semantic_error (position,"String argument needed.");
+      };      
+      string_tmp.clear;
+      str.append_in string_tmp;
+      ENVIRONMENT.execute_command string_tmp; 
+    } else {    
+      slot := get_method name;
+      (slot = NULL).if {
+        string_tmp.copy "Slot `";
+        string_tmp.append name;
+        string_tmp.append "' not found.";
+        semantic_error (position,string_tmp);
+      };
+      (slot.run_with val).if_false {
+        semantic_error (position,"Invalid argument.");
+      };
+    };
+    (rec != NULL).if {
+      rec.free;
+    };
+    (val != NULL).if {
+      val.free;
+    };
+  );
+  
+  - run_expr:LIP_CONSTANT <-
+  ( + slot:LIP_SLOT_DATA;
+    + str:LIP_STRING;
+    + val:LIP_CONSTANT;
+    + result:LIP_CONSTANT;
+    + res:INTEGER;
+    
+    (argument != NULL).if {
+      val := argument.run_expr;    
+    };    
+    (name = ALIAS_STR.slot_run).if {
+      str ?= val;
+      (str = NULL).if {
+        semantic_error (position,"String argument needed.");
+      };      
+      string_tmp.clear;
+      str.append_in string_tmp;
+      res := ENVIRONMENT.execute_command string_tmp; 
+      result := LIP_INTEGER.get res;
+    }.elseif {name = ALIAS_STR.slot_get_integer} then {
+      {
+        IO.read_line;
+        (IO.last_string.is_integer).if_false {
+          "Error INTEGER needed.\n".print;
+        };
+      }.do_until {IO.last_string.is_integer};      
+      result := LIP_INTEGER.get (IO.last_string.to_integer);      
+    }.elseif {name = ALIAS_STR.slot_get_string} then {
+      IO.read_line;
+      result := LIP_STRING.get (ALIAS_STR.get (IO.last_string));
+    } else {
+      slot := get_data name;
+      (slot = NULL).if {
+        slot := stack.last;
+        (slot = NULL).if {
+          string_tmp.copy "Slot `";
+          string_tmp.append name;
+          string_tmp.append "' not found.";
+          semantic_error (position,string_tmp);
+        };
+      };        
+      result := slot.get_value;
+    };
+    (val != NULL).if {
+      val.free;
+    };
+    result
+  );
+  
+  - load_directory path:ABSTRACT_STRING is_recursive is_rec:BOOLEAN <-
+  ( + entry:ENTRY;
+    + dir:DIRECTORY;
+    
+    entry := FILE_SYSTEM.get_entry path;             
+    ((entry != NULL) && {entry.is_directory} && {entry.open}).if {
+      dir ?= entry;           
+      (dir.lower).to (dir.upper) do { j:INTEGER;
+        entry := dir.item j;
+        (entry.name.has_suffix ".li").if {
+          path_file.add_last (entry.path);            
+        }.elseif {(is_rec) && {entry.is_directory}} then {
+          load_directory (entry.path) is_recursive TRUE;
+        };
+      };      
+    } else {
+      string_tmp.copy "Incorrect directory `";
+      string_tmp.append path;
+      string_tmp.append "'.";
+      warning_error (position,string_tmp);
+    };
+  );

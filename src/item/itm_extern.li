@@ -46,17 +46,17 @@ Section Public
   
   - last_code:STRING_CONSTANT;
   
-  - get_access:FAST_ARRAY[EXPR] <-
+  - get_access:FAST_ARRAY(EXPR) <-
   ( + idx,base:INTEGER;
     + e:EXPR;
     + loc:STRING_CONSTANT;
     + var:VARIABLE;
-    + access_list:FAST_ARRAY[EXPR];
+    + access_list:FAST_ARRAY(EXPR);
     
     string_tmp2.copy extern;
     idx := string_tmp2.index_of '@' since (string_tmp2.lower);
     (idx <= string_tmp2.count).if {
-      access_list := ALIAS_ARRAY[EXPR].new;
+      access_list := ALIAS_ARRAY(EXPR).new;
       {idx > string_tmp2.upper}.until_do {
 	base := idx;
 	idx  := idx + 1;
@@ -94,10 +94,21 @@ Section Public
 	string_tmp2.insert_string "(@)" to base;
 	idx := string_tmp2.index_of '@' since (base+2);
       };
-      access_list := ALIAS_ARRAY[EXPR].copy access_list;
+      access_list := ALIAS_ARRAY(EXPR).copy access_list;
     };
     last_code := ALIAS_STR.get string_tmp2;
     access_list
+  );
+  
+  //
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    buffer.add_last '`';
+    buffer.append extern;
+    buffer.add_last '`';
   );
 
 

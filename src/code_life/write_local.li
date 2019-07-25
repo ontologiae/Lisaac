@@ -66,7 +66,7 @@ Section Public
   - execute_access_link;
 
   - execute_argument:BOOLEAN <- 
-  // BSBS: Cette methode foureuse ne doit plus etre necessaire (utilise execute normal)
+  // BSBS: Cette methode foireuse ne doit plus etre necessaire (utilise execute normal)
   ( + new_val:INSTR;
     + read:READ;    
     + result:BOOLEAN;
@@ -75,10 +75,7 @@ Section Public
     ? { value    != NULL };
     
     read ?= value;
-    ((read != NULL) && {read.variable = variable}).if {
-      remove;      
-      result := TRUE;
-    }.elseif {ensure_count = 0} then {
+    (ensure_count = 0).if {
       //
       // Supprime affectation.
       //      
@@ -106,27 +103,42 @@ Section Public
   //
   
   - genere buffer:STRING <-
-  ( 
-    add_var_size local;
-    (variable.ensure_count = -1).if {
-      buffer.add_last '*';
-    };
-    buffer.append (variable.intern_name);     
-    //
-    ((value.static_type.raw = TYPE_NULL) && {variable.type.raw = type_block}).if {
-      buffer.append ".__id=0";
-    } else {
-      buffer.add_last '=';    
-      genere_value buffer;
+  ( + idf:STRING_CONSTANT;
+    
+    idf := ALIASER_LOCAL.write Self;        
+    (quiet_generation).if_false {
+      (local.is_result).if { 
+        buffer.add_last '*';
+      };    
+      buffer.append idf; 
+      //
+      ((value.static_type.raw = TYPE_NULL) && {variable.type.raw.is_block}).if {
+        buffer.append ".__id=0";
+      } else {        
+        buffer.add_last '=';    
+        genere_value buffer;
+      };
     };
   );
+  
+  - genere_first_result buffer:STRING <-
+  ( + idf:STRING_CONSTANT;
     
+    idf := ALIASER_LOCAL.write Self;        
+    (local.is_result).if { 
+      buffer.add_last '*';
+    };
+    buffer.append idf;    
+    //    
+    buffer.add_last '=';    
+  );
+  
   - genere_argument_result buffer:STRING <-
-  ( 
+  ( + idf:STRING_CONSTANT;
+    
+    idf := ALIASER_LOCAL.write Self;
     buffer.add_last '&';
-    buffer.append (variable.intern_name);    
-    local.set_ensure_count 1; // BSBS: Bidouille !
-    add_var_size local;
+    buffer.append idf; 
   );
   
 

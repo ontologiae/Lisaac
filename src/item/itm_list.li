@@ -41,11 +41,11 @@ Section Public
   // Data
   //
 
-  + local_list:FAST_ARRAY[ITM_LOCAL];  // `+'
+  + local_list:FAST_ARRAY(ITM_LOCAL);  // `+'
   
-  + static_list:FAST_ARRAY[ITM_LOCAL]; // `-'
+  + static_list:FAST_ARRAY(ITM_LOCAL); // `-'
 
-  + code:FAST_ARRAY[ITM_CODE];
+  + code:FAST_ARRAY(ITM_CODE);
   
   + is_check_name:BOOLEAN;
   
@@ -71,19 +71,19 @@ Section Public
   // Added
   //
 
-  - set_local_list l:FAST_ARRAY[ITM_LOCAL] <-
+  - set_local_list l:FAST_ARRAY(ITM_LOCAL) <-
   (
     ? {! l.is_empty};
     local_list := l;
   );
 
-  - set_static_list l:FAST_ARRAY[ITM_LOCAL] <-
+  - set_static_list l:FAST_ARRAY(ITM_LOCAL) <-
   (
     ? {! l.is_empty};
     static_list := l;
   );
   
-  - set_code c:FAST_ARRAY[ITM_CODE] <-
+  - set_code c:FAST_ARRAY(ITM_CODE) <-
   (
     code := c;
   );    
@@ -115,69 +115,19 @@ Section Public
   // Runnable.
   //
   
-  - to_run_extern <-
-  // List extern.
-  ( + nb_result_list:INTEGER;
-    + nb_result_slot:INTEGER;
-                     
-    // Creation list.
-    to_run_base FALSE;
-    
-    (verify).if {      
-      // Verify Result cardinality.
-      nb_result_list := stack_result.upper - stack_result_lower + 1;
-      (profil_first.result_last != NULL).if {		
-	(profil_first.result_list != NULL).if {
-	  nb_result_slot := profil_first.result_list.count + 1;
-	} else {
-	  nb_result_slot := 1;
-	};
-      };
-	
-      (nb_result_list != nb_result_slot).if {	
-	semantic_error ((profil_first.slot.position),"Value result missing");
-      };      
-    };
-  );
-
   - to_run_expr:EXPR <- 
   // List intern.
-  ( + result:EXPR;
-                
-    CONTEXT.push_intern position;        
-    
-    to_run_base TRUE;        
-    result := create_result_expr;
-    
-    CONTEXT.pop_intern;    
-    list_current.add_last last_expr;
-    
-    result
-  );
-  
-  - to_run_contract:LIST <- 
-  // List intern.
-  ( + lst:LIST;
-    ? {! code.is_empty};
-    
-    CONTEXT.push_intern position;        
-    //    
-    to_run_base TRUE;
-    lst := list_current;
-    //
-    CONTEXT.pop_intern;    
-    lst
-  );
-  
-Section ITM_LIST, PROFIL_BLOCK
-  
-  - to_run_base last_out:BOOLEAN <-
   ( + i:INSTR;
-    + var:LOCAL;
-    + expr:EXPR;
+    + var:LOCAL; 
     + stack_top:INTEGER;
-    
-    stack_top := stack_local.upper + 1;
+    + result_top:INTEGER;
+    + result:EXPR;
+    + nb_result:INTEGER;
+    + lr:FAST_ARRAY(EXPR);
+        
+    stack_top  := stack_local .upper + 1;
+    result_top := stack_result.upper + 1;
+            
     // Push Local.
     (local_list != NULL).if {      
       (local_list.lower).to (local_list.upper) do { j:INTEGER;
@@ -191,96 +141,62 @@ Section ITM_LIST, PROFIL_BLOCK
 	var := static_list.item j.to_run_static;
 	stack_local.add_last var;		
       };      
-    };
-        
+    };        
     // Append code.
-    (code.lower).to (code.upper - 1) do { j:INTEGER;
+    (code.lower).to (code.upper) do { j:INTEGER;
       i := code.item j.to_run;      
       list_current.add_last i;
     };    
-    // Result
-    (! code.is_empty).if {
-      expr := code.last.to_run_expr;
-      (expr.static_type.raw = TYPE_VOID).if {
-	list_current.add_last expr;
-      } else {
-	i := expr.put_result last_out;
-	list_current.add_last i;
-	(last_out).if_false {
-	  list_current.add_last (PROTOTYPE_CST.create position type (TYPE_VOID.default));
-	};
-      };
-    };
-    
-    // Pop local.
-    pop_stack_until stack_top;
-  );
-  
-  //
-  //
-  //
-  
-  - last_expr:INSTR;
-  
-  - create_result_expr:EXPR <-
-  ( + result:EXPR;
-    + var:VARIABLE;
-    + val:EXPR;
-    + nb_result:INTEGER;
-    + lr:FAST_ARRAY[EXPR];
-    + has_last:BOOLEAN;
-    
-    has_last := (list_current.static_type.raw != TYPE_VOID);
-    nb_result := stack_result.upper - stack_result_lower + 1 + has_last.to_integer;
-    
-    (nb_result = 0).if {      
-      last_expr := list_current;
-      result    := PROTOTYPE_CST.create position type (TYPE_VOID.default);      
-    } else {
-      (has_last).if {
-	
-	(list_current.static_type = NULL).if {
-	  list_current.debug_display;
-	};
-	
-	var := list_current.static_type.get_temporary position;
-	last_expr := var.write position value list_current;	
-      } else {
-	var := stack_result.last;
-      };      
-      result := var.read position;
+    // Compute result expr.            
+    nb_result := stack_result.upper - result_top + 1;    
+        
+    (nb_result = 0).if {            
+      result := PROTOTYPE_CST.create position type (TYPE_VOID.default); // BSBS: Alias.   
+    } else {                 
       (nb_result > 1).if {
 	// Creation Vector.
-	lr := FAST_ARRAY[EXPR].create_with_capacity nb_result;
-	(stack_result_lower).to (stack_result_lower + nb_result - 2) do { j:INTEGER;
-	  val := stack_result.item j.read position;
-	  lr.add_last val;
+	lr := FAST_ARRAY(EXPR).create_with_capacity nb_result;
+	(result_top).to (stack_result.upper) do { j:INTEGER;
+	  lr.add_last (stack_result.item j.read position);
 	};
-	lr.add_last result;
 	result := EXPR_MULTIPLE.create lr;
+      } else {
+        result := stack_result.last.read position;
       };
-    };
-          
-    ? {result != NULL};
+    };    
+    // Pop local / Result.
+    pop_stack_until stack_top;    
+    stack_result.remove_since result_top;
+    ? {stack_result.upper = Old stack_result.upper};
+    // 
     result
   );
   
-  - create_result_list:FAST_ARRAY[LOCAL] <-
-  ( + result:FAST_ARRAY[LOCAL];
-    + nb_result:INTEGER;
-    + loc:LOCAL;
-        
-    nb_result := stack_result.upper - stack_result_lower + 1;    
-        
-    (nb_result != 0).if {      
-      result := FAST_ARRAY[LOCAL].create_with_capacity nb_result;
-      (stack_result_lower).to (stack_result.upper) do { j:INTEGER;
-	loc := stack_result.item j;
-	result.add_last loc; 	
+  //
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    (code.count = 1).if {
+      buffer.add_last '(';
+      code.first.append_in buffer;
+      buffer.add_last ')';      
+    } else {
+      buffer.append "(\n";      
+      (code.lower).to (code.upper) do { i:INTEGER;
+        indent.append "  ";
+        code.item i.append_in buffer;
+        buffer.append ";\n";
       };
-    };
-    result
+      indent.remove_last 2;
+      buffer.append ")";      
+    };      
   );
+  
+Section ITM_LIST, ITM_RESULT
+  
+  - stack_result:FAST_ARRAY(LOCAL) := FAST_ARRAY(LOCAL).create_with_capacity 16;    
 
 
 

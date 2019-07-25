@@ -85,7 +85,7 @@ Section Public
     + result:LOCAL;
     
     last_position := position;
-    result := LOCAL.create position name name style '+' type (type.to_run);
+    result := LOCAL.create position name name style '+' type (type.to_run_for profil_slot);
     last_position := pos;
     result
   );
@@ -94,14 +94,14 @@ Section Public
   // Static local slot.
   ( + result:LOCAL;
     + slot:ITM_SLOT;
-    + larg:FAST_ARRAY[ITM_ARGUMENT];
+    + larg:FAST_ARRAY(ITM_ARGUMENT);
     + arg:ITM_ARGUMENT;
     + proto:PROTOTYPE;
     
-    (type.is_self).if {
+    (type = ITM_TYPE_SIMPLE.type_self).if {
       semantic_error (position,"Type `SELF' is not possible for `-' style local.");
     };
-    result := LOCAL.create position name name style '-' type (type.to_run);    
+    result := LOCAL.create position name name style '-' type (type.to_run_for profil_slot);    
     //
     proto := position.prototype;
     slot := proto.first_slot;
@@ -112,12 +112,12 @@ Section Public
       slot := ITM_SLOT.create position name (result.intern_name) 
       feature (SECTION_.get_name (ALIAS_STR.section_private));
       slot.set_style '-';
-      slot.set_type type;
-      larg := ALIAS_ARRAY[ITM_ARGUMENT].new;
+      slot.set_result_type type;
+      larg := ALIAS_ARRAY(ITM_ARGUMENT).new;
       arg := ITM_ARG.create position name (ALIAS_STR.variable_self)
-      type ITM_TYPE_SELF;
+      type (ITM_TYPE_SIMPLE.type_self);
       larg.add_last arg;
-      larg := ALIAS_ARRAY[ITM_ARGUMENT].copy larg;
+      larg := ALIAS_ARRAY(ITM_ARGUMENT).copy larg;
       slot.set_argument_list larg; 
       proto.add_slot slot;
     } else {
@@ -126,6 +126,18 @@ Section Public
     //
     result
   );
+  
+  // 
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    buffer.append name;
+    buffer.add_last ':';
+    type.append_in buffer;
+  );
+    
 
 
 

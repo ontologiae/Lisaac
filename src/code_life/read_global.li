@@ -44,7 +44,7 @@ Section Public
   // Comparison.
   //
   
-  - '==' Right 60 other:EXPR :BOOLEAN <- 
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <- 
   ( + rd:READ_GLOBAL;
     
     rd ?= other;
@@ -75,17 +75,13 @@ Section Public
   
   - execute_access_unlink:INSTR <- 
   (
-    (global.value != NULL).if {
-      global.execute;
-    };
+    global.execute;
     NULL
   );
 
   - execute_access_link <- 
   (
-    (global.value != NULL).if {
-      global.execute;
-    };    
+    global.execute;
   );
   
   //

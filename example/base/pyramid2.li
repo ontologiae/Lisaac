@@ -31,16 +31,16 @@ Section Inherit
 
 Section Private
   
-  + pyramid:ARRAY2[INTEGER];
+  + pyramid:ARRAY2(INTEGER);
 
-  + used:ARRAY[BOOLEAN]; // Already used numbers in `pyramid'.
+  + used:ARRAY(BOOLEAN); // Already used numbers in `pyramid'.
 
   - fill size:INTEGER <-
   // Fill in a `pyramid' of `size' elements.
   (
     ? {size > 1};
-    used := ARRAY[BOOLEAN].create 1 to ((size+1) * size / 2);
-    pyramid := ARRAY2[INTEGER].create (1,1) to (size,size);
+    used := ARRAY(BOOLEAN).create 1 to ((size+1) * size / 2);
+    pyramid := ARRAY2(INTEGER).create (1,1) to (size,size);
     (solution 1).if {
       print;
     } else {
@@ -114,6 +114,8 @@ Section Private
     };
     result
   );  
+       
+Section Public
 
   - print <-
   // Display the pyramid to the standart output.
@@ -132,8 +134,6 @@ Section Private
       blanks.add_last ' ';
     };
   );
-       
-Section Public
   
   - main <-
   ( + size: INTEGER;

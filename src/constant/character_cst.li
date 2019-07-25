@@ -64,7 +64,7 @@ Section Public
   // Comparaison.
   //
   
-  - '==' Right 60 other:EXPR :BOOLEAN <-    
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-    
   ( + s:SELF;
     s ?= other;
     (s != NULL) && {text = s.text}

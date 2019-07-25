@@ -35,7 +35,9 @@ Section Inherit
 Section Public
   
   - name:STRING_CONSTANT <- ALIAS_STR.variable_void;
-    
+  
+  - intern_name:STRING_CONSTANT <- name;    
+  
   //
   // Creation.
   //
@@ -47,15 +49,21 @@ Section Public
   );
   
   //
-  // Type control.
+  // Import / Export
   //
-  
-  - is_export_to t:TYPE :BOOLEAN <- FALSE;
-  - is_import_to t:TYPE :BOOLEAN <- FALSE;
+    
+  - is_export_to t:TYPE_FULL :BOOLEAN <- FALSE;
+
+  - is_import_to t:TYPE_FULL :BOOLEAN <- FALSE;
   
   //
   // Genere.
   //
+
+  - genere_typedef <-
+  (
+    // Nothing.
+  );
   
   - genere_struct <-
   (

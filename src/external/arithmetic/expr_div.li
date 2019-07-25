@@ -32,7 +32,7 @@ Section Inherit
   
   + parent_expr_binary:Expanded EXPR_BINARY;
   
-Section Private  
+Section Public
   
   - symbol:STRING_CONSTANT := "/";
   
@@ -82,19 +82,19 @@ Section Private
   ( + result:EXPR;
     + neg:EXPR_NEG;
     
-    (right == left).if {
+    (right ~= left).if {
       result := INTEGER_CST.create position value 1 type static_type;
       right.remove;
       left .remove;
     } else {      
       neg ?= left;
-      ((neg != NULL) && {neg.right == right}).if {
+      ((neg != NULL) && {neg.right ~= right}).if {
 	result := INTEGER_CST.create position value (-1) type static_type;
 	left.remove;
 	right.remove;
       } else {
 	neg ?= right;
-	((neg != NULL) && {neg.right == left}).if {
+	((neg != NULL) && {neg.right ~= left}).if {
 	  result := INTEGER_CST.create position value (-1) type static_type;
 	  left.remove;
 	  right.remove;

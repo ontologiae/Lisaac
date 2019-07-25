@@ -1,0 +1,98 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Example                                //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := BEZIER;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+
+Section Inherit
+
+  + parent_point:Expanded POINT;
+
+Section Public
+
+  + p1_x:INTEGER_32;
+  + p1_y:INTEGER_32;
+
+  + p2_x:INTEGER_32;
+  + p2_y:INTEGER_32;
+    
+  //
+  // Creation.
+  //
+
+  - create (p1x,p1y:INTEGER_32) and (p2x,p2y:INTEGER_32) end (px,py:INTEGER_32) :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make (p1x,p1y) and (p2x,p2y) end (px,py);
+    result
+  );
+
+  - make (p1x,p1y:INTEGER_32) and (p2x,p2y:INTEGER_32) end (px,py:INTEGER_32) <-
+  ( 
+    x := px;
+    y := py;
+    p1_x := p1x;
+    p1_y := p1y;
+    p2_x := p2x;
+    p2_y := p2y;
+  );
+
+  //
+  // Transformation
+  //
+  
+  - move (dx,dy:INTEGER_32) <-
+  (
+    parent_point.move (dx,dy);
+    p1_x := p1_x + dx;
+    p1_y := p1_y + dy;
+    p2_x := p2_x + dx;
+    p2_y := p2_y + dy;    
+  );
+
+  //
+  // Display
+  //
+  
+  - draw_border_in bmp:ABSTRACT_BITMAP <-
+  ( + p1_xs,p1_ys,p2_xs,p2_ys:INTEGER;
+    
+    p1_xs := ecrx p1_x;
+    p1_ys := ecry p1_y;
+    p2_xs := ecrx p2_x;
+    p2_ys := ecry p2_y;    
+    bmp.spline_w1 (p1_xs,p1_ys) w2 (p2_xs,p2_ys) to (x_screen,y_screen);
+  );
+
+  - draw_fill_in bmp:ABSTRACT_BITMAP <-
+  ( + p1_xs,p1_ys,p2_xs,p2_ys:INTEGER;
+    
+    p1_xs := ecrx p1_x;
+    p1_ys := ecry p1_y;
+    p2_xs := ecrx p2_x;
+    p2_ys := ecry p2_y;        
+    bmp.poly_spline_w1 (p1_xs,p1_ys) w2 (p2_xs,p2_ys) to (x_screen,y_screen);
+  );
+  

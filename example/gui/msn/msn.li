@@ -45,10 +45,10 @@ Section Public
   ( 
     + win_about:G_WIN_OUT;
     + win_exit:G_WIN_OUT;
-    + action_send:BLOCK;
+    + action_send:{G_IN; };
     
     // Init window.
-    VIDEO.make (640,400);
+    VIDEO.make_size (640,400);
     
     action_send := { in:G_IN;
       history.text.append (in.text);
@@ -98,7 +98,7 @@ Section Public
     );
     
     // Screen definition.
-    INTERFACE.make VIDEO size (VIDEO.width,VIDEO.height) with (             
+    DESK.make VIDEO with (             
       G_RAW.create (
 	(G_OUT.create "Send message : ".fix_height) /
 	win_history
@@ -119,7 +119,5 @@ Section Public
 	  ((G_IMG.create "about.bmp" | G_OUT.create " About ").fix_width)
 	) connect win_about
       ).fix_height)
-    );
-    
-    INTERFACE.run;    
+    );    
   );

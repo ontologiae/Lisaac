@@ -74,9 +74,12 @@ Section NODE, DTA
   // Update.
   //
   
-  - update_link:BOOLEAN <-
+  - update_link self_type:TYPE_FULL :BOOLEAN <-
+  [
+    -? {self_type != NULL};
+  ]
   ( + typ:TYPE;
-    + list:FAST_ARRAY[CASE];
+    + list:FAST_ARRAY(CASE);
     + case:CASE;
     + e:EXPR;
     + low,up,count:INTEGER;
@@ -84,7 +87,7 @@ Section NODE, DTA
     (slot.slot_id = NULL).if {
       (first_code = NULL).if {
 	first_type := TYPE_ID.get_index (slot.lower_style);
-	first_code := call_for first_type;      
+	first_code := call_for first_type self self_type;      
       };
     } else {            
       low := slot.lower_style;
@@ -105,10 +108,10 @@ Section NODE, DTA
 	  typ := TYPE_ID.get_index (j+low);
 	  
 	  ((j > list.upper) || {typ != list.item j.id}).if {
-	    case := CASE.create typ with (call_for typ);
+	    case := CASE.create typ with (call_for typ self self_type);
 	    list.add case to j;
 	  };	    
-	};	  
+	};  
       };
     };
     FALSE
@@ -116,29 +119,45 @@ Section NODE, DTA
   
 Section Private  
   
-  - call_for t:TYPE :LIST <-
+  - call_for t:TYPE self type_self:TYPE_FULL :LIST <-
+  [
+    -? {type_self != NULL};
+  ]
   ( + result:LIST;
     + typ:TYPE_ID;
     + call:CALL_SLOT;
     + em:EXPR_MULTIPLE;
     + rd:READ;
-    + wrt:WRITE;
+    + wrt:WRITE;    
     + result_var:VARIABLE;
-    + new_larg:FAST_ARRAY[EXPR];    
+    + new_larg:FAST_ARRAY(EXPR);    
     + slot_dta:SLOT_DATA;
     + slot_cod:SLOT_CODE;
     + idx:INTEGER;    
     + type:TYPE_FULL;
     + my_profil:PROFIL;
-    + wrt_lst:FAST_ARRAY[WRITE];
+    + wrt_lst:FAST_ARRAY(WRITE);
     + ctext:LOCAL;
+    + new_type_self:TYPE_FULL;
+    + data_rd:DTA_RD;
+    + cop_arg:EXPR;
+    + new_val:EXPR;
     
     result := LIST.create position;
     
+    data_rd ?= data;      
+    ((type_self.prototype.style = '-') && {data_rd != NULL} && {! data_rd.is_intern}).if {
+      cop_arg := data.self_arg.my_copy;
+    };
+    
     typ ?= t;
-    idx := typ.index;
+    idx := typ.index;    
     (idx = 0).if {
-      // Data.
+      // Data.      
+      (cop_arg != NULL).if {
+        result.add_last (COP_LOCK.create position with cop_arg);
+      };
+      //
       slot_dta := slot.slot_data;      
       slot_dta.init;
       (slot.slot_data_list != NULL).if {
@@ -146,14 +165,15 @@ Section Private
 	  slot.slot_data_list.item j.init;
 	};
       };
+      //
       (result_expr.static_type.raw = TYPE_VOID).if {
+        // BSBS: Pourquoi tu produit quelque chose qui serre à rien ???
 	(slot_dta.style = '-').if {
 	  result.add_last (slot_dta.read position);
 	} else {		
 	  result.add_last (slot_dta.read position with (expr.my_copy));
-	};
-	result.add_last (PROTOTYPE_CST.create position type (TYPE_VOID.default)); // BSBS: Alias.
-      } else {	
+	};	
+      } else {	        
 	em ?= result_expr;
 	(em != NULL).if {
 	  (em.lower).to (em.upper - 1) do { j:INTEGER;
@@ -165,62 +185,147 @@ Section Private
 	  rd ?= em.last;
 	} else {
 	  rd ?= result_expr;
-	};	
+        };	
+        
+        //(slot_dta.name == "storage").if {
+        /*
+        string_tmp.clear;
+        string_tmp.copy (type_self.raw.name);
+        string_tmp.add_last ' ';
+        string_tmp.append (t.name);        
+        (data.slot != NULL).if {
+          string_tmp.add_last ' ';
+          string_tmp.append (data.slot.name);        
+        };
+        result.add_last (
+          EXTERNAL_C.create position text (ALIAS_STR.get string_tmp) access NULL persistant TRUE type (TYPE_NULL.default)
+        );
+         */ 
+          /*
+          "Data : ".print; slot_dta.intern_name.print; 
+          " dans ".print; type_self.raw.name.print; 
+          (profil_current != NULL).if {
+            profil_current.name.print;
+          };
+          '\n'.print;
+          */
+        //};
 	result_var := rd.variable;
 	result.add_last (new_write result_var with (expr,slot_dta));
+      };
+      (cop_arg != NULL).if {
+        result.add_last (COP_UNLOCK.create position);        
       };
     } else {
       // Function.
       slot_cod := slot.slot_code idx;      
       (slot_cod.id_section.is_inherit_or_insert).if {
-	new_larg := FAST_ARRAY[EXPR].create_with_capacity 1;
+	new_larg := FAST_ARRAY(EXPR).create_with_capacity 1;
 	new_larg.add_last (data.self_arg.my_copy);
       } else {
 	new_larg := data.get_argument;
       };
-      type := new_larg.first.static_type;      
-      (type.is_strict).if {
-	// Fix Self type for resend call (else it's fixed by NODE_TYPE)
-	ITM_TYPE_SELF.set_run type;      
-      };
+      type := new_larg.first.static_type;            
+      ? {type != NULL};
       //      
-      (debug_level_option != 0).if {	
-	(data.context = NULL).if {
-	  ctext := context_main;
-	} else {
-	  ctext := data.context.context;
-	};
+      (debug_level_option != 0).if {	        
+        // BSBS: Poser le PUSH avant le NODE
+	//(data.context = NULL).if {
+	//  ctext := context_main;
+        //} else {
+        (data.context = NULL).if {
+          crash_with_message "NODE_STYLE : data.context = NULL!\n";
+        };
+        
+        ctext := data.context;
+	//};
 	result.add_last (
 	  PUSH.create position context ctext first FALSE
-	);
+        );     
       };
       //
-      (my_profil, wrt_lst) := slot_cod.get_profil new_larg;
-      call := CALL_SLOT.create position profil my_profil with wrt_lst;      
-      (result_expr.static_type.raw != TYPE_VOID).if {	
+      rd ?= new_larg.first;      
+      ((rd != NULL) && {rd.variable.name = ALIAS_STR.variable_self}).if {
+        // Fix Self type for resend call (else it's fixed by NODE_TYPE)        
+        new_type_self := type;               
+      } else {        
+	new_type_self := type_self;
+      };
+      /*
+      string_tmp.copy "// ";
+      new_type_self.display string_tmp;
+      string_tmp.append "  /  ";
+      type_self.display string_tmp;
+      result.add_last (
+        EXTERNAL_C.create (data.position) 
+        text (ALIAS_STR.get string_tmp) access NULL persistant TRUE type (TYPE_VOID.default)
+      );
+      */
+      new_val := CAST.create new_type_self value (new_larg.first);
+      new_larg.put new_val to 0;            
+      
+      
+      /*
+      (new_larg.lower+1).to (new_larg.upper) do { j:INTEGER;        
+        ts ?= slot_cod.get_argument_type j;
+        ((ts != NULL) && {ts = ITM_TYPE_SIMPLE.type_self}).if {
+          (new_larg.item j.static_type != new_type_self).if {
+            new_type_self.print;
+            new_larg.item j.static_type.print;
+            ts.print;
+            string_tmp.clear;
+            (slot_cod.argument_list.lower).to (slot_cod.argument_list.upper) do { h:INTEGER;
+              slot_cod.argument_list.item h.append_in string_tmp;              
+            };
+            string_tmp.print; 
+            '\n'.print;
+            warning_error (position,"BUG");
+            semantic_error (new_larg.item j.position,"Type not compatible SELF.");
+          };
+          //new_val := CAST.create new_type_self value (new_larg.item j);
+          //new_larg.put new_val to j;
+        };
+      };
+      */            
+      (my_profil, wrt_lst) := slot_cod.get_profil new_larg self new_type_self;
+      //      
+      (result_expr.static_type.raw = TYPE_VOID).if {	
+        result.add_last (
+          CALL_SLOT.create position profil my_profil with wrt_lst cop cop_arg
+        );
+      } else {        
+        call := CALL_SLOT.create position profil my_profil with wrt_lst cop NULL;            
+        (cop_arg != NULL).if {
+          result.add_last (COP_LOCK.create position with cop_arg);
+          result.add_last call;
+          result.add_last (COP_UNLOCK.create position);
+        } else {
+          result.add_last call;
+        };
 	em ?= result_expr;
 	(em != NULL).if {
-	  (em.lower).to (em.upper - 1) do { j:INTEGER;
+	  (em.lower).to (em.upper) do { j:INTEGER;
 	    rd ?= em.item j;
 	    ? {rd != NULL};
 	    result_var := rd.variable;	    
 	    rd  := call.profil.result_list.item j.read position;
 	    wrt := result_var.write position value rd;
-	    call.result_list.add_last wrt;	    
-	  };
-	  rd ?= em.last;
-	} else {
-	  rd ?= result_expr;
-	};
-	? {rd != NULL};
-	result_var := rd.variable;	
-	result.add_last (result_var.write position value call);
-      } else {
-	result.add_last call;
-      };
-    };
-    // In list.    
-    result.add_last (PROTOTYPE_CST.create position type (TYPE_VOID.default)); // BSBS : Alias.
+            call.result_list.add_last (RESULT.create wrt);
+	  };	  
+	}.elseif {
+          (call.profil.result_list.count != 0) || 
+          {call.is_interrupt}
+        } then {
+          rd ?= result_expr;
+          result_var := rd.variable;	    
+          (call.is_interrupt).if_false {
+            rd  := call.profil.result_list.first.read position;
+          };
+          wrt := result_var.write position value rd;
+          call.result_list.add_last (RESULT.create wrt); 
+	};	
+      };      
+    };    
     result
   );
     

@@ -65,3 +65,14 @@ Section Public
   ( 
     CHARACTER_CST.create position char character    
   );
+  
+  //
+  // Display.
+  //
+  
+  - append_in buffer:STRING <-
+  (
+    buffer.add_last '\'';
+    buffer.append character;
+    buffer.add_last '\'';
+  );

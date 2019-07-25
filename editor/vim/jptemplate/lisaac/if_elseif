@@ -1,0 +1,5 @@
+(${test expression1}).if {
+  ${cursor}
+}.elseif {${test expression2}} then {
+
+};

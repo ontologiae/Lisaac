@@ -28,11 +28,15 @@ Section Header
   
 Section Inherit
   
-  - parent_object:OBJECT := OBJECT;
+  + parent_area_mask:Expanded AREA_MASK;
+  
+  + parent_g_expr:Expanded G_EXPR;
   
 Section Private  
   
-  - cmds:FAST_ARRAY[STRING];
+  - command:STRING;    
+  
+  - cmds:FAST_ARRAY(STRING);
   
   - dir:DIRECTORY;
   
@@ -45,56 +49,56 @@ Section Private
     //
     // Entry command.
     //
-    (cmd == "help").if {
+    (cmd ~= "help").if {
       help;
-    }.elseif {cmd == "ls"} then {
+    }.elseif {cmd ~= "ls"} then {
       ls;
-    }.elseif {cmd == "version"} then {
-      "Small Lisaac shell Version 0.1\n".print;
-    }.elseif {cmd == "rm"} then {
+    }.elseif {cmd ~= "version"} then {
+      print_screen "Small Lisaac shell Version 0.2\n";
+    }.elseif {cmd ~= "rm"} then {
       rm;      
-    }.elseif {cmd == "rename"} then {
-      rename;
+    }.elseif {cmd ~= "mv"} then {
+      mv;
     //  
     // Directory Manager.  
     //
-    }.elseif {cmd == "cd"} then {
+    }.elseif {cmd ~= "cd"} then {
       cd;
-    }.elseif {cmd == "mkdir"} then {
+    }.elseif {cmd ~= "mkdir"} then {
       mkdir;
     //  
     // File Manager.  
     //
-    }.elseif {cmd == "cat"} then {
+    }.elseif {cmd ~= "cat"} then {
       cat;
-    }.elseif {cmd == "mkfile"} then {
+    }.elseif {cmd ~= "mkfile"} then {
       mkfile;
+    }.elseif {(cmd ~= "exit") || {cmd ~= "bye"}} then {
+      exit_shell;
     } else {
-      '`'.print;
-      cmd.print;
-      "\': Command not found.\n".print;
+      print_screen "`";
+      print_screen cmd;
+      print_screen "\': Command not found.\n";
     };
   );
   
   - help <-
   (
+    print_screen
     "Shell manager:\n\
     \  help                : Display this help.\n\
     \  exit / bye          : Exit Lisaac Shell.\n\
     \  version             : Print version.\n\
-    \  \n\
     \Entry manager:\n\
     \  ls                  : List information about the files.\n\
     \  rm <src>            : Remove file or directory <src>.\n\
-    \  rename <src> <name> : Rename file or directory <src> with new <name>.\n\
-    \  \n\
+    \  mv <src> <name>     : Move file or directory <src> with new <name>.\n\
     \Directory manager:\n\
     \  cd <dst>            : Change current directory.\n\
     \  mkdir <dir>         : Create the directory.\n\
-    \  \n\
     \File manager:\n\
     \  cat <src>           : Open and display file <src>.\n\
-    \  mkfile <src> <text> : Creat <src> file with <text>.\n".print;
+    \  mkfile <src> <text> : Creat <src> file with <text>.\n";
   );
   
   //
@@ -103,86 +107,70 @@ Section Private
   
   - ls <-
   ( + e:ENTRY;
+    + f:FILE;
     
-    "----Access----  ----Update----  ---Size--   ----Name----\n".print;
-    dir.lower.to (dir.upper) do { i:INTEGER;
-      e := dir.item i;
-      string_tmp.clear;
-      // Access.
-      e.access_date.append_short_in string_tmp;
-      string_tmp.add_last ' ';
-      e.access_time.append_short_in string_tmp;
-      string_tmp.append "  ";
-      // Update.
-      e.update_date.append_short_in string_tmp;
-      string_tmp.add_last ' ';
-      e.update_time.append_short_in string_tmp;
-      string_tmp.append "  ";
-      // Size.
-      e.size.append_in string_tmp format 9;
-      // Name.
-      (e.is_directory).if {
-        string_tmp.append " d ";
-      } else {
-        string_tmp.append " - ";
+    (dir.open).if_false {
+      print_screen "`ls\': Permission denied.\n";
+    } else {
+      print_screen "----Access----  ----Update----  ---Size--   ----Name----\n";    
+      dir.lower.to (dir.upper) do { i:INTEGER;
+        e := dir.item i;
+        string_tmp.clear;
+        // Access.        
+        e.access_date.append_short_in string_tmp;
+        string_tmp.add_last ' ';
+        e.access_time.append_short_in string_tmp;
+        string_tmp.append "  ";
+        // Update.
+        e.update_date.append_short_in string_tmp;
+        string_tmp.add_last ' ';
+        e.update_time.append_short_in string_tmp;
+        string_tmp.append "  ";      
+        // Name.
+        (e.is_directory).if {
+          string_tmp.append "          d ";
+        } else {
+          // Size.
+          f ?= e;
+          f.size.append_in string_tmp format 9;
+          string_tmp.append " - ";
+        };
+        string_tmp.append (e.name);
+        string_tmp.add_last '\n';
+        print_screen string_tmp;
       };
-      string_tmp.append (e.name);
-      string_tmp.add_last '\n';
-      string_tmp.print;
     };
   );
     
-  - rename <-
-  ( + e:ENTRY;
-    + src,dst:STRING;
+  - mv <-
+  ( + src,dst:STRING;
     (cmds.count < 3).if {
-      "`rename\': Too few arguments.\n".print;
+      print_screen "`mv\': Too few arguments.\n";
     }.elseif {cmds.count != 3} then {
-      "`rename\': Too many arguments.\n".print;
+      print_screen "`mv\': Too many arguments.\n";
     } else {
       src := cmds.item 1;
-      dst := cmds.item 2;
-      (dst.index_of '/' since 1 != 0).if {
-        '`'.print;
-        dst.print;
-        "\': Invalid name.".print;
-      } else {
-        e := dir.get src;
-        (e = NULL).if {
-          "`rename\': cannot stat `".print;
-          src.print;
-          "\': No such file or directory.\n".print;
-        } else {
-          (e.rename dst).if_false {
-            "`rename\': cannot rename file `".print;
-            dst.print;
-            "\': Permission denied.\n".print;
-          };
-        };
+      dst := cmds.item 2;      
+      (dir.move src to dst).if_false {
+        print_screen "`mv\': cannot rename file `";
+        print_screen dst;
+        print_screen "\': Permission denied.\n";
       };
     };
   );
 
   - rm <-
-  ( + e:ENTRY;
-    + param:STRING;
+  ( + param:STRING;
     (cmds.count = 1).if {
-      "`rm\': Too few arguments.\n".print;
+      print_screen "`rm\': Too few arguments.\n";
     }.elseif {cmds.count != 2} then {
-      "`rm\': Too many arguments.\n".print;
+      print_screen "`rm\': Too many arguments.\n";
     } else {
-      param := cmds.item 1;
-      e := dir.get param;
-      (e = NULL).if {
-        "`rm\': cannot remove `".print;
-        param.print;
-        "\': No such file or directory.\n".print;
-      } else {
-        (e.remove).if_false {
-          "`rm\': cannot remove `".print;
-          param.print;
-          "\': Permission denied.\n".print;
-        };
+      param := cmds.item 1;      
+      (dir.remove param).if_false {
+        print_screen "`rm\': cannot remove `";
+        print_screen param;
+        print_screen "\': Permission denied.\n";
       };
     };
   );
@@ -196,33 +184,24 @@ Section Private
     + param:STRING;
     
     (cmds.count > 2).if {
-      "`cd\': Too many arguments.\n".print;
-    }.elseif {cmds.count = 1} then {
-      dir.close;
+      print_screen "`cd\': Too many arguments.\n";
+    }.elseif {cmds.count = 1} then {      
       dir := FILE_SYSTEM;
     } else {
       param := cmds.item 1;
-      e := dir.get param;
+      e := dir.get_entry param;
       (e != NULL).if {
         (e.is_directory).if {
-          e := e.open;
-          (e != NULL).if {
-            dir.close;
-            dir ?= e;
-          } else {
-            "`cd ".print;
-            param.print;
-            "\': Permission denied.\n".print;
-          };
+          dir ?= e;                    
         } else {
-          '`'.print;
-          param.print;
-          "\': Not a directory.\n".print;
+          print_screen "`";
+          print_screen param;
+          print_screen "\': Not a directory.\n";
         };
       } else {
-        '`'.print;
-        param.print;
-        "\': No such file or directory.\n".print;
+        print_screen "`";
+        print_screen param;
+        print_screen "\': No such file or directory.\n";
       };
     };
   );
@@ -232,16 +211,16 @@ Section Private
     + param:STRING;
        
     (cmds.count = 1).if {
-      "`mkdir\': Too few arguments.\n".print;
+      print_screen "`mkdir\': Too few arguments.\n";
     }.elseif {cmds.count != 2} then {
-      "`mkdir\': Too many arguments.\n".print;
+      print_screen "`mkdir\': Too many arguments.\n";
     } else {
       param := cmds.item 1;
       e := dir.make_directory param;
       (e = NULL).if {
-        '`'.print;
-        param.print;
-        "\': File exists, cannot create directory.\n".print;
+        print_screen "`";
+        print_screen param;
+        print_screen "\': File exists, cannot create directory.\n";
       };
     };
   );
@@ -253,32 +232,31 @@ Section Private
   - cat <-
   ( + e:ENTRY;
     + param:STRING;
-    + file:STD_FILE;
+    + file:FILE;
     
     (cmds.count = 1).if {
-      "`cat\': Too few arguments.\n".print;
+      print_screen "`cat\': Too few arguments.\n";
     }.elseif {cmds.count != 2} then {
-      "`cat\': Too many arguments.\n".print;
+      print_screen "`cat\': Too many arguments.\n";
     } else {
       param := cmds.item 1;
-      e := dir.get param;
+      e := dir.get_entry param;
       ((e = NULL) || {! e.is_file}).if {
-        '`'.print;
-        param.print;
-        "\': No such file.\n".print;
+        print_screen "`";
+        print_screen param;
+        print_screen "\': No such file.\n";
       } else {
-        e := e.open;
-        (e = NULL).if {
-          '`'.print;
-          param.print;
-          "\': Not open.\n".print;
-        } else {
-          file ?= e;
+        file ?= e;
+        (! file.open).if {
+          print_screen "`";
+          print_screen param;
+          print_screen "\': Not open.\n";
+        } else {          
           string_tmp.clear;
-          string_tmp.set_capacity (file.size.to_integer);
+          string_tmp.set_capacity (file.size.to_integer);          
           file.read string_tmp size (file.size);
-          string_tmp.print;
-          '\n'.print;
+          print_screen string_tmp;
+          print_screen "\n";
           file.close;
         };
       };
@@ -286,21 +264,20 @@ Section Private
   );
     
   - mkfile <-
-  ( + e:ENTRY;
-    + f:STD_FILE;
+  ( + f:FILE;
     + param:STRING;
        
     (cmds.count = 1).if {
-      "`mkfile\': Too few arguments.\n".print;
+      print_screen "`mkfile\': Too few arguments.\n";
     } else {
       param := cmds.item 1;
-      e := dir.make_file param;
-      (e = NULL).if {
-        '`'.print;
-        param.print;
-        "\': File exists, cannot create file.\n".print;
+      f := dir.make_file param;
+      (f = NULL).if {
+        print_screen "`";
+        print_screen param;
+        print_screen "\': File exists, cannot create file.\n";
       }.elseif {cmds.count > 2} then {
-        f ?= e.open;
+        f.open;
         2.to (cmds.upper) do { j:INTEGER;
           string_tmp.copy (cmds.item j);
           string_tmp.add_last ' ';
@@ -310,31 +287,338 @@ Section Private
       };
     };
   );
-    
+  
+  - exit_shell <-
+  (    
+    print_screen "Good bye.\n";
+    (is_isaac).if {
+      x_screen := y_screen := 0;
+      my_window.close;
+    } else {
+      die_with_code 0;
+    };
+  );
+  
 Section Public
+  
+  //
+  // Text mode.
+  //
   
   - main <-
   ( + command:STRING;
-    + exit:BOOLEAN;
         
-    cmds := FAST_ARRAY[STRING].create_with_capacity 10;
+    cmds := FAST_ARRAY(STRING).create_with_capacity 10;
     command := STRING.create 100;
     dir := FILE_SYSTEM;
     
     {
-      dir.path.print;
-      " > ".print;
+      print_screen (dir.path);
+      print_screen " > ";
       command.clear;
       IO.read_line_in command;
       
       (command.is_empty).if_false {       
         cmds.clear;
-        command.split_in cmds;      
-        exit := (cmds.first == "exit") || {cmds.first == "bye"};	
-        (exit).if_false {
-          execute;
+        command.split_in cmds;              
+        execute;
+      };
+    }.endless_loop;
+  );
+  
+  //
+  // Graphics Mode.
+  //
+  
+  + my_window:G_WIN_OUT;
+  
+  - is_isaac:BOOLEAN <- my_window != NULL;
+  
+  - run s:ABSTRACT_STRING :G_WIN_OUT <-
+  (
+    video_line_tmp  := BMP_LINE(PIXEL_32).create (VIDEO.width);
+    x_screen := y_screen := 0;
+    load_font s;
+    command := STRING.create 100;    
+    cmds := FAST_ARRAY(STRING).create_with_capacity 10;
+    
+    dir := FILE_SYSTEM;
+    
+ //   new_command;    
+    my_window := G_WIN_OUT.create "Mini Shell" with (Self.fix_width.fix_height)
+  );
+  
+  //
+  // Update position.
+  //
+  
+  - width_min:INTEGER  := 80*8;
+  
+  - height_min:INTEGER := 16 * 16;
+  
+  - set_position rac:AREA at (x,y:INTEGER) size (w,h:INTEGER) <-
+  ( 
+    update rac from (x,y) size (w,h);
+    redraw (x_window,y_window) to (x_window+width-1,y_window+height-1);
+    new_command;
+  );
+  
+  //
+  // Display.
+  //
+    
+  - draw (x0,y0:INTEGER) to (x1,y1:INTEGER) <-  
+  (    
+    mask_draw (x0,y0) to (x1,y1) color green;         
+  );
+  
+  - print_screen st:ABSTRACT_STRING <-
+  ( + car:CHARACTER;
+    + line:FAST_ARRAY(UINTEGER_16);
+    
+    (is_isaac).if {    
+      color green;
+      (st.lower).to (st.upper) do { j:INTEGER;
+        car := st.item j;
+        (car != '\n').if {
+          print_char car at (x_screen,y_screen);
+          x_screen := x_screen + 8;
+          (x_screen > width).if {
+            x_screen := 0;
+            y_screen := y_screen + 16;
+          };
+        } else {
+          x_screen := 0;
+          y_screen := y_screen + 16;
+        };      
+        (y_screen >= y_max).if {
+          0.to 15 do { i:INTEGER;
+            sav_line.put (mask.item i) to i; 
+          };
+          16.to y_max do { y:INTEGER;
+            mask.put (mask.item y) to (y-16);	  
+          };
+          0.to 15 do { i:INTEGER;
+            line := sav_line.item i; 	  
+            line.clear;
+            mask.put line to (y_max-15+i);
+          };
+          redraw (x_window,y_window) to (x_window+width-1,y_window+height-1);
+          y_screen := y_screen - 16;
+          color green;
         };
       };
-    }.do_until {exit};    
-    "Good bye.\n".print;
+    } else {  
+      st.print;
+    };
   );
+  
+Section Private  
+
+  - font:FAST_ARRAY(UINTEGER_8);
+  
+  - x_screen:INTEGER;
+  - y_screen:INTEGER;
+  
+  - print_char car:CHARACTER at (x,y:INTEGER) <-
+  ( + ofs,px,py:INTEGER;
+    + mask:UINTEGER_8;
+    
+    py := y;
+    ofs := car.to_uinteger_8.to_integer * 16;
+    ofs.to (ofs+15) do { o:INTEGER;
+      px := x;
+      mask := font.item o;
+      {mask != 0}.while_do {
+	((mask & 80h) != 0).if {
+	  pixel_to (px,py);
+	};
+	mask := mask << 1;
+	px := px + 1;
+      };
+      py := py + 1;
+    };
+  );
+  
+  - sav_line:FAST_ARRAY(FAST_ARRAY(UINTEGER_16)) := FAST_ARRAY(FAST_ARRAY(UINTEGER_16)).create 16;
+  
+  - load_font s:ABSTRACT_STRING <-
+  ( + cur_dir:DIRECTORY;    
+    + e:ENTRY;
+    + f:FILE;
+        
+    cur_dir := FILE_SYSTEM;          
+    string_tmp.copy s;
+    string_tmp.append "font.fnt";
+    e := cur_dir.get_entry string_tmp;
+    ((e != NULL) && {e.is_file}).if {
+      f ?= e;
+      f.open;
+      font := FAST_ARRAY(UINTEGER_8).create_with_capacity 4096;
+      f.read font size 4096;
+      f.close;      
+    } else {
+      "\nFile 'font.fnt' Not Found!".print;
+      die_with_code 0;
+    };    
+  );
+  
+  - color_4_to_8 n:INTEGER :UINTEGER_32 <-
+  (
+    ((255.to_real_16_16 /# 15) *# n).to_integer
+  );
+  
+  - color_table:NATIVE_ARRAY(UINTEGER_32) :=
+  ( + result:NATIVE_ARRAY(UINTEGER_32);
+    + r,g,b,col:UINTEGER_32;
+    
+    result := NATIVE_ARRAY(UINTEGER_32).create 4096;
+    0.to 4095 do { c:INTEGER;      
+      r := color_4_to_8 ((c & 0F00h) >> 8);
+      g := color_4_to_8 ((c & 00F0h) >> 4);
+      b := color_4_to_8  (c & 000Fh);
+      // Begin color effect
+      r := (r >> 1); // + (r >> 2);
+      b := (b >> 1) + (b >> 2);
+      g := (g >> 1); // + (g >> 2);
+      // End.
+      col := (r << 16) | (g << 8) | b;
+      result.put col to c;
+    };
+    result
+  );
+  
+  - col_trans col:UINTEGER_32:UINTEGER_32<-
+  ( + idx:UINTEGER_32;
+    
+    idx := 
+    ((col >> 12) & 0F00h) | // Red
+    ((col >>  8) & 00F0h) | // Green
+    ((col >>  4) & 000Fh);  // Blue
+    color_table.item idx
+  );
+  
+  + video_line_tmp:ABSTRACT_BMP_LINE;
+  
+  - y_command:INTEGER;
+  
+  - new_command <-
+  (     
+    y_command := y_screen;    
+    command.clear;    
+    cursor := 0;
+    update_command TRUE;
+  );
+  
+  - update_command is_actif:BOOLEAN <-
+  ( + y_max:INTEGER;
+    + line:FAST_ARRAY(UINTEGER_16);
+    
+    y_command.to (mask.upper) do { y:INTEGER;
+      line := mask.item y;
+      (! line.is_empty).if {
+	y_max := y;
+	line.clear;
+      };
+    };
+    y_screen := y_command;
+    x_screen := 0;
+    print_screen (dir.path);
+    print_screen " > ";
+    string_tmp.copy command;
+    (is_actif).if {
+      string_tmp.insert '|' to cursor;
+    };
+    print_screen string_tmp;
+    redraw (x_window,y_window+y_command) to (x_window+width-1,y_window+y_max);
+  );
+  
+  - cursor:INTEGER;  
+  
+Section Public
+  
+  - receive msg:EVENT <-
+  ( + evt_key:EVENT_KEYBOARD;
+    + evt_mouse:EVENT_MOUSE;
+    + key:CHARACTER;
+    + cmd:UINTEGER_8;
+    
+    evt_mouse ?= msg;
+    (evt_mouse != NULL).if {
+      parent_area_mask.receive msg;
+    };    
+    evt_key ?= msg;
+    (evt_key != NULL).if {
+      cmd := (evt_key.key >> 8).to_uinteger_8;
+      key := (evt_key.key & 0FFh).to_character;
+      ((cmd & 8) != 0).if {
+	key
+	// Enter
+	.when '\13\' then {
+	  update_command FALSE;
+	  print_screen "\n";
+	  (command.is_empty).if_false {       
+	    cmds.clear;
+	    command.split_in cmds;
+	    execute;	   
+	  };	  
+      	  new_command;
+	}
+	// Move cursor.	
+	.when 'L' then { 
+	  (cursor != 0).if {
+	    cursor := cursor - 1;
+	  };
+	}
+	.when 'R' then {
+	  (cursor != command.count).if {
+	    cursor := cursor + 1;
+	  };
+	}
+	.when 'B' then {
+	  cursor := 0;
+	}
+	.when 'E' then {
+	  cursor := command.count;
+	}
+	// Suppr.
+	.when '\8\' then {
+	  (cursor != 0).if {
+	    command.remove cursor;
+	    cursor := cursor - 1;
+	  };
+	}
+	.when 'S' then {
+	  (cursor != command.count).if {
+	    command.remove (cursor+1);
+	  };
+	};
+      } else {
+	command.insert key to cursor;
+	cursor := cursor + 1;	
+      };
+      update_command TRUE;
+    };
+  );
+  
+  - slave_pixel_hard (x,y:INTEGER) color col:UINTEGER_32 <- 
+  (     
+    parent_area_mask.slave_pixel_hard (x,y) color (col_trans col);     
+  );
+  
+  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER color col:UINTEGER_32<- 
+  ( 
+    parent_area_mask.slave_line_h_hard (x1,y) until x2 color (col_trans col);
+  );
+
+  - slave_line_h_hard (x1,y:INTEGER) until x2:INTEGER 
+  image line:ABSTRACT_BMP_LINE offset ofs:INTEGER <-
+  ( + col:UINTEGER_32;
+    
+    ofs.to (ofs+x2-x1) do { o:INTEGER;
+      col := line.get_color o;
+      video_line_tmp.put (col_trans col) to o;      
+    };
+    parent_area_mask.slave_line_h_hard (x1,y) until x2 image video_line_tmp offset ofs;
+  );
+

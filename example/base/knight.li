@@ -48,13 +48,13 @@ Section Private
 
   - chess_max:INTEGER := 24;
 
-  - chessboard:ARRAY2[INTEGER];
+  - chessboard:ARRAY2(INTEGER);
 
   - nb_tries:INTEGER;
 
-  - tl:ARRAY[INTEGER] :=
-  ( + result:ARRAY[INTEGER];
-    result := ARRAY[INTEGER].create 1 to 8;
+  - tl:ARRAY(INTEGER) :=
+  ( + result:ARRAY(INTEGER);
+    result := ARRAY(INTEGER).create 1 to 8;
     result.put (-2) to 1; result.put (-1) to 2;
     result.put   1  to 3; result.put   2  to 4;
     result.put   2  to 5; result.put   1  to 6;
@@ -62,9 +62,9 @@ Section Private
     result
   );
 
-  - tc:ARRAY[INTEGER] :=
-  ( + result:ARRAY[INTEGER];
-    result := ARRAY[INTEGER].create 1 to 8;
+  - tc:ARRAY(INTEGER) :=
+  ( + result:ARRAY(INTEGER);
+    result := ARRAY(INTEGER).create 1 to 8;
     result.put   1  to 1; result.put   2  to 2;
     result.put   2  to 3; result.put   1  to 4;
     result.put (-1) to 5; result.put (-2) to 6;
@@ -79,7 +79,7 @@ Section Private
     ? {1 <= column};
     ? {column <= size};
     
-    chessboard := ARRAY2[INTEGER].create (1,1) to (size,size);
+    chessboard := ARRAY2(INTEGER).create (1,1) to (size,size);
     chessboard.put 1 to (line,column);
     (solution (line,column)).if {
       print;
@@ -144,7 +144,9 @@ Section Private
     };
     result
   );
-
+  
+Section Public
+  
   - print <-
   // Display the cheesboard.
   ( + separator:STRING;
@@ -166,9 +168,7 @@ Section Private
       separator.print;
     };
   );
-  
-Section Public
-  
+    
   - main <-
   ( + size, line, column:INTEGER;
     
@@ -177,18 +177,18 @@ Section Public
     };
     (! size.in_range chess_min to chess_max).if {
       size := ask ("Chess-board size: ",chess_min,chess_max);
-    };
+    };    
     ((COMMAND_LINE.upper >= 2) && {COMMAND_LINE.item 2.is_integer}).if {
       line := COMMAND_LINE.item 2.to_integer;
     };
     (! line.in_range 1 to size).if {
       line := ask ("Start line: ",1,size);
-    };
+    };    
     ((COMMAND_LINE.upper >= 3) && {COMMAND_LINE.item 3.is_integer}).if {
       column := COMMAND_LINE.item 3.to_integer;
-    };
+    };    
     (! column.in_range 1 to size).if {
       column := ask ("Start column: ",1,size);
-    };
+    };    
     knight (size,line,column);
   );

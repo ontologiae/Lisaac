@@ -29,7 +29,7 @@ Section Inherit
   
   - parent_obj:OBJ := OBJ;
 
-Section Private  
+Section Public
   
   + name:STRING_CONSTANT := "MASTER";
   
@@ -40,9 +40,7 @@ Section Private
     name.print;
     '\n'.print;
   );
-  
-Section Public  
-  
+    
   - main <-
   ( + obj:OBJ;    
     

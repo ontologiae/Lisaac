@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name        := COUPLED[E];
+  + name        := COUPLED(E);
 
   - copyright   := "2003-2007 Benoit Sonntag";
 

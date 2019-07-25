@@ -34,8 +34,8 @@ Section Inherit
   
 Section PUSH,LISAAC
   
-  - source_line:HASHED_DICTIONARY[STRING,UINTEGER_32] := 
-  HASHED_DICTIONARY[STRING,UINTEGER_32].create;
+  - source_line:HASHED_DICTIONARY(STRING,UINTEGER_32) := 
+  HASHED_DICTIONARY(STRING,UINTEGER_32).create;
   
 Section Public
   
@@ -122,13 +122,15 @@ Section Public
     
   - genere buffer:STRING <-
   ( + id:UINTEGER_32;
-    add_var_size context;
+    + idf:STRING_CONSTANT;
+        
+    idf := ALIASER_LOCAL.push Self; 
     (is_first).if {      
-      buffer.append "push_first(&";
+      buffer.append "lisaac_push_first(&";
     } else {
-      buffer.append "push(&";
+      buffer.append "lisaac_push(&";
     };
-    buffer.append (context.intern_name);
+    buffer.append idf;
     buffer.add_last ',';
     id := position.code;
     (debug_with_code).if {
@@ -140,11 +142,11 @@ Section Public
     id.append_in buffer;
     buffer.add_last ')';    
     
-    buffer.append "; // L";
+    buffer.append "; /* L";
     position.line.append_in buffer;
     buffer.add_last ' ';
     buffer.append (position.prototype.name);    
-    
+    buffer.append "*/";
   );
 
   //

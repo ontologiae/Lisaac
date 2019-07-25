@@ -34,6 +34,16 @@ Section Inherit
   
 Section Public
   
+  - last_index_str (n:STRING,c:CHARACTER) :INTEGER <-
+  // BSBS: A Mettre dans STRING.
+  ( + result:INTEGER;
+    result := n.upper;
+    {(result < n.lower) || {n.item result = c}}.until_do {
+      result := result-1;
+    };
+    result
+  );
+    
   //
   // Invariant loop system.
   //
@@ -56,45 +66,48 @@ Section Public
   //
   // Display debug tools.
   //
-  
+    
   + object_id:INTEGER <- 
   ( + result:INTEGER;
     - object_counter:INTEGER; 
-
+    
     result := object_counter;
     object_counter := object_counter + 1;
-    object_id := result;
-    result
+    object_id := result
   );
 
   //
   // Compiler Options.
   //
   
-  - is_optimization:BOOLEAN;  
-  
-  - inline_level:INTEGER := 17;
-  
-  - is_statistic:BOOLEAN;
-  
-  - is_quiet_operation:BOOLEAN;
-  
   - debug_level_option:INTEGER;  
-  
   - debug_with_code:BOOLEAN;
-    
-  - verbose_level:INTEGER;
-  - is_verbose:BOOLEAN <- (verbose_level != 0);
-
-  - is_warning:BOOLEAN;
   
   - is_all_warning:BOOLEAN;
   
-  - is_executing_pass:BOOLEAN;
+  - is_optimization:BOOLEAN;    
+  - inline_level:INTEGER := 17;
+  
+  - is_java:BOOLEAN; // Fuck the Java!
+  
+  - is_statistic:BOOLEAN;  
+  - is_quiet:BOOLEAN;
+  
+  //
+  //
+  //
+     
+  - verbose_level:INTEGER;
+  - is_verbose:BOOLEAN <- (verbose_level != 0);
+  
+  - is_readable:BOOLEAN;
+  - is_graph:BOOLEAN;
   
   //
   // Other flags.
   //
+  
+  - is_cop:BOOLEAN;
   
   - is_copy_local:BOOLEAN;
   
@@ -110,7 +123,12 @@ Section Public
     //};
   );
   
-  - new_execute_pass <- new_depend_pass;
+  - new_execute_pass <- 
+  (
+    new_depend_pass;
+  );
+  
+  - is_executing_pass:BOOLEAN;
   
   //
   // Sequence counter.
@@ -122,7 +140,7 @@ Section Public
   - seq_or_and             :UINTEGER_32; // || or &&  
   - seq_call_and_loop      :UINTEGER_32; // Call or loop (or function).
   - seq_call_local_and_loop:UINTEGER_32; // Call sensitive or loop.
-  - seq_list:FAST_ARRAY[LIST] := FAST_ARRAY[LIST].create_with_capacity 64;
+  - seq_list:FAST_ARRAY(LIST) := FAST_ARRAY(LIST).create_with_capacity 64;
   
   - is_seq_list l:LIST :BOOLEAN <-
   ( + result:BOOLEAN;
@@ -143,16 +161,23 @@ Section Public
   - list_main:LIST;
   - context_main:LOCAL;
   
-  - list_current:LIST;
+  - profil_main:PROFIL_SLOT := // BSBS: A REVOIR (a uniformiser ((graph)))
+  ( + result:PROFIL_SLOT;
     
-  - stack_local:FAST_ARRAY[LOCAL]  := FAST_ARRAY[LOCAL].create_with_capacity 64;  
-  - stack_result:FAST_ARRAY[LOCAL] := FAST_ARRAY[LOCAL].create_with_capacity 16;  
-  - stack_local_lower :INTEGER;
-  - stack_result_lower:INTEGER;
+    result := PROFIL_SLOT.clone; 
+    result.alloc_profil_main;
+    result
+  );  
   
-  - profil_first:PROFIL_SLOT;
-  - profil_second:PROFIL;
-      
+  - list_current:LIST;
+  
+  - current_list_level:INTEGER;
+  
+  - stack_local:FAST_ARRAY(LOCAL)  := FAST_ARRAY(LOCAL).create_with_capacity 64;  
+  
+  - profil_slot:PROFIL_SLOT; // Principal slot.
+  - profil_current:PROFIL;   // Sub-profil or (profil = profil_slot)
+     
   - display_stack_local <-
   (
     string_tmp.clear;
@@ -166,73 +191,33 @@ Section Public
   //
   // Output Buffer and service.
   //
-  
-  - var_size:FAST_ARRAY[FAST_ARRAY[LOCAL]] :=
-  ( + result:FAST_ARRAY[FAST_ARRAY[LOCAL]];
-    
-    result := FAST_ARRAY[FAST_ARRAY[LOCAL]].create_with_capacity 4;
-    0.to 3 do { j:INTEGER;
-      result.add_last (FAST_ARRAY[LOCAL].create_with_capacity 32);
-    };
-    result
-  );
-  
-  - add_var_size v:LOCAL <-
-  ( + tab:FAST_ARRAY[LOCAL];
-    + j:INTEGER;
-    + t:TYPE_FULL;
-    
-    ? {v.style = '+'};
-    
-    (v.style != '+').if {
-      v.intern_name.print; " style [".print; v.style.print; "]\n".print;
-      warning_error (v.position,"BUG ANY.add_var_size Error");
-    };
-    // BSBS: C'est pas top, avec des HASHED_SET ce serait mieux...
-    t := v.type;
-    tab := var_size.item (v.type.size);
-    j := tab.lower;    
-    {(j <= tab.upper) && {tab.item j.type != t}}.while_do {
-      j := j + 1;
-    };
-    (j > tab.upper).if {
-      tab.add_last v;
-    } else {
-      {(j <= tab.upper) && {tab.item j != v} && {tab.item j.type = t}}.while_do {
-	j := j + 1;
-      };
-      ((j > tab.upper) || {tab.item j != v}).if {
-	tab.add v to j;	
-      };
-    };
-  );
-  
+      
   - output_decl:STRING := STRING.create 60000;
   - output_glob:STRING := STRING.create 10000;
-  - output_code:STRING := STRING.create 4000000;
+  - output_code:STRING := STRING.create 4_000_000;
   
   - title txt:STRING_CONSTANT in buf:STRING <-
   (
-    buf.append "\n//";
+    buf.append "\n/*";
     3.to 28 do { j:INTEGER;
       buf.add_last '=';      
     };
-    buf.append "//\n// ";
+    buf.append "*/\n/* ";
     buf.append txt;
     (txt.count+5).to 28 do { j:INTEGER;
       buf.add_last ' ';
     };
-    buf.append " //\n//";
+    buf.append " */\n/*";
     3.to 28 do { j:INTEGER;
       buf.add_last '=';      
     };
-    buf.append "//\n\n";
+    buf.append "*/\n\n";
   );
   
   
   - indent:STRING := STRING.create 128;
 
-  - operator_to_name (typ,op:ABSTRACT_STRING) :STRING_CONSTANT <-
+  - operator typ:ABSTRACT_STRING name op:ABSTRACT_STRING :STRING_CONSTANT <-
   ( + c:CHARACTER;
     string_tmp.copy typ;
     (op.lower).to (op.upper) do { j:INTEGER;
@@ -321,19 +306,17 @@ Section Public
   // String temporary.
   //
 
-  - string_tmp:STRING := STRING.create 256;
-  
-  - string_tmp2:STRING := STRING.create 256;
+  - string_tmp :STRING := STRING.create 256;  
+  - string_tmp2:STRING := STRING.create 256;  
+  - string_tmp3:STRING := STRING.create 256;  
+  - string_tmp4:STRING := STRING.create 256;
   
   //
   // Path directory and command front end.
   //
   
-  - path_directory:LINKED_LIST[STRING_CONSTANT] := 
-  LINKED_LIST[STRING_CONSTANT].create;
-
-  - command_list  :LINKED_LIST[STRING_CONSTANT] := 
-  LINKED_LIST[STRING_CONSTANT].create;
+  - path_file:FAST_ARRAY(STRING_CONSTANT) := 
+  FAST_ARRAY(STRING_CONSTANT).create_with_capacity 3000;
 
   //
   // Alias type.

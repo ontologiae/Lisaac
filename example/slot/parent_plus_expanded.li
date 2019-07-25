@@ -27,7 +27,7 @@ Section Header
   
 Section Inherit  
   
-  - parent_minus:OBJECT := OBJECT;
+  - parent_object:OBJECT := OBJECT;
   
 Section Private  
   

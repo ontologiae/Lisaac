@@ -55,7 +55,6 @@ Section Public
   
   - make p:POSITION name n:STRING_CONSTANT arg a:ITM_CODE <-
   (
-    ? {a != NULL};
     position := p;
     name     := n;
     arg      := a;

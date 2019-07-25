@@ -1,0 +1,28 @@
+Section Header
+
+  + name := BENCH;
+  - copyright := "(c) 2009 by Jeremy Cowgar";
+  - comment := "Benchmarks any console program";
+  
+Section Public
+
+  - main <-
+  ( + cmd:STRING;
+    + time:REAL_32;
+    
+    (COMMAND_LINE.upper = 0).if {
+      "Usage: bench program [command_line_option...]".println;
+      OBJECT.die_with_code 1;
+    };
+  
+    cmd := STRING.create 256;
+
+    1.to (COMMAND_LINE.upper) do { y:INTEGER;
+      cmd := cmd + (COMMAND_LINE.item y) + " ";
+    };
+
+    time := TOOLS.bench { ENVIRONMENT.execute_command cmd; };
+    
+    "Time: ".print;
+    time.println;
+  );

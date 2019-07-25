@@ -90,33 +90,35 @@ Section Public
     result
   );
   
-Section ITM_READ  
+  //
+  // Display.
+  //
   
-  - to_run_with first_itm:ITM_CODE args larg:FAST_ARRAY[ITM_CODE] :EXPR <-
-  ( + args:FAST_ARRAY[EXPR];
-    + receiver:EXPR;
-    + receiver_type:TYPE;
-    + em:EXPR_MULTIPLE;
-    + pos_null:POSITION;
+  - append_in buffer:STRING <-
+  (
+    buffer.append name;
+    buffer.append "()";
+  );
+  
+Section ITM_READ, SLOT_DATA
+  
+  - to_run_with first_itm:ITM_CODE args larg:FAST_ARRAY(ITM_CODE) :EXPR <-
+  ( + rec:EXPR;
     //
     + itm_list:ITM_LIST;
     + itm_read:ITM_READ;
-    + is_resend:BOOLEAN;
-    //    
-    + slot_msg:SLOT;
-    + is_block_value:BOOLEAN;
-    //
-    + base:NODE;
+    + is_resend,implicit_self:BOOLEAN;
         
     //
-    // Compute `receiver'.
+    // Compute `rec'.
     //    
-    args := ALIAS_ARRAY[EXPR].new;
+    
     (first_itm = NULL).if {
-      // Implicite Self.
-      receiver := lookup (ALIAS_STR.variable_self).read position;    
-    } else {      
-      receiver := first_itm.to_run_expr;      
+      // Implicit Self.
+      rec := lookup (ALIAS_STR.variable_self).read position;
+      implicit_self := TRUE;
+    } else {            
+      rec := first_itm.to_run_expr;      
       // Resend detect.
       itm_list ?= first_itm;
       (itm_list != NULL).if {
@@ -129,45 +131,56 @@ Section ITM_READ
 	{position.prototype.search_parent (itm_read.name)}
       );
     };
+    to_run_with_self (rec,implicit_self,is_resend) args larg
+  );
+  
+  - to_run_with_self (r:EXPR,implicit_self,is_resend:BOOLEAN) 
+  args larg:FAST_ARRAY(ITM_CODE) :EXPR <-
+  ( + args:FAST_ARRAY(EXPR);
+    + rec_type:TYPE;
+    + rec:EXPR;
+    + em:EXPR_MULTIPLE;
+    + pos_null:POSITION;
+    //    
+    + slot_msg:SLOT;
+    + is_block_value:BOOLEAN;
+    //
+    + base:NODE;
     
+    rec := r;
     //
     // Detect slot.
     //
-    
-    receiver_type := receiver.static_type.raw;
-    (receiver_type = TYPE_VOID).if {
+    args := ALIAS_ARRAY(EXPR).new;
+    rec_type := rec.static_type.raw;
+    (rec_type = TYPE_VOID).if {
       // BSBS: Ce cas ne doit jamais arriver !
       // il se déclenche avec parent.msg.truc lorsque msg du parent n'a pas de type de retour
       // Mais que le profil général en a un...
       semantic_error (position,"Call on Void"); 
     };
-    
-    ((receiver_type == type_block) && 
-    {name = ALIAS_STR.slot_value}).if {
+        
+    (
+      (rec_type.is_block) && 
+      {name = ALIAS_STR.slot_value}
+    ).if {
       // { ... }.value
       is_block_value := TRUE;
     } else {
-      slot_msg := receiver_type.get_slot name;     
+      slot_msg := rec_type.get_slot name;     
       (slot_msg = NULL).if {            
 	string_tmp.copy "Slot `";
 	string_tmp.append name;
 	string_tmp.append "' not found in `";
-	receiver_type.append_name_in string_tmp; 
-	string_tmp.append "'.";
+	rec_type.append_name_in string_tmp; 
+        string_tmp.append "'.";                        
 	semantic_error (position,string_tmp);
-      };
-      // For problem with block profil ! (Not clean...)                  
-      (
-	(slot_msg.slot_data_intern != NULL) && 
-	{slot_msg.slot_data_intern.type.raw == type_block}
-      ).if {
-	slot_msg.slot_data.init; // BSBS: Ne doit plus etre necessaire, c est fait en amont.
-      };
+      };      
       // Verification
       (verify).if {
 	(
-	  ((larg  = NULL) && {slot_msg.base_slot.argument_list.count != 1}) || 
-	  {(larg != NULL) && {larg.count != slot_msg.base_slot.argument_list.count-1}}
+	  ((larg  = NULL) && {slot_msg.argument_list.count != 1}) || 
+	  {(larg != NULL) && {larg.count != slot_msg.argument_list.count-1}}
 	).if {
 	  POSITION.put_error semantic text "Incorrect number argument."; 
 	  slot_msg.position.put_position;
@@ -176,10 +189,10 @@ Section ITM_READ
 	};
 	last_position := slot_msg.position;	
 	( !
-	  slot_msg.id_section.access receiver_type with (ITM_TYPE_SELF.to_run.raw)
+	  slot_msg.id_section.access rec_type with (profil_slot.type_self.raw)
 	).if {
 	  string_tmp.copy "Type ";
-	  ITM_TYPE_SELF.to_run.append_name_in string_tmp;
+	  profil_slot.type_self.append_name_in string_tmp;
 	  string_tmp.append " does not have access to this slot.";
 	  POSITION.put_error warning text string_tmp;
 	  slot_msg.position.put_position;
@@ -192,13 +205,13 @@ Section ITM_READ
     //
     // Add arguments
     //
-    add_arg receiver to 0 in args for slot_msg block is_block_value;
-    em ?= receiver;
+    add_arg rec to 0 in args for slot_msg block is_block_value;
+    em ?= rec;
     (em != NULL).if {
-      receiver := em.expr_list.first;
+      rec := em.expr_list.first;
     };
     (larg != NULL).if {
-      (larg.lower).to (larg.upper) do { j:INTEGER;
+      (larg.lower).to (larg.upper) do { j:INTEGER;        
 	add_arg (larg.item j.to_run_expr) to (j+1) in args for slot_msg block is_block_value;
       };
     };
@@ -208,10 +221,10 @@ Section ITM_READ
     //
     (is_block_value).if {
       // { ... }.value      
-      args := ALIAS_ARRAY[EXPR].copy args;      
+      args := ALIAS_ARRAY(EXPR).copy args;      
       args.put (args.first.my_copy) to 0;      
-      //receiver := slot_msg.slot_data_intern.read position with receiver;
-      base := NODE.new_block position receiver receiver with args;
+      //rec := slot_msg.slot_data_intern.read position with rec;
+      base := NODE.new_block position receiver rec with args;
     }.elseif {args.count = 1} then {
       // Classic message without arguments.
       (is_resend).if {
@@ -221,15 +234,16 @@ Section ITM_READ
       
       ((verify) && {is_all_warning} && {name == "deferred"}).if {
 	string_tmp.copy "Deferred in `";
-	string_tmp.append (profil_first.slot.name);
+	profil_slot.slot.pretty_name_in string_tmp;
 	string_tmp.append "' for ";
-	receiver.static_type.append_name_in string_tmp;	
+	rec.static_type.append_name_in string_tmp;	
 	warning_error (position,string_tmp);
       };
       
-      base := NODE.new_read position slot slot_msg receiver receiver self (args.first);
+      base := NODE.new_read position slot slot_msg 
+      receiver rec self (args.first) intern implicit_self;
       
-      ALIAS_ARRAY[EXPR].free args;
+      ALIAS_ARRAY(EXPR).free args;
     } else {
       // Classic message with arguments.
       (is_resend).if {
@@ -237,25 +251,30 @@ Section ITM_READ
       } else {
 	args.put (args.first.my_copy) to 0;
       };
-      args := ALIAS_ARRAY[EXPR].copy args;
-      base := NODE.new_read position slot slot_msg receiver receiver with args;
+      args := ALIAS_ARRAY(EXPR).copy args;
+      base := NODE.new_read position slot slot_msg 
+      receiver rec with args intern implicit_self;
     };
     list_current.add_last base;
         
     (larg != NULL).if {
-      ALIAS_ARRAY[ITM_CODE].free larg;
+      ALIAS_ARRAY(ITM_CODE).free larg;
     };
-    
-    ? {base.result_expr != NULL};
+        
+    ? {base.result_expr != NULL};    
     base.result_expr    
   );
   
 Section Private
   
   - add_arg e:EXPR to idx:INTEGER 
-  in args:FAST_ARRAY[EXPR] for slot:SLOT block is_block_value:BOOLEAN <-
+  in args:FAST_ARRAY(EXPR) for slot:SLOT block is_block_value:BOOLEAN <-
   ( + em:EXPR_MULTIPLE;
     + count:INTEGER;
+    + itm_arg:ITM_ARGUMENT;
+    + ts:ITM_TYPE_SIMPLE;
+    + t:TYPE_FULL;
+    + ex:EXPR;
     
     em ?= e;
     (em != NULL).if {
@@ -265,14 +284,43 @@ Section Private
       count := 1;
       args.add_last e;
     };
-    (verify).if {
+    (verify).if {      
       (! is_block_value).if {	
-	(slot.base_slot.argument_list.item idx.count != count).if {
-	  POSITION.put_error semantic text "Incorrect vector size."; 
-	  slot.base_slot.argument_list.item idx.position.put_position;
-	  e.position.put_position;
+        itm_arg := slot.argument_list.item idx;
+        (itm_arg.count != count).if {
+          string_tmp.copy "Incorrect vector size for #";
+          idx.append_in string_tmp;
+          string_tmp.append " argument of `";
+          string_tmp.append name;
+          string_tmp.append "' slot. (slot #";
+          itm_arg.count.append_in string_tmp;
+          string_tmp.append ", call #";
+          count.append_in string_tmp;
+          string_tmp.add_last ')';
+	  POSITION.put_error semantic text string_tmp; 
+	  itm_arg.position.put_position;
+          e.position.put_position;          
 	  POSITION.send_error;
-	};
+        };
+        (args.count > 1).if {
+          (itm_arg.lower).to (itm_arg.upper) do { i:INTEGER;
+            ts ?= itm_arg.item i;          
+            ((ts != NULL) && {ts = ITM_TYPE_SIMPLE.type_self}).if {
+              ex := args.item (args.upper - itm_arg.upper + i);            
+              t := ex.static_type;
+              ((! t.is_expanded) && {! t.is_strict}).if {
+                string_tmp.copy "Type expression (";
+                t.append_name_in string_tmp;
+                string_tmp.append ") is not Expanded or Strict for SELF argument type.";
+                POSITION.put_error semantic text string_tmp;
+                itm_arg.position.put_position;
+                ex.position.put_position;
+                position.put_position;
+                POSITION.send_error;
+              };
+            };
+          };
+        };
       }.elseif {(idx = 0) && {count != 1}} then {
 	semantic_error (e.position,"Incorrect vector size for `value' message.");
       };

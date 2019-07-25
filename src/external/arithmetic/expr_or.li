@@ -32,7 +32,7 @@ Section Inherit
   
   + parent_expr_binary:Expanded EXPR_BINARY;
   
-Section Private  
+Section Public
   
   - symbol:STRING_CONSTANT := "|";
   
@@ -77,7 +77,7 @@ Section Private
     + and_l,and_r:EXPR_AND;
     + not_l,not_r:EXPR_NOT;
     
-    (left == right).if {
+    (left ~= right).if {
       right.remove;
       result := left;
     } else {
@@ -87,7 +87,7 @@ Section Private
 	not_l ?= and_l.left;
 	not_r ?= and_r.right;
 	((not_l != NULL) && {not_r != NULL}).if {
-	  ((not_l.right == and_r.left) && {and_l.right == not_r.right}).if {
+	  ((not_l.right ~= and_r.left) && {and_l.right ~= not_r.right}).if {
 	    result := EXPR_XOR.create position with (not_l.right) and (and_l.right);
 	    right.remove;
 	  };

@@ -1,0 +1,74 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+Section Header
+
+  + name    := CLOCK_VIEW;
+    
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Clock viewer. IsaacOS revient en force !!!";
+    
+Section Inherit  
+  
+  + parent_g_raw:Expanded G_OUT;
+  
+Section Public
+  
+  //
+  // Creation.
+  //
+  
+  - run:G_GROUP <-
+  (
+    make " HH:MM JJ/MM/AAAA " justify center;
+    update;    
+    TIMER.add_client Self;
+    G_RAW.create Self
+  );
+  
+  - main <-
+  (
+    VIDEO.make_size (130,30);    
+    DESK.make VIDEO with run;
+  );
+  
+  //
+  // Display.
+  //
+
+  - update <-
+  (    
+    text.clear;
+    text.add_last ' ';
+    CLOCK.time.append_short_in text;
+    text.add_last ' ';
+    CLOCK.date.append_short2_in text;
+    text.add_last ' ';
+  );
+  
+  - old_count:UINTEGER_32;
+  
+  - receive msg:EVENT <-
+  ( + evt_timer:EVENT_TIMER;
+    
+    evt_timer ?= msg;
+    (evt_timer != NULL).if {
+      (evt_timer.count - old_count > 2*600).if {
+	old_count := evt_timer.count;
+	update;
+	refresh;	
+      };
+    } else {
+      parent_g_raw.receive msg;
+    };
+  );
+
+
+
+
+

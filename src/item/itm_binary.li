@@ -38,26 +38,26 @@ Section Public
   // Data
   //
 
-  + position_list:FAST_ARRAY[POSITION];
+  + position_list:FAST_ARRAY(POSITION);
 
-  + value_list   :FAST_ARRAY[ITM_CODE];
+  + value_list   :FAST_ARRAY(ITM_CODE);
 
-  + operator_list:FAST_ARRAY[STRING_CONSTANT];
+  + operator_list:FAST_ARRAY(STRING_CONSTANT);
 
   //
   // Constructor
   //  
 
-  - create p:FAST_ARRAY[POSITION] values v:FAST_ARRAY[ITM_CODE] 
-  operators o:FAST_ARRAY[STRING_CONSTANT] :SELF <-
+  - create p:FAST_ARRAY(POSITION) values v:FAST_ARRAY(ITM_CODE) 
+  operators o:FAST_ARRAY(STRING_CONSTANT) :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p values v operators o;
     result
   );
   
-  - make p:FAST_ARRAY[POSITION] values v:FAST_ARRAY[ITM_CODE] 
-  operators o:FAST_ARRAY[STRING_CONSTANT] <-
+  - make p:FAST_ARRAY(POSITION) values v:FAST_ARRAY(ITM_CODE) 
+  operators o:FAST_ARRAY(STRING_CONSTANT) <-
   (
     ? { p.count=o.count };
     ? { p.count=(v.count-1) };
@@ -74,29 +74,29 @@ Section Public
   ( + max_pos,max_lev:INTEGER;
     + max_pri  :STRING_CONSTANT;
     + expr     :INSTR;
-    + val_list:FAST_ARRAY[EXPR];
+    + val_list:FAST_ARRAY(EXPR);
     + val:EXPR;    
     + typ_list:TYPES_TMP;
     + typ:TYPE;
-    + slo_list:FAST_ARRAY[SLOT];
+    + slo_list:FAST_ARRAY(SLOT);
     + slo,slo_ref:SLOT;
-    + ope_list:FAST_ARRAY[STRING_CONSTANT];
-    + pos_list:FAST_ARRAY[POSITION];
+    + ope_list:FAST_ARRAY(STRING_CONSTANT);
+    + pos_list:FAST_ARRAY(POSITION);
     + nam:STRING_CONSTANT;
     + site:NODE;
     + extern:EXPR;
     + loc:VARIABLE;
-    + l_arg:FAST_ARRAY[EXPR];
+    + l_arg:FAST_ARRAY(EXPR);
     + result:EXPR;
 
     // Array Temporary.
-    ope_list := ALIAS_ARRAY[STRING_CONSTANT].new;
+    ope_list := ALIAS_ARRAY(STRING_CONSTANT).new;
     ope_list.copy operator_list;
-    pos_list := ALIAS_ARRAY[POSITION].new;
+    pos_list := ALIAS_ARRAY(POSITION).new;
     pos_list.copy position_list;
-    val_list := ALIAS_ARRAY[EXPR].new;
+    val_list := ALIAS_ARRAY(EXPR).new;
     typ_list := TYPES_TMP.new;
-    slo_list := ALIAS_ARRAY[SLOT].new;
+    slo_list := ALIAS_ARRAY(SLOT).new;
 
     // ITM_CODE -> EXPR
     (value_list.lower).to (value_list.upper) do { j:INTEGER;      
@@ -198,7 +198,7 @@ Section Public
 	val := loc.read (pos_list.item max_pos);
       } else {
 	// SW_READ.
-	l_arg := FAST_ARRAY[EXPR].create_with_capacity 2;
+	l_arg := FAST_ARRAY(EXPR).create_with_capacity 2;
 	l_arg.add_last (val_list.item max_pos);
 	l_arg.add_last (val_list.item (max_pos + 1));
 	
@@ -223,11 +223,11 @@ Section Public
     result := val_list.first;
     
     // Free Array Temporary.
-    ALIAS_ARRAY[STRING_CONSTANT].free ope_list;    
-    ALIAS_ARRAY[POSITION].free pos_list;    
-    ALIAS_ARRAY[EXPR].free val_list;
+    ALIAS_ARRAY(STRING_CONSTANT).free ope_list;    
+    ALIAS_ARRAY(POSITION).free pos_list;    
+    ALIAS_ARRAY(EXPR).free val_list;
     typ_list.free;
-    ALIAS_ARRAY[SLOT].free slo_list;
+    ALIAS_ARRAY(SLOT).free slo_list;
     
     result
   );
@@ -236,10 +236,10 @@ Section Private
   
   - error_slot p:POSITION name s:STRING_CONSTANT in t:TYPE list st:TYPES_TMP <-
   (
-    string_tmp.copy "Slot '";
+    string_tmp.copy "Slot '";    
     string_tmp.append s;
     string_tmp.append "' not found in ";
-    string_tmp.append (t.intern_name);
+    string_tmp.append (t.name);
     string_tmp.append ". ( ";
     (st.lower).to (st.upper-1) do { j:INTEGER;
       st.item j.append_name_in string_tmp;

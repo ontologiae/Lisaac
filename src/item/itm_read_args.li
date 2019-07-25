@@ -54,20 +54,20 @@ Section Public
   // Data
   //
 
-  + args:FAST_ARRAY[ITM_CODE];
+  + args:FAST_ARRAY(ITM_CODE);
 
   //
   // Constructor
   //
   
-  - create p:POSITION name n:STRING_CONSTANT args arg:FAST_ARRAY[ITM_CODE] :SELF <-
+  - create p:POSITION name n:STRING_CONSTANT args arg:FAST_ARRAY(ITM_CODE) :SELF <-
   ( + result:SELF;
     result := clone;
     result.make p name n args arg;
     result
   );
   
-  - make p:POSITION name n:STRING_CONSTANT args arg:FAST_ARRAY[ITM_CODE] <-
+  - make p:POSITION name n:STRING_CONSTANT args arg:FAST_ARRAY(ITM_CODE) <-
   (
     position := p;
     name     := n;
@@ -79,9 +79,9 @@ Section Public
   //
 
   - to_run_expr:EXPR <-
-  ( + l_arg:FAST_ARRAY[ITM_CODE];    
+  ( + l_arg:FAST_ARRAY(ITM_CODE);    
     
-    l_arg := ALIAS_ARRAY[ITM_CODE].new;       
+    l_arg := ALIAS_ARRAY(ITM_CODE).new;       
     (args.lower+1).to (args.upper) do { j:INTEGER;         
       l_arg.add_last (args.item j);
     };        

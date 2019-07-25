@@ -50,11 +50,11 @@ Section Public
   // Comparison.
   //
   
-  - '==' Right 60 other:EXPR :BOOLEAN <- 
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <- 
   ( + rd:READ_SLOT;
     
     rd ?= other;
-    ((rd != NULL) && {slot = rd.slot} && {receiver == rd.receiver})    
+    ((rd != NULL) && {slot = rd.slot} && {receiver ~= rd.receiver})    
   );
     
   //
@@ -95,17 +95,13 @@ Section Public
   
   - execute_access_unlink:INSTR <- 
   (
-    (slot.value != NULL).if {
-      slot.execute;
-    };
+    slot.execute;
     receiver.execute_unlink
   );
     
   - execute_access_link <- 
   ( 
-    (slot.value != NULL).if {
-      slot.execute;
-    };
+    slot.execute;
     receiver := receiver.execute_link;        
   );
 
@@ -114,38 +110,67 @@ Section Public
   //
   
   - genere buffer:STRING <-
-  ( + tf:TYPE_FULL;
+  ( + tf,tf2:TYPE_FULL;
     + t:TYPE;
+    + add_end:BOOLEAN;
+    + ptr,ptr2:BOOLEAN;
     
-    (slot.intern_name = ALIAS_STR.slot_self).if {
-      buffer.append "((";
-      tf := slot.type;
-      tf.genere_declaration buffer;	
-      buffer.add_last ' ';
-      tf.genere_star_declaration buffer;	
-      buffer.add_last ')';
+    (is_java).if {
       receiver.genere buffer;
-      buffer.append ".self)";
-    } else {
-      tf := receiver.static_type;    
-      ((tf.is_strict) || {tf.is_expanded_ref}).if {
-	receiver.genere buffer;
-	buffer.append "->";
-      }.elseif {tf.is_expanded} then {      
-	receiver.genere buffer;
-	buffer.add_last '.';          
-      } else {
-	buffer.append "((";
-	t := slot.receiver_type;
-	t.put_reference_declaration buffer;	
-	buffer.add_last ' ';
-	t.put_reference_star_declaration buffer;	
-	buffer.add_last ')';
-	receiver.genere buffer;
-	buffer.append ")->";
-      };
+      //not_yet_implemented;
+      buffer.add_last '.';
       buffer.append (variable.intern_name);
-    };    
+    } else {    
+      (slot.intern_name = ALIAS_STR.slot_self).if {
+        buffer.append "((";
+        tf := slot.type;
+        tf.genere_declaration buffer;	
+        buffer.add_last ' ';
+        tf.genere_star_declaration buffer;	
+        buffer.add_last ')';
+        receiver.genere buffer;
+        buffer.append ".self)";
+      } else {
+        tf := receiver.static_type;    
+        t  := slot.receiver_type;
+        (t.alias_slot != NULL).if {
+          tf2 := slot.type;
+          ptr  := (! tf .is_expanded) || {tf .is_expanded_ref} || {tf .is_strict};
+          ptr2 := (! tf2.is_expanded) || {tf2.is_expanded_ref} || {tf2.is_strict};
+          (ptr != ptr2).if {
+            add_end := TRUE;
+            (ptr).if {
+              buffer.append "(*(";
+            } else {
+              buffer.append "(&(";
+            };
+          };
+        };
+        (
+          (tf.is_strict) || {tf.is_expanded_ref} || {tf.is_expanded}
+        ).if {
+          receiver.genere buffer;
+        } else {          
+          buffer.append "((";          
+          t.put_reference_declaration buffer;	
+          buffer.add_last ' ';
+          t.put_reference_star_declaration buffer;	
+          buffer.add_last ')';
+          receiver.genere buffer;
+          buffer.add_last ')';          
+        };
+        (t.alias_slot = NULL).if {
+          ((tf.is_expanded) && {! tf.is_expanded_ref} && {! tf.is_strict}).if {
+            buffer.add_last '.';
+          } else {
+            buffer.append "->";
+          };                  
+          buffer.append (variable.intern_name);          
+        }.elseif {add_end} then {
+          buffer.append "))";
+        };
+      };    
+    };
   );
   
   //

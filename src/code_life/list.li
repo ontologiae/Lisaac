@@ -30,11 +30,11 @@ Section Header
   
 Section Inherit
   
-  + parent_expr:Expanded EXPR;
+  + parent_instr:Expanded INSTR;
   
 Section Private  
   
-  + expr_list:FAST_ARRAY[INSTR];
+  + expr_list:FAST_ARRAY(INSTR);
     
 Section Public  
   
@@ -90,13 +90,6 @@ Section Public
     expr_list.put e to (idx-1);
   );  
 
-  - last_expr:EXPR <-
-  ( + result:EXPR;
-       
-    result ?= last;
-    result
-  );
-  
   - remove_last <-
   (
     expr_list.remove_last;
@@ -138,18 +131,7 @@ Section Public
   // Flags.
   //
   
-  - is_empty:BOOLEAN <-
-  ( + void_:PROTOTYPE_CST;
-    + result:BOOLEAN;
-
-    (count = 0).if {
-      result := TRUE;
-    }.elseif {count = 1} then {
-      void_ ?= first;
-      result := (void_ != NULL) && {void_.static_type.raw = TYPE_VOID};
-    };
-    result
-  );
+  - is_empty:BOOLEAN <- count = 0;
   
   //
   // Creation.
@@ -166,7 +148,7 @@ Section Public
   (
     new_depend_pass;
     position  := p;
-    expr_list := FAST_ARRAY[INSTR].create_with_capacity 2;
+    expr_list := FAST_ARRAY(INSTR).create_with_capacity 2;
   );
 
   - my_copy:SELF <-
@@ -189,32 +171,35 @@ Section Public
       item j.remove;
     };    
   );
-  
-  //
-  // Type.
-  //
-  
-  - static_type:TYPE_FULL <- last_expr.static_type;
-  
-  - get_type t:TYPES_TMP <- last_expr.get_type t;
-
+    
   //
   // Execute.
   //
-    
-  - execute_unlink:INSTR <-  
-  ( 
-    // Result not used : Add last `Void'. (BSBS: OPTIM: Create un Void shared!)
-    (static_type.raw != TYPE_VOID).if {	
-      add_last (PROTOTYPE_CST.create position type (TYPE_VOID.default));
-    };
-    
-    execute_list
-  );
-
-  - execute_link:EXPR <-
+  
+  - i_am_the_last i:INSTR :BOOLEAN <- 
   (
-    execute_list
+    last.i_am_the_last i
+  );
+  
+  - execute:INSTR <-
+  ( + result:INSTR;    
+        
+    execute_case;    
+
+    (list_current != NULL).if {
+      // Fusion list.      
+      (expr_list.is_empty).if_false {
+        lower.to (upper-1) do { j:INTEGER;
+          list_current.insert_before (item j);
+        };        
+        result := last; 
+        ? {result != NULL};      
+        new_execute_pass;
+      };
+    } else {              
+      result := Self;
+    };    
+    result    
   );  
     
   - execute_case <-  
@@ -232,22 +217,27 @@ Section Public
     // Execute expression list.
     ? {index = 0};
     index := lower;
-    {index != upper}.while_do {            
+    {index <= upper}.while_do {            
       old_seq_or_and := seq_or_and;                  
       new_expr := item index.execute;      
       (new_expr != NULL).if {	
-	put new_expr to index;
-	index := index + 1;
+        put new_expr to index;        
+        index := index + 1;        
+        (new_expr = CALL_NULL).if {
+          // Delete all ...
+          {index <= upper}.while_do {
+            item index.remove;
+            remove_index index;
+          };
+        };
       } else {
 	remove_index index;
       };                  
     };
       
     // Last.    
-    old_seq_or_and := seq_or_and;
-    new_expr := last_expr.execute_link;
-    put new_expr to upper;
-    index := 0;
+    old_seq_or_and := seq_or_and;            
+    index := 0; // Debug necessity
         
     // Restore Context.
     list_current := old_list_current;    
@@ -256,112 +246,46 @@ Section Public
     seq_inline := seq_inline + 1;
   );
   
-Section Private  
-  
-  - execute_list:EXPR <-  
-  ( + result:EXPR;    
-        
-    execute_case;    
-
-    (list_current != NULL).if {
-      // Fusion list.      
-      (lower).to (upper-1) do { j:INTEGER;
-	list_current.insert_before (item j);
-      };
-      result := last_expr; 
-      ? {result != NULL};
-      new_execute_pass;
-    } else {              
-      result := Self;
-    };    
-    result
-  );
-    
 Section Public
   
   //
   // Generation.
   //
   
-  //- n_bug:INTEGER;
-    
   - genere buffer:STRING <-
   (         
     buffer.append "{\n";
     indent.append "  ";
     
-    lower.to (upper-1) do { j:INTEGER;
-      buffer.append indent;          
-      item j.genere buffer;
-      buffer.append ";\n";
-
-//      buffer.append "if (BUG) printf(\"";
-//      n_bug.append_in buffer;
-//      buffer.append "\\n\");";
-//      n_bug := n_bug + 1;
-    };
-        
+    current_list_level := current_list_level + 1;
+    
+    genere_body buffer;
+    
+    current_list_level := current_list_level - 1;
+    
     indent.remove_last 2;    
     buffer.append indent;
     buffer.add_last '}';
   );
-  
-  - n_bug:INTEGER;
-  
-  
+    
   - genere_extern buffer:STRING <-
   ( + pos_local:INTEGER;   
-    + last_expr:EXPR;
-    + t:TYPE_FULL;
-      
-    buffer.append "{\n";
-    indent.append "  ";
+              
     // Local.    
     pos_local := buffer.count+1;
     stack_local.clear;
-  
-    (lower).to (upper-1) do { j:INTEGER;
-      buffer.append indent;      
-      
-      //item j.debug_display;
-      
-      item j.genere buffer;
-      buffer.append ";\n";      
-
-//      buffer.append "if (BUG) printf(\"";
-//      n_bug.append_in buffer;
-//      buffer.append "\\n\");";
-//      n_bug := n_bug + 1;
-    };
-    (static_type.raw != TYPE_VOID).if {
-      buffer.append indent;      
-      buffer.append "return(";          
-      //
-      last_expr ?= last;      
-      t := last_expr.static_type;
-      (
-	(t.is_expanded) && 
-	{! t.is_expanded_ref} && 
-	{! t.is_expanded_c}
-      ).if {
-	buffer.add_last '&';
-      };	
-      last_expr.genere buffer;
-      buffer.add_last ')';
-      buffer.append ";\n";    
-    };
-
+    
+    ALIASER_LOCAL.reset;
+    
+    genere_body buffer;
+    
     // Local.    
     string_tmp.clear;        
-    add_local (var_size.item 3) in string_tmp; // 64 bits
-    add_local (var_size.item 2) in string_tmp; // 32 bits
-    add_local (var_size.item 1) in string_tmp; // 16 bits
-    add_local (var_size.item 0) in string_tmp; //  8 bits
-    buffer.insert_string string_tmp to pos_local;      
-    // End.
-    indent.remove_last 2;    
-    buffer.append indent;
-    buffer.add_last '}';
+    add_local (ALIASER_LOCAL.var_size.item 3) in string_tmp; // 64 bits
+    add_local (ALIASER_LOCAL.var_size.item 2) in string_tmp; // 32 bits
+    add_local (ALIASER_LOCAL.var_size.item 1) in string_tmp; // 16 bits
+    add_local (ALIASER_LOCAL.var_size.item 0) in string_tmp; //  8 bits
+    buffer.insert_string string_tmp to pos_local;          
   );
   
   //
@@ -392,32 +316,81 @@ Section Public
   
 Section Private  
   
-  - add_local tab:FAST_ARRAY[LOCAL] in buf:STRING <-
+  - genere_body buffer:STRING <-
+  ( + old_count,j:INTEGER;
+    j := lower;
+    {j <= upper}.while_do {
+      buffer.append indent;
+      old_count := buffer.count;
+      {
+        item j.genere buffer;
+        j := j + 1;
+      }.do_while {(j <= upper) && {old_count = buffer.count}};      
+      buffer.append ";\n";
+    };        
+  );  
+  
+  - add_local tab:FAST_ARRAY(LOCAL) in buf:STRING <-
   ( + loc:LOCAL;
     + t:TYPE_FULL;
     + cur:INTEGER;
+    //+ i:INTEGER;
     
     (! tab.is_empty).if {
       (tab.lower).to (tab.upper) do { j:INTEGER;
 	loc := tab.item j;	
-	(((buf.count + loc.intern_name.count - cur) > 70) || {t != loc.type}).if {
-	  // New line
-	  (t != NULL).if {
-	    buf.append ";\n";	  
-	  };
-	  cur := buf.count;
-	  t := loc.type;
-	  buf.append indent;
-	  t.genere_declaration buf;	      	  
-	  buf.add_last ' ';
-	} else {
-	  buf.add_last ',';
-	};
-	t.genere_star_declaration buf;	    	
-	buf.append (loc.intern_name);	
+        loc.is_result.if_false {
+          (loc.type.raw = TYPE_CONTEXT).if {
+            context_counter := context_counter + 1;
+          } else {
+            local_counter := local_counter + 1;
+          };
+          /*
+          (
+            (loc.ensure_count != 0) && 
+            {profil_current != NULL} && 
+            {loc.type.raw != TYPE_CONTEXT}
+          ).if {            
+            i := profil_current.result_list.lower;
+            {
+              (i <= profil_current.result_list.upper) && 
+              {profil_current.result_list.item i != loc}
+            }.while_do {
+              i := i + 1;
+            };
+            (i > profil_current.result_list.upper).if {
+              
+              loc.intern_name.print;
+              ' '.print;
+              loc.ensure_count.print; 
+              '\n'.print;
+              
+            };
+          };
+          */
+          (((buf.count + loc.intern_name.count - cur) > 70) || {t != loc.type}).if {
+            // New line
+            (t != NULL).if {
+              buf.append ";\n";
+            };
+            cur := buf.count;
+            t := loc.type;
+            buf.append indent;
+            t.genere_declaration buf;
+            buf.add_last ' ';
+          } else {
+            buf.add_last ',';
+          };
+          t.genere_star_declaration buf;
+          buf.append (loc.intern_name);
+        };
       };
-      buf.append ";\n";
-      tab.clear;
+      buf.append ";\n";     
     };
   );
+  
+Section LISAAC
 
+  - local_counter:INTEGER;
+  
+  - context_counter:INTEGER;

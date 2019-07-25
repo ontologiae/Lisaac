@@ -33,7 +33,7 @@ Section Inherit
   + parent_constant:Expanded CONSTANT;
   
 Section Public
-  
+   
   - output:STRING := 
   ( + result:STRING;
     
@@ -49,32 +49,33 @@ Section Public
   //
 
   + string:STRING_CONSTANT;
-
+  
   //
   // Creation.
   //
 
-  - create p:POSITION text n:STRING_CONSTANT :SELF<-
+  - create p:POSITION text n:STRING_CONSTANT length len:INTEGER :SELF<-
   ( + result:SELF;
     result := clone;
-    result.make p text n;
+    result.make p text n length len;
     result
   );
   
-  - make p:POSITION text n:STRING_CONSTANT <-
+  - make p:POSITION text n:STRING_CONSTANT length len:INTEGER <-
   (
     position := p;
     string   := n;
+    dico_string.put len to n;
     static_type := type_string_constant.default;
   );
 
-  - my_copy:SELF <- SELF.create position text string;
+  - my_copy:SELF <- clone;
 
   //
   // Comparaison.
   //
   
-  - '==' Right 60 other:EXPR :BOOLEAN <-  
+  - Self:SELF '~=' Right 60 other:EXPR :BOOLEAN <-  
   ( + p:STRING_CST;
     p ?= other;
     (p != NULL) && {string = p.string}
@@ -85,69 +86,94 @@ Section Public
   //
 
   - genere buffer:STRING <-
-  ( + idx,val,cur:INTEGER;    
-    - is_storage:INTEGER;
+  ( + idx,count,cur:INTEGER;    
+    - is_init:BOOLEAN;
+    - is_storage:BOOLEAN;
+    - is_count:BOOLEAN;
     
-    (is_storage = 0).if {
-      (type_string_constant.get_local_slot (ALIAS_STR.slot_storage).slot_data_intern.ensure_count = 0).if {
-	is_storage := 1;
-      } else {
-	is_storage := 2;
-      };
+    (is_init).if_false {
+      is_storage := type_string_constant.get_local_slot (ALIAS_STR.slot_storage)
+      .slot_data_intern.ensure_count != 0;
+      is_count   := type_string_constant.get_local_slot (ALIAS_STR.slot_count)
+      .slot_data_intern.ensure_count != 0;      
+      is_init := TRUE;
     };
     
-    // BSBS: Franchement c'est trop bidouille ce truc ...
-    // Il vaudrait mieux parser la chaine plus rapidement sans calcul de
-    // la taille, et calculer la taille que pour ce qui sont vivant ...
-    
-    // Après, tu pourras eviter la bidouille du __id__ et genere ca plus tard.
-    
-    val := ITM_STRING.dico_string.fast_at string;
-    (val >= 0).if {
+    count := dico_string.fast_at string;
+    (count >= 0).if {
       output_count := output_count + 1;
       idx := output_count;
       
-      cur := output.count-1;	
-      output.append "__STRING_CONSTANT __string_";
-      idx.append_in output;
-      output.append "={";
-      (static_type.is_late_binding).if {
-	output.append "__STRING_CONSTANT__,";	
+      cur := output.count - 1;
+      (is_java).if {
+        output.append "private static ";
       };
-      val.append_in output;
-      (is_storage = 2).if {
-	output.append ",\"";            
+      output.append "__";
+      output.append (type_string_constant.intern_name);
+      output.append " __string_";
+      idx.append_in output;
+      output.add_last '=';
+      (is_java).if {
+        output.append "new __STRING_CONSTANT(";
+      } else {
+        output.add_last '{';
+        (static_type.is_late_binding).if {
+          output.append "__";
+          output.append (static_type.raw.intern_name);
+          output.append "__,";	
+        };
+      };
+      (is_count).if {
+        count.append_in output;
+        output.add_last ',';
+      };
+      (is_storage).if {
+	output.add_last '\"';
 	output.append string;
 	{(output.count - cur) > 78}.while_do {
 	  output.insert_string "\\\n" to (cur+78);
 	  cur := cur + 78;
 	};            
-	output.add_last '"';
+	output.add_last '\"';
+      } else {
+        output.remove_last 1;
       };
-      output.append "};\n";
-      ITM_STRING.dico_string.fast_put (-idx) to string;
+      (is_java).if {
+        output.append ");\n";
+      } else {
+        output.append "};\n";
+      };
+      dico_string.fast_put (-idx) to string;
     } else {
-      idx := -val;
+      idx := -count;
     };
     //
-    buffer.append "(&__string_";
-    idx.append_in buffer;
-    buffer.add_last ')';
+    (is_java).if {
+      buffer.append "__string_";
+      idx.append_in buffer;      
+    } else {
+      buffer.append "(&__string_";
+      idx.append_in buffer;
+      buffer.add_last ')';
+    };
   );
-
+  
   //
   // Display.
   //
 
   - display buffer:STRING <-
   (
-    buffer.add_last '"';
+    buffer.add_last '\"';
     buffer.append string;
-    buffer.add_last '"';
+    buffer.add_last '\"';
     display_ref buffer;
   );
   
+Section Private  
   
+  - dico_string:HASHED_DICTIONARY(INTEGER,STRING_CONSTANT) := 
+  HASHED_DICTIONARY(INTEGER,STRING_CONSTANT).create;
 
 
 

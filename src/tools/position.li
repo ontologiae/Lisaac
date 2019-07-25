@@ -32,7 +32,7 @@ Section Header
   \ 15 bits : Line            [1..32767].";
   
   - type        := `unsigned long`;
-  - default     := ( CONVERT[INTEGER,POSITION].on 0 );
+  - default     := ( CONVERT(INTEGER,POSITION).on 0 );
   
 Section Insert  
   
@@ -42,7 +42,7 @@ Section Public
   
   - object_size:INTEGER <- POINTER.object_size;
   
-  - code:UINTEGER_32 <- CONVERT[POSITION,UINTEGER_32].on Self;
+  - code:UINTEGER_32 <- CONVERT(POSITION,UINTEGER_32).on Self;
   
   //
   // Creation.
@@ -54,7 +54,7 @@ Section Public
     ? {c    .in_range 0 to    255};
     ? {proto.index.in_range 0 to    511};
     cod := proto.index.to_uinteger_32 | (c << 9) | (l << 17);
-    CONVERT[UINTEGER_32,POSITION].on cod
+    CONVERT(UINTEGER_32,POSITION).on cod
   );
       
   //
@@ -79,7 +79,9 @@ Section Public
     is_verbose.if {
       msg_err.print;
     };
-    ((type_error != warning) || {is_warning}).if {    
+    (type_error = warning).if {    
+      nb_warning := nb_warning + 1;
+    } else {
       die_with_code exit_failure_code;
     };
   );

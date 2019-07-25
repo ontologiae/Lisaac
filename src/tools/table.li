@@ -34,9 +34,9 @@ Section Inherit
   
 Section Private
   
-  - table:FAST_ARRAY2[ABSTRACT_STRING] := FAST_ARRAY2[ABSTRACT_STRING].create (10,10);
+  - table:FAST_ARRAY2(ABSTRACT_STRING) := FAST_ARRAY2(ABSTRACT_STRING).create (10,10);
   
-  - size:FAST_ARRAY[INTEGER] := FAST_ARRAY[INTEGER].create_with_capacity 10;
+  - size:FAST_ARRAY(INTEGER) := FAST_ARRAY(INTEGER).create_with_capacity 10;
   
   - line:INTEGER;
   - column:INTEGER;

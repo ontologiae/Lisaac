@@ -80,7 +80,7 @@ Section Public
   //-- E & E -> E
   ( + result:EXPR;
         
-    (left == right).if {
+    (left ~= right).if {
       result := left;
       right.remove;
     };

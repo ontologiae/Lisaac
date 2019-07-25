@@ -1,0 +1,3 @@
+{${test expression}}.while_do {
+  ${cursor}
+};

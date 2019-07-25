@@ -1,0 +1,99 @@
+///////////////////////////////////////////////////////////////////////////////
+//                             Lisaac Compiler                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name      := LIP_SLOT_DATA;
+
+  - copyright := "2003-2008 Sonntag Benoit";
+
+  - author    := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
+  - comment   := "The main prototype";
+
+Section Inherit
+
+  + parent_lip_slot:Expanded LIP_CODE;
+
+Section Public
+  
+  + name:STRING_CONSTANT;
+  
+  + value:LIP_CONSTANT;
+  
+  //
+  // Creation.
+  //
+
+  - create p:POSITION name n:STRING_CONSTANT value v:LIP_CONSTANT 
+  argument is_arg:BOOLEAN :SELF <-
+  [
+    -? {v != NULL};
+  ]
+  ( + result:SELF;
+    result := clone;
+    result.make p name n value v argument is_arg;
+    result
+  );
+
+  - make p:POSITION name n:STRING_CONSTANT value v:LIP_CONSTANT
+  argument is_arg:BOOLEAN <-
+  ( + s:LIP_SLOT_DATA;
+    position := p;
+    s := get_data n;
+    (s != NULL).if {
+      semantic_error (s.position,"Double declaration.");
+    };
+    name     := n;
+    value    := v;    
+    (is_arg).if_false {
+      list_data.add Self to n;
+    };    
+  );
+  
+  //
+  // Value.
+  //
+  
+  - set_value v:LIP_CONSTANT :BOOLEAN <-
+  ( + new_val:LIP_CONSTANT;
+    
+    new_val := value.copy_of v;
+    (new_val != NULL).if {     
+      value := new_val;            
+    }    
+  );
+    
+  - get_value:LIP_CONSTANT <-
+  (
+    value.copy
+  );
+  
+  //
+  // Print.
+  //
+  
+  - print <-
+  (
+    name.print;
+    ':'.print;
+    value.name.print;
+  );
+  
+  

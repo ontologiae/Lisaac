@@ -20,13 +20,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name        := ITM_TYPE_SIMPLE;
+  + name      := ITM_TYPE_SIMPLE;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
+  - copyright := "2003-2007 Benoit Sonntag";
 
   
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Simple type";
+  - author    := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment   := "Simple type";
   
 Section Inherit
   
@@ -34,16 +34,10 @@ Section Inherit
   
 Section ITM_TYPE_SIMPLE, ITM_TYPE_SELF
   
-  - dico:HASHED_DICTIONARY[ITM_TYPE_SIMPLE,STRING_CONSTANT] := 
-  ( + result:HASHED_DICTIONARY[ITM_TYPE_SIMPLE,STRING_CONSTANT];
-    
-    result := HASHED_DICTIONARY[ITM_TYPE_SIMPLE,STRING_CONSTANT].create;
-    ITM_TYPE_SELF.make;
-    result.fast_put ITM_TYPE_SELF to (ALIAS_STR.prototype_self);
-    result
-  );
+  - dico:HASHED_DICTIONARY(ITM_TYPE_SIMPLE,STRING_CONSTANT) := 
+  HASHED_DICTIONARY(ITM_TYPE_SIMPLE,STRING_CONSTANT).create;
 
-Section Private 
+Section ITM_TYPE_SIMPLE
   
   - create n:STRING_CONSTANT :SELF <-
   ( + result:SELF;
@@ -56,10 +50,15 @@ Section Private
   - make n:STRING_CONSTANT <-
   (
     name := n;
+    dico.fast_put Self to n;
   );
   
 Section Public
-
+  
+  - type_null:ITM_TYPE_SIMPLE := ITM_TYPE_SIMPLE.get (ALIAS_STR.variable_null);
+  - type_void:ITM_TYPE_SIMPLE := ITM_TYPE_SIMPLE.get (ALIAS_STR.variable_void);
+  - type_self:ITM_TYPE_SIMPLE := ITM_TYPE_PARAMETER.create (ALIAS_STR.prototype_self);
+  
   - hash_code:INTEGER <- name.hash_code;
   
   + name:STRING_CONSTANT;
@@ -67,24 +66,47 @@ Section Public
   - style:STRING_CONSTANT; // NULL
   
   - get n:STRING_CONSTANT :ITM_TYPE_SIMPLE <-
+  [
+    -? {n != NULL};    
+  ]
   ( + result:ITM_TYPE_SIMPLE;
-  
-    result := dico.fast_reference_at n;
+        
+    result := dico.fast_reference_at n;    
     (result = NULL).if {
-      result := create n;
-      dico.fast_put result to n;
-    };
+      result := create n;      
+    };            
     result
   );
   
-  + to_run:TYPE_FULL <-
-  (     
-    to_run := TYPE.get Self
+  + to_run_for p:PARAMETER_TO_TYPE :TYPE_FULL <-
+  ( + result:TYPE_FULL;   
+    
+    (Self = type_null).if {
+      result := TYPE_NULL.default;
+    }.elseif {Self = type_void} then {
+      result := TYPE_VOID.default;
+    } else {
+      result := TYPE.get Self;
+    };
+    /*to_run_for :=*/ result  // BSBS: A tester pour les perfs.
   );
   
-  - display buffer:STRING <-
+  - append_in buffer:STRING <-
   (
+    (style != NULL).if {
+      buffer.append style;
+      buffer.add_last ' ';
+    };
     buffer.append name;
+  );
+  
+  - shorter_in buf:STRING <-
+  (
+    (style != NULL).if {
+      put style to buf like (ALIAS_STR.short_keyword);
+      buf.add_last ' ';
+    };
+    put name to buf like (ALIAS_STR.short_prototype);
   );
   
   //
@@ -97,3 +119,5 @@ Section Public
       buf.add_last (name.item j.to_lower);
     };
   );
+    
+  

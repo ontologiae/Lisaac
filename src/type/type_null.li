@@ -35,6 +35,8 @@ Section Inherit
 Section Public
   
   - name:STRING_CONSTANT <- ALIAS_STR.variable_null;
+  
+  - intern_name:STRING_CONSTANT <- name;
     
   //
   // Creation.
@@ -45,7 +47,7 @@ Section Public
     index       := index_count;
     index_count := index_count + 1;
     dico_type.fast_put Self to name;    
-    slot_run := FAST_ARRAY[SLOT].create_with_capacity 1; // BSBS: Plus utile !
+    slot_run := FAST_ARRAY(SLOT).create_with_capacity 1; // BSBS: Plus utile !
     default := TYPE_FULL.create Self with 0;
   );
   
@@ -54,103 +56,69 @@ Section Public
   - get_path_slot n:STRING_CONSTANT :SLOT <- NULL;
   
   //
-  // Type control.
-  //
-      
-  - is_export_to t:TYPE :BOOLEAN <- FALSE;
-  - is_import_to t:TYPE :BOOLEAN <- FALSE;
-    
-  //
   // Error.
   //
   
   //- bug:INTEGER;
   
-  - product_error p:POSITION for res:EXPR in lst:LIST with prof:PROFIL <-
-  ( + i:INSTR;
-    + em:EXPR_MULTIPLE;
-    + rd:READ;    
-    + code:STRING_CONSTANT;
-    + old_list_current:LIST;
-    + old_profil_second:PROFIL;
-    + ctext:LOCAL;
-    
-    (debug_level_option != 0).if {
-      (prof = NULL).if {
-	ctext := context_main;
-      } else {
-	ctext := prof.context;
-      };
+  - product_error p:POSITION in lst:LIST with ctext:LOCAL <-
+  (     
+    (debug_level_option != 0).if {      
       lst.add_last (
 	PUSH.create p context ctext first FALSE
-      );
-      code := 
-      "stack_print(top_context); \
-      \print_string(\"Call on NULL\\n\"); \
-      \die_with_code(1)";
-      /*
-      string_tmp.copy "stack_print(top_context); print_string(\"Call on NULL:";
-      bug.append_in string_tmp;
-      bug := bug + 1;
-      string_tmp.append "\\n\"); die_with_code(1)";
-      code := STRING_CONSTANT.create_copy string_tmp;
-      */
-    } else {
-      code := 
-      "print_string(\"Call on NULL\\n\
-      \(Use `-D' option)\\n\"); \ 
-      \die_with_code(1)";
-    };
-    i := EXTERNAL_C.create (lst.position) text code 
-    access NULL persistant TRUE type (TYPE_VOID.default); 	
-    
-    lst.add_last i;    
-    ((res != NULL) && {res.static_type.raw != TYPE_VOID}).if {
-      // BSBS: A revoir pour plus simple ....
-      old_list_current  := list_current;
-      old_profil_second := profil_second;
-      list_current  := lst;
-      profil_second := prof;
-            
-      em ?= res;
-      (em != NULL).if {
-	(em.lower).to (em.upper) do { j:INTEGER;
-	  rd ?= em.item j;
-	  rd.variable.init;
-	};
-      } else {	
-	rd ?= res;
-	(rd != NULL).if { 
-	  rd.variable.init;
-	};
-      };
-      
-      list_current  := old_list_current;
-      profil_second := old_profil_second;
-    };
-    lst.add_last (PROTOTYPE_CST.create p type (TYPE_VOID.default)); // BSBS: Alias.
+      );      
+    };    
+    lst.add_last CALL_NULL;        
   );
   
 Section Public
   
-  - is_sub_type other:TYPE :BOOLEAN <- TRUE;  
+  //
+  // Import / Export
+  //
+    
+  - is_export_to t:TYPE_FULL :BOOLEAN <- FALSE;
 
+  - is_import_to t:TYPE_FULL :BOOLEAN <- FALSE;
+  
+  //
+  //
+  //
+  
+  - is_sub_type other:TYPE :BOOLEAN <- TRUE;  
+  
+  - genere_typedef <-
+  (
+  );
+  
   - genere_struct <-
   (
-    output_decl.append 
-    "// NULL\n\
-    \#ifndef NULL\n\
-    \#define NULL ((void *)0)\n\
-    \#endif\n\n";
+    (is_java).if_false {
+      output_decl.append 
+      "/* NULL */\n\
+      \#ifndef NULL\n\
+      \#define NULL ((void *)0)\n\
+      \#endif\n\n";
+    };
   );
   
   //
   // Code source generation.
   //
   
-  - put_id buffer:STRING <- buffer.append name;
+  - put_id buffer:STRING <- 
+  (
+    put_value buffer;
+  );
   
   - put_access_id e:EXPR in buffer:STRING <- e.genere buffer;   
   
-  - put_value buffer:STRING <- buffer.append name;
+  - put_value buffer:STRING <- 
+  ( 
+    (is_java).if {
+      buffer.append "null";
+    } else {
+      buffer.append name;
+    };
+  );
   

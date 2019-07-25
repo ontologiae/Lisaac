@@ -59,7 +59,7 @@ Section Public
   //-- E <= E -> TRUE
   ( + result:PROTOTYPE_CST;
     
-    (left == right).if {
+    (left ~= right).if {
       result := PROTOTYPE_CST.create position type (type_true.default);
       left .remove;
       right.remove;

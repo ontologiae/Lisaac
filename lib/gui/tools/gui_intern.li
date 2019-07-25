@@ -1,0 +1,129 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := GUI_INTERN;
+  
+  - comment     := "Intern plateform.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_gui:GUI;
+  
+section PRIVATE  
+  
+  + elevator_v:GUI_MINI_ELEVATOR;  
+  + elevator_h:GUI_MINI_ELEVATOR;
+  
+section PUBLIC  
+  
+  + area:AREA;
+  
+  //
+  // Creation.
+  //
+  
+  - create_in f:AREA at x,y:INTEGER size w,h:INTEGER :SELF <-
+  ( + result:SELF;
+        
+    result:=clone;
+    result.make_in f at x,y size w,h;  
+    result
+  );
+
+  - make_in f:AREA at x,y:INTEGER size w,h:INTEGER <-
+  ( 
+    make_in f at x,y size w,h action NULL;
+    area := create 0,0 size w,h;
+    elevator_v := GUI_MINI_ELEVATOR.create_v_for area;
+    elevator_h := GUI_MINI_ELEVATOR.create_h_for area;    
+  );
+
+  - create2_in f:AREA at x,y:INTEGER size w,h:INTEGER :SELF <-
+  ( + result:SELF;
+        
+    result:=clone;
+    result.make_in f at x,y size w,h action NULL;
+    result
+  );
+  
+  - make_area a:AREA <-
+  (
+    area := a;
+    elevator_v := GUI_MINI_ELEVATOR.create_v_for area;
+    elevator_h := GUI_MINI_ELEVATOR.create_h_for area;    
+  );
+    
+  //
+  // Action.
+  // 
+  
+  - receive msg:EVENT <-
+  ( + mouse:EVENT_MOUSE;
+    + win:AREA;    
+    
+    mouse ?= msg;
+    (mouse != NULL).if {
+      win := INTERFACE.get_object (mouse.x_current),(mouse.y_current);
+      (win != area).if {	
+	stat := 0;
+	(win != elevator_v).if {
+	  elevator_v.hide;
+	};
+	(win != elevator_h).if {
+	  elevator_h.hide;
+	};
+	INTERFACE.receive msg;	
+      } else {
+	(stat = 0).if {	  
+	  stat := 1;
+	  elevator_v.show;
+	  elevator_h.show;
+	};	
+	parent.receive msg;
+      };
+    };   
+  );
+
+  - resize_area sx,sy:INTEGER <-
+  ( + dx,dy,tmp:INTEGER;
+    area.resize (sx.max width),(sy.max height);
+    tmp := y_window + height - area.y_window - area.height;
+    (tmp > 0).if {
+      dy := tmp;
+    };
+    tmp := x_window + width - area.x_window - area.width;
+    (tmp > 0).if {
+      dx := tmp;
+    };
+    ((dx != 0) || {dy != 0}).if {
+      area.move dx,dy;
+    };
+        
+    (elevator_v.is_necessary).if {
+      elevator_v.show;
+      elevator_v.refresh;
+    } else {
+      elevator_v.hide;
+    };
+    (elevator_h.is_necessary).if {
+      elevator_h.show;
+      elevator_h.refresh;
+    } else {
+      elevator_h.hide;
+    };
+  );
+

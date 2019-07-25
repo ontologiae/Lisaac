@@ -1,0 +1,84 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac                                        *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+section HEADER
+
+  + name    := AI_LAYER;
+  
+  - category:= MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Layer of a AI document.";
+
+  - version :="1.0";  
+  - date    :="2003/04";
+    
+section INHERIT  
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+  
+  + color:AI_COLOR;
+  
+  + operation:LINKED_LIST[AI_OPERATION];
+  
+  + is_fill:BOOLEAN;
+  
+  + is_stroke:BOOLEAN;
+      
+  //
+  // Creation.
+  //
+  
+  - create lst_op:LINKED_LIST[AI_OPERATION] color col:AI_COLOR fill f:BOOLEAN stroke s:BOOLEAN :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make lst_op color col fill f stroke s;
+    result
+  );
+  
+  - make lst_op:LINKED_LIST[AI_OPERATION] color col:AI_COLOR fill f:BOOLEAN stroke s:BOOLEAN <-
+  (
+    color     := col;
+    operation := lst_op;
+    is_stroke := s;
+    is_fill   := f;
+  );
+  
+  //
+  // Draw
+  //
+  
+  - draw b:BITMAP scale s:REAL_16_16 <-
+  (
+    ? { color != NULL};
+    ? { operation !=  NULL};
+    
+    /*
+    (operation.lower).to (operation.upper) do { i:INTEGER;
+      operation.item i.display; 
+    };
+    */
+
+    is_fill.if {      
+      b.color (color.rgbcolor_fill);
+      (operation.lower).to (operation.upper) do { i:INTEGER;
+	operation.item i.draw_fill b scale s;
+      };
+      b.poly_trace;
+    };
+    is_stroke.if {
+      b.color (color.rgbcolor_stroke);
+      (operation.lower).to (operation.upper) do { i:INTEGER;
+	operation.item i.draw_stroke b scale s;
+      };
+    };
+  );
+  
+

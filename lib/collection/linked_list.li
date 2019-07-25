@@ -206,7 +206,21 @@ section PUBLIC
     item index
   );
   
-  -  put element:E to index:NUMERIC <-
+  - has element:E :BOOLEAN <-
+  // True if contain E
+  ( + result:BOOLEAN;
+    + i:INTEGER;
+    (element != NULL).if {
+      i := upper;
+      { result || {i < lower}}.until_do {
+	result := (element == item i);
+	i := i - 1;
+      };
+    };
+    result  
+  );
+  
+  - put element:E to index:NUMERIC <-
   ( + old_count:INTEGER;
     old_count := count;
     ? { valid_index index};

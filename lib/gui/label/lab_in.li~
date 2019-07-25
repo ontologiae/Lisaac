@@ -1,0 +1,143 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  + name        := LAB_IN;
+  
+  - comment     := "Label text.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_g_label:GUI_LABEL;
+  
+section PUBLIC
+  
+  - text:STRING <-
+  ( + result:STRING;
+    result ?= name
+  );
+  
+  + justify:USMALLINT;
+  
+  - left:USMALLINT   := 0;
+  - right:USMALLINT  := 1;
+  - center:USMALLINT := 2;
+
+  + type:USMALLINT;
+  
+  - type_text:USMALLINT        := 0;
+  - type_decimal:USMALLINT     := 1;
+  - type_hexadecimal:USMALLINT := 2;
+  - type_binary:USMALLINT      := 3;
+  
+  + cursor:INTEGER;
+  
+  //
+  // Creation.
+  //
+  
+  - create typ:USMALLINT width w:INTEGER justify j:USMALLINT :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make typ width w justify left;
+    result
+  );
+  
+  - create_width w:INTEGER :SELF <- create type_text width w justify left;
+  
+  - create_width w:INTEGER justify j:USMALLINT :SELF <- create type_text width w justify j;
+  
+  - make t:USMALLINT width w:INTEGER justify j:USMALLINT <-
+  (
+    name := STRING.create (w<<4);
+    (t != type_text).if {
+      text.add_last '0';
+    };
+    text.copy "Toto";
+    type := t;
+    my_width_min := w;
+    justify := j;
+  );
+    
+section G_LABEL
+  
+  + my_width_min :INTEGER;
+  
+  - my_height_min:INTEGER <- 17;
+  
+  - my_display_in bmp:GUI_ITEM to x,y:INTEGER <- 
+  ( + len,px:INTEGER;
+    + old_x0,old_x1,old_y0,old_y1:INTEGER;
+    
+    bmp.draw_border_in x,y to (x + my_width_min),(y + my_height_min);        
+    bmp.rectangle_fill (x+1),(y+1) to (x+my_width_min-1),(y+my_height_min-1)
+    color (bmp.color_back_light);
+    
+    old_x0 := bmp.clip_x0; old_x1 := bmp.clip_x1;
+    old_y0 := bmp.clip_y0; old_y1 := bmp.clip_y1;
+    bmp.clipping ((x+1).max old_x0),((y+1).max old_y0) to 
+    ((x + my_width_min-1).min old_x1),((y + my_height_min-1).min old_y1);
+            
+    len := bmp.font_width name;
+    bmp.color (bmp.black);
+    (justify = left).if {
+      px := x + 2;
+    }.elseif {justify = right} then {
+      px := x + my_width_min - len;
+    } else {
+      px := x + ((my_width_min - len) >> 1);      
+    };
+    bmp.print name to px,y;
+    /*
+    (stat = 0).if {    
+      color black;
+      print text to (len+2),1;
+    } else {
+      color red;
+      (stat = 2).if {
+	text.insert '|' to cursor;
+	len2 := font_width text size cursor;
+	(len2 > (x_max-len-3)).if {
+	  px := len+2 - (len2 - (x_max-len-3));
+	} else {
+	  px := len+2;
+	};
+	print text to px,1;
+	text.remove (cursor+1);
+      } else {
+	print text to (len+2),1;
+      };
+    };
+    */
+    bmp.clipping old_x0,old_y0 to old_x1,old_y1;
+  );
+
+section PRIVATE
+  
+  - what_letter pos_x:INTEGER :INTEGER <-
+  // Return cursor position under `pos_x' coord.
+  ( + result:INTEGER; 
+    + x,x_cur:INTEGER; // la position x de la souris moins la taille du label
+    
+    x := pos_x - (font_width name + 4); // 4 for border
+        
+    result := text.lower;    
+    {(result <= text.upper) && {x_cur < x}}.while_do {
+      x_cur := x_cur + font_width_letter (text.item result);
+      result := result + 1;
+    };
+        
+    result-1
+  );

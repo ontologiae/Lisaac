@@ -1,0 +1,251 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  + name        := GUI_STYLE_BMP;
+  
+  - comment     := "GUI Style Bitmap.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_window:AREA;
+  
+section PUBLIC  
+  
+  //
+  // Stat:
+  //  -1  : not actif.
+  //  00b : not press / not in.
+  //  01b : not press /     in. 
+  //  10b :     press / not in.
+  //  11b :     press /     in.
+  //
+  
+  
+  //
+  // Button
+  //
+  
+  - draw_button_size:INTEGER := 16;
+  
+  - draw_button_left x,y:INTEGER stat t:INTEGER <-
+  ( + epsi:INTEGER;
+    
+    epsi := button x,y to (x+15),(y+15) stat t;
+    poly_move_to (x+9+epsi),(y+ 3+epsi);
+    poly_line_to (x+9+epsi),(y+11+epsi);
+    poly_line_to (x+5+epsi),(y+ 7+epsi);
+    poly_trace;
+  );
+  
+  - draw_button_right x,y:INTEGER stat t:INTEGER <-
+  ( + epsi:INTEGER;
+    
+    epsi := button x,y to (x+15),(y+15) stat t;
+    poly_move_to (x+ 6+epsi),(y+ 3+epsi);
+    poly_line_to (x+10+epsi),(y+ 7+epsi);
+    poly_line_to (x+ 6+epsi),(y+11+epsi);
+    poly_trace;
+  );
+  
+  - draw_button_up x,y:INTEGER stat t:INTEGER <-
+  ( + epsi:INTEGER;
+    
+    epsi := button x,y to (x+15),(y+15) stat t;
+    poly_move_to (x+7 +epsi),(y+5+epsi);
+    poly_line_to (x+11+epsi),(y+9+epsi);
+    poly_line_to (x+3 +epsi),(y+9+epsi);
+    poly_trace;
+  );
+  
+  - draw_button_down x,y:INTEGER stat t:INTEGER <-
+  ( + epsi:INTEGER;
+    
+    epsi := button x,y to (x+15),(y+15) stat t;
+    poly_move_to (x+7 +epsi),(y+9+epsi);
+    poly_line_to (x+11+epsi),(y+5+epsi);
+    poly_line_to (x+3 +epsi),(y+5+epsi);
+    poly_trace;
+  );
+  
+  - draw_button_downlist x,y:INTEGER stat t:INTEGER <-
+  ( + epsi:INTEGER;
+    
+    epsi := button x,y to (x+15),(y+15) stat t;
+    poly_move_to (x+7 +epsi),(y+7+epsi);
+    poly_line_to (x+11+epsi),(y+3+epsi);
+    poly_line_to (x+3 +epsi),(y+3+epsi);
+    poly_trace;
+    rectangle_fill (x+3+epsi),(y+9+epsi) to (x+11+epsi),(y+11+epsi);
+  );
+  
+  - draw_button lab:GUI_LABEL stat t:INTEGER <- 
+  ( + epsi,px,py:INTEGER;
+    
+    epsi := button 0,0 to x_max,y_max stat t;
+    px := ((width  - lab.width_min ) >> 1) + epsi;
+    py := ((height - lab.height_min) >> 1) + epsi;
+    lab.display_in self to px,py;
+  );
+  
+  //
+  // Check / Check list
+  //
+  
+  - draw_check lab:GUI_LABEL stat t:INTEGER <-
+  ( + py:INTEGER;
+    + back:UINTEGER;
+    ((t & 01b) = 0).if {
+      back := color_back;
+    } else {
+      back := color_back_light;
+    };
+    rectangle_fill x_min,y_min to x_max,y_max color back;
+    // Case.
+    py := (height - 14) >> 1;
+    rectangle_in 1,py to 14,(py+13) color color_back_light;
+    ((t & 10b) != 0).if {
+      color black;
+      line  3,(py+2) to 12,(py+11);
+      line  3,(py+3) to 11,(py+11);
+      line  4,(py+2) to 12,(py+10);
+      
+      line 12,(py+2) to  3,(py+11);
+      line 11,(py+2) to  3,(py+10);
+      line 12,(py+3) to  4,(py+11);
+    };
+    // Label display.
+    (stat = -1).if { 
+      color color_dark;  
+    } else {
+      color black;
+    };    
+    backcolor back;
+    py := (height - lab.height_min) >> 1;
+    lab.display_in self to 20,py;
+  );
+
+  - draw_check_list lab:GUI_LABEL stat t:INTEGER <-
+  ( + py:INTEGER;
+    + back:UINTEGER;
+    
+    ((t & 01b) = 0).if {
+      back := color_back;
+    } else {
+      back := color_back_light;
+    };
+    rectangle_fill x_min,y_min to x_max,y_max color back;
+    // Case.
+    py := (height - 14) >> 1;
+    color color_dark;
+    move_to 1,(py+6);
+    line_to 7,py;
+    line_to 13,(py+6);
+    color color_light;
+    line_to 7,(py+12);
+    line_to 1,(py+6);
+    
+    color color_back_light;
+    poly_move_to 7,(py+1);
+    poly_line_to 12,(py+6);
+    poly_line_to 7,(py+11);
+    poly_line_to 2,(py+6);
+    poly_trace;
+    
+    ((t & 10b) != 0).if {
+      color black;
+      circle_fill 7,(py+6) rayon 2 color black;
+    };
+    // Label display.
+    (stat = -1).if { 
+      color color_dark;  
+    } else {
+      color black;
+    };
+    backcolor back;
+    py := (height - lab.height_min) >> 1;
+    lab.display_in self to 20,py;
+  );
+  
+section PUBLIC
+    
+  //
+  // Draw facility.
+  //
+  
+  - color_dark:UINTEGER      := 01E527Fh;
+  - color_light:UINTEGER     := 0D0E1EFh;
+  
+  - color_back:UINTEGER      := 083AAD3h;  
+  - color_back_light:UINTEGER:= color_back + 101010h;  
+
+  - border_in x0,y0:INTEGER to x1,y1:INTEGER <-
+  (
+    color color_dark;
+    move_to x0,y1;
+    line_v_until y0;
+    line_h_until x1;
+    color color_light;
+    line_v_until y1;
+    line_h_until x0;
+  );
+  
+  - border_out x0,y0:INTEGER to x1,y1:INTEGER <-
+  (
+    color color_light;
+    move_to x0,y1;
+    line_v_until y0;
+    line_h_until x1;
+    color color_dark;
+    line_v_until y1;
+    line_h_until x0;
+  );
+  
+  - rectangle_in_out x0,y0:INTEGER to x1,y1:INTEGER color col:UINTEGER <-
+  (
+    border_in x0,y0 to x1,y1;
+    border_out (x0+1),(y0+1) to (x1-1),(y1-1);
+    rectangle_fill (x0+2),(y0+2) to (x1-2),(y1-2) color col;
+  );
+  
+  - rectangle_in x0,y0:INTEGER to x1,y1:INTEGER color col:UINTEGER <-
+  (
+    border_in x0,y0 to x1,y1;
+    rectangle_fill (x0+1),(y0+1) to (x1-1),(y1-1) color col;
+  );
+  
+  - button x0,y0:INTEGER to x1,y1:INTEGER stat t:INTEGER :INTEGER <-
+  ( + epsi:INTEGER;
+    + col:UINTEGER;
+    
+    ((t & 0001b) = 0).if {
+      col := color_back;
+    } else {
+      col := color_back_light;
+    };
+    ((t & 0010b) = 0).if {
+      rectangle_in_out x0,y0 to x1,y1 color col;
+    } else {
+      epsi := 1;
+      rectangle_in x0,y0 to x1,y1 color col;
+    };
+    (t = -1).if {
+      color color_dark;
+    } else {
+      color black;
+    };
+    backcolor col;
+    epsi
+  );

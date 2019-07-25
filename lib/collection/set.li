@@ -84,7 +84,7 @@ section PUBLIC
   (
     + result:SELF;
     result := clone;
-    result.with_capacity sz;
+    result.with_capacity sz; 
     result
   );
   
@@ -346,6 +346,23 @@ section PUBLIC
     idx := e.hash_code % capacity;
     node := buckets.item idx;
     { (node = NULL) || {node.item == e}}.until_do {
+      node := node.next;
+    };
+    (node !=NULL).if {
+      result := node.item;
+    };
+    result
+  );
+  
+  - get_if cmp:BLOCK with_hash h:INTEGER :E <-
+  // Is element `e' in the set?
+  ( + idx:INTEGER;
+    + node:SET_NODE[E];
+    + result:E;
+
+    idx := h % capacity;
+    node := buckets.item idx;
+    { (node = NULL) || {cmp.value (node.item)}}.until_do {
       node := node.next;
     };
     (node !=NULL).if {

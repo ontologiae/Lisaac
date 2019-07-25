@@ -77,11 +77,13 @@ section PUBLIC
 //    convert_5_to_8.item (real_color & 01Fh)
   );
   
-  - color col:UINTEGER <-
+  - color col:UINTEGER :UINTEGER <-
   (     
-    real_color := (((col & 0F80000h) >> 8) |
-                   ((col & 000FC00h) >> 5) |
-                   ((col & 00000F8h) >> 3)).to_ushortint;
+    real_color := (
+      ((col & 0F80000h) >> 8) |
+      ((col & 000FC00h) >> 5) |
+      ((col & 00000F8h) >> 3)
+    ).to_ushortint
   );
   
   - color_rgb r,g,b:USMALLINT <-
@@ -107,4 +109,7 @@ section PUBLIC
   );
   
   - to_pixel_16:PIXEL_16 <- self;
+
+
+
 

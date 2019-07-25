@@ -63,7 +63,7 @@ section PUBLIC
     dictionary.key item_index
   );
   
-  - next
+  - next <-
   (
     item_index := item_index + 1;
   );

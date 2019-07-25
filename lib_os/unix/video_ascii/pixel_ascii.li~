@@ -1,0 +1,109 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := PIXEL_ASCII;
+  
+  - comment     := "Version Generic ASCII";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_pixel:PIXEL := PIXEL;
+  
+section MAPPING
+  
+  + char:CHARACTER;
+  
+section PUBLIC
+  
+  - red:USMALLINT <- 
+  ( + result:USMALLINT;
+    
+    char
+    .when ' ' then { result := 31;  }
+    .when '.' then { result := 63;  }  
+    .when '-' then { result := 95;  }
+    .when '=' then { result := 127; }
+    .when '+' then { result := 159; }
+    .when '*' then { result := 191; }
+    .when '%' then { result := 223; } 
+    .when '#' then { result := 255; };
+    result
+  );
+  
+  - green:USMALLINT <- red;
+
+  - blue:USMALLINT <- red;
+ 
+  - color col:UINTEGER :UINTEGER <- 
+  ( + gray:UINTEGER;
+    
+    gray := ((col >> 16)+ ((col & 00FF00h)>>8)+ ((col & 0000FFh) >> 3))/3;
+    gray
+    .when 0   to 31  then { char := ' '; }
+    .when 32  to 63  then { char := '.'; }  
+    .when 64  to 95  then { char := '-'; }
+    .when 96  to 127 then { char := '='; }
+    .when 128 to 159 then { char := '+'; }
+    .when 160 to 191 then { char := '*'; }
+    .when 192 to 223 then { char := '%'; } 
+    .when 224 to 255 then { char := '#'; };
+    col
+  );
+  
+  - color_rgb r,g,b:USMALLINT <- 
+  ( + gray:INTEGER;
+    
+    gray := (r.to_integer+g+b)/3;
+    gray
+    .when 0   to 31  then { char := ' '; }
+    .when 32  to 63  then { char := '.'; }  
+    .when 64  to 95  then { char := '-'; }
+    .when 96  to 127 then { char := '='; }
+    .when 128 to 159 then { char := '+'; }
+    .when 160 to 191 then { char := '*'; }
+    .when 192 to 223 then { char := '%'; } 
+    .when 224 to 255 then { char := '#'; };
+  );
+  
+  - size:USMALLINT          := 8; 
+  - red_size:USMALLINT      := 3;      
+  - red_pos:USMALLINT       := 0;
+  - green_size:USMALLINT    := 3;
+  - green_pos:USMALLINT     := 3;
+  - blue_size:USMALLINT     := 2;
+  - blue_pos:USMALLINT      := 6;
+  - reserved_size:USMALLINT := 0;
+  - reserved_pos:USMALLINT  := 0;
+  
+  - copy other:SELF <-  
+  (
+    color_rgb (other.red),(other.green),(other.blue);
+  );
+  
+  - print <-
+  (
+    (char=0).if {
+      char:=' ';
+    };
+    char.print;
+  );
+
+  - to_pixel_ascii:PIXEL_ASCII <- self;
+
+
+
+

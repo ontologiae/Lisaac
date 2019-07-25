@@ -1,0 +1,277 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        := ABSTRACT_DIRECTORY;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Boutet Jerome (boutet@loria.fr)";
+  
+  - comment     := "Basic Directory management";
+  
+section INHERIT
+  
+  + parent_entry:ENTRY := ENTRY;
+  
+section ENTRY 
+  
+  + list:LINKED_LIST[ENTRY];
+  
+section PUBLIC
+  
+  //
+  // Update.
+  //
+  
+  - refresh:BOOLEAN <-
+  (
+    physical_refresh
+  );
+  
+  //
+  // Indexing.
+  //
+  
+  - lower:INTEGER := 1;
+  // Minimum index.
+  
+  - upper:INTEGER <- list.upper; 
+  // Maximum index.
+  
+  - valid_index index:NUMERIC :BOOLEAN <- 
+  // True when `index' is valid (ie. inside actual
+  // bounds of the collection).
+  ( + result:BOOLEAN;
+    result := (lower <= index) && {upper >= index};
+    ? { result = ((lower <= index) && {upper >= index})};
+    result
+  );
+  
+  //
+  // Counting.
+  //
+  
+  - count:INTEGER <- (upper - lower + 1);
+  // Number of available indices.
+  
+  - is_empty:BOOLEAN <- count = 0;
+  // Is collection empty ?
+  
+  //
+  // Accessing.
+  //
+    
+  - item i:NUMERIC :ENTRY <-
+  // Item at the corresponding index `i'. 
+  ( ? {valid_index i};
+    list.item i
+  );
+  
+  - first:ENTRY <- 
+  // The very `first' item.  
+  ( + result:ENTRY;
+    ? {! is_empty};
+    result := item lower;
+    result
+  );
+  
+  - last:ENTRY <-
+  // The `last' item.
+  ( + result:ENTRY;
+    ? {! is_empty};    
+    result = item upper;
+    result
+  );
+  
+  - has e:ENTRY :BOOLEAN <-
+  ( + i:INTEGER;
+    
+    i:= lower;
+    {(i>upper) || {item i = e}}.until_do {
+      i := i + 1;
+    };
+    (i<=upper)
+  );
+  
+  - index_of e:ENTRY :INTEGER <-
+  ( + result:INTEGER;
+   
+    result := lower;
+    {(result > upper) || {e = item result}}.until_do {
+      result := result + 1;
+    };
+    ? { lower <= result };
+    ? { result <= upper + 1 };
+    ? { (result <= upper) ->> {e = item result}};    
+    result
+  );
+
+  + parent:ENTRY;
+  
+  - this:ENTRY <- parent_entry;
+  
+  //
+  // Writing:
+  //
+  
+  - make_directory n:ABSTRACT_STRING :ENTRY <-
+  ( + result:ENTRY;
+    + dir:DIRECTORY;
+    string_tmp.copy path;
+    string_tmp.add_last '/';
+    string_tmp.append n;
+    reduce_path string_tmp;
+    (physical_make_directory string_tmp).if {
+      result := get_entry string_tmp;
+      (result != NULL).if {
+	dir := get_parent_intern (result.path);
+	(dir != NULL).if {
+	  dir.refresh;
+	};
+      };
+    };
+    result
+  );
+  
+  - make_file n:ABSTRACT_STRING :ENTRY <-
+  ( + result:ENTRY;
+    + dir:DIRECTORY;
+    string_tmp.copy path;
+    string_tmp.add_last '/';
+    string_tmp.append n;
+    reduce_path string_tmp;
+    (physical_make_file string_tmp).if {
+      result := get_entry string_tmp;
+      (result != NULL).if {
+	dir := get_parent_intern (result.path);
+	(dir != NULL).if {
+	  dir.refresh;
+	};
+      };
+    };
+    result
+  );
+  
+  //
+  // Get new Entry.
+  //
+  
+  - get new_path:ABSTRACT_STRING :ENTRY <-
+  ( 
+    string_tmp.copy path;
+    string_tmp.add_last '/';
+    string_tmp.append new_path;
+    reduce_path string_tmp;    
+    get_entry string_tmp
+  );
+  
+  //
+  // Rename
+  //
+  
+  - no_error:INTEGER          := 0;
+  - error_source:INTEGER      := 1;
+  - error_destination:INTEGER := 2;
+  - error_extern:INTEGER      := 3;
+  
+  - move src:ABSTRACT_STRING with dst:ABSTRACT_STRING :INTEGER <-
+  ( + e:ENTRY;
+    + d:DIRECTORY;
+    + result:INTEGER;
+    // Source path.
+    string_tmp.copy path;
+    string_tmp.add_last '/';
+    string_tmp.append src;
+    reduce_path string_tmp;
+    // Destination path.
+    string_tmp2.copy path;
+    string_tmp2.add_last '/';
+    string_tmp2.append dst;
+    reduce_path string_tmp2;
+    // Physical remove.
+    not_yet_implemented;
+    /*
+    (physical_rename string_tmp with string_tmp2).if {
+      (alias.has string_tmp).if {
+	e := alias.at string_tmp;
+	alias.remove string_tmp;
+	d := get_parent_intern (e.path);
+	(d != NULL).if {
+	  d.list.remove (d.index_of e);
+	};
+	e.set_path string_tmp2;
+	alias.add (e.this) to (e.path); 
+	d := get_parent_intern (e.path);
+	(d != NULL).if {
+	  d.list.add_last e;
+	};
+      };
+    } else {
+      result := error_extern;
+    };
+    */
+    result
+  );
+  
+  - print <-
+  ( + p:ABSTRACT_STRING;
+    lower.to upper do { j:INTEGER;
+      p := item j.path;
+      p.print;
+      (p.count).to 19 do { i:INTEGER;
+	' '.print;	
+      };            
+    };
+    '\n'.print;
+  );
+  
+section ENTRY
+  
+  - make e:ENTRY :BOOLEAN <-
+  (
+    parent_entry := e;
+    list := LINKED_LIST[ENTRY].create;
+    refresh
+  );
+  
+section PRIVATE  
+  
+  //
+  // Physical implementation.
+  //
+  
+  //
+  // Scanning
+  //
+      
+  - physical_refresh:BOOLEAN <-
+  ( 
+    deferred;
+    FALSE
+  );
+    
+  - physical_make_directory new_path:STRING :BOOLEAN <-
+  ( 
+    deferred;
+    FALSE
+  );
+
+  - physical_make_file new_path:STRING :BOOLEAN <-
+  ( 
+    deferred;
+    FALSE
+  );
+
+
+
+  

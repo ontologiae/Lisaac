@@ -1,0 +1,37 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := EVENT;
+  
+  - comment     := "Event generic";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+  
+  + destination:INBOX; // If null, Broad cast message.
+  
+  - source:INBOX <- (deferred; INBOX);  
+      
+  - set_destination evt:INBOX <-
+  (
+    destination := evt;
+  );
+  
+  - display <- deferred;
+
+

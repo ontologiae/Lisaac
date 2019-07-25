@@ -55,7 +55,34 @@ section PUBLIC
   
 section PUBLIC
   
-  - create h,m,s,cs:USMALLINT :TIME <-
+  - '>' right 60 other:SELF :BOOLEAN <- to_raw > other.to_raw;
+  
+  - '<' right 60 other:SELF :BOOLEAN <- to_raw < other.to_raw;
+  
+  - '>=' right 60 other:SELF :BOOLEAN <- to_raw >= other.to_raw;
+  
+  - '<=' right 60 other:SELF :BOOLEAN <- to_raw <= other.to_raw;
+  
+  - to_csecond:INTEGER <- hour.to_integer * (60*60*100) + 
+  minute.to_integer * (60*100) + 
+  second.to_integer * 100 + 
+  csecond;
+  
+  - '-' right 60 other:SELF :SELF <- 
+  ( 
+    create_csecond (self -# other)
+  );
+  
+  // BSBS: A uniformiser -# +# ???
+  
+  - '-#' right 60 other:SELF :INTEGER <- to_csecond - other.to_csecond;
+  
+  - '+#' right 60 other:INTEGER :TIME <-
+  ( 
+    create_csecond (to_csecond + other)
+  );
+  
+  - create h,m,s,cs:NUMERIC :TIME <-
   ( + t:UINTEGER;
     ? {h.in_range 0 to 23};
     ? {m.in_range 0 to 59};
@@ -67,6 +94,22 @@ section PUBLIC
     t := t | (s.to_uinteger << 8);
     t := t | cs;
     force_conversion t
+  );
+  
+  - create_csecond csec:INTEGER :SELF <-
+  ( + h,m,s,cs,diff:INTEGER;
+    
+    diff := csec;
+    h := diff / (60*60*100);
+    diff := diff % (60*60*100);
+    
+    m := diff / (60*100);
+    diff := diff % (60*100);
+    
+    s := diff / 100;
+    cs := diff % 100;    
+    
+    create h,m,s,cs
   );
   
   - to_string:STRING <-
@@ -82,7 +125,16 @@ section PUBLIC
     str.add_last ':';
     minute.append_in str format 2 with '0';
     str.add_last ':';
-    second.append_in str format 2 with '0';           
+    second.append_in str format 2 with '0';
+    str.add_last ',';
+    csecond.append_in str format 2 with '0';
+  );
+
+  - append_short_in str:STRING <-
+  (
+    hour.append_in str format 2 with '0';
+    str.add_last ':';
+    minute.append_in str format 2 with '0';
   );
   
   - update <-

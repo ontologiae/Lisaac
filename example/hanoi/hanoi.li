@@ -5,7 +5,6 @@
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
 *                          http://www.IsaacOS.com                          *
 ***************************************************************************/
-
 section HEADER
   
   + name        := HANOI;

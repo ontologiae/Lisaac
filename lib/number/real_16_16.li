@@ -50,7 +50,7 @@ section PUBLIC
   );
   
   - to_uinteger:UINTEGER   <- 
-  ( ? {in_range 0 to (UINTEGER.maximum)};
+  ( //? {in_range 0 to (UINTEGER.maximum)};
     floor.to_uinteger
   );
   
@@ -217,7 +217,7 @@ section PUBLIC
   
   - pi:SELF <- `(int)(PI*65536.)`:SELF;
   
-  - atan:SELF <- `(int)(sqrt(((double)@self)/65536.)*65536.)`:SELF;
+  - atan:SELF <- `(int)(atan(((double)@self)/65536.)*65536.)`:SELF;
   
   - sqrt:SELF <- `(int)(sqrt(((double)@self)/65536.)*65536.)`:SELF;
   

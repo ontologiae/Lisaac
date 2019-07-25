@@ -36,6 +36,13 @@ section PUBLIC
     value && other
   );
   
+  - if test:BOOLEAN <-
+  (
+    test.if_true {
+      value;
+    };
+  );
+  
   //
   // Loop :
   //

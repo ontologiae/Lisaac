@@ -1,0 +1,72 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+
+  - name    := CLOCK;
+  
+  - category:=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+
+  - comment     :="X11 - Clock management.";
+
+  - version :="1.0";  
+
+  - date    :="2003/04";
+  
+  - external := `#include <time.h>`;
+  
+section INHERIT  
+  
+  - parent_input:INPUT := INPUT;
+      
+section PUBLIC  
+  
+  - date:DATE <-
+  ( + wd,d,mo:USMALLINT;    
+    + y:USHORTINT;
+    
+    `{ 
+      struct tm *t; time_t tt;
+      tt = time(NULL);
+      t = localtime(&tt)`;      
+      wd := `t->tm_wday`:USMALLINT + 1;
+      d  := `t->tm_mday`:USMALLINT;
+      mo := `t->tm_mon` :USMALLINT + 1;
+      y  := `t->tm_year`:USHORTINT + 1900;    
+    `}`;
+    DATE.create y,mo,d,wd
+  );
+    
+  - time:TIME <-
+  ( + s,m,h:USMALLINT;
+        
+    `{ 
+      struct tm *t; time_t tt;
+      tt = time(NULL);
+      t = localtime(&tt)`;      
+      h := `t->tm_hour`:USMALLINT;
+      m := `t->tm_min` :USMALLINT;
+      s := `t->tm_sec` :USMALLINT;      
+    `}`;    
+    TIME.create h,m,s,0
+  );
+  
+  - make <-
+  (
+    // Nothing.
+  );
+
+
+
+
+

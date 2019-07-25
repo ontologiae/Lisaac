@@ -1,0 +1,76 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := BOX_CANCEL;
+  
+  - comment     := "Button plateform.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+section INHERIT
+  
+  * parent_button:BUTTON;
+    
+section PUBLIC  
+  
+  - action <-
+  ( + father:BOX;
+    
+    father ?= parent;
+//    father.close;
+    
+  );    
+  
+  //
+  // Display.
+  //
+  
+  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  ( + d:INTEGER;
+    
+    clipping x0,y0 to x1,y1;    
+    
+    rectangle_fill x0,y0 to x1,y1 color 0C8C8FFh;
+    
+    (is_active).if {
+      color red;
+    } else {
+      color black;
+    };
+    
+    (is_pressed).if {
+      d := 1;
+    };
+    
+    poly_move_to (1 + d),(2 + d);
+    poly_line_to (4 + d),(5 + d);
+    poly_line_to (1 + d),(8 + d);
+    poly_line_to (2 + d),(9 + d);
+    poly_line_to (5 + d),(6 + d);
+    poly_line_to (8 + d),(9 + d);
+    poly_line_to (9 + d),(8 + d);
+    poly_line_to (6 + d),(5 + d);
+    poly_line_to (9 + d),(2 + d);
+    poly_line_to (8 + d),(1 + d);
+    poly_line_to (5 + d),(4 + d);
+    poly_line_to (2 + d),(1 + d);
+    poly_trace;
+  );
+
+
+
+
+
+

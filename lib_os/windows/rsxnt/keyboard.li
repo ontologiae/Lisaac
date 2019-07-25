@@ -1,0 +1,63 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac                                        *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+section HEADER
+
+  - name    := KEYBOARD;
+  
+  - category:= MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Windows (Win32) - RSXNT - Keyboard Driver";
+
+  - version :="1.0";  
+  - date    :="2005";
+  
+section INHERIT
+
+  * parent_input_keyboard:INPUT_KEYBOARD;
+
+section PRIVATE
+    
+  - keyup cu:USMALLINT :USMALLINT <-
+  ( + result:USMALLINT;
+    
+    result := cu;
+    cmd := cmd & 0F7h; // Deactivate the cmd bit    
+    
+    cu
+    .when 8 then  { cmd := cmd | 8; }
+    .when 13 then { cmd := cmd | 8; };
+    
+    
+    result
+  );
+
+  - keydown cu:USMALLINT :USMALLINT <-
+  ( + result:USMALLINT;
+
+    cu
+    .when 52h then { result := 'I'.to_usmallint; }
+    .when 53h then { result := 'S'.to_usmallint; }
+    .when 4Fh then { result := 'E'.to_usmallint; }
+    .when 47h then { result := 'B'.to_usmallint; }
+    .when 49h then { result := 'A'.to_usmallint; }
+    .when 51h then { result := 'Z'.to_usmallint; }
+    .when 48h then { result := 'U'.to_usmallint; }
+    .when 50h then { result := 'D'.to_usmallint; }
+    .when 4Bh then { result := 'L'.to_usmallint; }
+    .when 4Dh then { result := 'R'.to_usmallint; };
+    cmd := cmd | 8;
+    
+    result
+  );
+    
+
+
+
+

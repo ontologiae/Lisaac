@@ -21,7 +21,7 @@ section INHERIT
   - parent_object:OBJECT := OBJECT;
   
 section PUBLIC  
-
+    
   - make <-
   ( 
     "Hello world !\n".print;

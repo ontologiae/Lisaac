@@ -1,0 +1,388 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        := ABSTRACT_ENTRY;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+
+  - author      := 
+  "Benoit Sonntag (bsonntag@loria.fr), \
+  \Jerome Boutet (boutet@loria.fr)";
+
+  - comment     := "Abstract Entry.";
+  
+section INHERIT  
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+
+  //
+  // Path.
+  //
+  
+  + path:STRING_CONSTANT;
+  
+  * name:STRING_CONSTANT; // Alias with the tail `path' storage.
+  
+  + link_count:INTEGER;
+  
+  //
+  // Date / Time.
+  //
+  
+  + access_time:TIME;
+  + access_date:DATE;
+  
+  + update_time:TIME;
+  + update_date:DATE;
+    
+  //
+  // type.
+  //
+  
+  + is_directory:BOOLEAN;
+  
+  - is_file:BOOLEAN <- ! is_directory;
+  
+  - this:ENTRY <- self;
+  
+  //
+  // Size.
+  //
+  
+  + size:UINTEGER;
+  
+  //
+  // Open / Close
+  //
+  
+  - is_open:BOOLEAN <- (link_count > 0);
+  
+  - open:ENTRY <-
+  // Return FILE or DIRECTORY, NULL:error.
+  (    
+    link_count := link_count + 1;
+    (child = NULL).if { 
+      (is_directory).if {
+	child := DIRECTORY.clone; 
+      } else {
+	child := STD_FILE.clone;
+      };
+    };
+    (child.make this).if_false {
+      child := NULL;
+    };
+    child
+  );
+
+  - open_bmp:BMP_FILE <-
+  // Return FILE or DIRECTORY, NULL:error.
+  ( + result:BMP_FILE; 
+    link_count := link_count + 1;
+    (child = NULL).if { 
+      result := BMP_FILE.clone;
+      child := result;
+    } else {
+      result ?= child;
+    };
+    (child.make this).if_false {
+      child := result := NULL;
+    };
+    result
+  );
+
+  - open_ai:AI_FILE <-
+  // Return FILE or DIRECTORY, NULL:error.
+  ( + result:AI_FILE; 
+    link_count := link_count + 1;
+    (child = NULL).if { 
+      result := AI_FILE.clone;
+      child := result;
+    } else {
+      result ?= child;
+    };
+    (child.make this).if_false {
+      child := result := NULL;
+    };
+    result
+  );
+  
+  - close:ENTRY <-
+  (
+    ? {is_open};
+    link_count := link_count - 1;
+    ? {link_count >= 0};
+    this
+  );
+  
+  //
+  // Manager.
+  //
+  
+  - remove:BOOLEAN <-
+  // Remove file or directory (WARNING: delete recursive)
+  ( + dir:DIRECTORY;
+    + i:INTEGER;
+    + result:BOOLEAN;
+    
+    (! is_open).if { 
+      (is_directory).if {
+	result := TRUE;
+	dir ?= open;
+	i := dir.lower;
+	{(i > dir.upper) || {! result}}.until_do {
+	  result := dir.item i.remove;	  
+	  i := i + 1;
+	};	
+	result.if {
+	  result := physical_remove_directory;
+	};
+	close;
+      } else {
+	result := physical_remove_file;
+      };
+      (result).if {
+	dir := get_parent_intern path;
+	(dir != NULL).if {
+	  dir.list.remove (dir.index_of this);
+	};
+	// Remove Alias.
+	alias.remove path;
+      };
+    };
+    result
+  );
+  
+  - rename new_name:ABSTRACT_STRING :BOOLEAN <-
+  ( + result:BOOLEAN;
+    ? {new_name.index_of '/' = 0};
+    
+    get_parent_path path in string_tmp;    
+    string_tmp.add_last '/';
+    string_tmp.append new_name;
+    (result := physical_rename path with string_tmp).if {
+      alias.remove path;
+      set_path string_tmp;
+      alias.add this to path;
+    };
+    result
+  );
+  
+section ENTRY  
+  
+  + child:ENTRY;
+    
+  - make_entry p:ABSTRACT_STRING :BOOLEAN <-
+  ( 
+    set_path p; 
+    physical_make
+  );
+  
+  - make e:ENTRY :BOOLEAN <- 
+  // Redefine in DIRECTORY and FILE
+  (
+    deferred;
+    FALSE
+  );
+  
+  - set_path n:ABSTRACT_STRING <-
+  ( + idx:INTEGER;
+    path := STRING_CONSTANT.create_copy n;
+    idx := path.last_index_of '/'; 
+    name.set_storage (path.storage + idx) count (path.count - idx);
+  );
+  
+  - reduce_path st:STRING <-
+  ( + i:INTEGER;
+    + stat:INTEGER;
+    + car:CHARACTER;
+    
+    //    "Reduce:{".print; 
+    //    st.print;
+    //    "}=>\n       {".print;
+
+    st.replace_all '\\' with '/';
+    i := st.lower;
+    {i > st.upper}.until_do {
+      car := st.item i;
+      (car = '/').if {
+	// Separator character.
+	stat.when 0 then {
+	  // foo/bar => foo/bar
+	  //    ^          ^
+	  stat := 1;
+	}.when 1 then {
+	  // foo//bar => /bar
+	  //     ^       ^
+	  st.remove_first (i-1);
+	  i := st.lower;
+	}.when 2 then {
+	  // foo/./bar => foo/bar
+	  //      ^          ^
+	  st.remove_between (i-1) to i;
+	  i := i - 2;
+	  stat := 1;
+	}.when 3 then {
+	  // toto/foo/../bar => toto/bar 
+	  //            ^           ^
+	  + idx:INTEGER;
+	  idx := st.last_index_of '/' since (i-4);
+	  // st.last_index_of '/' since (i-4);
+	  (idx = 0).if {
+	    st.remove_first (i-1);
+	    i := st.lower;
+	  } else {
+	    st.remove_between idx to (i-1);
+	    i := idx;
+	  };
+	  stat := 1;
+	};
+      }.elseif {car = '.'} then {
+	// Point character.
+	(stat)
+	.when 0 then {
+	  // foo.bar => foo.bar
+	}.when 1 then {
+	  // foo/.bar => foo/.bar
+	  stat := 2;
+	}.when 2 then {
+	  // foo/..bar => foo/..bar
+	  stat := 3;
+	}.when 3 then {
+	  // foo/...bar => foo/...bar
+	  stat := 0;
+	};
+      } else {
+	// Other character.
+	stat := 0;
+      };
+      i := i + 1;
+    };
+    
+    stat.when 0 then {
+      // foo/bar  => foo/bar
+      //        ^           ^
+    }.when 1 then {
+      // foo/  => foo
+      //     ^       ^
+      st.remove_last 1;
+    }.when 2 then {
+      // foo/.  => foo
+      //      ^       ^
+      st.remove_last 2;      
+    }.when 3 then {
+      // toto/foo/..  => toto 
+      //            ^        ^
+      + idx:INTEGER;
+      idx := st.last_index_of '/' since (i-4);
+      (idx = 0).if {
+	st.clear;
+      } else {
+	st.remove_between idx to (i-1);
+      };
+    };
+    (st.is_empty).if {
+      st.add_last '/';
+    };
+    
+    //st.print; "}\n".print;
+  );
+  
+section ENTRY
+    
+  //
+  // Alias Entry.
+  //
+  
+  - alias:DICTIONARY[ENTRY,ABSTRACT_STRING] := 
+  DICTIONARY[ENTRY,ABSTRACT_STRING].create;
+  
+  - get_entry p:ABSTRACT_STRING :ENTRY <- 
+  ( + new_entry,result:ENTRY;
+        
+    (alias.has p).if {
+      result := alias.at p;
+    } else {
+      new_entry := ENTRY.clone;
+      new_entry.make_entry p.if {
+	alias.put new_entry to (new_entry.path);
+	result := new_entry;
+      };
+    };
+    
+    result
+  );
+  
+  - get_parent_path p:ABSTRACT_STRING in tmp:STRING <-
+  ( + i:INTEGER;
+    
+    (tmp != p).if {
+      tmp.copy p;
+    };
+    i := tmp.last_index_of '/';
+    ? {i != 0};
+    tmp.keep_head (i-1);
+    (tmp.is_empty).if {	  
+      tmp.add_last '/';
+    };
+  );
+  
+  - get_parent_intern p:ABSTRACT_STRING :DIRECTORY <-
+  ( + ent:ENTRY;
+    + result:DIRECTORY;
+    
+    get_parent_path p in string_tmp;
+    (alias.has string_tmp).if {
+      ent := alias.at string_tmp;
+      (ent.child != NULL).if {
+	result ?= ent.child;
+      };
+    };
+    result
+  );
+  
+  //
+  // Physical implementation.
+  //
+
+  - physical_make:BOOLEAN <-
+  ( 
+    deferred;
+    FALSE
+  );
+  
+  - physical_remove_directory:BOOLEAN <-
+  ( 
+    deferred;
+    FALSE
+  );
+  
+  - physical_remove_file:BOOLEAN <-
+  ( 
+    deferred;
+    FALSE
+  );
+  
+  - physical_rename old_path:ABSTRACT_STRING with new_path:ABSTRACT_STRING :BOOLEAN <-
+  ( 
+    deferred;
+    FALSE
+  );
+  
+  //
+  // Service routine
+  //
+
+  - string_tmp:STRING  := STRING.create 255;
+  - string_tmp2:STRING := STRING.create 255;

@@ -1,0 +1,124 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := MOUSE;
+  
+  - comment     := "X11 - Mouse driver";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_input:INPUT;
+  
+section STARTUP
+  
+  - set x,y:INTEGER with left_new,right_new:BOOLEAN <-
+  ( + tmp:USMALLINT;
+    + x_new, y_new:INTEGER;
+    
+    y_new := y.max y_minimum.min y_maximum;
+    x_new := x.max x_minimum.min x_maximum;
+          
+    tmp:=(p_end+1)&003h;
+    buffer_event.item p_end.make x_new,y_new button left_new,right_new;
+
+    (((tmp+2)&3)!=p_beg).if {
+      p_end:=tmp;
+    };
+    
+    get_event;
+    
+    // Update status.
+    x_current:=x_new;
+    y_current:=y_new;
+    right:=right_new;
+    left :=left_new;    
+  );
+  
+section PUBLIC
+  
+  + x_minimum:INTEGER;
+  + x_maximum:INTEGER;
+  
+  + y_minimum:INTEGER;
+  + y_maximum:INTEGER;
+  
+  + x_current:INTEGER;
+  + y_current:INTEGER; 
+  
+  + right:BOOLEAN;
+  + left:BOOLEAN;
+  
+section PRIVATE
+  
+  + buffer_event:MAP_FIXED_ARRAY[EVENT_MOUSE];
+  - p_beg:USMALLINT;  // Pointer on the buffer (beginning)
+  - p_end:USMALLINT;  // Pointer on the buffer (end)
+    
+section PUBLIC
+  
+  //
+  // Creation / Initialisation.
+  //
+  
+  - make <-
+  (
+    is_actif := TRUE;
+    
+    //
+    // Mouse hardware configuration.
+    //
+    
+    x_maximum := VIDEO.x_max;
+    y_maximum := VIDEO.y_max;
+    
+    //
+    // Software configuration.
+    //
+    buffer_event := MAP_FIXED_ARRAY[EVENT_MOUSE].create 4;
+    0.to 3 do { j:INTEGER;
+      buffer_event.item j.set_prev (buffer_event.item ((j-1)&3));
+    };    
+  );
+  
+  - get_event <-
+  ( + p:INTEGER;
+    + evt:EVENT_MOUSE;
+    
+    p := p_beg;
+    { p != p_end }.while_do {
+      evt := buffer_event.item p;
+      (list_client.lower).to (list_client.upper) do { j:INTEGER;
+	list_client.item j.receive (buffer_event.item p);
+      };      
+      p := (p + 1) & 03h;
+    };    
+  );
+    
+  - acknowledge <-
+  (
+    p_beg := (p_beg+1) & 03h;
+  );
+  
+  
+  
+
+
+
+
+
+
+
+
+

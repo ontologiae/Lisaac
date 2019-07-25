@@ -1,0 +1,165 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  - name        := VIDEO;
+  
+  - comment     := "X11 Driver video - Xlib -";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+
+  - external := 
+`
+#include <X11/Xlib.h>
+Display *display;
+Window  window;
+GC      gc;
+Screen  *screen;
+XImage  *ximage=NULL;
+`;
+
+section INHERIT
+  
+  * parent_bitmap:BITMAP;
+  
+section VIDEO
+  
+  - line_tmp:BMP_LINE;
+  
+section PUBLIC
+  
+  - message str:ABSTRACT_STRING <-
+  ( 
+    "Message : ".print; str.print; '\n'.print;
+  );
+  
+  - is_active:BOOLEAN;
+  
+  - planes:UINTEGER;
+  
+  - make w,h:INTEGER <-
+  ( + data:NATIVE_ARRAY[USMALLINT];
+    
+    // Init BITMAP:
+    width  := w;
+    height := h;
+    
+    // Creation Server X:
+    `display = XOpenDisplay(NULL)`;
+    // Screen Default:
+    `screen = ScreenOfDisplay(display,DefaultScreen(display))`;
+    // Init Graphic context:
+    `gc = DefaultGC(display,DefaultScreen(display))`;
+    // Creation Window:
+    `window = XCreateSimpleWindow(display,RootWindow(display,DefaultScreen(display)), 0,0,@w,@h,2,0,0)`; 
+
+    // Event manager:
+    //XSelectInput(display,window,ExposureMask);
+
+    // Title window:
+    `XStoreName(display,window,"X-Isaac")`;  
+
+    // Display Window:
+    `XMapWindow(display,window)`;
+    
+    planes := `PlanesOfScreen(screen)`:UINTEGER;
+    "Video mode: ".print;
+    planes.print; "bits\n".print;
+    
+    planes
+    .when 15 then {
+      line_tmp := BMP_LINE_15.create w;
+      data := line_tmp.get_storage;
+      `ximage = XCreateImage(display,None,15,ZPixmap,0,(char *)@data,@w,1,16,0)`;
+    }
+    .when 16 then { 
+      line_tmp := BMP_LINE_16.create w; 
+      data := line_tmp.get_storage;
+      `ximage = XCreateImage(display,None,16,ZPixmap,0,(char *)@data,@w,1,16,0)`;
+    }
+    .when 24 then { 
+      line_tmp := BMP_LINE_32.create w; 
+      data := line_tmp.get_storage;
+      `ximage = XCreateImage(display,None,24,ZPixmap,0,(char *)@data,@w,1,32,0)`;
+    }
+    .when 32 then { 
+      line_tmp := BMP_LINE_32.create w; 
+      data := line_tmp.get_storage;
+      `ximage = XCreateImage(display,None,32,ZPixmap,0,(char *)@data,@w,1,32,0)`;
+    };
+    
+    is_active := TRUE;
+  );
+  
+  - auto_make <-
+  (
+    make 800,600;
+  );
+  
+  - close <-
+  (
+    ? {is_active};
+    // Remove Window:
+    //`XUnmap(display,window)`;
+    is_active := FALSE;
+    ? {! is_active};
+  );
+
+  // 
+  // Redefine Low level Bitmap.
+  //
+  
+  - pixel_hard x,y:INTEGER color col:UINTEGER <-
+  ( + real_col:UINTEGER;
+    + m:USMALLINT;
+    
+    VIDEO.planes
+    .when 15 then { real_col := PIXEL_15.color col; }
+    .when 16 then { real_col := PIXEL_16.color col; }
+    .when 24 then { real_col := PIXEL_24.color col; }
+    .when 32 then { real_col := PIXEL_32.color col; };
+    m := mode;
+    `XSetForeground(display,gc,(int)@real_col)`;
+    `XSetFunction(display,gc,(int)@m)`;
+    `XDrawPoint(display,window,gc,@x,@y)`;
+  );
+  
+  - line_h_hard x,y:INTEGER until x1:INTEGER color col:UINTEGER <-
+  ( + real_col:UINTEGER;
+    + m:USMALLINT;
+    
+    VIDEO.planes
+    .when 15 then { real_col := PIXEL_15.color col; }
+    .when 16 then { real_col := PIXEL_16.color col; }
+    .when 24 then { real_col := PIXEL_24.color col; }
+    .when 32 then { real_col := PIXEL_32.color col; };
+    m := mode;
+    `XSetForeground(display,gc,(int)@real_col)`;
+    `XSetFunction(display,gc,(int)@m)`;
+    `XDrawLine(display,window,gc,@x,@y,@x1,@y)`;
+  );
+    
+  - line_h_hard x,y:INTEGER until x1:INTEGER image line:BMP_LINE offset ofs:INTEGER <-
+  ( + len:INTEGER;
+    len := x1 - x;
+    VIDEO.line_tmp.put line offset ofs from 0 to len;
+    `XPutImage(display,window,gc, ximage, 0, 0, @x, @y, @len+1, 1)`;
+  );
+
+  
+  - get_pixel_hard x,y:INTEGER :PIXEL <-
+  (
+    not_yet_implemented;
+  );
+
+

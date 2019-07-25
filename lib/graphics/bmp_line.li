@@ -79,7 +79,7 @@ section PUBLIC
   (
     upper := -1;
   );
-  
+   
   //
   // Put.
   //

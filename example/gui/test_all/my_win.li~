@@ -1,0 +1,94 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+/*
+Copyright (C) 2005  Benoit Sonntag
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+
+You should have received a copy of the GNU Library General Public
+License along with this library; if not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+Boston, MA  02110-1301, USA.
+*/
+section HEADER
+  
+  + name        := MY_WIN;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "The first GUI program.";
+  
+section INHERIT
+  
+  * parent_inbox:INBOX;
+  
+section PUBLIC  
+  
+  - exit:GUI_BUTTON;
+   
+  - check_list:LINKED_LIST[GUI_CHECK_LIST];
+  
+  - receive msg:EVENT <-
+  (
+    (msg.source = exit).if {
+      VIDEO.close;
+      die_with_code exit_success_code;
+    };
+  );
+  
+  - make <-
+  ( + win:GUI_WINDOW;
+    
+    GUI_BUTTON.create_in INTERFACE at 5,5 size 110,20 label "GUI_BUTTON" action self;    
+    
+    GUI_CHECK.create_in INTERFACE at 5,30 label "Object GUI_CHECK" action self;
+    
+    check_list := LINKED_LIST[GUI_CHECK_LIST].create;
+    GUI_CHECK_LIST.create_in INTERFACE at 5,50 label "Object GUI_CHECK_LIST 1" action self list check_list;
+    GUI_CHECK_LIST.create_in INTERFACE at 5,66 label "Object GUI_CHECK_LIST 2" action self list check_list;
+    GUI_CHECK_LIST.create_in INTERFACE at 5,82 label "Object GUI_CHECK_LIST 3" action self list check_list;
+    
+    GUI_IMAGE.create_in INTERFACE at 5,105 filename "save.bmp";
+    GUI_ICONE.create_in INTERFACE at 35,105 filename "save.bmp" action self;
+    
+    GUI_IN_INTEGER.create_in INTERFACE at 5,135 width 200 label "object GUI_IN_INTEGER : " action self;
+    GUI_IN_TEXT.create_in INTERFACE at 5,160 width 250 label "object GUI_IN_TEXT : " action self;
+    
+    GUI_ELEVATOR.create_in INTERFACE at 300,10 height 180 upper 1000 step 20 action self;
+    GUI_ELEVATOR.create_in INTERFACE at 130,5 width 160 upper 1000 step 20 action self;
+    
+    win := GUI_WINDOW.create_in INTERFACE at 95,78 size 130,44 title "GUI_WINDOW";
+    exit := GUI_BUTTON.create_in win at 4,20 size 122,20 label "Exit" action self;
+    
+    INTERFACE.run;
+  );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

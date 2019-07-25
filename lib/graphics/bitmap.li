@@ -101,6 +101,9 @@ section PUBLIC
   // Image size.
   + height:INTEGER;       
   + width:INTEGER;        
+  
+  - x_max:INTEGER <- width  - 1;
+  - y_max:INTEGER <- height - 1;
     
   // Clipping :
   + clip_x0:INTEGER; 
@@ -113,8 +116,20 @@ section PUBLIC
   + spot_y:INTEGER;
   
   // Current color.
-  + rgbcolor   :UINTEGER; // Format: RRGGBB in hexadecimal
-  + transparent:BOOLEAN;
+  + rgbcolor    :UINTEGER; // Format: RRGGBB in hexadecimal
+  + rgbbackcolor:UINTEGER;
+  + transparent :BOOLEAN;
+  
+  + mode:USMALLINT := mode_copy; // Set mode. 
+  
+  // Ref. `X.h'
+  - mode_copy:USMALLINT := 03h;
+  - mode_xor :USMALLINT := 06h;
+  
+  - set_mode m:USMALLINT <-
+  (
+    mode := m;
+  );
   
   // Macro colors
   
@@ -191,6 +206,11 @@ section PUBLIC
   - color col:UINTEGER <-
   (
     rgbcolor := col;
+  );
+
+  - backcolor col:UINTEGER <-
+  (
+    rgbbackcolor := col;
   );
   
   - transparent_on <-
@@ -367,9 +387,7 @@ section PUBLIC
       };
       
       (x0 <= x1).if {
-	x0.to x1 do { j:INTEGER;	  
-	  pixel_hard j,spot_y color rgbcolor;
-	};	
+	line_h_hard x0,spot_y until x1 color rgbcolor;
       };
     };
     result
@@ -1430,38 +1448,80 @@ section PUBLIC
       };  
     };
   );
+
+  - put_bitmap bmp:BITMAP to x,y:INTEGER scale scale_x,scale_y:REAL_16_16 <-
+  ( + x1,y1,x0,y0:INTEGER;
+    + y_src,x_src,x_tmp:REAL_16_16;
+    + line:BMP_LINE;
+    + col:UINTEGER;
+
+    x0 := x.max clip_x0;
+    y0 := y.max clip_y0;
+    x1 := (x + (bmp.width.to_real_16_16  / scale_x).to_integer -1).min clip_x1;
+    y1 := (y + (bmp.height.to_real_16_16 / scale_y).to_integer -1).min clip_y1;
+    ((x0<=x1) && {y0<=y1}).if {
+      x_src := (x0 - x).to_real_16_16 * scale_x;
+      y_src := (y0 - y).to_real_16_16 * scale_y;      
+      y0.to y1 do { y_dst:INTEGER;
+	line := bmp.get_line (y_src.to_integer);
+	x_tmp := x_src;
+	x0.to x1 do { x_dst:INTEGER;
+	  col := line.get_color (x_tmp.to_integer);
+	  pixel_hard x_dst,y_dst color col;
+	  x_tmp := x_tmp + scale_x;
+	};	
+	y_src := y_src + scale_y;
+      };  
+    };
+  );
   
 section PUBLIC
   
   // For demo ... :-)
   
   - font_width string:ABSTRACT_STRING :INTEGER <-
+  ( 
+    font_width string size (string.upper)
+  );
+  
+  - font_width_letter char:CHARACTER :INTEGER <-
   ( + offset_begin,offset_end:INTEGER;
-    + result:INTEGER;
     + car:INTEGER;
 
-    (string.lower).to (string.upper) do { j:INTEGER;
-      car:=string.item j.to_integer;
-      ((car<32) || {car>=127}).if {
-	car:=0;
-      } else {
-	car:=car-32;
-      };
-      offset_begin:=`__index_font[@car]`:INTEGER;
-      offset_end  :=`__index_font[@car+1]`:INTEGER;
-      result:=result + offset_end - offset_begin + 1;
+    car := char.to_integer;
+    ((car < 32) || {car >= 127}).if {
+      car := 0;
+    } else {
+      car := car-32;
+    };
+    offset_begin:=`__index_font[@car]`:INTEGER;
+    offset_end  :=`__index_font[@car+1]`:INTEGER;
+    offset_end - offset_begin + 1
+  );
+
+  - font_width string:ABSTRACT_STRING size n:INTEGER :INTEGER <-
+  (     
+    font_width string at (string.lower) to n
+  );
+  
+  - font_width string:ABSTRACT_STRING at beg:INTEGER to end:INTEGER :INTEGER <-
+  ( + result:INTEGER;
+
+    beg.to end do { j:INTEGER;
+      result:=result + font_width_letter (string.item j);
     };
     result
   );
   
-  - print string:ABSTRACT_STRING to x,y:INTEGER :INTEGER <-
+  - print_char c:CHARACTER to x,y:INTEGER :INTEGER <-
   ( + pix_x,pix_y,offset_begin,offset_end:INTEGER;
     + bit_count:USHORTINT;
-    + car:INTEGER;
-
-    pix_x:=x;
-    (string.lower).to (string.upper) do { j:INTEGER;
-      car:=string.item j.to_integer;
+    + sz_letter:INTEGER;
+    + car:USMALLINT;
+    
+    car := c.to_usmallint;
+    ((y <= clip_y1) && {(y+15) >= clip_y0} && {x <= clip_x1}).if {
+      pix_x:=x;      	
       ((car<32) || {car>=127}).if {
 	car:=0;
       } else {
@@ -1469,21 +1529,78 @@ section PUBLIC
       };
       offset_begin:=`__index_font[@car]`:INTEGER;
       offset_end  :=`__index_font[@car+1]`:INTEGER;
-      {offset_begin!=offset_end}.while_do {
-	pix_y:=y;
-	bit_count:=1;
-	{bit_count!=0}.while_do {
-	  ((`__graph_font[@offset_begin]`:USHORTINT & bit_count)!=0).if {
-	    pixel_to pix_x,pix_y;
+      sz_letter := offset_end-offset_begin + 1;
+      ((pix_x + sz_letter) > clip_x0).if {
+	{offset_begin != offset_end}.while_do {
+	  (pix_x.in_range clip_x0 to clip_x1).if {
+	    pix_y:=y;
+	    bit_count:=1;
+	    {bit_count != 0}.while_do {
+	      (pix_y.in_range clip_y0 to clip_y1).if {
+		((`__graph_font[@offset_begin]`:USHORTINT & bit_count)!=0).if {
+		  pixel_hard pix_x,pix_y color rgbcolor;
+		};		
+	      };
+	      pix_y:=pix_y+1;
+	      bit_count:=bit_count << 1;
+	    };
 	  };
-	  pix_y:=pix_y+1;
-	  bit_count:=bit_count << 1;
+	  pix_x:=pix_x+1;
+	  offset_begin:=offset_begin+1;
 	};
-	pix_x:=pix_x+1;
-	offset_begin:=offset_begin+1;
-      };
-      pix_x:=pix_x+1;
-    };
-    
+	pix_x := pix_x + 1;
+      } else {
+	pix_x := pix_x + sz_letter;
+      };    
+    };    
     pix_x
+  );
+  
+  - print string:ABSTRACT_STRING at b:INTEGER to e:INTEGER to x,y:INTEGER :INTEGER <-
+  ( + pix_x,pix_y,offset_begin,offset_end:INTEGER;
+    + bit_count:USHORTINT;
+    + car,sz_letter:INTEGER;
+    
+    ((y <= clip_y1) && {(y+15) >= clip_y0} && {x <= clip_x1}).if {
+      pix_x:=x;
+      b.to e do { j:INTEGER;
+	car:=string.item j.to_integer;
+	((car<32) || {car>=127}).if {
+	  car:=0;
+	} else {
+	  car:=car-32;
+	};
+	offset_begin:=`__index_font[@car]`:INTEGER;
+	offset_end  :=`__index_font[@car+1]`:INTEGER;
+	sz_letter := offset_end-offset_begin + 1;
+	((pix_x + sz_letter) > clip_x0).if {
+	  {offset_begin != offset_end}.while_do {
+	    (pix_x.in_range clip_x0 to clip_x1).if {
+	      pix_y:=y;
+	      bit_count:=1;
+	      {bit_count != 0}.while_do {
+		(pix_y.in_range clip_y0 to clip_y1).if {
+		  ((`__graph_font[@offset_begin]`:USHORTINT & bit_count)!=0).if {
+		    pixel_hard pix_x,pix_y color rgbcolor;
+		  };		
+		};
+		pix_y:=pix_y+1;
+		bit_count:=bit_count << 1;
+	      };
+	    };
+	    pix_x:=pix_x+1;
+	    offset_begin:=offset_begin+1;
+	  };
+	  pix_x := pix_x + 1;
+	} else {
+	  pix_x := pix_x + sz_letter;
+	};	
+      };
+    };
+    pix_x
+  );
+
+  - print string:ABSTRACT_STRING to x,y:INTEGER :INTEGER <-
+  ( 
+    print string at (string.lower) to (string.upper) to x,y
   );

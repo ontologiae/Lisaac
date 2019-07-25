@@ -25,6 +25,8 @@ section PRIVATE
   
   + storage:MAP_NATIVE_ARRAY[PIXEL_15];
   
+section PUBLIC  
+  
   - get_storage:NATIVE_ARRAY[USMALLINT] <- NATIVE_ARRAY[USMALLINT].force_conversion storage;
   
   - make n:INTEGER <-
@@ -48,8 +50,6 @@ section PRIVATE
     storage  := MAP_NATIVE_ARRAY[PIXEL_15].force_conversion offset;    
   );
 
-section PUBLIC
-  
   - pixel_geometry:PIXEL := PIXEL_15;
   
   //

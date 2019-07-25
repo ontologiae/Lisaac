@@ -1,0 +1,214 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  + name        := ABSTRACT_FILE;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)"; 
+
+  - comment     := "Abstract File Management";
+  
+section INHERIT
+  
+  + parent_entry:ENTRY := ENTRY;   
+  
+section PUBLIC
+    
+  + cursor:UINTEGER;
+  
+  - set_cursor n:UINTEGER <-
+  (
+    cursor := n;
+  );
+  
+  //
+  // Update.
+  //
+  
+  - refresh:BOOLEAN <-
+  (
+    physical_refresh
+  );
+    
+  - is_empty:BOOLEAN <- size = 0;
+  // Is collection empty ?
+  
+  - this:ENTRY <- parent_entry;
+  
+  //
+  // Read.
+  //
+  
+  - read dest:OBJECT :INTEGER <- 
+  ( 
+    array_intern.make_with_map_object dest;
+    read_bound array_intern size (dest.object_size)
+  ); 
+  
+  - read dest:ARRAYED size nb_elt:NUMERIC :INTEGER <-
+  ( 
+    dest.set_capacity (dest.count + nb_elt);
+    read_bound dest size nb_elt
+  );
+  
+  //
+  // Write.
+  //
+  
+  - write src:ARRAYED from start:NUMERIC size nb_elt:NUMERIC :INTEGER <-
+  ( + result:INTEGER;
+    + elt_size,elt_ofs,size_byte:INTEGER;
+    + size_block:INTEGER;
+    + idx_elt:INTEGER;
+    ? {(start + nb_elt - 1) <= src.upper};
+    ? { is_open };
+    ? { nb_elt > 0};
+    ? {src!=NULL};
+
+    elt_size:=src.element_sizeof;
+    size_byte:=nb_elt * elt_size;    
+    basic_seek cursor;
+    cursor := cursor + size_byte.to_uinteger;
+    size_block := 2048;
+    idx_elt := start;
+    {size_byte > 0}.while_do {
+      (size_byte < 2048).if {
+	size_block := size_byte;
+      };
+      0.to (size_block - 1) do {i:INTEGER;
+	tmp_buffer.put (src.item_byte idx_elt offset elt_ofs) to i;
+	elt_ofs := elt_ofs+1;
+	(elt_ofs = elt_size).if {
+	  elt_ofs := 0;
+	  idx_elt := idx_elt + 1;
+	};
+      };
+      result := result + basic_write tmp_buffer size size_block;
+      size_byte := size_byte - size_block;
+    };
+    result        
+  );
+  
+  //
+  // Close.
+  //
+  
+  - close:ENTRY <-
+  ( + result:ENTRY;
+    + dir:DIRECTORY;
+    
+    result := parent_entry.close;
+    cursor := 0;
+    (basic_close).if {
+      dir := get_parent_intern (result.path);
+      (dir != NULL).if {
+	dir.refresh;
+      };
+    } else {
+      result := NULL;
+    };
+    result
+  );
+  
+section ENTRY
+  
+  - make e:ENTRY :BOOLEAN <-
+  (
+    parent_entry := e;
+    physical_open
+  );
+  
+section PRIVATE  
+  
+  - read_bound dest:ARRAYED size nb_elt:NUMERIC :INTEGER <-
+  ( + result:INTEGER;
+    + elt_size,size_byte:UINTEGER;
+    + size_block:UINTEGER;
+    
+    ? { is_open };
+    ? { nb_elt > 0};
+    ? { dest!=NULL};
+    
+    elt_size  := dest.element_sizeof.to_uinteger;
+    size_byte := nb_elt.to_uinteger * elt_size;
+    
+    ((cursor + size_byte) > size).if {
+      size_byte := size - cursor;
+    };
+    
+    basic_seek cursor;
+    size_block := 2048;
+    
+    array_intern2.make_with_map_object tmp_buffer;
+    {size_byte > 0}.while_do {
+      (size_byte < 2048).if {
+	size_block := size_byte;
+      };
+      result := result + basic_read tmp_buffer size size_block;
+      cursor := cursor + size_block;
+
+      array_intern2.set_upper ((size_block - 1).to_integer);
+      dest.add_last_buffer array_intern2 from 0 to (size_block - 1);
+      size_byte := size_byte - size_block;
+      array_intern2.clear;
+    };
+    result    
+  );
+    
+  + array_intern:FIXED_ARRAY[USMALLINT] := FIXED_ARRAY[USMALLINT].clone;
+  
+  + array_intern2:FIXED_ARRAY[USMALLINT] := FIXED_ARRAY[USMALLINT].clone;
+  
+  - tmp_buffer:NATIVE_ARRAY[USMALLINT] := NATIVE_ARRAY[USMALLINT].calloc 2048; // 512 byte
+  
+  //
+  // Physical implementation.
+  //
+  
+  - physical_open:BOOLEAN <-
+  ( 
+    deferred;
+    FALSE
+  ); 
+    
+  - basic_seek pos:NUMERIC :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( 
+    ? {is_open};    
+    deferred;
+    0
+  );
+  
+  - basic_read buf:NATIVE_ARRAY[USMALLINT] size s:NUMERIC :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( 
+    ? {is_open};
+    deferred;
+    0
+  );
+  
+  - basic_write buf:NATIVE_ARRAY[USMALLINT] size s:NUMERIC :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( 
+    ? {is_open};
+    deferred;
+    0
+  );
+  
+  - basic_close:BOOLEAN <-
+  ( 
+    deferred;
+    FALSE
+  );
+  
+  

@@ -1,0 +1,103 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  * name        :=TRUE;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="TRUE object";
+
+  - type        := `char`;
+  - default     := TRUE;
+  
+section INHERIT
+  
+  - parent_boolean:BOOLEAN := BOOLEAN;
+  
+section PUBLIC
+  
+  //
+  // Conditional :
+  //
+  
+  - if_true block:BLOCK  <-
+  (
+    block.value;
+  );
+  
+  - if_false block:BLOCK;
+  
+  - if true_block:BLOCK else false_block:BLOCK <-
+  (
+    true_block.value;
+  );
+  
+  - if true_block:BLOCK :BOOLEAN <-
+  (
+    true_block.value;
+    TRUE
+  );
+  
+  - elseif cond:BLOCK then block:BLOCK :BOOLEAN <- TRUE;
+  
+  - elseif cond:BLOCK then block:BLOCK else block_else:BLOCK;
+  
+  //
+  // Binary operator :
+  //
+  
+  - '=='  right 60 other:BOOLEAN :BOOLEAN <- other;
+  
+  - '!==' right 60 other:BOOLEAN :BOOLEAN <- ! other;
+  
+  - '||'  left 10  other:BLOCK   :BOOLEAN <- TRUE;   // or else
+  
+  - '&&'  left 20  other:BLOCK   :BOOLEAN <- other.value;  // and then
+  
+  - '|'   left 10  other:BOOLEAN :BOOLEAN <- TRUE;  // or
+  
+  - '&'   left 20  other:BOOLEAN :BOOLEAN <- other; // and
+  
+  - '^'  left 10  other:BOOLEAN :BOOLEAN <- ! other;
+  
+  - '->'  right 25 other:BOOLEAN :BOOLEAN <- other;
+
+  - '->>' right 25 other:BLOCK  :BOOLEAN <- other.value;
+  
+  - '=>' s:ABSTRACT_STRING <-
+  (
+    s.print;
+    `while (1)`;
+  );
+  
+  //
+  // Prefix operator
+  //
+  
+  - '!':BOOLEAN <- FALSE;
+  
+  //
+  // Conversion
+  //
+  
+  - to_string:STRING       <- "1".to_string; // BSBS: A revoir ...
+  
+  - to_numeric:NUMERIC     <- 1;
+  
+  - to_character:CHARACTER <- '1';
+
+
+
+
+
+
+

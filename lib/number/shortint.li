@@ -8,7 +8,7 @@
 
 section HEADER
   
-  * name        :=SHORTINT -> NUMERIC, LONGINT, INTEGER;
+  * name        :=SHORTINT -> NUMERIC, LONGINT, INTEGER, DOUBLE;
   
   - category    :=MICRO;
   

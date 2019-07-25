@@ -34,7 +34,15 @@ section PRIVATE
   );
   
 section PUBLIC
-
+  
+  - '>' right 60 other:SELF :BOOLEAN <- to_raw > other.to_raw;
+  
+  - '<' right 60 other:SELF :BOOLEAN <- to_raw < other.to_raw;
+  
+  - '>=' right 60 other:SELF :BOOLEAN <- to_raw >= other.to_raw;
+  
+  - '<=' right 60 other:SELF :BOOLEAN <- to_raw <= other.to_raw;
+  
   - year :USHORTINT <-
   ( 
     (to_raw >> 16).to_ushortint
@@ -101,15 +109,34 @@ section PUBLIC
     .when 7 then {
       str.append "Su";
     };
-    str.add_last ' ';
+    (week_day != 0).if {
+      str.add_last ' ';
+    };
     day.append_in str format 2 with '0';
     str.add_last '/';
     month.append_in str format 2 with '0';
     str.add_last '/';
     year.append_in str format 4;           
   );
-  
-  
+
+  - append_short_in str:STRING <-
+  (
+    day.append_in str format 2 with '0';
+    str.add_last '/';
+    month.append_in str format 2 with '0';
+    str.add_last '/';
+    (year % 100).append_in str format 2 with '0';           
+  );
+
+  - append_short2_in str:STRING <-
+  (
+    day.append_in str format 2 with '0';
+    str.add_last '/';
+    month.append_in str format 2 with '0';
+    str.add_last '/';
+    year.append_in str format 4 with '0';           
+  );
+    
   - print <-
   (
     to_string.print;

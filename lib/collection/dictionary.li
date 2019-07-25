@@ -80,6 +80,21 @@ section PUBLIC
     };
     node != NULL
   );
+
+  - fast_has k:K :BOOLEAN <-
+  // Is there a value currently associated with key `k'?
+  (
+    + idx:INTEGER;
+    + node:DICTIONARY_NODE[V,K];
+    
+    idx := k.hash_code % capacity;
+    node := buckets.item idx;
+    
+    { (node = NULL) || { node.key = k}}.until_do {
+      node := node.next;
+    };
+    node != NULL
+  );
   
   
   - at k:K :V <-
@@ -95,6 +110,24 @@ section PUBLIC
     node := buckets.item idx;
     
     { node.key == k}.until_do {
+      node := node.next;
+    };
+    node.item
+  );
+
+  - fast_at k:K :V <-
+  // Return the value associated to key `k'.
+  // (See also `reference_at' if V is a reference type.)
+  (
+    + idx:INTEGER;
+    + node:DICTIONARY_NODE[V,K];  
+    
+    ? { fast_has k };
+    
+    idx := k.hash_code % capacity;
+    node := buckets.item idx;
+    
+    { node.key = k}.until_do {
       node := node.next;
     };
     node.item
@@ -129,8 +162,31 @@ section PUBLIC
     
     result
   );
-  
-  
+
+  - fast_reference_at k:K :V <-
+  // Return NULL or the value associated with key `k'. Actually, this 
+  // feature is useful when the type of values (the type V) is a 
+  // reference type, to avoid using `has' just followed by `at' to get 
+  // the corresponding value.
+  (
+    + idx:INTEGER;
+    + node:DICTIONARY_NODE[V,K];
+    + result:V;
+    
+    idx := k.hash_code % capacity;
+    node := buckets.item idx;
+    { (node = NULL) ||{ node.key = k }}.until_do {
+      node := node.next;
+    };
+    ( node != NULL ).if {
+      result := node.item;
+    };
+    
+    ? { fast_has k ->> {result = fast_at k}};
+    
+    result
+  );
+ 
   - put v:V to k:K  <-
   // Change some existing entry or `add' the new one. If there is
   // as yet no key `k' in the dictionary, enter it with item `v'.
@@ -161,6 +217,38 @@ section PUBLIC
     };
     
     ? { v = at k };
+  );
+
+  - fast_put v:V to k:K  <-
+  // Change some existing entry or `add' the new one. If there is
+  // as yet no key `k' in the dictionary, enter it with item `v'.
+  // Otherwise overwrite the item associated with key `k'.
+  (
+    + h, idx:INTEGER;
+    + node:DICTIONARY_NODE[V,K];
+    //? { k != NULL}; // BSBS : a voir si k=INTEGER
+    cache_user := -1;
+    
+    h := k.hash_code;
+    idx := h % capacity;
+    node := buckets.item idx;
+        
+    { (node = NULL) || { node.key = k}}.until_do {
+      node := node.next;
+    };
+    ( node = NULL ).if {
+      (capacity = count).if {
+	increase_capacity;
+	idx := h % capacity;
+      };
+      node:=DICTIONARY_NODE[V,K].create v to k next (buckets.item idx);
+      buckets.put node to idx;
+      count := count + 1;
+    } else {
+      node.set_item v;
+    };
+    
+    ? { v = fast_at k };
   );
   
   
@@ -334,7 +422,7 @@ section PUBLIC
     set_cache_user index;
     result := cache_node.item;
     
-    ? { result = at (key index)};
+    ? { result = fast_at (key index)};
     result
   );
   

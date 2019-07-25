@@ -24,16 +24,21 @@
   //   - `target' is a target value.
   
 section DEFAULT  
-  
+
   + target := UNIX;
 
 section COMMON
   // Always valid path.
-
-  + lib   := lisaac + "lib/";
-  + unix  := lisaac + "unix/";
-  + dos   := lisaac + "dos/";
   
+  + option_gcc := "-O3";
+  
+  + lib    := lisaac + "lib/";
+  + lib_os := lisaac + "lib_os/";
+  
+  + unix    := lib_os + "unix/";
+  + dos     := lib_os + "dos/";
+  + windows := lib_os + "windows/";
+    
   // Standard library:
   - lib + "time/";
   - lib + "number/";
@@ -44,20 +49,52 @@ section COMMON
   - lib + "memory/";
   - lib + "io/";  
   - lib + "graphics/";
+  - lib + "file_system/";
+  - lib + "format/";
+  - lib + "format/ai/";
+  - lib + "format/bmp/";
   
-section UNIX
+  // GUI library:
+  - lib + "gui/";
+  - lib + "gui/clipping/";
+  - lib + "gui/event/";
+  - lib + "gui/input/";
+  - lib + "gui/style/";
+  - lib + "gui/tools/";
+
+  - lib + "gui/label/";
+  - lib + "gui/item/";
+  - lib + "gui/group_in/";
+  - lib + "gui/group/";
+  
+section WINDOWS,OS_WIN
+  
+  - windows + "file_system/";
+  - windows + "rsxnt/";
+  
+  * "gcc -Zwin32 " + input_file + " -o " + output_file + ".exe " + option_gcc;    
+  
+section DOS  
+  
+  - dos + "file_system/";
+  - dos + "int86/";
+  
+  * "gcc " + input_file + " -o " + output_file + ".exe " + option_gcc;
+  
+section UNIX, DOS, WINDOWS, OS_WIN, OS_LIN
   
   - unix   + "system/";
   - unix   + "file_system/";
-  - unix   + "video/";
 
-  * "gcc -O3 " + input_file + " -o " + output_file;
-  
-section DOS, WINDOWS
+section UNIX, OS_LIN
 
-  - unix   + "system/";
-  - unix   + "file_system/";
-  - dos    + "video/";
+  - unix   + "x11/";
   
-  * "gcc -O3 " + input_file + " -o " + output_file + ".exe";
+  * "gcc " + input_file + " -o " + output_file + " -L/usr/X11R6/lib -lm -lX11 " + option_gcc;
+      
+
+  
+  
+  
+    
   

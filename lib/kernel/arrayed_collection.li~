@@ -1,0 +1,232 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  - name        :=ARRAYED_COLLECTION[E];
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  - comment     :="Common root for ARRAY[E] and FIXED_ARRAY[E].";
+  
+section INHERIT
+  
+  - parent_arrayed:ARRAYED := ARRAYED;
+  
+  - parent_collection:COLLECTION[E] := COLLECTION[E];
+  
+section PUBLIC
+  
+  + storage:NATIVE_ARRAY[E];
+  // Internal access to storage location.
+  
+  + capacity:INTEGER;
+  // Internal storage capacity in number of item.
+  
+  + upper:INTEGER;
+  // Upper index bound.
+    
+  - subarray min:NUMERIC to max:NUMERIC :SELF <-
+  // New collection consisting of items at indexes in [`min' .. `max'].
+  // Result has the same dynamic type as `Current'.
+  // See also `slice'.
+  ( + result:SELF;
+    ? { lower <= min };
+    ? { max <= upper };
+    ? { min <= max + 1 };
+    deferred;
+
+    ? { same_dynamic_type result};
+    ? { result.count = max - min + 1};
+    ? { result.lower = min | (result.lower = 0)};
+    result
+  );
+  
+  // Implementation of deferred:
+  
+  - first :E <-
+  ( + result:E;
+    ? {count >= 1};
+    result := storage.item 0;
+    ? { result = item lower};
+    result
+  );
+  
+  
+  - last :E <-
+  (+ result:E;
+    ? {! is_empty};    
+    result := item upper;
+    ? { result = item upper};
+    result
+  );
+  
+  
+  - add element:E to index:NUMERIC <-
+  ( + old_count,old_lower,old_upper:INTEGER;
+    old_count := count;
+    old_lower := lower;
+    old_upper := upper;
+    ( index = upper + 1).if {
+      add_last element;
+    } else {
+      add_last element;
+      move index to (upper - 1) by 1;
+      put element to index;
+    }; // end if
+    ? { first = element };
+    ? { count = 1 + old_count };
+    ? { lower = old_lower };
+    ? { upper = 1 + old_upper };
+  );
+  
+  
+  - remove_last <-
+  ( + old_count,old_upper:INTEGER;
+    ? {! is_empty};
+    old_count := count;
+    old_upper := upper;
+    upper := upper - 1;
+    ? { count = old_count - 1};
+    ? { upper = old_upper - 1};    
+  );
+  
+  
+  - replace_all old_value:E with new_value:E <-
+  ( + old_count:INTEGER;
+    old_count := count;
+    storage.replace_all old_value with new_value until (count - 1);
+    ? { count = old_count};
+    ? { occurrences old_value = 0};
+  );
+  
+  
+  - fast_replace_all old_value:E with new_value:E <-
+  ( + old_count:INTEGER;
+    old_count := count;
+    storage.fast_replace_all old_value with new_value until (count - 1);
+    ? { count = old_count};
+    ? { occurrences old_value = 0};
+  );
+  
+  
+  - append other:SELF <-
+  ( + old_count:INTEGER;
+    old_count := count;
+    ? {other != NULL};
+    (other.lower).to (other.upper) do { j:INTEGER;
+      add_last (other.item j);
+    };      
+    ? {count = other.count + old_count}; 
+  );
+  
+  // Interfacing with C:
+  
+  - to_external:POINTER <-
+  // Gives C access into the internal `storage' of the ARRAY.
+  // Result is pointing the element at index `lower'.
+  //
+  // NOTE: do not free/realloc the Result. Resizing of the array
+  //       can makes this pointer invalid.
+  (
+    + result:POINTER;
+    ? (!is_empty);
+    result := storage.to_pointer;
+    
+    ? {result.is_not_null};
+    
+    result
+  );
+  
+  
+  - set_upper new_upper:NUMERIC <-
+  (
+    upper := new_upper;
+  );
+  
+  
+  - invariant :BOOLEAN <-
+  (
+    (capacity >= (upper - lower + 1)) && 
+    { (capacity > 0) ->> { storage.is_not_null}}
+  );
+
+  //
+  // Guru section.
+  //
+  
+  - element_sizeof:INTEGER <- E.pointer_size;
+  
+  - valid_stream s:NUMERIC :BOOLEAN <-
+  ( + result:BOOLEAN;
+    
+    result := ! E.is_clonable;
+    result := result && {(s.to_integer % element_sizeof)=0};
+    result := result && {E.object_size!=0};
+    result
+  );
+  
+  + ofs_buf:INTEGER;
+    
+  - add_last_buffer buf:FIXED_ARRAY[USMALLINT] from beg:NUMERIC to end:NUMERIC <-
+  ( + tab:NATIVE_ARRAY[USMALLINT];
+    + pos_beg,size,new_capacity:INTEGER;
+    
+    ? {! E.is_clonable};
+    
+    pos_beg := count * element_sizeof + ofs_buf;
+    size    := end - beg + 1;
+    
+    new_capacity := (pos_beg + end - beg + element_sizeof) / element_sizeof;
+    (capacity < new_capacity).if {
+      "cap:".print;
+      capacity.print;
+      "new:".print;
+      new_capacity.print;
+      "Crash !\n".print;
+      crash;
+    };
+    
+    tab := NATIVE_ARRAY[USMALLINT].force_conversion storage;
+    tab.copy (buf.storage + beg) to pos_beg until size;
+    ofs_buf := (pos_beg + size) % element_sizeof;
+    upper   := (pos_beg + size - 1) / element_sizeof;
+  );
+
+  - add_last_buffer_bug buf:FIXED_ARRAY[USMALLINT] from beg:NUMERIC to end:NUMERIC <-
+  ( + e:E;
+    + tab:NATIVE_ARRAY[USMALLINT];
+    + pos,ofs:INTEGER;
+    ? {! E.is_clonable};
+    ? {((end - beg + 1) % element_sizeof) = 0};
+    
+    // BSBS: A refaire plus rapide en utilisant directement le storage...
+    beg.to end do { j:UINTEGER;      
+      (ofs=0).if {
+	add_last e;
+      };
+      tab := NATIVE_ARRAY[USMALLINT].force_conversion storage;
+      pos := upper * element_sizeof + ofs.to_integer;
+      tab.put (buf.item j) to pos;
+      ofs := (ofs + 1) % element_sizeof;
+    };
+  );
+
+  - item_byte idx:NUMERIC offset ofs:NUMERIC :USMALLINT <-
+  ( + pos:INTEGER; 
+    + tab:NATIVE_ARRAY[USMALLINT];
+    ? {ofs < element_sizeof};
+    pos := idx * element_sizeof + ofs;
+    tab := NATIVE_ARRAY[USMALLINT].force_conversion storage;
+    tab.item pos    
+  );
+
+
+

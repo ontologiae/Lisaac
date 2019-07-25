@@ -1,0 +1,73 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+section HEADER
+  
+  + name        := MY_WIN;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "The first GUI program.";
+  
+section INHERIT
+  
+  * parent_inbox:INBOX;
+  
+section PUBLIC  
+  
+  - exit:ITM_BUTTON;
+  
+  - receive msg:EVENT <-
+  (
+    
+    (msg.source = exit).if {
+      VIDEO.close;
+      die_with_code exit_success_code;
+    };
+  );
+  
+  - make <-
+  ( + win:GUI_WIN;
+    
+    ITM_RAW.create_in INTERFACE at 20,180 action self with (
+      LAB_BMP.create "img.bmp"
+    );
+    
+    ITM_BUTTON.create_in INTERFACE at 20,20 size 400,60 action self with (
+      LAB_OUT.create "Toto"
+    );
+    ITM_BUTTON.create_in INTERFACE at 20,100 size 400,60 action self with (
+      LAB_OUT.create "Titi"
+    );
+    
+    win := GUI_WIN.create_in INTERFACE at 95,78 size 160,100 title "Transparence";// action self;
+    exit := ITM_BUTTON.create_in win at 20,30 size 50,25 action self with (
+      LAB_OUT.create "Exit"
+    );
+    
+    win := GUI_WIN.create_in INTERFACE at 150,90 size 160,100 title "Trans2";// action self;
+    win := GUI_WIN.create_in INTERFACE at 200,120 size 160,100 title "Trans3";// action self;
+        
+    INTERFACE.run;
+  );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

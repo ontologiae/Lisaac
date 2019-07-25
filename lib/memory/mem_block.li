@@ -172,8 +172,8 @@ section PUBLIC
       // Linked list
       result := first_free << 1;
       first_free := memory.item first_free;
-    };
-    
+    };        
+        
     small_size := small_size + sz;
     result
   );

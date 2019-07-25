@@ -1,0 +1,89 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := GUI_BUTTON;
+  
+  - comment     := "Button plateform.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_item:ITEM;
+    
+section PUBLIC  
+  
+  //
+  // Creation.
+  //
+  
+  - create_in f:AREA at x,y:INTEGER size w,h:INTEGER label txt:ABSTRACT_STRING action a:INBOX :SELF <-
+  ( + result:SELF;
+        
+    result:=clone;
+    result.make_in f at x,y size w,h label txt action a;
+    
+    result
+  );
+  
+  //
+  // Action.
+  // 
+  
+  - receive msg:EVENT <-
+  (
+    receive_on msg;
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  ( + epsi,len:INTEGER;
+    
+    clipping x0,y0 to x1,y1;
+    
+    draw_border_in 0,0 to x_max,y_max;
+    ((stat & 2) = 0).if {
+      // Off
+      draw_border_out 1,1 to (x_max-1),(y_max-1);
+      rectangle_fill 2,2 to (x_max-2),(y_max-2) color color_back; 
+    } else {
+      // On
+      epsi := 2;
+      rectangle_fill 1,1 to (x_max-1),(y_max-1) color color_back; 
+    };
+    
+    ((stat & 1) = 0).if {
+      // Out      
+      color black;
+    } else {
+      // In
+      (stat = -1).if {
+	color color_dark;
+      } else {
+	color red;
+      };
+    };
+    len := font_width name;
+    print name to (((x_max-len)>>1)+epsi),(((y_max-16)>>1)+epsi); 
+  );
+  
+
+
+
+
+

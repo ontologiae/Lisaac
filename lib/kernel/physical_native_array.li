@@ -1,0 +1,26 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+ 
+  * name        :=PHYSICAL_NATIVE_ARRAY[E];
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+
+  - comment     :="Native array of collection library.";
+  
+section INHERIT
+  
+  - parent_native_array:NATIVE_ARRAY[E] := NATIVE_ARRAY[E];
+  
+
+  
+

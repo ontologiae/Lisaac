@@ -1,0 +1,106 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  * name        :=FALSE;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="FALSE object";
+
+  - type        := `char`;
+  - default     := FALSE;
+  
+section INHERIT
+  
+  - parent_boolean:BOOLEAN := BOOLEAN;
+  
+section PUBLIC
+  
+  //
+  // Conditional :
+  //
+  
+  - if_true block:BLOCK;
+  
+  - if_false block:BLOCK <-
+  ( //? {block!=NULL};
+    block.value;
+  );
+  
+  - if true_block:BLOCK else false_block:BLOCK <-
+  (
+    false_block.value;
+  );
+  
+  - if true_block:BLOCK :BOOLEAN <- FALSE;
+  
+  - elseif cond:BLOCK then block:BLOCK :BOOLEAN <-
+  ( + result:BOOLEAN;
+    
+    result:=cond.value;
+    (result).if {
+      block.value;
+    };
+    result
+  );
+  
+  - elseif cond:BLOCK then block:BLOCK else block_else:BLOCK <-
+  (
+    (cond.value).if {
+      block.value;
+    } else {
+      block_else.value;
+    };
+  );
+  
+  //
+  // Binary operator :
+  //
+  
+  - '=='  right 60 other:BOOLEAN :BOOLEAN <- ! other;
+  
+  - '!==' right 60 other:BOOLEAN :BOOLEAN <- other;
+  
+  - '||'  left 10  other:BLOCK   :BOOLEAN <- other.value;
+  
+  - '&&'  left 20  other:BLOCK   :BOOLEAN <- FALSE;
+  
+  - '|'   left 10  other:BOOLEAN :BOOLEAN <- other;
+  
+  - '&'   left 20  other:BOOLEAN :BOOLEAN <- FALSE;
+  
+  - '^'  left 10  other:BOOLEAN :BOOLEAN <- other;
+  
+  - '->'  right 25 other:BOOLEAN :BOOLEAN <- TRUE;
+  
+  - '->>' right 25 other:BLOCK  :BOOLEAN <- TRUE;
+  
+  - '=>' s:ABSTRACT_STRING <-
+  (
+  );
+  
+  //
+  // Prefix operator
+  //
+  
+  - '!' :BOOLEAN <- TRUE;
+  
+  //
+  // Convertion
+  //
+  
+  - to_string:STRING       <- "0".to_string;
+  
+  - to_numeric:NUMERIC     <- 0;
+  
+  - to_character:CHARACTER <- '0';
+

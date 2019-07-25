@@ -1,0 +1,377 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := GUI_ELEVATOR;
+  
+  - comment     := "Elevator plateform.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_item:ITEM;
+  
+section PRIVATE
+  
+  - max:INTEGER <-
+  ( + result:INTEGER;
+    is_vertical.if {
+      result := y_max;
+    } else {
+      result := x_max;
+    };
+    result
+  );
+  
+  - pg_size:INTEGER <-
+  ( + result:INTEGER;
+    (is_vertical).if {
+      result := height;
+    } else {
+      result := width;
+    };
+    result
+  );
+  
+  - cursor_begin:INTEGER <-  
+  ( + len_total:INTEGER;
+    len_total := max - 17 - 16;
+    ((len_total.to_real_16_16 /# count) *# position).to_integer + 17
+  );
+  
+  - cursor_size:INTEGER <-
+  ( + len_total,page:INTEGER;
+    len_total := max - 17 - 16;
+    page := ((len_total.to_real_16_16 /# count) *# pg_size).to_integer;
+    (page >= len_total).if {
+      page := len_total-1;
+    };
+    page
+  );
+  
+  + is_vertical:BOOLEAN;
+  
+  - is_horizontal:BOOLEAN <- ! is_vertical;
+  
+section PUBLIC  
+  
+  - lower:INTEGER := 0;
+  
+  + upper:INTEGER;
+  
+  + position:INTEGER;
+  
+  + step:INTEGER := 1;
+  
+  - count:INTEGER <- upper - lower + 1;
+  
+  - set_upper up:INTEGER <-
+  (
+    upper    := up;
+    position := 0;
+    refresh;
+  );
+  
+  - set_position p:INTEGER <-
+  (
+    position := p;
+    refresh;
+  );
+  
+  //
+  // Creation.
+  //
+  
+  - create_in f:AREA at x,y:INTEGER height h:INTEGER upper mx:INTEGER step p:INTEGER action a:INBOX :SELF <-
+  ( + result:SELF;
+        
+    result:=clone;
+    result.make_in f at x,y height h upper mx step p action a;
+    
+    result
+  );
+
+  - create_in f:AREA at x,y:INTEGER width h:INTEGER upper mx:INTEGER step p:INTEGER action a:INBOX :SELF <-
+  ( + result:SELF;
+        
+    result:=clone;
+    result.make_in f at x,y width h upper mx step p action a;
+    
+    result
+  );
+  
+  - make_in f:AREA at x,y:INTEGER height h:INTEGER upper mx:INTEGER step p:INTEGER action a:INBOX <-
+  (
+    upper := mx;
+    step  := p;
+    is_vertical := TRUE;
+    make_in f at x,y size 16,h label "Vertical elevator" action a;
+  );
+
+  - make_in f:AREA at x,y:INTEGER width h:INTEGER upper mx:INTEGER step p:INTEGER action a:INBOX <-
+  (
+    upper := mx;
+    step  := p;
+    is_vertical := FALSE;
+    make_in f at x,y size h,16 label "Horizontal elevator" action a;
+  );
+  
+  //
+  // Action.
+  // 
+  
+  - receive msg:EVENT <-
+  // 000 0000 : Nothing.
+  // 000 0001 : Up in.
+  // 000 0010 : Up press.
+  // 000 0100 : Down in.
+  // 000 1000 : Down press.
+  // 001 0000 : Up page.
+  // 010 0000 : Down pages.
+  // 100 0000 : Cursor move.
+  ( + mouse:EVENT_MOUSE;
+    + win:AREA;    
+    + new_stat:INTEGER;
+    + is_action:BOOLEAN;
+    + py1,py2,len_total,old_position:INTEGER;
+    + mouse_d,mouse_p:INTEGER;
+    + is_refresh:BOOLEAN;
+    
+    mouse ?= msg;
+    (mouse != NULL).if {
+      win := INTERFACE.get_object (mouse.x_current),(mouse.y_current);
+      (stat = -1).if {
+	(win != self).if {
+	  INTERFACE.receive msg;
+	};
+      } else {
+	(is_vertical).if {
+	  mouse_d := mouse.dy;
+	  mouse_p := mouse.y_relative;
+	} else {
+	  mouse_d := mouse.dx;
+	  mouse_p := mouse.x_relative;
+	};
+	((stat & 1111010b) = 0).if {
+	  // No press.
+	  (win != self).if {
+	    new_stat := 0;
+	    INTERFACE.receive msg;
+	  } else {
+	    new_stat := (
+	      ( mouse_p <      16) .to_numeric.to_integer | 
+	      ((mouse_p > (max-16)).to_numeric.to_integer<<2)
+	    );
+	    (mouse.left).if {
+	      new_stat := new_stat | (new_stat << 1);
+	      (new_stat = 0).if {
+		py1 := cursor_begin;
+		py2 := py1 + cursor_size;
+		new_stat := (
+		  ((mouse_p < py1).to_numeric.to_integer << 4) |
+		  ((mouse_p > py2).to_numeric.to_integer << 5)
+		);
+		(new_stat = 0).if {
+		  // Moving.
+		  new_stat := 1000000b;
+		} else {
+		  is_action := TRUE;
+		};
+	      } else {
+		is_action := TRUE;
+	      };
+	    };
+	  };
+	} else {
+	  // Press.
+	  (mouse.left).if {
+	    new_stat  := stat;
+	    is_action := TRUE;
+	  } else {
+	    (win != self).if {
+	      new_stat := 0;
+	      INTERFACE.receive msg;
+	    } else {
+	      new_stat := (
+		( mouse_p <      16) .to_numeric.to_integer | 
+		((mouse_p > (max-16)).to_numeric.to_integer<<2)
+	      );
+	    };
+	  };
+	};
+	(stat != new_stat).if {
+	  stat := new_stat;
+	  is_refresh := TRUE;
+	};
+	(is_action).if {
+	  old_position := position;
+	  (((stat & 0010b) != 0) && {position != 0}).if {
+	    position := (position - step).max 0;
+	  };
+	  (((stat & 1000b) != 0) && {position < (upper-pg_size)}).if {
+	    position := (position + step).min (upper-pg_size);
+	  };
+	  (((stat & 0010000b) != 0) && {position != 0}).if {
+	    position := (position - pg_size).max 0;
+	  };
+	  (((stat & 0100000b) != 0) && {position < (upper-pg_size)}).if {
+	    position := (position + pg_size).min (upper-pg_size);
+	  };
+	  (((stat & 1000000b) != 0) && {mouse_d != 0}).if {
+	    len_total := max - 17 - 16;
+	    position  := position + ((count.to_real_16_16 /# len_total) *# mouse_d).to_integer;
+	    position  := position.min (upper-pg_size).max 0;
+	  };
+	  (position != old_position).if {
+	    send action;
+	    is_refresh := TRUE;
+	  };
+	};
+	(is_refresh).if {
+	  refresh;
+	};
+      };
+    };
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  ( + epsi:INTEGER;
+    + py1,py2,bx,by:INTEGER;
+    
+    clipping x0,y0 to x1,y1;
+    
+    //
+    // Bar
+    //
+    (is_vertical).if {
+      // Vertical
+      draw_border_in 0,16 to 15,(y_max-16);
+      (stat != -1).if {
+	py1 := cursor_begin;
+	py2 := py1 + cursor_size;
+	draw_border_out 1,py1 to 14,py2;
+	rectangle_fill 2,(py1+1) to 13,(py2-1) color color_back;
+	(py1 > 17).if {
+	  rectangle_fill 1,17 to 14,(py1-1) color color_back_light;
+	};
+	(py2 < (y_max-17)).if {
+	  rectangle_fill 1,(py2+1) to 14,(y_max-17) color color_back_light;
+	};
+      } else {
+	rectangle_fill 1,17 to 14,(y_max-17) color color_back_light;
+      };
+    } else {
+      // Horizontal
+      draw_border_in 16,0 to (x_max-16),15;
+      (stat != -1).if {
+	py1 := cursor_begin;
+	py2 := py1 + cursor_size;
+	draw_border_out py1,1 to py2,14;
+	rectangle_fill (py1+1),2 to (py2-1),13 color color_back;
+	(py1 > 17).if {
+	  rectangle_fill 17,1 to (py1-1),14 color color_back_light;
+	};
+	(py2 < (x_max-17)).if {
+	  rectangle_fill (py2+1),1 to (x_max-17),14 color color_back_light;
+	};
+      } else {
+	rectangle_fill 17,1 to (x_max-17),14 color color_back_light;
+      };
+    };
+    
+    //
+    // Button up or left.
+    //
+    draw_border_in 0,0 to 15,15;
+    ((stat & 0010b) = 0).if {
+      // Off
+      draw_border_out 1,1 to 14,14;
+      rectangle_fill 2,2 to 13,13 color color_back; 
+    } else {
+      // On
+      epsi := 1;
+      rectangle_fill 1,1 to 14,14 color color_back; 
+    };
+    ((stat & 0001b) = 0).if {
+      color black;
+    } else {
+      (stat = -1).if {
+	color color_dark;
+      } else {
+	color red;
+      };
+    };
+    (is_vertical).if {
+      poly_move_to (7 +epsi),(5+epsi);
+      poly_line_to (11+epsi),(9+epsi);
+      poly_line_to (3 +epsi),(9+epsi);
+    } else {
+      poly_move_to (9+epsi),( 3+epsi);
+      poly_line_to (9+epsi),(11+epsi);
+      poly_line_to (5+epsi),( 7+epsi);
+    };
+    poly_trace;
+    
+    //
+    // Button down or right.
+    //
+    (is_vertical).if {
+      bx := 0;
+      by := y_max - 15;
+    } else {
+      bx := x_max - 15;
+      by := 0;
+    };
+    epsi := 0;
+    draw_border_in bx,by to (bx+15),(by+15);
+    ((stat & 1000b) = 0).if {
+      // Off
+      draw_border_out (bx+1),(by+1) to (bx+14),(by+14);
+      rectangle_fill  (bx+2),(by+2) to (bx+13),(by+13) color color_back; 
+    } else {
+      // On
+      epsi := 1;
+      rectangle_fill (bx+1),(by+1) to (bx+14),(by+14) color color_back; 
+    };
+    ((stat & 0100b) = 0).if {
+      color black;
+    } else {
+      (stat = -1).if {
+	color color_dark;
+      } else {
+	color red;
+      };
+    };
+    (is_vertical).if {
+      poly_move_to (7 +epsi),(y_max-6+epsi);
+      poly_line_to (11+epsi),(y_max-10+epsi);
+      poly_line_to (3 +epsi),(y_max-10+epsi);
+    } else {
+      poly_move_to (bx+ 6+epsi),(by+ 3+epsi);
+      poly_line_to (bx+10+epsi),(by+ 7+epsi);
+      poly_line_to (bx+ 6+epsi),(by+11+epsi);
+    };
+    poly_trace;
+  );
+  
+
+
+
+
+

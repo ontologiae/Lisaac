@@ -36,12 +36,13 @@ section MAPPING
   
 section PUBLIC
   
-  - color col:UINTEGER <-
+  - color col:UINTEGER :UINTEGER <-
   (
     alpha := ((col & 0FF000000h) >> 24).to_usmallint;
     red   := ((col & 000FF0000h) >> 16).to_usmallint;
     green := ((col & 00000FF00h) >>  8).to_usmallint;
     blue  :=  (col & 0000000FFh).to_usmallint;    
+    col
   );
   
   - color_rgb r,g,b:USMALLINT <-

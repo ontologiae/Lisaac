@@ -5,7 +5,6 @@
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
 *                          http://www.IsaacOS.com                          *
 ***************************************************************************/
-
 section HEADER
   
   - name        :=ABSTRACT_STRING -> STRING;
@@ -177,7 +176,7 @@ section PUBLIC
   
   - index_of ch:CHARACTER since start_index:INTEGER :INTEGER <-
   // Index of first occurrence of `c' at or after `start_index',
-  // 0 if none.
+  // result = count + 1, if none.
   ( + result:INTEGER;
     ? { start_index.in_range 1 to (count + 1)};
     
@@ -186,11 +185,23 @@ section PUBLIC
     {(result > count) || {ch = item result}}.until_do {
       result := result + 1;
     };
-    (result > count).if {
-      result := 0;
-    };
+        
+    result
+  );
+  
+  - last_index_of ch:CHARACTER since start_index:INTEGER :INTEGER <-
+  // Index of first occurrence of `c' at or before `start_index',
+  // 0 if none.
+  ( + result:INTEGER;
+    ? {start_index.in_range 0 to upper};
     
-    ? { (result != 0) ->> {item result == ch}};    
+    result := start_index;
+    
+    {(result < lower) || {ch = item result}}.until_do {
+      result := result - 1;
+    };
+        
+    ? {(result != 0) ->> {item result == ch}};    
     result
   );
   
@@ -213,8 +224,9 @@ section PUBLIC
   // Gives the index of the last occurrence `ch' or
   // 0 if none.
   (+ result:INTEGER;
-    result := 1 + storage.fast_reverse_index_of ch from upper;    
-    ?	{(result != 0) ->> {item result = ch}};    
+    result := 1 + storage.fast_reverse_index_of ch from (upper-1);    
+    
+    ? {(result != 0) ->> {item result = ch}};    
     result
   );
     
@@ -453,7 +465,65 @@ section PUBLIC
     result
   );
   
-   - is_real_16_16:BOOLEAN <-
+  - is_hexadecimal :BOOLEAN <-
+  ( + j:INTEGER;
+    + result:BOOLEAN;
+    (is_empty).if_false {
+      j := lower;
+      {(j > upper) || {! item j.is_hexadecimal_digit}}.until_do {
+	j:=j+1;
+      };
+      result := j > upper;
+    };
+    result
+  );
+
+  - to_hexadecimal :LONGINT <-
+  ( + result:LONGINT;
+    ? {is_hexadecimal};
+    lower.to upper do { j:INTEGER;
+      result := (result << 4) | item j.hexadecimal_value;
+    };
+    result
+  );
+
+  - is_octal :BOOLEAN <-
+  ( + result:BOOLEAN;
+    + j:INTEGER;
+    (is_empty).if_false {        
+      j := lower;
+      {(j > upper) || {! item j.is_octal_digit}}.until_do {
+	j:=j+1;
+      };
+      result:= j > upper;
+    };
+    result
+  );
+
+  - to_octal:LONGINT <-
+  ( + result:LONGINT;
+    ? {is_octal};
+    
+    lower.to upper do { j:INTEGER;
+      result := (result << 3) | item j.octal_value;
+    };
+    result
+  );
+
+  - to_binary :LONGINT <-
+  ( + result:LONGINT;
+    ? {is_bit};
+    
+    lower.to upper do { j:INTEGER;
+      result := result << 1;
+      (item j = '1').if {
+	result := result | 1;
+      };
+    };
+    result
+  );
+  
+  - is_real_16_16:BOOLEAN <-
   // Does self represent an REAl_16_16 ?
   // `Result' is true if and only if the following two conditions hold:
   //
@@ -767,7 +837,7 @@ section PUBLIC
   - split_in words:COLLECTION[STRING] <-
   // Same jobs as `split' but result is appended in `words'.
   (
-    + state,i,old_count: INTEGER;
+    + state,old_count: INTEGER;
     // state = 0: waiting next word.
     // state = 1: inside a new word.
     + c: CHARACTER;
@@ -775,27 +845,25 @@ section PUBLIC
     ? { words != NULL};
     old_count := words.count;
     ( count > 0 ).if {
-      i := 1;
-      { i > count}.until_do {
+      1.to upper do { i:INTEGER;
 	c := item i;
 	(state == 0).if {
 	  (! c.is_separator).if {
 	    string_buffer.clear;
 	    string_buffer.append_character c;
 	    state := 1;
-	  } else {
-	    (! c.is_separator).if {
-	      string_buffer.append_character c;
-	    } else {
-	      words.add_last (string_buffer.clone);
-	      state := 0;
-	    };
 	  };
-	  i := i + 1;
+	} else {
+	  (! c.is_separator).if {
+	    string_buffer.append_character c;
+	  } else {
+	    words.add_last (string_buffer.twin);
+	    state := 0;
+	  };
 	};
       };
       ( state == 1).if {
-	words.add_last (string_buffer.clone);
+	words.add_last (string_buffer.twin);
       };
     };
     

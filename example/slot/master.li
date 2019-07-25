@@ -6,6 +6,25 @@
 *                          http://www.IsaacOS.com                          *
 ***************************************************************************/
 
+/*
+Copyright (C) 2005  Benoit Sonntag
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+
+You should have received a copy of the GNU Library General Public
+License along with this library; if not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+Boston, MA  02110-1301, USA.
+*/
+
 section HEADER
   
   + name        := MASTER; // MASTER can to be clonable.
@@ -99,51 +118,51 @@ section PRIVATE
   
   - display <-  
   (
-    "+========+======+======+======+\n\
-    \|  ".print;
+    "+========+==============+======+======+======+\n\
+    \|".print;
     name.print;
-    "  |  -   |  +   |  *   |\n\
-    \+========+======+======+======+\n".print;
+    "|   Evaluate   |  -   |  +   |  *   |\n\
+    \+========+==============+======+======+======+\n".print;
 
     // Parent.
-    "| parent | ".print;
+    "| Parent | parent.value | ".print;
     parent_value_minus.to_string_format 4.print;
     " | ".print;
     parent_value_plus.to_string_format 4.print;
     " | ".print;
     parent_value_star.to_string_format 4.print;
     " |\n\  
-    \+--------+------+------+------+\n".print;
+    \+--------+--------------+------+------+------+\n".print;
 
     // Global.
-    "| global | ".print;
+    "| Global | global.value | ".print;
     (global_minus = NULL).if { "NULL".print; } else { global_minus.value.to_string_format 4.print; };
     " | ".print;
     (global_plus  = NULL).if { "NULL".print; } else { global_plus .value.to_string_format 4.print; };
     " | ".print;
     (global_star  = NULL).if { "NULL".print; } else { global_star .value.to_string_format 4.print; };
     " |\n\
-    \+--------+------+------+------+\n".print;
+    \+--------+--------------+------+------+------+\n".print;
     
     // Method.
-    "| method | ".print;
+    "| Method | method  2,3  | ".print;
     method_minus 2, 3.to_string_format 4.print;
     " | ".print;
     method_plus  2, 3.to_string_format 4.print;
     " | ".print;
-    "NAN.".print;
+    "XXXX".print;
     " |\n\  
-    \+--------+------+------+------+\n".print;
+    \+--------+--------------+------+------+------+\n".print;
 
     // Local.
-    "| local  | ".print;
+    "| Local  | value        | ".print;
     local_minus.to_string_format 4.print;
     " | ".print;
     local_plus.to_string_format 4.print;
     " | ".print;
     local_star.to_string_format 4.print;
     " |\n".print;
-    "+========+======+======+======+\n\n".print;
+    "+========+==============+======+======+======+\n\n".print;
   );  
   
   //
@@ -168,78 +187,102 @@ section PUBLIC
   - make <-
   ( + copy:SELF;
     
-    "Example with -/+/* slot declaration:\n\
+    "\nExample with -/+/* slot declaration:\n\
     \====================================\n\n".print;
+    "In this example, '#' represent either '-' , '+' or '*'\n\n".print;
     
-    "Source declaration:\n\
-    \-------------------\n".print;
+    "Object PARENT:                           |   Object OBJ:                      \n\
+    \-------------------                      |   -------------------              \n\
+    \SECTION PUBLIC                           |   SECTION PUBLIC                   \n\
+    \  + value:INTEGER;                       |     + value:INTEGER;               \n\
+    \                                         |                                    \n\
+    \  - set_value new:INTEGER <-             |     - set_value new:INTEGER <-     \n\
+    \    (                                    |       (                            \n\
+    \       value := new;                     |          value := new;             \n\
+    \    );                                   |       );                           \n\n".print;
     
-    "Parent slot declaration:\n".print;
-    "  X parent:PARENT\n".print;
-    "Global data slot declaration:\n".print;
-    "  X global:OBJ\n".print;
-    "Method slot declaration (call `method 2 and 3'):\n".print;
-    "  X method x,y:INTEGER :INTEGER <- (x + y);\n".print;
-    "Local slot declaration:\n".print;
-    "  ( X local:OBJ;           \n\
-    \                           \n\
-    \    (local = NULL).if {    \n\
-    \      local := OBJ.clone;  \n\
-    \      local.set_value 100; \n\
-    \    } else {               \n\
-    \      local.set_value (local.value + 1); \n\
-    \    };                     \n\
-    \                           \n\
-    \    local.value            \n\
-    \  )                        \n".print;
+    
+    "Object EXAMPLE:     \n\
+    \------------------- \n".print;    
+    
+    "SECTION INHERIT     \n\
+    \  # parent:PARENT;                    // Parent slot declaration \n\n".print;
+    
+    "SECTION PUBLIC      \n\
+    \  # global:OBJ;                       // Global data slot declaration \n\n".print;
+    
+    "  # method x,y:INTEGER :INTEGER <-    // Method slot declaration  \n\
+    \    (                                                             \n\
+    \       x + y                                                      \n\
+    \    ); \n\n".print;
+	
+    "  - value:INTEGER <-                                              \n\
+    \    (  # local:OBJ;                    // Local slot declaration  \n\
+    \       (local = NULL).if {                                        \n\
+    \         local := OBJ.clone;                                      \n\
+    \         local.set_value 100;                                     \n\
+    \       } else {                                                   \n\
+    \         local.set_value (local.value + 1);                       \n\
+    \       };                                                         \n\
+    \                                                                  \n\
+    \    local.value                                                   \n\
+    \  ); \n\n".print;
     
     press_key;
     
-    name := "SELF";
+    name := "ORIGINAL";
     copy := clone;
-    copy.set_name "COPY";
+    copy.set_name "  COPY  ";
     
-    "Default value for two objects (SELF and COPY):\n\
-    \----------------------------------------------\n".print;    
-    self.display;    
+    "************************\n\
+    \***   MAIN PROGRAM   ***\n\
+    \************************\n\n".print; 
+    "Definition of an EXAMPLE object named 'original' \n\n".print;
+    self.display; 
+    
+    "Definition of an EXAMPLE object named 'copy' \n\
+    \  ---> copy := self.clone; \n\n".print;
     copy.display;
-    "Rmq.: The `*' declaration slots are never with `NULL' value.\n".print;     
+    "!!!!! The `*' declaration slots are never with `NULL' value.\n\n".print;     
     press_key;
     
     //
     // LOCAL.
     //
     
-    "LOCAL SLOTS:\n\
-    \------------\n".print;    
+    "==============\n\
+    \= LOCAL SLOT =\n\
+    \==============\n\n".print;    
  
-    "Display SELF object:\n".print;
+    " Display ORIGINAL object \n\n".print;
     self.display;
-    "Rmq.: The `-' local slot have a persistant value.\n".print;    
+    "!!!!! The `-' local slot have a persistant value.\n\n".print;    
     press_key;
     
-    "Display COPY object:\n".print;
+    " Display COPY object \n\n".print;
     copy.display;
-    "Rmq.: The `-' local slot is shared with SELF object.\n".print;
+    "!!!!! The `-' local slot is shared with ORIGINAL object.\n\n".print;
     press_key;
     
     //
     // PARENT.
     //
     
-    "PARENT SLOTS:\n\
-    \-------------\n".print;    
+    "===============\n\
+    \= PARENT SLOT =\n\
+    \===============\n\n".print;
         
-    "`SELF.parent.value := 1' :\n".print;
+    " ---> ORIGINAL.parent.set_value 1\n\n".print;
     parent_value_minus := 1;
     parent_value_plus  := 1;
     parent_value_star  := 1;
     self.display;
     copy.display;
-    "Rmq.: The `-' or '+' parent object is shared with COPY object.\n".print;
+    "!!!!! The `-' or '+' parent object is shared with COPY object.\n\n".print;
     press_key;
 
-    "`SELF.parent := PARENT.clone' and `SELF.parent.value := 2' :\n".print;
+    " ---> ORIGINAL.parent := PARENT.clone \n\
+    \ ---> ORIGINAL.parent.set_value 2\n\n".print;
     parent_minus := PARENT_MINUS.clone;
     parent_plus  := PARENT_PLUS.clone;
     parent_value_minus := 2;
@@ -247,37 +290,39 @@ section PUBLIC
     parent_value_star  := 2;
     self.display;
     copy.display;
-    "Rmq.: The `-' parent slot is always shared with COPY object.\n".print;
+    "!!!!! The `-' parent slot is always shared with COPY object.\n\n".print;
     press_key;
     
     //
     // GLOBAL.
     //
     
-    "GLOBAL SLOTS:\n\
-    \-------------\n".print;    
+    "===============\n\
+    \= GLOBAL SLOT =\n\
+    \===============\n\n".print;
         
-    "`SELF.global := OBJ.clone':\n".print;
+    " ---> ORIGINAL.global := OBJ.clone\n\n".print;
     global_minus := OBJ.clone;
     global_plus  := OBJ.clone;
     self.display;
     copy.display;
-    "Rmq.: The `-' global data slot is shared with COPY object.\n".print;
+    "!!!!! The `-' global data slot is shared with COPY object.\n\n".print;
     press_key;
 
     //
-    // GLOBAL.
+    // METHOD.
     //
     
-    "METHOD SLOTS:\n\
-    \-------------\n".print;    
+   "===============\n\
+   \= GLOBAL SLOT =\n\
+   \===============\n\n".print;
         
-    "`SELF.method <- ( x,y:INTEGER; x * y)':\n".print;
+    " ---> ORIGINAL.method <- ( x,y:INTEGER; x * y)\n\n".print;
     method_minus <- ( x,y:INTEGER; x * y);
     method_plus  <- ( x,y:INTEGER; x * y);
     self.display;
     copy.display;
-    "Rmq.: The `-' method slot is shared with COPY object.\n".print;
+    "!!!!! The `-' method slot is shared with COPY object.\n\n".print;
     press_key;
     
   );

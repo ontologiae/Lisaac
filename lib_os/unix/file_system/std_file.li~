@@ -1,0 +1,75 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        :=STD_FILE;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  
+  - author      :="Benoit Sonntag (bsonntag@loria.fr)";
+  
+  - comment     :="File management";
+    
+section INHERIT
+  
+  * parent_abstract_file:ABSTRACT_FILE;
+  
+section PRIVATE  
+  
+  + stream:POINTER; // Unix file pointer (FILE *).
+
+section PUBLIC
+    
+  //
+  // Physical implementation.
+  //
+  
+  - physical_open:BOOLEAN <-
+  ( + path_pointer:NATIVE_ARRAY[CHARACTER];
+    ? { name != NULL};    
+    path_pointer := path.to_external;
+    stream := `fopen((char*)@path_pointer,"r+b")`:(POINTER); 
+    stream != NULL
+  ); 
+    
+  - basic_seek pos:NUMERIC :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( + str:POINTER;
+    ? {is_open};
+    ? {stream != NULL};
+    str := stream;    
+    `fseek((FILE*)(@str),@pos,SEEK_SET)`:(INTEGER)
+  );
+  
+  - basic_read buf:NATIVE_ARRAY[USMALLINT] size s:NUMERIC :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( + str:POINTER;
+    ? {is_open};
+    str := stream;    
+    `fread((void *)(@buf),(size_t)(1), (size_t)(@s),(FILE*)(@str))`:(INTEGER)
+  );
+  
+  - basic_write buf:NATIVE_ARRAY[USMALLINT] size s:NUMERIC :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( + str:POINTER;
+    ? {is_open};
+    str := stream;      
+    `fwrite((void *)(@buf),(size_t)(1), (size_t)(@s),(FILE*)(@str))`:(INTEGER)
+  );
+  
+  - basic_close:BOOLEAN <-
+  ( + str:POINTER;
+    str := stream;
+    stream := NULL;
+    `fclose((FILE*)(@str))`:(INTEGER) = 0
+  );
+
+  

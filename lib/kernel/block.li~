@@ -1,0 +1,105 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  - name        :=BLOCK;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Block instruction library { ... } .";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+    
+  //
+  // Conditional :
+  //
+  
+  - '||' left 10 other:BLOCK :BOOLEAN <-
+  (
+    value || other
+  );
+  
+  - '&&' left 20 other:BLOCK :BOOLEAN <-
+  (
+    value && other
+  );
+  
+  //
+  // Loop :
+  //
+  
+  - while_do body:BLOCK <-
+  ( //? {body!=NULL};
+    
+    value.if {
+      body.value;
+      while_do body;
+    };
+  );
+  
+  - do_while test:BLOCK <-
+  ( //? {test!=NULL};
+    
+    value;
+    test.value.if {
+      do_while test;
+    };
+  );
+  
+  - until_do body:BLOCK <-
+  ( // ? {body!=NULL};
+    
+    (! value).if {
+      body.value;
+      until_do body;
+    };
+  );
+  
+  - do_until test:BLOCK <-
+  ( //? {test!=NULL};
+    
+    value;
+    (! test.value).if {
+      do_until test;
+    };
+  );
+  
+  //
+  // Debug: Require / Ensure / Check
+  //
+  
+  - '?' <-
+  (
+    (is_debug_mode && {! value}).if {
+//      VIDEO.is_active.if {
+//	VIDEO.close;
+//      };
+      check_crash; 
+    };
+  );
+  
+  - '??':BOOLEAN <-
+  ( + result:BOOLEAN;
+    result := ! value;
+    
+    result.if {"\nAssertion violated\n".print;};
+    result
+  );
+  
+  - '!' <-
+  // 'is_debug_mode' is True, then execute block.
+  (
+    is_debug_mode.if { value; };
+  );

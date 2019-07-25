@@ -1,0 +1,78 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//                               Lisaac Library                               //
+//                                                                            //
+//                        LORIA - UHP - INRIA - FRANCE                        //
+//               (c) INRIA (see `licence.txt' for more details)               //
+//                     Benoit SONNTAG - bsonntag@loria.fr                     //
+//                     Jerome BOUTET  - boutet@loria.fr                       //
+//                           http://www.IsaacOS.com                           //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
+Section Header
+  
+  + name        := MASTER;
+  
+  - category    := MACRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "The first program.";
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Private  
+  
+  + root:NODE_COMPOSITE;
+  
+Section Public  
+
+  - make <-
+  ( + file:NODE;
+    + dir,dir2:NODE_COMPOSITE;
+    
+    root := NODE_COMPOSITE.create "Root";
+
+    dir := NODE_COMPOSITE.create "Directory";
+    root.add dir;
+    
+    file := NODE.create "SubFile1";
+    dir.add file;
+    file := NODE.create "SubFile2";
+    dir.add file;
+    file := NODE.create "SubFile3";
+    dir.add file;
+    
+    dir2 := NODE_COMPOSITE.create "SubDirectory";
+    dir.add dir2;
+    
+    file := NODE.create "SubSubFile1";
+    dir2.add file;
+    file := NODE.create "SubSubFile2";
+    dir2.add file;
+    
+    file := NODE.create "File1";
+    root.add file;
+    file := NODE.create "File2";
+    root.add file;
+    
+    root.print;
+  );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

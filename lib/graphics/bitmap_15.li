@@ -49,7 +49,6 @@ section PUBLIC
   (
     width  := w;
     height := h;
-    bytes_per_line:=(w * PIXEL_15.size + 7)>>3;
     image := FIXED_ARRAY[BMP_LINE].create h;
     0.to (image.upper) do { y:INTEGER;
       image.put (BMP_LINE_15.create w) to y;

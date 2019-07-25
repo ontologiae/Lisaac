@@ -1,0 +1,110 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := GUI_CHECK;
+  
+  - comment     := "Check.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_item:ITEM;
+    
+section PUBLIC  
+  
+  - is_check:BOOLEAN <- (stat & 10b) != 0;
+  
+  //
+  // Creation.
+  //
+  
+  - create_in f:AREA at x,y:INTEGER label txt:ABSTRACT_STRING action a:INBOX :SELF <-
+  ( + result:SELF;
+    + len:INTEGER;
+    
+    len := font_width txt + 20;
+    result:=clone;
+    result.make_in f at x,y size len,16 label txt action a;
+    
+    result
+  );
+  
+  - set_on <-
+  (
+    set_stat 10b;
+  );
+  
+  - set_off <-
+  (
+    set_stat 00b;
+  );
+  
+  
+  //
+  // Action.
+  // 
+  
+  - receive msg:EVENT <-
+  (
+    receive_on_off msg;
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  (     
+    clipping x0,y0 to x1,y1;
+    
+    rectangle 0,0 to 15,15 color color_back;
+    // Case
+    color color_dark;
+    move_to 1,14;
+    line_v_until 1;
+    line_h_until 14;
+    color color_light;
+    line_v_until 14;
+    line_h_until 1;
+    
+    rectangle_fill 2,2 to 13,13 color color_back_light; 
+    rectangle_fill 16,0 to x_max,y_max color color_back;
+    ((stat & 10b) != 0).if {
+      color black;
+      line  3,3 to 12,12;
+      line  3,4 to 11,12;
+      line  4,3 to 12,11;
+      
+      line 12,3 to  3,12;
+      line 11,3 to  3,11;
+      line 12,4 to  4,12;
+    };
+    
+    (stat = -1).if { 
+      color color_dark;  
+    }.elseif {(stat & 01b) = 0} then {
+      color black;
+    } else {
+      color red;
+    };
+    print name to 19,0; 
+  );
+  
+
+
+
+
+

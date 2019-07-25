@@ -5,7 +5,6 @@
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
 *                          http://www.IsaacOS.com                          *
 ***************************************************************************/
-
 section HEADER
   
   + name        :=STRING;
@@ -39,7 +38,7 @@ section PUBLIC
   // Creation / Modification :
   //
   
-  - create needed_capacity:INTEGER :SELF <-
+  - create needed_capacity:NUMERIC :SELF <-
   (
     + result:SELF;
     result := STRING.clone;
@@ -54,7 +53,7 @@ section PUBLIC
     result
   );
   
-  - make needed_capacity:INTEGER <-
+  - make needed_capacity:NUMERIC <-
   // Initialize the string to have at least `needed_capacity'
   // characters of storage.
   ( ? {needed_capacity >= 0};
@@ -534,7 +533,7 @@ section PUBLIC
     + old_count:INTEGER;
     ? { n >= 0};
     old_count := count;
-    n.downto 0 do { i:INTEGER; 
+    (n - 1).downto 0 do { i:INTEGER; 
       append_character c;
     };
     
@@ -547,8 +546,8 @@ section PUBLIC
     + old_count:INTEGER;
     
     ? { n >= 0 };
+    old_count := count;
     (n > 0).if {
-      old_count := count;
       (old_count == 0).if {
 	extend_multiple c by n;
       } else {
@@ -690,15 +689,17 @@ section PUBLIC
   // is not part of the Eiffel STRING.
   // Also consider `from_external_copy' to choose the most appropriate.
   ( ? {p.is_not_null};
-
-    storage := p;
+    
     count := 0;
-    {storage.item count = '\0'}.until_do {
+    {p.item count = '\0'}.until_do {
       count := count + 1;
     };
-    capacity := count + 1;
+    (storage != p).if {
+      storage := p;
+      capacity := count + 1;
+    };
     
-    ? {capacity = (count + 1)};
+    ? {capacity >= (count + 1)};
     ? {p = to_external};
   );
   

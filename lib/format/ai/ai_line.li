@@ -1,0 +1,76 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac                                        *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+section HEADER
+
+  + name    := AI_LINE;
+  
+  - category:= MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Operation: line.";
+
+  - version :="1.0";  
+  - date    :="2003/04";
+  
+section INHERIT
+  
+  - parent_ai_operation:AI_OPERATION := AI_OPERATION;
+  
+section PUBLIC
+  
+  + x:REAL_16_16;  
+  + y:REAL_16_16;
+  
+  //
+  // Creation.
+  //
+  
+  - create lx,ly:REAL_16_16 :SELF <-
+  ( + result:SELF;
+    result := SELF.clone;
+    result.make lx,ly;
+    result
+  );
+  
+  - make lx,ly:REAL_16_16 <-
+  (
+    x := lx;
+    y := ly;
+  );
+  
+  //
+  // Draw.
+  //
+  
+  - draw_stroke b:BITMAP scale s:REAL_16_16 <-
+  (
+    b.line_to ((x * s).rounded),((y * s).rounded);
+  );
+
+  - draw_fill b:BITMAP scale s:REAL_16_16 <-
+  (
+    b.poly_line_to ((x * s).rounded),((y * s).rounded);
+  );
+  
+  //
+  // Display.
+  //
+  
+  - display <-
+  (
+    "poly_line_to ".print;
+    (x *# 8).rounded.print;
+    ','.print;
+    (y *# 8).rounded.print;
+    ";\n".print;
+  );
+
+
+
+

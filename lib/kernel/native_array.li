@@ -5,7 +5,23 @@
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
 *                          http://www.IsaacOS.com                          *
 ***************************************************************************/
+/*
+Copyright (C) 2005  Benoit Sonntag
 
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
 section HEADER
  
   * name        :=NATIVE_ARRAY[E];
@@ -45,6 +61,8 @@ section PUBLIC
     result
   );
   
+  - create nb_elements:INTEGER :NATIVE_ARRAY[E] <- calloc nb_elements;
+  
   - calloc nb_elements:INTEGER :NATIVE_ARRAY[E] <-
   // Allocate a new array of `nb_elements' of type `E'.
   // The new array is initialized with default values.
@@ -71,6 +89,7 @@ section PUBLIC
     old_ptr := POINTER.force_conversion self;
     new_ptr := MEMORY.realloc old_ptr size (old_nb_elts * element_sizeof) to (new_nb_elts * element_sizeof);
     new := `(void*)@new_ptr`:NATIVE_ARRAY[E];
+    new.clear old_nb_elts to (new_nb_elts - 1);
     new
   );
   
@@ -94,6 +113,7 @@ section PUBLIC
   //
   
   - '+' left 80 other:NUMERIC :NATIVE_ARRAY[E] <- `@self+@other`:NATIVE_ARRAY[E];
+  // other is in element
   
   //
   // Comparison:

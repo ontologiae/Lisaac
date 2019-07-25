@@ -1,0 +1,121 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+section HEADER
+
+  - name    := INTERFACE;
+  
+  - category:=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="User Interface and Events managment.";
+
+  - version :="1.0";  
+  - date    :="2003/04";
+  
+section INHERIT  
+  
+  * parent_window:AREA;
+        
+section PUBLIC
+  
+  - screen:AREA; // Physical screen.
+  
+  - make bmp:BITMAP size w,h:INTEGER <-
+  (
+    set_video_support bmp;
+    screen := AREA.clone;
+    screen.make NULL from 0,0 size (bmp.width),(bmp.height);    
+    make screen from 0,0 size w,h;
+    EVENT_SYSTEM.make;
+    focus := self;
+  );
+
+  - make bmp:BITMAP <-
+  (
+    make bmp size (bmp.width),(bmp.height);    
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  (
+    clipping x0,y0 to x1,y1;
+    rectangle_fill 1,1 to (width-2),(height-2) color gray;
+    rectangle 0,0 to (width-1),(height-1) color white;    
+  );
+   
+  //
+  // Connect.
+  //    
+  
+  - connect_to obj:INPUT <-
+  (
+    obj.make;
+    obj.add_client self;
+  );
+  
+  - connect_all <-
+  (
+    connect_to MOUSE;
+    connect_to KEYBOARD;
+    connect_to TIMER;
+  );
+  
+  - focus:INBOX;
+  
+  - run <-
+  ( + msg:EVENT;    
+    + input:INPUT;
+        
+    {
+      EVENT_SYSTEM.get_event;
+      
+      {storage_message.is_empty}.until_do {
+	msg := storage_message.first;
+	storage_message.remove_first;
+	msg.set_destination focus;
+	focus.receive msg;	
+	input ?= msg.source;
+	input.acknowledge;
+      };      
+    }.do_while {`1`:BOOLEAN(TRUE,FALSE)}; // Infinity Loop 
+  );
+  
+  //
+  // Message Server.
+  //
+  
+section PRIVATE
+  
+  - storage_message:LINKED_LIST[EVENT] := LINKED_LIST[EVENT].create;
+  
+section PUBLIC  
+  
+  - receive msg:EVENT <-
+  ( + mouse:EVENT_MOUSE;
+    + win:AREA;
+    (msg.destination = NULL).if {
+      // Hardware Message.
+      storage_message.add_last msg;
+    } else {
+      // Other message.
+      mouse ?= msg;
+      (mouse != NULL).if {
+	win := get_object (mouse.x_current),(mouse.y_current);
+	(win != focus).if {
+	  focus := win;
+	  msg.set_destination focus;
+	  focus.receive msg;		  
+	};
+      };
+    };
+  );
+  

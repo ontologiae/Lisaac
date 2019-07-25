@@ -6,7 +6,6 @@
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
 *                          http://www.IsaacOS.com                          *
 ***************************************************************************/
-
 section HEADER
   
   - name        :=COLLECTION[E];
@@ -253,7 +252,7 @@ section PUBLIC
     
     old_count := count;
     
-    (other.lower).to (other.upper - 1) do { i:INTEGER; 	
+    (other.lower).to (other.upper) do { i:INTEGER; 	
       add_last (other.item i);
     }; // end do
     
@@ -552,18 +551,18 @@ section PUBLIC
     ? { valid_index (upper_index + distance) };
     
     old_count := count;
-    ( distance = 0 ).if {
-    }.elseif { distance < 0} then {
-      
-      lower_index.to upper_index do { i:INTEGER;
-	put (item i) to (i + distance);
-	put default_value to i;
-      }; // end do
-    } else {
-      upper_index.downto lower_index do { i:INTEGER;
-	put (item i) to (i + distance);
-	put default_value to i;
-      }; // end do
+    (distance != 0).if {
+      (distance < 0).if {      
+	lower_index.to upper_index do { i:INTEGER;
+	  put (item i) to (i + distance);
+	  put default_value to i;
+	}; // end do
+      } else {
+	upper_index.downto lower_index do { i:INTEGER;
+	  put (item i) to (i + distance);
+	  put default_value to i;
+	}; // end do
+      };
     }; // end if
     
     ? {count = old_count};

@@ -1,0 +1,101 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := BMP_LINE_ASCII;
+  
+  - comment     := "Bitmap line for text mode";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+
+section INHERIT
+  
+  * parent_bmp_line:BMP_LINE;
+  
+section PUBLIC
+  
+  + storage:MAP_NATIVE_ARRAY[PIXEL_ASCII];
+  
+  - get_storage:NATIVE_ARRAY[USMALLINT] <- NATIVE_ARRAY[USMALLINT].force_conversion storage;
+  
+  - make n:INTEGER <-
+  ( 
+    capacity := n;
+    upper    := n - 1;    
+    storage  := MAP_NATIVE_ARRAY[PIXEL_ASCII].calloc n;    
+  );
+  
+  - make_with_capacity n:INTEGER <-
+  (
+    capacity := n;
+    upper    := -1;
+    storage  := MAP_NATIVE_ARRAY[PIXEL_ASCII].calloc n;    
+  );
+  
+  - make n:INTEGER at offset:UINTEGER <-
+  ( 
+    capacity := n;
+    upper    := n - 1;    
+    storage  := MAP_NATIVE_ARRAY[PIXEL_ASCII].force_conversion offset;    
+  );
+
+section PUBLIC
+  
+  - pixel_geometry:PIXEL := PIXEL_ASCII;
+  
+  //
+  // Put.
+  //
+  
+  - put col:UINTEGER from idx_begin:INTEGER to idx_end:INTEGER <- 
+  ( ? {idx_begin<=idx_end};
+    ? {idx_begin>=0};
+    ? {idx_end.in_range 0 to upper};
+        
+    idx_begin.to idx_end do { n:INTEGER;
+      storage.item n.color col;
+    };
+  );
+  
+  - put bmp:BMP_LINE offset ofs:INTEGER from idx_begin:INTEGER to idx_end:INTEGER <-
+  ( + offset:INTEGER;
+    + pixel:PIXEL_ASCII;
+    ? {idx_begin <= idx_end};
+    ? {idx_begin >= 0};
+    ? {idx_end.in_range 0 to upper};
+    ? {ofs >= 0};
+    ? {(ofs + (idx_end - idx_begin)) <= bmp.upper}; 
+    offset := ofs;
+    idx_begin.to idx_end do { n:INTEGER;
+      pixel := bmp.item_ascii offset;
+      storage.item n.copy pixel;
+      offset := offset + 1;
+    };
+  );
+  
+  //
+  // Get.
+  //
+  
+  - item n:INTEGER :PIXEL <-
+  ( ? {n.in_range 0 to upper};
+    
+    storage.item n
+  );
+  
+  - print <-
+  (
+    0.to upper do { i:INTEGER;
+      item i.print;
+    };
+  );
+

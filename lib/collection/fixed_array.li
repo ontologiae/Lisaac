@@ -48,7 +48,7 @@ section PUBLIC
     result
   );
   
-  - create_with_native_array_byte na:NATIVE_ARRAY[USMALLINT] size s:INTEGER :SELF <-
+  - create_with_native_array_byte na:NATIVE_ARRAY[USMALLINT] size s:NUMERIC :SELF <-
   (
     + result:SELF;
     result := clone;
@@ -67,7 +67,7 @@ section PUBLIC
     ? {storage!=NULL};
   );
   
-  - make_with_native_array_byte na:NATIVE_ARRAY[USMALLINT] size s:INTEGER <-
+  - make_with_native_array_byte na:NATIVE_ARRAY[USMALLINT] size s:NUMERIC <-
   (
     ? {s > 0};
     ? {na != NULL};
@@ -109,7 +109,7 @@ section PUBLIC
       storage := NATIVE_ARRAY[E].calloc needed_capacity;
       capacity := needed_capacity;
     }.elseif { capacity > needed_capacity } then {
-      storage.clear 0 to upper;
+      storage.clear 0 to upper; // BSBS: Ca serre a quoi de le vider !
     }; // end if
     upper := -1;
     ? { capacity >= needed_capacity };
@@ -117,7 +117,20 @@ section PUBLIC
     
   ); // end with_capacity
   
+  //
+  // Hashable.
+  //
   
+  - hash_code:INTEGER <-
+  ( + result:INTEGER;
+    
+    is_empty.if {
+      result := 0;
+    } else {
+      result := last.hash_code;
+    };
+    result
+  );
   
   // Modification:
 
@@ -351,7 +364,7 @@ section PUBLIC
     upper := model.count - 1;
     i1 := 0;
     
-    (model.lower).to (modele.upper) do { i2:INTEGER;
+    (model.lower).to (model.upper) do { i2:INTEGER;
       storage.put (model.item i2) to i1;
       i1 := i1 + 1;
     }; // end do
@@ -507,7 +520,25 @@ section PUBLIC
     ? { upper = old_upper - 1}; 
   ); // end remove
   
-  
+  - remove beg:INTEGER to end:INTEGER <-
+  ( + s:INTEGER;
+    
+    (beg = end).if {
+      remove beg;
+    }.elseif {beg < end} then {
+      s := end - beg + 1;
+      move (end+1) to upper by (-s);
+      upper := upper - s;
+    };
+  );
+
+  - remove_since beg:INTEGER <-
+  ( ? {beg >= 0};
+    
+    (beg <= upper).if {      
+      upper := beg - 1; 
+    };
+  );
   
   - get_new_iterator: ITERATOR[E] <- 
   (

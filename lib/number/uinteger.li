@@ -43,7 +43,7 @@ section PUBLIC
   
   - to_ushortint:USHORTINT <- 
   ( 
-    ? {self <=# (USHORTINT.maximum)};
+    ? {self <=# 65535 /*(USHORTINT.maximum)*/};
     to_raw_ushortint
   );
   

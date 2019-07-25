@@ -1,0 +1,230 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := BOX;
+  
+  - comment     := "Box (window) plateform.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+section INHERIT
+  
+  * parent_window:WINDOW;
+  
+section PUBLIC
+  
+  + stat:INTEGER;
+  
+//  + is_reduce:BOOLEAN;
+  
+//  + is_close:BOOLEAN;
+  
+  + title:ABSTRACT_STRING;
+  
+  + title_len:INTEGER;
+  
+  - create father:WINDOW from x0,y0:INTEGER size w,h:INTEGER title t:ABSTRACT_STRING :BOX <-
+  ( + result:SELF;
+    
+    result:=clone;
+    result.make father from x0,y0 size w,h title t;
+    
+    result
+  );
+  
+  - make father:WINDOW from x0,y0:INTEGER size w,h:INTEGER title t:ABSTRACT_STRING <-
+  (
+    title := t;    
+    title_len := BITMAP.font_width title + 2; //+ 25;
+    make father from x0,y0 size w,h;
+    //BOX_CANCEL.create_in self from 2,2 size 12,12;
+    //BOX_REDUCE.create_in self from 14,2 size 12,12;
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  (
+
+    clipping x0,y0 to x1,y1;    
+    
+    color 646496h;
+    line_v 0,15 until 0;
+    line_h_until (title_len+1);
+    line_to (title_len+1+15),15;
+        
+    // Border out.
+    rectangle 0,16 to x_max,y_max color black;
+    
+    // Border in.
+    line_v 3,(y_max-3) until 19 color 444476h;
+    line_h_until (x_max-3);
+    line_v_until (y_max-3) color 0C8C8FFh;
+    line_h_until 3;
+    
+    // Border gray.
+    rectangle 1,17 to (x_max-1),(y_max-1) color 646496h;
+    rectangle 2,18 to (x_max-2),(y_max-2);
+    
+    // Title background.
+    color 0C8C8FFh;
+    poly_move_to 1,1;
+    poly_line_to (title_len+1),1;
+    poly_line_to (title_len+15),15;
+    poly_line_to 1,15;
+    poly_trace;
+    
+    // Title.
+    (stat = 0).if {
+      color black;
+    } else {
+      color red;
+    };
+    //print title to (2+25),(-1);    
+    print title to 3,(-1);
+  );
+
+  - slave_pixel_hard x,y:INTEGER color col:UINTEGER <- 
+  ( 
+    ( ((y<16) && {x>(title_len+1+y)}) || 
+    { (y.in_range 20 to (y_max-4)) && {x.in_range 4 to (x_max-4)}} ).if {
+      pixel_hard x,y color col;
+    };
+  );
+  
+  - slave_line_h_hard x1,y:INTEGER until x2:INTEGER color col:UINTEGER <- 
+  ( + new_x1,new_x2:INTEGER;
+    
+    ((y<16) && {x2>(title_len+1+y)}).if {
+      new_x1:=x1.max (title_len+2+y);
+      line_h_hard new_x1,y until x2 color col;
+    }.elseif {(y.in_range 20 to (y_max-4)) && {x1<(x_max-3)} && {x2>3}} then {
+      new_x1:=x1.max 4;
+      new_x2:=x2.min (x_max-4);
+      line_h_hard new_x1,y until new_x2 color col;
+    };
+  );
+
+  - slave_line_h_hard x1,y:INTEGER until x2:INTEGER image line:BMP_LINE offset ofs:INTEGER <-
+  ( + new_x1,new_x2,new_ofs:INTEGER;
+    
+    ((y<16) && {x2>(title_len+1+y)}).if {
+      new_x1  := x1.max (title_len+2+y);
+      new_ofs := ofs + new_x1 - x1;
+      line_h_hard new_x1,y until x2 image line offset new_ofs;
+    }.elseif {(y.in_range 20 to (y_max-4)) && {x1<(x_max-3)} && {x2>3}} then {
+      new_x1  := x1.max 4;
+      new_x2  := x2.min (x_max-4);
+      new_ofs := ofs + new_x1 - x1;
+      line_h_hard new_x1,y until new_x2 image line offset new_ofs;
+    };
+  );
+
+  //
+  // Event.
+  //
+  
+  - get_object x,y:INTEGER :WINDOW <-
+  ( + result:WINDOW;
+    + rel_x,rel_y:INTEGER;
+    
+    result := parent_window.get_object x,y;
+    (result=self).if {
+      rel_x := x - x_window;
+      rel_y := y - y_window;
+      ((rel_y<16) && {rel_x>(title_len+1+rel_y)}).if {
+	result := NULL;
+      };
+    };
+    result
+  );
+    
+  - receive msg:EVENT <-  
+  ( + evt_mouse:EVENT_MOUSE;
+    + win:WINDOW;
+    
+    evt_mouse ?= msg;
+    (evt_mouse != NULL).if { 
+      /*
+      is_reduce.if {
+	((evt_mouse.is_in) &&
+	{(get_y_window + y_max)>INTERFACE.screen.y_max} && {evt_mouse.x_relative>24}).if {
+	  // Window up. 
+	  move 0,(- y_max + 15);	
+	};
+	(
+	  (evt_mouse.is_out) &&
+	  {(get_y_window + y_max)<=INTERFACE.screen.y_max} &&
+	  {get_object (evt_mouse.x_current),(evt_mouse.y_current) = NULL}
+	).if {
+	  // Window down.
+	  move 0,(y_max - 15);
+	};	
+      } else {*/
+	((evt_mouse.is_moving_only) && {evt_mouse.left}).if {
+	  move (evt_mouse.dx),(evt_mouse.dy);
+	} else {
+	  win := INTERFACE.get_object (evt_mouse.x_current),(evt_mouse.y_current);
+	  (win != self).if {
+	    stat := 0;
+	    refresh;
+	    INTERFACE.receive msg;
+	  } else {
+	    (stat != 1).if {
+	      stat := 1;
+	      refresh;
+	    };
+	  };
+	};
+     // };
+    };
+  );
+  
+  //
+  // Message.
+  //
+  
+  - close <-
+  ( 
+    (is_reduce).if {
+      INTERFACE.screen.remove_bar self;
+    };
+    delete;
+  );
+  
+  + x_old:INTEGER;
+  
+  + y_old:INTEGER;
+  
+  - reduce <-
+  ( 
+    (is_reduce).if {
+      INTERFACE.screen.remove_bar self;  
+      set_position x_old,y_old;
+    } else {
+      x_old := get_x_window;
+      y_old := get_y_window;
+      INTERFACE.screen.add_bar self;      
+    };    
+    is_reduce := ! is_reduce;
+  );
+
+  - action who:OBJECT <-
+  (
+  );
+
+

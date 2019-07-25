@@ -25,6 +25,8 @@ section PRIVATE
   
   + storage:MAP_NATIVE_ARRAY[PIXEL_24];
   
+section PUBLIC  
+  
   - get_storage:NATIVE_ARRAY[USMALLINT] <- NATIVE_ARRAY[USMALLINT].force_conversion storage;
   
   - make n:INTEGER <-
@@ -41,6 +43,25 @@ section PRIVATE
     storage  := MAP_NATIVE_ARRAY[PIXEL_24].calloc n;    
   );
   
+  - set_capacity new_capacity:NUMERIC <-
+  // Resize capacity the array, but not count.
+  ( + old_capacity:INTEGER;
+    
+    ? {new_capacity >= 0};
+    
+    old_capacity := capacity;
+    (new_capacity > capacity).if {
+      (capacity = 0).if {
+	storage := MAP_NATIVE_ARRAY[PIXEL_24].calloc new_capacity;
+      } else {
+	storage := storage.realloc capacity with new_capacity;	
+      }; // end if
+      capacity := new_capacity;	
+    }; // end if        
+    
+    ? { capacity >= old_capacity };    
+  ); // end resize
+
   - make n:INTEGER at offset:UINTEGER <-
   ( 
     capacity := n;

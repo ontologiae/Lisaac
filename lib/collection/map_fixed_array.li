@@ -103,6 +103,25 @@ section PUBLIC
   // Modification
   //
   
+  - set_capacity new_capacity:NUMERIC <-
+  // Resize capacity the array, but not count.
+  ( + old_capacity:INTEGER;
+    
+    ? {new_capacity >= 0};
+    
+    old_capacity := capacity;
+    (new_capacity > capacity).if {
+      ( capacity = 0).if {
+	storage := MAP_NATIVE_ARRAY[E].calloc new_capacity;
+      } else {
+	storage := storage.realloc capacity with new_capacity;	
+      }; // end if
+      capacity := new_capacity;	
+    }; // end if        
+    
+    ? { capacity >= old_capacity };    
+  ); // end resize
+  
   - shift_right other:INTEGER <-
   // Shift right the beginning of the table
   (

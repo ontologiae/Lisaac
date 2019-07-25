@@ -36,7 +36,7 @@ section PUBLIC
     (red.to_uinteger << 16) | (green.to_uinteger << 8) | blue
   );
   
-  - color col:UINTEGER <- deferred;
+  - color col:UINTEGER :UINTEGER <- deferred;
   
   - color_rgb r,g,b:USMALLINT <- deferred;  // For speed conversion between pixels
   

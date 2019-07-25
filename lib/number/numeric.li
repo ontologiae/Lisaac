@@ -5,12 +5,12 @@
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
 *                          http://www.IsaacOS.com                          *
 ***************************************************************************/
-
 section HEADER
   
   - name        :=NUMERIC -> USMALLINT,  USHORTINT, UINTEGER,  ULONGINT,
                              SMALLINT,   SHORTINT,  INTEGER,   LONGINT,
-                             UREAL_26_6, REAL_24_8, REAL_16_16,ULARGEINT;
+                             UREAL_26_6, REAL_24_8, REAL_16_16,ULARGEINT,
+                             DOUBLE;
   
   - category    :=MICRO;
   
@@ -105,10 +105,12 @@ section PUBLIC
     (to_integer<<16).to_raw_real_16_16
   );
   
-  - to_ulargeint:ULARGEINT <-
+  - to_double:DOUBLE <-
   (
-    ULARGEINT.create self
+    to_raw_double
   );
+  
+  - to_ulargeint:ULARGEINT <- ULARGEINT.create self;
   
   - to_numeric:NUMERIC <- NUMERIC.force_conversion self;
   
@@ -261,6 +263,11 @@ section PUBLIC
     (self + a) & (~ a)
   );
   
+  - is_power_2:BOOLEAN <-
+  (
+    not_yet_implemented;
+  );
+  
   //
   // Looping.
   //
@@ -346,8 +353,8 @@ section PUBLIC
     result
   );
   
-  - fibonacci:INTEGER <-
-  ( + result:INTEGER;
+  - fibonacci:SELF <-
+  ( + result:SELF;
     ? {self >= 0};
     
     (self <= 1).if {
@@ -376,7 +383,7 @@ section PUBLIC
       result := other.gcd (self % other);
     };
     
-    ? {result == other.gcd self};
+ //   ? {result == other.gcd self};
     result
   );
   
@@ -431,7 +438,7 @@ section PUBLIC
     ? {to_string.count<=s};
     
     result := to_string;
-    result.precede_multiple ' ' by (s - result.count);
+    result.precede_multiple ' ' by ((s.to_integer) - result.count);
     
     ? {result.count == s};
     result
@@ -512,6 +519,18 @@ section PUBLIC
     result
   );
   
+  - to_hexadecimal_format s:INTEGER :STRING <-
+  // Convert the hexadecimal view of `self' into a new allocated
+  // STRING. For example, if `self' is -1 the new STRING is
+  // "FFFFFFFF" on a 32 bit machine.
+  // Note: see also `to_hexadecimal_in' to save memory.
+  ( + result:STRING;
+    
+    result := STRING.create 8;
+    to_hexadecimal_in result format s;
+    result
+  ); 
+  
   - to_hexadecimal_in buffer:STRING <-
   // Append in `buffer' the equivalent of `to_hexadecimal'. No new STRING
   // creation during the process.
@@ -536,7 +555,59 @@ section PUBLIC
       };
     };
   );
+  
+  - to_hexadecimal_in buffer:STRING format s:INTEGER <-
+  // Append in `buffer' the equivalent of `to_hexadecimal'. No new STRING
+  // creation during the process.
+  ( + val:SELF;
+    + i,old_count:INTEGER;
+    ? {buffer!=NULL};
+    
+    (self==0).if {
+      buffer.extend '0';
+    } else {
+      i := buffer.count + 1;
+      val := self;
+      {val != 0}.while_do { //JBJB 
+	buffer.extend ((val & 15).hexadecimal_digit);
+	val := val >> 4;
+      };
+      old_count := buffer.count;
+      {i >= old_count}.until_do {
+	buffer.swap i with old_count;
+	old_count := old_count - 1;
+	i := i + 1;
+      };
+    };
+    buffer.precede_multiple '0' by ((s.to_integer) - buffer.count);
+  ); 
 
+  - to_binary_in buffer:STRING format s:INTEGER <-
+  // Append in `buffer' the equivalent of `to_binary_string'. No new STRING
+  // creation during the process.
+  ( + val:SELF;
+    + i,old_count:INTEGER;
+    ? {buffer!=NULL};
+    
+    (self==0).if {
+      buffer.extend '0';
+    } else {
+      i := buffer.count + 1;
+      val := self;
+      {val != 0}.while_do { 
+	buffer.extend ('0' +# (val & 1));
+	val := val >> 1;
+      };
+      old_count := buffer.count;
+      {i >= old_count}.until_do {
+	buffer.swap i with old_count;
+	old_count := old_count - 1;
+	i := i + 1;
+      };
+    };
+    buffer.precede_multiple '0' by ((s.to_integer) - buffer.count);
+  ); 
+  
   //
   // Hashing:
   //
@@ -570,6 +641,8 @@ section NUMERIC, CHARACTER
   - to_raw_real_24_8:REAL_24_8   <- REAL_24_8.force_conversion self;
 
   - to_raw_real_16_16:REAL_16_16 <- REAL_16_16.force_conversion self;
+
+  - to_raw_double:DOUBLE <- DOUBLE.force_conversion self;
 
   //
   // Print

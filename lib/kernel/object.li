@@ -5,7 +5,6 @@
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
 *                          http://www.IsaacOS.com                          *
 ***************************************************************************/
-
 section HEADER
   
   - name        := OBJECT;
@@ -27,6 +26,7 @@ section PUBLIC
   - pointer_size:INTEGER <- POINTER.pointer_size;
 
   - is_debug_mode:BOOLEAN <- `50`;
+  //- is_debug_mode:BOOLEAN <- FALSE;  // For testing only call on NULL
   
   - is_ansi:BOOLEAN := SYSTEM.is_ansi;
   

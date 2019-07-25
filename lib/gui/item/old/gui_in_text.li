@@ -1,0 +1,252 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+/*
+Copyright (C) 2005  Benoit Sonntag
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+section HEADER
+  
+  + name        := GUI_IN_TEXT;
+  
+  - comment     := "Button plateform.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_item:ITEM;
+    
+section PUBLIC  
+  
+  + text:STRING;
+  
+  + cursor:INTEGER;
+  
+  //
+  // Creation.
+  //
+  
+  - create_in f:AREA at x,y:INTEGER width w:INTEGER label txt:ABSTRACT_STRING action a:INBOX :SELF <-
+  ( + result:SELF;
+        
+    result:=clone;
+    result.make_in f at x,y width w label txt action a;
+    
+    result
+  );
+  
+  - make_in f:AREA at x,y:INTEGER width w:INTEGER label txt:ABSTRACT_STRING action a:INBOX <-
+  (
+    text := STRING.create (w<<4);
+    make_in f at x,y size w,20 label txt action a;
+  );
+  
+  //
+  // Action.
+  // 
+  
+  - receive msg:EVENT <-
+  // 0 : Out
+  // 1 : in
+  // 2 : input
+  (
+    + mouse:EVENT_MOUSE;
+    + keyb:EVENT_KEYBOARD;
+    + win:AREA;    
+    + cmd:USMALLINT;
+    + key:CHARACTER;
+    
+    mouse ?= msg;
+    (mouse != NULL).if {
+      win := INTERFACE.get_object (mouse.x_current),(mouse.y_current);
+      stat
+      .when (-1) then {
+	(win != self).if {
+	  INTERFACE.receive msg;
+	};
+      }
+      .when 0 then {
+	(win = self).if {
+	  stat := 1;
+	  refresh;
+	} else {
+	  INTERFACE.receive msg;
+	};
+      }
+      .when 1 then {
+	(win = self).if {
+	  (mouse.left).if {
+	    stat := 2;
+	    cursor := what_letter (mouse.x_relative);
+	    refresh;
+	  };
+	} else {
+	  stat := 0;
+	  refresh;
+	};
+      }
+      .when 2 then {
+	(mouse.left).if {
+	  (win = self).if {
+	    cursor := what_letter (mouse.x_relative);
+	  } else {
+	    stat := 0;
+	    // Action.
+	    send action;
+	    INTERFACE.receive msg;
+	  };
+	  refresh;
+	};
+      };
+    };
+    
+    keyb ?= msg;
+    ((keyb != NULL) && {stat = 2}).if {
+      cmd := (keyb.key >> 8).to_usmallint;
+      key := (keyb.key & 0FFh).to_character;
+      ((cmd & 8) != 0).if {
+	key
+	// Enter
+	.when '\13\' then {
+	  stat := 0;
+	  refresh;
+	  // Action.
+	  send action;
+	  INTERFACE.receive msg;
+	}
+	// Move cursor.	
+	.when 'L' then { 
+	  (cursor != 0).if {
+	    cursor := cursor - 1;
+	  };
+	}
+	.when 'R' then {
+	  (cursor != text.count).if {
+	    cursor := cursor + 1;
+	  };
+	}
+	.when 'B' then {
+	  cursor := 0;
+	}
+	.when 'E' then {
+	  cursor := text.count;
+	}
+	// Suppr.
+	.when '\8\' then {
+	  (cursor != 0).if {
+	    text.remove cursor;
+	    cursor := cursor - 1;
+	  };
+	}
+	.when 'S' then {
+	  (cursor != text.count).if {
+	    text.remove (cursor+1);
+	  };
+	};
+      } else {
+	text.insert key to cursor;
+	cursor := cursor + 1;
+      };
+      refresh;
+    };
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  ( + len,len2,px:INTEGER;
+    
+    clipping x0,y0 to x1,y1;
+       
+    len := font_width name + 1;
+    color color_back;
+    rectangle_fill 0,0 to len,y_max;
+    (stat = -1).if {
+      color color_dark;
+    } else {
+      color black;
+    };
+    print name to 1,1;
+    
+    len := len + 1;
+    move_to len,y_max;
+    line_v_until 0;
+    line_h_until x_max;
+    color color_light;
+    line_v_until y_max;
+    line_h_until len;
+    
+    color color_back_light;
+    rectangle_fill (len+1),1 to (x_max-1),(y_max-1);
+    clipping (x0.max (len+1)),(y0.max 1) to (x1.min (x_max-1)),(y1.min (y_max-1));
+    
+    (stat = 0).if {    
+      color black;
+      print text to (len+2),1;
+    } else {
+      color red;
+      (stat = 2).if {
+	text.insert '|' to cursor;
+	len2 := font_width text size cursor;
+	(len2 > (x_max-len-3)).if {
+	  px := len+2 - (len2 - (x_max-len-3));
+	} else {
+	  px := len+2;
+	};
+	print text to px,1;
+	text.remove (cursor+1);
+      } else {
+	print text to (len+2),1;
+      };
+    };
+    
+  );
+  
+section PRIVATE
+  
+  // BSBS: Ca sert a rien d'approximer, parceque apres tu call font_width qui balai deja le string... 
+  
+  - what_letter pos_x:INTEGER :INTEGER <-
+  // Return cursor position under `pos_x' coord.
+  ( + result:INTEGER; 
+    + x,x_cur:INTEGER; // la position x de la souris moins la taille du label
+    
+    x := pos_x - (font_width name + 4); // 4 for border
+        
+    result := text.lower;    
+    {(result <= text.upper) && {x_cur < x}}.while_do {
+      x_cur := x_cur + font_width_letter (text.item result);
+      result := result + 1;
+    };
+        
+    result-1
+  );
+
+
+
+

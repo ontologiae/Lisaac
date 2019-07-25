@@ -39,19 +39,19 @@ section PUBLIC
   
   - minimum:INTEGER := 0;
   
-  - '==' other:CHAR_UNICODE :BOOLEAN <- (code == other.code);
-
+  //  - '==' other:CHAR_UNICODE :BOOLEAN <- (code == other.code); BSBS=> JBJB A revoir
+/* BSBS: JBJB a revoir ??
   - code:USHORTINT <-
   // Unicode code of Current.
   ( + result:USHORTINT;
     result:=to_ushortint;
     result
   );
-  
+*/  
   - to_ushortint:USHORTINT <- USHORTINT.force_conversion self;
   // Auto-cast
   
-  - print <- to_ushortint.print;
+  //  - print <- to_ushortint.print; BSBS-> JBJB a revoir !!
   
   - to_integer:INTEGER <-
   // Sign-extended conversion.

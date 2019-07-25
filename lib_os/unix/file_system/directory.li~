@@ -1,0 +1,105 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        :=DIRECTORY;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  
+  - author      :="Benoit Sonntag (bsonntag@loria.fr)";
+  
+  - comment     :="Directory management";
+  
+  - external := 
+`
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+`;
+  
+section INHERIT
+  
+  * parent_abstract_directory:ABSTRACT_DIRECTORY;
+  
+section PRIVATE  
+  
+  //
+  // Physical implementation.
+  //
+  
+  //
+  // Scanning
+  //
+      
+  - physical_refresh:BOOLEAN <-
+  ( + p,n:NATIVE_ARRAY[CHARACTER];
+    + dir,dirent:POINTER;
+    + new_entry:ENTRY;
+    + result:BOOLEAN;
+    + i:INTEGER;
+    
+    list.clear;
+    p := path.to_external;
+    dir := `opendir(@p)`:POINTER;
+    (dir != NULL).if {
+      result := TRUE;
+      {
+	dirent := `readdir(@dir)`:POINTER;
+	(dirent != NULL).if {
+	  n := `((struct dirent *)@dirent)->d_name`:NATIVE_ARRAY[CHARACTER];	
+	  string_tmp.clear;
+	  i := 0;
+	  {n.item i = '\0'}.until_do { 
+	    string_tmp.add_last (n.item i);
+	    i := i + 1;
+	  };
+	  (string_tmp !== ".".to_string).if {
+	    string_tmp.add_first '/';
+	    string_tmp.prepend path;
+	    reduce_path string_tmp;
+	    new_entry := get_entry string_tmp;
+	    (new_entry = NULL).if {
+	      result := FALSE;
+	    } else {
+	      (new_entry.path.count < path.count).if {
+		parent := new_entry;
+	      } else {
+		list.add_last new_entry;
+	      };
+	    };
+	  };
+	};
+      }.do_while {(dirent != NULL) && {result}};
+      `closedir(@dir)`;
+    };
+    result
+  );
+    
+  - physical_make_directory new_path:STRING :BOOLEAN <-
+  ( + p:NATIVE_ARRAY[CHARACTER];
+    p := new_path.to_external;
+    `mkdir(@p,S_IRWXU)`:(INTEGER) = 0
+  );
+
+  - physical_make_file new_path:STRING :BOOLEAN <-
+  ( + p:NATIVE_ARRAY[CHARACTER];
+    + stream:POINTER;
+    + result:BOOLEAN;
+    
+    p := new_path.to_external;
+    stream := `fopen((char*)@p,"w+b")`:POINTER;
+    (stream != NULL).if {
+      result := `fclose((FILE*)@stream)`:INTEGER = 0;
+    };
+    result
+  );
+
+  

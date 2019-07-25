@@ -57,6 +57,25 @@ section PUBLIC
     result
   );
   
+  - realloc old_nb_elts:INTEGER with new_nb_elts:INTEGER :MAP_NATIVE_ARRAY[E] <-
+  // Assume Current is a valid MAP_NATIVE_ARRAY in range
+  // [0 .. `old_nb_elts'-1]. Allocate a bigger new array in
+  // range [0 .. `new_nb_elts'-1].
+  // Old range is copied in the new allocated array.
+  // New items are initialized with default values.
+  ( + new:MAP_NATIVE_ARRAY[E];
+    + old_ptr,new_ptr:POINTER;
+    
+    ? {self != NULL};
+    ? {old_nb_elts > 0};
+    ? {old_nb_elts < new_nb_elts};
+    old_ptr := POINTER.force_conversion self;
+    new_ptr := MEMORY.realloc old_ptr size (old_nb_elts * element_sizeof) to (new_nb_elts * element_sizeof);
+    new := `(void*)@new_ptr`:MAP_NATIVE_ARRAY[E];
+    new.clear old_nb_elts to (new_nb_elts - 1);
+    new
+  );
+  
   - create_at adress:UINTEGER :MAP_NATIVE_ARRAY[E] <-
   // Create a MAP_NATIVE_ARRAY[E] at `adress'.
   (
@@ -193,3 +212,12 @@ section PUBLIC
     };
   );
 
+  - clear lower:INTEGER to upper:INTEGER <-
+  // Set all elements in range [`lower' .. `upper'] with
+  // the default value
+  ( ? {lower >= 0};
+    ? {upper >= lower};
+    lower.to upper do { i:INTEGER;
+      MEMORY.copy (item i.to_pointer) from (E.to_pointer) size (E.object_size);
+    };      
+  );

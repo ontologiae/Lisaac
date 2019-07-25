@@ -19,7 +19,7 @@ section HEADER
   - bibliography:= "http://IsaacOS.com";
   - author      := "Benoit Sonntag (bsonntag@loria.fr)";
 
-  - default     := 0;
+  //- default     := 0;
 
 section INHERIT
 
@@ -66,12 +66,8 @@ section NUMERIC
   
 section PUBLIC  
   
-  - object_size:INTEGER <- 
-  {
-    crash; // A REVOIR !!  4 * count ?
-    0
-  };
-
+  - object_size:INTEGER <- `52`; 
+ 
   //
   // Range.
   //
@@ -83,16 +79,16 @@ section PUBLIC
   );
     
   //
-  // Convertion format with test.
+  // Conversion format with test.
   //
   
   - to_ulongint:ULONGINT   <- 
-  ( ? {in_range 0,(ULONGINT.maximum)};
-    storage.first + (storage.item 1.to_ulongint << 32) 
+  ( ? {count <= 2}; // Bound limit control.
+    storage.first.to_ulongint + (storage.item 1.to_ulongint << 32) 
   );
   
   - to_uinteger:UINTEGER   <- 
-  ( ? {in_range 0,(UINTEGER.maximum)};
+  ( ? {count = 1};
     storage.first.to_uinteger
   );
   
@@ -161,7 +157,7 @@ section PUBLIC
 	((substr >> 32) == 1).if {
 	  over := 1;
 	};
-	result.put ((substr & (UINTEGER.maximum)).to_uinteger) to idx;
+	result.put ((substr & (UINTEGER.maximum.to_ulongint)).to_uinteger) to idx;
       };
     };
     
@@ -186,7 +182,7 @@ section PUBLIC
       ((substr >> 32) == 1).if {
 	over := 1;
       };
-      result.put ((substr & (UINTEGER.maximum)).to_uinteger) to 0;
+      result.put ((substr & (UINTEGER.maximum.to_ulongint)).to_uinteger) to 0;
       idx := idx + 1;
       {over == 0}.until_do {
 	part1 := item idx;
@@ -194,7 +190,7 @@ section PUBLIC
 	((substr >> 32) == 1).if {
 	  over := 1;
 	};
-	result.put ((substr & (UINTEGER.maximum)).to_uinteger) to idx;
+	result.put ((substr & (UINTEGER.maximum.to_ulongint)).to_uinteger) to idx;
 	idx := idx + 1;
       };      
     };
@@ -212,18 +208,19 @@ section PUBLIC
     (other.count > count).if {
       result := other + self;
     } else {
-       result.resize count;
+      result := 0;
+      result.resize count;
       (other.lower).to (other.upper) do { idx:INTEGER;
         part1:=item idx;
         part2:=other.item idx;
         sum:=part1+part2+over;
-        result.put ((sum & (UINTEGER.maximum)).to_uinteger) to idx;
+        result.put ((sum & (UINTEGER.maximum.to_ulongint)).to_uinteger) to idx;
         over:=sum >> 32;
       };
       (other.upper+1).to upper do { idx:INTEGER;
         part1:=item idx;
         sum:=part1+over;
-        result.put ((sum & (UINTEGER.maximum)).to_uinteger) to idx;
+        result.put ((sum & (UINTEGER.maximum.to_ulongint)).to_uinteger) to idx;
         over:=sum >> 32;
       };
       (over!==0).if {
@@ -267,56 +264,27 @@ section PUBLIC
     + part1,part2,product:ULONGINT;
     + index_result:INTEGER;
     
+    result := 0;
     result.resize (count + other.count);
     
     lower.to upper do { idx:INTEGER;
       + result_current:ULARGEINT;
+      
+      result_current := 0;
       result_current.resize count;
       part1 := item idx;
-
-//      idx.print;
-//      " -> ".print;
-//      "part1 :".print;
-//      part1.print;
-
       index_result := idx;
       (other.lower).to (other.upper) do { idx_other:INTEGER;
 	part2 := other.item idx_other;
 	product := part1 * part2;	
-	
-//	"Product :".print;
-//	product.print;	
-	
-	(product < (UINTEGER.maximum)).if {
-
-//	  " < max ".print;
-
+	(product < (UINTEGER.maximum.to_ulongint)).if {
 	  result_current.put (product.to_uinteger) to index_result;
 	} else {
-	  
-//	  " > max ".print;
-//	  (product & (UINTEGER.maximum)).to_uinteger.print;
-	  
-	  result_current.put ((product & (UINTEGER.maximum)).to_uinteger) to index_result;
+	  result_current.put ((product & (UINTEGER.maximum.to_ulongint)).to_uinteger) to index_result;
 	  index_result := index_result + 1;
-	  
-//	  " : ".print;
-//	  index_result.print;
-//	  " -> ".print;
-//	  (product >> 32).to_uinteger.print;
-	  
 	  result_current.force ((product >> 32).to_uinteger) to index_result;
 	  index_result := index_result + 1;
 	};
-//	"\n".print;	
-//	result_current.item 0.print;
-
-//	(result_current.upper > 0).if {
-//	  " - ".print;
-//	  result_current.item 1.print;
-//	};
-	
-//	"\n".print;
       };
       
       result := result + result_current;
@@ -330,39 +298,18 @@ section PUBLIC
   (
     + result:ULARGEINT;
     + part1,product,over:ULONGINT;
+    
+    result := 0;
     result.resize count;
-    lower.to upper do { idx:INTEGER;
-      
-//      idx.print;
-//      " : ".print;
-      
-      part1 := item idx;
-      
-//      part1.print;
-      
-      product :=  part1 * other + over;
-      
-//      " prod ".print;
-//      product.print;
-      
-      (product < (UINTEGER.maximum)).if {
-//	" < max ".print;
-	
+    lower.to upper do { idx:INTEGER;      
+      part1 := item idx;      
+      product :=  part1 * other + over;      
+      (product < (UINTEGER.maximum.to_ulongint)).if {
 	result.put (product.to_uinteger) to idx;
 	over := 0;
       } else {
-//	" > max :".print;
-//	(product & (UINTEGER.maximum)).to_uinteger.print;
-	
-	result.put ((product & (UINTEGER.maximum)).to_uinteger) to idx;
-
-//	" prod ".print;
-//	product.print;
-
+	result.put ((product & (UINTEGER.maximum.to_ulongint)).to_uinteger) to idx;
 	over := product >> 32;
-
-//	" over ".print;
-//	over.to_uinteger.print;
       };
     };
     
@@ -385,6 +332,7 @@ section PUBLIC
     + result:ULARGEINT;
     + last_mod,div:ULONGINT;
     + idx:INTEGER;
+    result := 0;
     result.resize count;
     idx := upper;
     last_mod := item idx;    
@@ -402,7 +350,7 @@ section PUBLIC
 	last_mod := last_mod % (other.to_ulongint); 
       };      
       (div !== 0).if {
-	result.put ((div & (UINTEGER.maximum)).to_uinteger) to idx;
+	result.put ((div & (UINTEGER.maximum.to_ulongint)).to_uinteger) to idx;
       };
     };
     last_modulo := last_mod.to_uinteger;
@@ -500,25 +448,12 @@ section PUBLIC
   - factorial:SELF <-
   ( + result,value:SELF;
     + value2:UINTEGER;
-    ? {self>=#0};
+    ? {self >=# 0};
     
-    (value.count = 1).if {
+    (count = 1).if {
       result := 1;
-      value2 := self.to_uinteger;
-      {value2 <=# 1}.until_do {
-/*
-	value2.print;
-	" : ".print;
-	result.print;
-	" - ".print;
-	result.item 0.print;
-	" : ".print;
-	result.item 1.print;
-	" : ".print;
-	result.item 2.print;
-	" : ".print;
-	"\n".print;
-*/
+      value2 := to_uinteger;
+      {value2 <= 1}.until_do {
 	result := result *# value2;
 	value2  := value2 - 1;
       };
@@ -543,7 +478,7 @@ section PUBLIC
   // creation during the process.
   ( + value:ULARGEINT; 
     + mod:UINTEGER;
-    + count:INTEGER;
+    + counter:INTEGER;
     + old_upper,new_upper:INTEGER;
     
     old_upper:=buffer.upper + 1;
@@ -553,29 +488,17 @@ section PUBLIC
     } else {
       value:=self;
       {
-//	" value:".print;
-//	value.item 0.print;
-//	(value.upper > 0).if {
-//	  " : ".print;
-//       value.item 1.print;
-//	};
-//	"\n".print;
 	value:=value /# 1000000000;
-	mod:=last_modulo;
-	
-//	"mod :".print;
-//	mod.print;
-//	"\n".print;
-	
-	{count==0}.until_do {
+	mod:=last_modulo;	
+	{counter==0}.until_do {
 	  buffer.extend '0';
-	  count:=count-1;
+	  counter:=counter-1;
 	};
-	count := 9;
+	counter := 9;
 	{	
 	  buffer.extend ((mod % 10).digit);
 	  mod := mod / 10;
-	  count := count-1;
+	  counter := counter-1;
 	}.do_while {mod!==0};
       }.do_while {value!==0};
       

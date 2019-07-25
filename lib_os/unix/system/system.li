@@ -1,0 +1,97 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  - name        := SYSTEM;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Generic System Object (methods).";
+
+  - external    := `#include <time.h>`;
+
+section PUBLIC
+  
+  - is_ansi:BOOLEAN := TRUE;
+  
+  - exit code:INTEGER <- `exit(@code)`;
+  
+  - putb value:USMALLINT to port:USHORTINT <-
+  // Write in port
+  ( 
+    `{ unsigned short val;
+      val = @value;
+      asm
+      (
+	"movw %0,%%dx \n\
+	movw %1,%%ax     \n\
+	outb %%al,%%dx  "
+	: /* No output */ 
+	:"r"(@port), "r"(val)
+	:"%ax","%dx"
+      );
+    }`;
+  );
+
+  - itemb port:USHORTINT :USMALLINT <-
+  // Read in port
+  ( + result:USMALLINT;
+    `{ unsigned short res;
+      asm
+      (
+	"movw %1,%%dx \n\
+	inb %%dx,%%al \n\
+	movw %%ax,%0  "
+	:"=r"(res)
+	:"r"(@port)
+	:"%ax","%dx"
+      )`;
+      result := `res`:USMALLINT;
+    `}`;
+    result
+  );
+       
+  - get_universal_time:ULONGINT <-
+  (
+    `(unsigned long long)time(NULL)`:ULONGINT
+  );
+
+  // Memory Management
+  
+  - get_begin_memory:UINTEGER := realloc_c 0,get_capacity_memory;
+  
+  - get_capacity_memory:UINTEGER := 1000000h; 
+                                   //1000000h /*16Mo*/; //10000000h /*256MB*/;
+  
+section SYSTEM,MEMORY
+  
+  - realloc_c beg:UINTEGER,nb:NUMERIC :UINTEGER <-
+  ( + result:UINTEGER;
+    result := `(unsigned long)realloc((void *)@beg,@nb+15)`:UINTEGER;
+    ((beg != 0) && {result != beg}).if {
+      MEMORY.print_nbx beg;
+      '\n'.print;
+      MEMORY.print_nbx result;
+      '\n'.print;
+      exit 1;
+    };
+    ? {(beg != 0) ->> {beg = result}};
+    ? {result != 0};
+    result
+  );
+  
+section ISAAC  
+  
+  - make <-
+  // Isaac compatibility.
+  (
+    // Nothing.
+  );

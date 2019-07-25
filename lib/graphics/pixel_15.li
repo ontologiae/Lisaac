@@ -60,11 +60,11 @@ section PUBLIC
     convert_5_to_8.item (real_color & 01Fh)
   );
   
-  - color col:UINTEGER <-
+  - color col:UINTEGER :UINTEGER <-
   (
     real_color := (((col & 0F80000h) >> 9) |
                    ((col & 000F800h) >> 6) |
-                   ((col & 00000F8h) >> 3)).to_ushortint;      
+                   ((col & 00000F8h) >> 3)).to_ushortint      
   );
   
   - color_rgb r,g,b:USMALLINT <-

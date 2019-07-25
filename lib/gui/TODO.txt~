@@ -1,0 +1,17 @@
+
+GROUP:
+======
+** GROUP_IN:
+-=-=-=-=-=-=
+ * GRP_TREE
+ * GRP_FRAME
+ * GRP_MITRE   
+ * GRP_LIST
+
+** GROUP_OUT: (Open/Close)
+-=-=-=-=-=-=-
+ * GRP_WINDOW
+ * GRP_MENU
+ * GRP_BAR
+ * GRP_LIST
+

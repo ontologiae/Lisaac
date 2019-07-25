@@ -1,0 +1,92 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac                                        *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+section HEADER
+
+  + name    := AI_COLOR;
+  
+  - category:= MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Color of .AI document.";
+
+  - version :="1.0";  
+  - date    :="2003/04";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PRIVATE  
+  
+  - gray_to_rgb g:REAL_16_16 :UINTEGER <-
+  ( + tmp:UINTEGER;
+    
+    tmp := (g *# 255).to_uinteger;
+    (tmp << 16) | (tmp << 8) | tmp
+  );
+  
+  - cmyk_to_rgb c,m,y,k:REAL_16_16 :UINTEGER <-
+  ( + r,g,b:UINTEGER;
+    r   := ((- (c + k).min 1 + 1) *# 255).to_uinteger;
+    g   := ((- (m + k).min 1 + 1) *# 255).to_uinteger;
+    b   := ((- (y + k).min 1 + 1) *# 255).to_uinteger;           
+    (r << 16) | (g << 8) | b
+  );
+  
+section PUBLIC
+  
+  + rgbcolor_fill  :UINTEGER;
+  + rgbcolor_stroke:UINTEGER;
+  
+  //
+  // GRAY
+  //
+    
+  - make_gray_stroke g:REAL_16_16 <-
+  ( 
+    rgbcolor_stroke := gray_to_rgb g;
+  );
+  
+  - make_gray_fill g:REAL_16_16 <-
+  ( 
+    rgbcolor_fill := gray_to_rgb g;
+  );
+  
+  //
+  // CMYK
+  //
+  
+  - make_cmyk_stroke c,m,y,k:REAL_16_16 <-
+  (
+    rgbcolor_stroke := cmyk_to_rgb c,m,y,k;
+  );
+  
+  - make_cmyk_fill c,m,y,k:REAL_16_16 <-
+  ( 
+    rgbcolor_fill := cmyk_to_rgb c,m,y,k;
+  );
+  
+  //
+  // CMYK + GRAY
+  //
+
+  - make_cmykg_stroke c,m,y,k,g:REAL_16_16 <-
+  (
+    make_cmyk_stroke c,m,y,k;
+  );
+  
+  - make_cmykg_fill c,m,y,k,g:REAL_16_16 <-
+  (
+    make_cmyk_fill c,m,y,k;
+  );
+
+
+
+
+

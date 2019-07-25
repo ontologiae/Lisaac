@@ -1,0 +1,208 @@
+
+/*
+Copyright (C) 2005  Benoit Sonntag
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+
+You should have received a copy of the GNU Library General Public
+License along with this library; if not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+Boston, MA  02110-1301, USA.
+*/
+
+section HEADER
+  
+  - name := SU_DOKU;
+  
+  - category := MACRO;
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PRIVATE
+  
+  //
+  // Data.
+  //
+  
+  - array  :FIXED_ARRAY2[INTEGER] := FIXED_ARRAY2[INTEGER].create 9,9;
+      
+  //
+  // Example.
+  //
+  
+  - load_example <-
+  (
+    array.set_all_with 0;
+    array.put 9 to 1,0; array.put 7 to 2,0; array.put 8 to 3,0; array.put 1 to 5,0; array.put 5 to 6,0;
+    array.put 4 to 1,1;
+    array.put 1 to 2,2; array.put 2 to 4,2; array.put 9 to 8,2;
+    array.put 4 to 6,3; array.put 8 to 7,3;
+    array.put 4 to 0,4; array.put 9 to 3,4; array.put 6 to 5,4; array.put 1 to 8,4;
+    array.put 5 to 1,5; array.put 2 to 2,5;
+    array.put 7 to 0,6; array.put 6 to 4,6; array.put 3 to 6,6;
+    array.put 6 to 7,7;
+    array.put 5 to 2,8; array.put 2 to 3,8; array.put 3 to 5,8; array.put 8 to 6,8; array.put 1 to 7,8;
+  );
+  
+  //
+  // Display.
+  //
+  
+  - display <-
+  ( + v:INTEGER;
+    
+    
+    0.to 8 do { y:INTEGER;
+      ((y % 3) = 0).if {
+	"#####################################\n".print;
+      } else {
+	"#---+---+---#---+---+---#---+---+---#\n".print;
+      };
+      0.to 8 do { x:INTEGER;
+	((x % 3) = 0).if {
+	  "# ".print;
+	} else {
+	  "| ".print;
+	};
+	v := array.item x,y;
+	(v = 0).if { 
+	  ' '.print;
+	} else {
+	  v.print;
+	};
+	' '.print;
+      };
+      "#\n".print;
+    };
+    "#####################################\n".print;
+  );
+  
+  //
+  // Solver.
+  //
+
+  - is_good value:INTEGER to x,y:INTEGER :BOOLEAN <-
+  ( + j,bx,by:INTEGER;
+    + result:BOOLEAN;
+    result := TRUE;
+    // Horizontal/Vertical test.
+    {(j<9) && {result}}.while_do {
+      result := (array.item x,j != value) && {array.item j,y != value};
+      j := j + 1;
+    };
+    (result).if {
+      // Block test.
+      bx := x / 3 * 3;
+      by := y / 3 * 3;
+      result := 
+      (array.item bx,by         != value) && 
+      {array.item (bx+1),by     != value} && 
+      {array.item (bx+2),by     != value} &&
+      {array.item bx,(by+1)     != value} && 
+      {array.item (bx+1),(by+1) != value} && 
+      {array.item (bx+2),(by+1) != value} &&
+      {array.item bx,(by+2)     != value} && 
+      {array.item (bx+1),(by+2) != value} && 
+      {array.item (bx+2),(by+2) != value};
+    };
+    result
+  );
+  
+  - solver x,y:INTEGER :BOOLEAN <-
+  ( + px,py:INTEGER;
+    + v:INTEGER;
+    + is_found:BOOLEAN;
+    
+    px := x; 
+    py := y;
+    {(py<9) && {array.item px,py != 0}}.while_do {
+      px := px + 1;
+      (px > 8).if {
+	px := 0;
+	py := py + 1;
+      };
+    };
+    (py = 9).if {
+      is_found := TRUE;
+    } else {
+      v := 1;  
+      {
+	(is_good v to px,py).if {
+	  array.put v to px,py;
+	  is_found := solver px,py;
+	  (is_found).if_false {
+	    array.put 0 to px,py;
+	  };
+	};
+	v := v + 1;
+      }.do_while {(v < 10) && {! is_found}};
+    };
+    is_found
+  );
+  
+section PUBLIC
+  
+  - main <-
+  ( + choice:CHARACTER;
+        
+    "====================================================\n\
+    \Welcome the SU DOKU solver (V.1.0 by Sonntag Benoit)\n\
+    \====================================================\n\n".print;
+    
+    {
+      "[a]:Load example. [b]:Display. [c]:New. [d]:Solve! [e]:Exit\n\
+      \Choice ?\n".print;
+      {
+	choice := IO.read_character;
+      }.do_until {choice.in_range 'a' to 'e'};
+      IO.read_character;
+      
+      choice
+      .when 'a' then {
+	load_example;
+	"Load example: Ok\n".print;
+      }
+      .when 'b' then {
+	display;
+      }
+      .when 'c' then {
+	0.to 8 do { y:INTEGER;
+	  0.to 8 do { x:INTEGER;
+	    "Line #".print;
+	    (y+1).print;
+	    " Column #".print;
+	    (x+1).print;
+	    " ?\n".print;
+	    {
+	      choice := IO.read_character;
+	    }.do_until {(choice.in_range '1' to '9') || {choice = '\n'}};
+	    (choice = '\n').if {
+	      array.put 0 to x,y;
+	    } else {
+	      array.put (choice.decimal_value) to x,y;
+	      IO.read_character;
+	    };
+	  };
+	};
+      }
+      .when 'd' then {
+	"Solver result: ".print;
+	solver 0,0.if {
+	  "Found !\n".print;
+	} else {
+	  "Not found!\n".print;
+	};
+      };
+    }.do_while {choice != 'e'};
+    "Good bye!\n".print;
+  );

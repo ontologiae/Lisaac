@@ -24,6 +24,75 @@ section INHERIT
   
 section PRIVATE  
   
+  //
+  // Independance File System 
+  //
+  
+  - open_read n:ABSTRACT_STRING :POINTER <- 
+  ( + buf:NATIVE_ARRAY[CHARACTER];
+    string_tmp.copy n;
+    buf := string_tmp.to_external;
+    `fopen((char*)@buf,"rb")`:(POINTER)
+  );
+
+  - open_write n:ABSTRACT_STRING :POINTER <- 
+  ( + buf:NATIVE_ARRAY[CHARACTER];
+    string_tmp.copy n;
+    buf := string_tmp.to_external;
+    `fopen((char*)@buf,"wb")`:(POINTER)
+  );
+  
+  - read f:POINTER in buf:STRING size sz:INTEGER :INTEGER <-   
+  ( + ptr:NATIVE_ARRAY[CHARACTER];
+    + result:INTEGER;
+    ptr := buf.to_external;    
+    result := `fread((void *)(@ptr),(size_t)(1), (size_t)(@sz),(FILE*)(@f))`:(INTEGER);
+    buf.from_external ptr;
+    result
+  );
+
+  - write f:POINTER with buf:STRING size sz:INTEGER :INTEGER <-   
+  ( + ptr:NATIVE_ARRAY[CHARACTER];
+    + result:INTEGER;
+    ptr := buf.to_external;    
+    result := `fwrite((void *)(@ptr),(size_t)(1), (size_t)(@sz),(FILE*)(@f))`:(INTEGER);
+    result
+  );
+  
+  - close p:POINTER <- `fclose((FILE*)(@p))`;
+  
+  - file_size p:POINTER :INTEGER <-
+  ( + result:INTEGER;
+    `fseek((FILE*)(@p),0,SEEK_END)`;
+    result := `ftell((FILE *)@p)`:INTEGER;
+    `fseek((FILE*)(@p),0,SEEK_SET)`;
+    result
+  );
+
+  - make_file new_path:STRING :BOOLEAN <-
+  ( + p:NATIVE_ARRAY[CHARACTER];
+    + stream:POINTER;
+    + result:BOOLEAN;
+    
+    p := new_path.to_external;
+    stream := `fopen((char*)@p,"w+b")`:POINTER;
+    (result := (stream != NULL)).if {
+      close stream; 
+    };
+    result
+  );
+  
+  //
+  //
+  //
+  
+  - error st:ABSTRACT_STRING <-
+  (
+    "Error: ".print;
+    st.print;
+    die_with_code exit_failure_code;
+  );
+  
   - step_count:INTEGER;  
   - step_max  :INTEGER := 5;
   
@@ -46,17 +115,19 @@ section PRIVATE
   - update file:ABSTRACT_STRING idf id:STRING_CONSTANT with new_text:ABSTRACT_STRING <-
   ( + index:INTEGER;
     + old_buffer,input:STRING;
-    + std_file:STD_FILE;
+    + std_file:POINTER;
+    + size_file:INTEGER;
     
     "  A `".print;
     file.print;
     
-    std_file := STD_FILE.create_open file;
-    (std_file.is_open).if {
+    std_file := open_read file;
+    (std_file != NULL).if {    
       // Update file.
-      input := STRING.create (std_file.size + new_text.count);
-      std_file.read input size (std_file.size);
-      std_file.close;
+      size_file := file_size std_file;
+      input := STRING.create ((size_file + new_text.count).to_uinteger);
+      read std_file in input size (size_file);
+      close std_file; 
       //    
       index := input.first_substring_index id;
       (index != 0).if {
@@ -83,17 +154,19 @@ section PRIVATE
       };
       new_text.print;
       // Append configuration.
-      input.insert_string new_text to index;
+      input.insert_string new_text to index; 
     } else {
       // Creation file.
       "' file has been created with:\n".print; 
       new_text.print;
       input := new_text;
+      (! make_file file).if {
+	error("Not create file!");
+      };
     };
-      
-    std_file := STD_FILE.create file;
-    std_file.write input from (input.lower) size (input.count);
-    std_file.close;      
+    std_file := open_write file;
+    write std_file with input size (input.count);
+    close std_file;
   );
   
   //
@@ -116,7 +189,7 @@ section PRIVATE
   
   - file_bashrc  :STRING_CONSTANT := "/.bashrc";
   - file_cshrc   :STRING_CONSTANT := "/.cshrc";
-  - file_autoexec:STRING_CONSTANT := "\\autoexec.bat";
+  - file_autoexec:STRING_CONSTANT := "C:\\autoexec.bat";
   
   - comment_windows :STRING_CONSTANT := "\r\nREM **** LISAAC COMPILER ****\r\n";
   - comment_unix    :STRING_CONSTANT := "\n# **** LISAAC COMPILER ****\n";
@@ -138,7 +211,7 @@ section PRIVATE
   //
   
   - install_variable <-
-  ( + std_file :STD_FILE;
+  ( + std_file:POINTER;
     + new_text :STRING;
     + file     :STRING;
     + comment  :STRING_CONSTANT;
@@ -170,10 +243,10 @@ section PRIVATE
       path_next := path_tcsh_next;
     } else {
       // On other shell
-      std_file := STD_FILE.create_open file_autoexec;
-      (std_file.is_open).if {
+      std_file := open_read file_autoexec;
+      (std_file != NULL).if {
 	// Windows
-	std_file.close;
+	close std_file;
 	file.append file_autoexec;
 	system    := system_windows;
 	comment   := comment_windows; 
@@ -192,6 +265,8 @@ section PRIVATE
     (system != system_unknown).if {
       (system = system_windows).if {
 	update "path.li" idf "  + target" with "  + target := WINDOWS;\n";
+	"\n  Note: You can to compile just for DOS with `+ target := DOS;' \n\
+	\        or `-t dos' option for lisaac command.\n".print; 
       } else {
 	update "path.li" idf "  + target" with "  + target := UNIX;\n";
       };
@@ -265,13 +340,30 @@ section PRIVATE
   
   - install_compiler <-
   ( + cmd:STRING_CONSTANT;
+    + char:CHARACTER;
     
-    (system = system_windows).if {
-      cmd := "gcc -O3 bin/lisaac.c -o bin/lisaac.exe";
-    } else {
-      cmd := "gcc -O3 bin/lisaac.c -o bin/lisaac";
+    "  Have you got GCC version 4.0 or greater ? (y/n)\n".print;
+    "  (type `gcc --version' for information)\n".print;
+    {(char != 'y') && {char != 'n'}}.while_do {
+      char := IO.read_character;
     };
-
+    
+    (char = 'y').if {
+      (system = system_windows).if {
+	cmd := "gcc -O2 bin/lisaac.c -o bin/lisaac.exe";
+      } else {
+	cmd := "gcc -O2 bin/lisaac.c -o bin/lisaac";
+      };
+    "\n  NOTE : Sorry, with GCC v.4.0 or greater, we have a problem (when -O3 gcc option)\n\
+    \  and a lot of `warning' are display...\n\n".print;
+    } else {
+      (system = system_windows).if {
+	cmd := "gcc -O3 bin/lisaac.c -o bin/lisaac.exe";
+      } else {
+	cmd := "gcc -O3 bin/lisaac.c -o bin/lisaac";
+      };
+      "\n  NOTE : If you want, you can update `path.li' with -O3 option for GCC.\n\n".print;
+    };
     "  Execute command `".print;
     cmd.print;
     "' (please wait ...)\n".print;
@@ -281,16 +373,24 @@ section PRIVATE
     };
     '\n'.print;
   );
-
+  
+  - string_tmp:STRING := STRING.create 256;
+  
 section PUBLIC
   
   + main <-
-  (
+  ( + cwd:NATIVE_ARRAY[CHARACTER];
+    
     "\t\t================================\n\
     \\t\t= Auto-Install Lisaac Compiler =\n\ 
     \\t\t================================\n\n".print;
-     
-    path_current := DIRECTORY.get_current_working_directory;
+    string_tmp.clear;
+    cwd := string_tmp.to_external;
+    `getcwd(@cwd,255)`;
+    string_tmp.from_external cwd;
+    
+    path_current := STRING.create (string_tmp.count);
+    path_current.copy string_tmp; 
     path_home    := ENVIRONMENT.get_environment_variable "HOME";
     shell        := ENVIRONMENT.get_environment_variable "SHELL";
     

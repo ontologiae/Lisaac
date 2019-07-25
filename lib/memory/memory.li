@@ -14,7 +14,9 @@ section HEADER
   - category    := MICRO;
   
   - bibliography:= "http://IsaacOS.com";
-  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";  
+  - author      := 
+  "Benoit Sonntag (bsonntag@loria.fr), \
+  \Jerome Boutet (boutet@loria.fr)";  
   
 section INHERIT  
   
@@ -128,7 +130,7 @@ section PRIVATE
 	end_memory := end_memory + add_size;	      
       } else {
 	// No Big Block left
-	'M'.print;
+	'm'.print;
 	'E'.print;
 	'M'.print;
 	':'.print;
@@ -259,8 +261,10 @@ section PUBLIC
       auto_install;
     };
     
-//    ? {check_memory};
+    //print_nb nb;
     
+    ? {check_memory};
+
     (nb <= 128).if {       
       // Small Allocation.
       size  := (nb+1)&0FEh;
@@ -298,7 +302,7 @@ section PUBLIC
 
     (result=0).if {
       // Not enough memory
-      'M'.print;
+      'n'.print;
       'E'.print;
       'M'.print;
       ':'.print;
@@ -323,17 +327,23 @@ section PUBLIC
       //crash_with_message "Error : Not enough memory (blue screen :-)";
     };
     
-//    ? {check_memory};
-
+        ? {check_memory};
+	
+	//'O'.print;
+	//'K'.print;
+	//'\n'.print;
     POINTER.from_uinteger result
   );
   
-  - free p:UINTEGER size nb:NUMERIC <-
+  - free ptr:POINTER size nb:NUMERIC <-
   ( + first_block,cur_block,p_block,n_block:MEM_BLOCK;
     + size, index:INTEGER;
+    + p:UINTEGER;
 
-//    ? {check_memory};
-    
+        ? {check_memory};
+    ? { ptr != NULL};
+    p := ptr.to_uinteger;
+
     (nb <= 128).if {
       // It's a small_block
       size  := (nb + 1) & 0FEh;
@@ -341,9 +351,10 @@ section PUBLIC
       first_block := small_fat.item index;
       ? {first_block!=NULL};
       
-      cur_block:=first_block;
+      cur_block:=first_block;      
       {cur_block.in_range p}.until_do {
 	cur_block := cur_block.next_same;
+	? {cur_block != first_block};
       };
       cur_block.free (p - cur_block.get_adress) size size;
       cur_block.is_small_free.if {
@@ -377,7 +388,7 @@ section PUBLIC
       big_free_intern (get_block (p - MEM_BLOCK.object_size));
     }; // End if small or big block    
     
-//    ? {check_memory};
+    ? {check_memory};
   );  
   
   - realloc old_ptr:POINTER size old_size:NUMERIC to new_size:NUMERIC :POINTER <-
@@ -387,7 +398,7 @@ section PUBLIC
     ? {new_size > 0};
     new_pointer := allocation new_size;
     copy new_pointer from old_ptr size old_size;
-    free (old_ptr.to_uinteger) size old_size;
+    free old_ptr size old_size;
     new_pointer
   );
   
@@ -459,7 +470,7 @@ section PUBLIC
 	tst:=TRUE;
       };
       tst.if {
-	('0'+car.to_character).print;
+	('0'+car.to_character).print;	
       };
       n   := n % div;
       div := div / 10;
@@ -522,9 +533,9 @@ section PRIVATE
   
   - auto_install <-
   ( + begin:UINTEGER;
-    begin_memory := SYSTEM.get_begin_memory;
-    capacity := SYSTEM.get_capacity_memory;
-    
+    begin_memory := SYSTEM.get_begin_memory;    
+    capacity     := SYSTEM.get_capacity_memory;
+       
     begin := begin_memory.align_power 16;
     end_memory := begin + capacity - 1;
     
@@ -535,7 +546,7 @@ section PRIVATE
     last_block := get_block begin;
     last_block.make (end_memory +1 - begin - MEM_BLOCK.object_size);
     first_free:=last_block;    
-    
+        
 //    ? {check_memory};    
     ? {get_next last_block = NULL};
     ? {small_fat!=NULL};      

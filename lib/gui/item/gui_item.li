@@ -1,0 +1,114 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  + name        := GUI_ITEM;
+  
+  - comment     := "Item Plateform.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_gui:GUI;
+  
+section PUBLIC
+    
+  + label:GUI_LABEL;
+  
+  + width_min:INTEGER;
+  + height_min:INTEGER;
+  
+  //
+  // Creation.
+  //
+  
+  - make_in f:AREA at x,y:INTEGER size w,h:INTEGER action a:INBOX with lab:GUI_LABEL <-
+  (
+    label      := lab;
+    width_min  := w; 
+    height_min := h;
+    make_in f at x,y size w,h action a;
+  );     
+
+  - make w,h:INTEGER action a:INBOX with lab:GUI_LABEL <-
+  (
+    label      := lab;
+    width_min  := w; 
+    height_min := h;
+    //
+    stat       := 0;    
+    action     := a;
+  );     
+  
+  //
+  // Auto-Position system.
+  //
+    
+  - '|' right 40 other:GUI_ITEM :GUI_ITEM <-
+  ( 
+    ITM_GROUP.create self and other with '|'     
+  );
+
+  - '/' right 40 other:GUI_ITEM :GUI_ITEM <-
+  ( 
+    ITM_GROUP.create self and other with '/'
+  );
+    
+  - fix_array_in f:AREA at x,y:INTEGER vspace v:INTEGER hspace h:INTEGER<-
+  ( + w_max,h_max:INTEGER;   
+    + ix,iy,px,py:INTEGER;
+    + n:GUI_ITEM;
+    
+    px := x;
+    n  := get_item 0,0;
+    {n != NULL}.while_do {            
+      py := y;
+      w_max := 0;
+      {
+	(n.width_min > w_max).if {
+	  w_max := n.width_min;
+	};
+	iy := iy + 1;
+	n := get_item ix,iy;
+      }.do_while {n != NULL};
+      iy := 0;	
+      n := get_item ix,iy;
+      h_max := get_height_line iy;
+      {
+	n.fix_frame_in f at px,py size w_max,h_max;
+	iy := iy + 1;
+	py := py + h_max + v;
+	n := get_item ix,iy;
+      }.do_while {n != NULL};
+      ix := ix + 1;
+      iy := 0;
+      px := px + w_max + h;
+      n := get_item ix,iy;
+    };     
+  );
+  
+section GUI_ITEM
+  
+  - get_item x,y:INTEGER :GUI_ITEM <-
+  ( + result:GUI_ITEM;
+    
+    ((x=0) && {y=0}).if {
+      result := self;
+    };
+    result
+  );
+  
+  - get_height_line y:INTEGER :INTEGER <-
+  (
+    height_min
+  );

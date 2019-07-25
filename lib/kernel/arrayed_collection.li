@@ -81,7 +81,6 @@ section PUBLIC
       move index to (upper - 1) by 1;
       put element to index;
     }; // end if
-    ? { first = element };
     ? { count = 1 + old_count };
     ? { lower = old_lower };
     ? { upper = 1 + old_upper };

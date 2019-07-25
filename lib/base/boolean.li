@@ -5,7 +5,6 @@
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
 *                          http://www.IsaacOS.com                          *
 ***************************************************************************/
-
 section HEADER
   
   * name     :=BOOLEAN;
@@ -43,6 +42,10 @@ section PUBLIC
   - if_false block:BLOCK <- deferred;
   
   - if true_block:BLOCK else false_block:BLOCK <- deferred;
+  
+  - if_true true_block:BLOCK else false_block:BLOCK <- deferred;
+  
+  - if_false true_block:BLOCK else false_block:BLOCK <- deferred;
   
   - if true_block:BLOCK :BOOLEAN <- deferred_boolean;
   
@@ -103,6 +106,13 @@ section PUBLIC
   
   - append_in str:STRING <- str.append to_string;
 
-
+  //
+  // Output.
+  //
+  
+  - print <-
+  (
+    to_string.print;
+  );
 
 

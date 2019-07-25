@@ -1,0 +1,128 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+/*
+Copyright (C) 2005  Benoit Sonntag
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+section HEADER
+  
+  + name        := LIMIT_X;
+  
+  - comment     := "Sub structure for AREA.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+  - verision    := "1.0";
+  
+section INHERIT
+
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC  
+
+  + value:INTEGER;
+  
+  + plan:PLAN;
+  
+  + next:LIMIT_X;
+  + prev:LIMIT_X;
+  
+section PUBLIC 
+  
+  - make x:INTEGER plan p:PLAN <- 
+  (
+    plan:=p;
+    value:=x;
+  );
+  
+  - create x:INTEGER plan p:PLAN :LIMIT_X <- 
+  ( + result:LIMIT_X;
+    
+    result:=LIMIT_X.clone;
+    result.make x plan p;
+    result
+  );
+  
+  - append old_root:LIMIT_X :LIMIT_X <-
+  ( + new_root:LIMIT_X;
+    + n,p:LIMIT_X;
+    
+    n:=old_root;   
+    (n!=NULL).if {
+      p:=n.prev;
+    };
+    {(n!=NULL) && {n.value<=value} && {(n.value!=value) || {n.plan.level>plan.level}}}.while_do {
+      p:=n; 
+      n:=n.next; 
+    };
+    next:=n; 
+    prev:=p;
+    (prev=NULL).if {
+      new_root:=self; 
+    } else {
+      new_root:=old_root;
+      p.set_next self;
+    };
+    (n!=NULL).if {
+      n.set_prev self;
+    };
+    new_root
+  );
+  
+  - remove old_root:LIMIT_X :LIMIT_X <-
+  ( + new_root:LIMIT_X;
+    
+    (prev=NULL).if {
+      new_root:=next;
+    } else {
+      prev.set_next next;
+      new_root:=old_root;
+    };
+    (next!=NULL).if {
+      next.set_prev prev;
+    };
+    new_root
+  );
+  
+  - set_value v:INTEGER <-
+  (
+    value:=v;
+  );
+  
+  - set_next new:LIMIT_X <-
+  (
+    next:=new;
+  );
+
+  - set_prev new:LIMIT_X <-
+  (
+    prev:=new;
+  );
+
+
+
+
+
+
+

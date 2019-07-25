@@ -1,0 +1,69 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  - name        := VIDEO;
+  
+  - comment     := "Generic Driver video - Text mode -";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+section INHERIT
+  
+  * parent_bitmap:BITMAP_ASCII;
+  
+section PUBLIC
+  
+  - is_active:BOOLEAN;
+  
+  - create <-
+  ( 
+    make 190,80;
+    is_active := TRUE;
+  );
+  
+  - display_screen <-
+  (
+    0.to (height-1) do { y:INTEGER;
+      '|'.print;
+      0.to (width-1) do { x:INTEGER;
+	image.item y.item x.print;
+      };
+      '|'.print;
+      '\n'.print;
+    };
+  );
+
+  - display_screen low:INTEGER to up:INTEGER <-
+  (
+    low.to up do { y:INTEGER;
+      '|'.print;
+      0.to (width-1) do { x:INTEGER;
+	image.item y.item x.print;
+      };
+      '|'.print;
+      '\n'.print;
+    };
+  );
+  
+  - close <-
+  (
+    ? {is_active};
+    is_active := FALSE;
+    ? {! is_active};
+  );
+
+
+
+
+

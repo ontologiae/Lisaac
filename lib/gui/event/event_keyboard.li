@@ -1,0 +1,82 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                                Isaac Library                             *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+/*
+Copyright (C) 2005  Benoit Sonntag
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+section HEADER
+
+  + name    := EVENT_KEYBOARD;
+  
+  - category:=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Keyboard event.";
+  
+section INHERIT
+
+  * parent_event:EVENT;
+  
+section PUBLIC
+  
+  - source:INBOX := KEYBOARD;
+  
+  + key:USHORTINT;
+    
+  + prev:EVENT_KEYBOARD;
+  
+  - set_prev new_prev:EVENT_KEYBOARD <-
+  (
+    prev := new_prev;
+  );
+  
+  - make c:USHORTINT <-
+  (
+    key := c;
+    destination := NULL;
+  );
+  
+  //
+  // Display.
+  // 
+  
+  - display <-
+  (
+    string_msg.copy "Keyb event: ";
+    string_msg.append ((key>>8).to_binary);
+    string_msg.add_last ' ';
+    string_msg.add_last ((key & 0FFh).to_character);
+    string_msg.add_last '\n';
+    VIDEO.message string_msg;
+  );
+  
+  - copy_from evt:EVENT_KEYBOARD <-
+  (
+    ? {evt != NULL};
+    key := evt.key;
+    destination := NULL;
+  );
+  
+    
+
+
+

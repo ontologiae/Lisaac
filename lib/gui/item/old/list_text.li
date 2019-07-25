@@ -1,0 +1,123 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := LIST_TEXT;
+  
+  - comment     := "List text.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_window:WINDOW;
+    
+section PUBLIC  
+  
+  + list:LINKED_LIST[ABSTRACT_STRING];
+  
+  + select:ABSTRACT_STRING;
+  
+  - create_in f:BOX from x0,y0:INTEGER size w,h:INTEGER :SELF <-
+  ( + result:SELF;
+        
+    result := clone;
+    result.make_in f from x0,y0 size w,h;
+    
+    result
+  );
+  
+  - make_in f:WINDOW from x0,y0:INTEGER size w,h:INTEGER <-
+  (
+    list := LINKED_LIST[ABSTRACT_STRING].create;
+    make f from x0,y0 size w,h;
+    evt_subscribe MOUSE broadcast FALSE;
+  );
+  
+  //
+  // Add.
+  //
+  
+  - add_last txt:ABSTRACT_STRING <-
+  (
+    list.add_last txt;
+    refresh;
+  );
+  
+  - clear <- 
+  (
+    list.clear;
+    select := NULL;
+    refresh;
+  );
+  
+  //
+  // Event.
+  //
+  
+  - action <-
+  ( + f:BOX;
+    
+    f ?= parent;
+    f.action self;
+  );    
+    
+  - new_event evt:EVENT <-  
+  ( + evt_mouse:MOUSE_EVENT;
+    + idx:INTEGER;
+    
+    ? { evt != NULL };
+    evt_mouse ?= evt;
+    (evt_mouse != NULL).if {      
+      (evt_mouse.left_up).if {
+	idx := (evt_mouse.y_relative >> 4) + 1;
+	(idx <= list.upper).if {	  
+	  select := list.item idx;	  
+	  refresh;
+	  action;
+	};
+      };
+    };
+  );
+  
+  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  ( + txt:ABSTRACT_STRING;
+    
+    clipping x0,y0 to x1,y1;    
+    
+    color 0404040h;
+    line_v 0,y_max until 0;
+    line_h_until x_max;
+    color 0FFFFFFh;
+    line_h 1,y_max until x_max;
+    line_v_until 1;
+    color 0E0E0E0h;
+    rectangle_fill 1,1 to (x_max - 1),(y_max - 1);
+    clipping x0,y0 to (x1.min (x_max - 2)),(y1.min (y_max -2));
+    (list.lower).to (list.upper) do { j:INTEGER;
+      txt := list.item j;
+      (txt = select).if {
+	color red;
+      } else {
+	color black;
+      };
+      print txt to 2,(2-16+j<<4);	
+    };
+  );
+
+
+
+
+
+

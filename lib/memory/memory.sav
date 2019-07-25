@@ -1,0 +1,518 @@
+/***************************************************************************
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  - name        := MEMORY;
+  
+  - comment     := "Memory manager, linear, no protect";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";  
+  
+section INHERIT  
+  
+  - parent_object:OBJECT := OBJECT; 
+  
+section MEMORY, MEM_BLOCK
+      
+  - small_fat:NATIVE_ARRAY[MEM_BLOCK];
+    
+  - first_free:MEM_BLOCK;  // linked list of big blocks free 
+  
+  - begin_memory:UINTEGER;
+  
+  - end_memory:UINTEGER;
+  
+  - capacity:UINTEGER;
+  
+  - last_block:MEM_BLOCK;
+  
+section PRIVATE  
+  
+  //
+  // Check Memory System. 
+  //
+  
+  - check_memory:BOOLEAN <-
+  ( + cur,cur_prev:MEM_BLOCK;
+    
+    // Last block check.
+    ? {last_block != NULL};
+    ? {get_next last_block = NULL};
+    
+    // Free Linked list.
+    cur := first_free;
+    {cur != NULL}.while_do {
+      ? {cur.is_free};
+      ? {(cur.prev_same != NULL) ->> {cur.prev_same.next_same = cur}};      
+      cur := cur.next_same;
+    };
+    
+    // Linear memory verification.
+    cur := last_block;
+    {cur != NULL}.while_do {
+      cur.check_big;
+      cur_prev := cur.prev;
+      ? {(cur_prev != NULL) ->> {get_next cur_prev = cur}};
+      cur := cur_prev;
+    };
+    
+    // Small Allocation check.
+    0.to 63 do { j:INTEGER;
+      cur := small_fat.item j;
+      (cur != NULL).if {
+	cur.check_small;
+      };
+    };
+    TRUE
+  );
+  
+  - get_block p:UINTEGER :MEM_BLOCK <- MEM_BLOCK.force_conversion p;
+  
+  - get_next block:MEM_BLOCK :MEM_BLOCK <-
+  ( + result:MEM_BLOCK;
+    + next:UINTEGER;
+    
+    next:=block.get_adress+block.size;
+    (next != (end_memory+1)).if {
+      result:=get_block next;
+    };
+    
+    result
+  );  
+  
+  - big_allocation_intern nb:NUMERIC :MEM_BLOCK <-
+  ( + cur_block,p_block,n_block,new_block:MEM_BLOCK;
+    + size,new_size,add_size:UINTEGER;
+    
+    ? {get_next last_block = NULL};
+    
+    size:=(nb+15) & 0FFFFFFF0h;
+    cur_block := first_free;
+    {(cur_block != NULL) && {cur_block.size < size}}.while_do {
+      ? {cur_block.is_free};
+      ? {(cur_block.next_same=NULL) || {cur_block.next_same.prev_same=cur_block}};
+      cur_block:=cur_block.next_same;
+    };
+  
+    (cur_block = NULL).if {
+      // More memory.
+      (is_ansi).if {
+	add_size := (size + 16 + 000FFFFFFh) & 0FF000000h; // + 16 Mo
+//	add_size := (size + 16 + 00000FFFFh) & 0FFFF0000h; // + 64Ko
+	capacity := capacity + add_size;
+	? {get_next last_block = NULL};
+	SYSTEM.realloc_c begin_memory,capacity;
+	
+	(last_block.is_free).if {
+	  cur_block := last_block;
+	  cur_block.set_size (cur_block.size + add_size);
+	} else {
+	  cur_block := get_block (end_memory + 1);
+	  cur_block.make (add_size - 16);
+	  cur_block.set_prev last_block;
+	  last_block := cur_block;
+	  cur_block.set_next_same first_free;
+	  (first_free != NULL).if {
+	    first_free.set_prev_same cur_block;
+	  };
+	  first_free := cur_block;
+	};
+	end_memory := end_memory + add_size;	      
+      } else {
+	'M'.print;
+	'E'.print;
+	'M'.print;
+      };
+    };
+    
+    ? {cur_block.is_free};
+    cur_block.to_busy;
+    
+    // Update same link.
+    p_block:=cur_block.prev_same;
+    n_block:=cur_block.next_same;    
+    (p_block=NULL).if {
+      first_free:=n_block;
+    } else {
+      p_block.set_next_same n_block;
+    };
+    (n_block!=NULL).if {
+      n_block.set_prev_same p_block;
+    };
+        
+    new_size := cur_block.size - size;
+    (new_size > (128 + MEM_BLOCK.object_size)).if {
+      // New Free.
+      new_size := new_size - MEM_BLOCK.object_size;
+      new_block:=get_block (cur_block.get_adress+size);
+      new_block.make new_size;
+      // Free Link.
+      (first_free!=NULL).if {
+	first_free.set_prev_same new_block;
+      };
+      new_block.set_next_same first_free;
+      first_free:=new_block;
+      // Linear Link.
+      cur_block.set_size size;      
+      new_block.set_prev cur_block;
+      n_block:=get_next new_block;
+      (n_block = NULL).if {
+	last_block := new_block;
+      } else {
+	n_block.set_prev new_block;
+      };
+    };
+
+    ? {get_next last_block = NULL};
+    
+    cur_block
+  );
+  
+  - big_free_intern blk:MEM_BLOCK <-
+  ( + p_block,n_block,pp_block,nn_block,block:MEM_BLOCK;
+    + size:UINTEGER;
+    
+    ? {get_next last_block = NULL};
+
+    size   :=blk.size;
+    p_block:=blk.prev;    
+    n_block:=get_next blk;
+    ((p_block!=NULL) && {p_block.is_free}).if {      
+      block:=p_block;
+      size:=size + block.size + MEM_BLOCK.object_size;
+    } else {      
+      block:=blk;      
+    };    
+    ((n_block!=NULL) && {n_block.is_free}).if {
+      size:=size + n_block.size + MEM_BLOCK.object_size;
+      pp_block:=n_block.prev_same;
+      nn_block:=n_block.next_same;
+      (pp_block=NULL).if {
+	first_free:=nn_block;
+      } else {
+	pp_block.set_next_same nn_block;
+      };
+      (nn_block!=NULL).if {
+	nn_block.set_prev_same pp_block;
+      };
+      n_block:=get_next n_block;      
+    };
+    block.set_size size;
+    (n_block = NULL).if {
+      last_block := block;
+    } else {
+      n_block.set_prev block;
+    };
+    
+    (! block.is_free).if {
+      block.to_free;
+      block.set_prev_same NULL;
+      block.set_next_same first_free;
+      (first_free != NULL).if {
+	first_free.set_prev_same block;
+      };
+      first_free:=block;
+    };
+
+    ? {get_next last_block = NULL};
+  );
+    
+section PUBLIC  
+  
+  - count_bug:UINTEGER;
+  
+  - allocation nb:NUMERIC :POINTER <-
+  ( + result:UINTEGER;
+    + first_block, lst_block, new_block:MEM_BLOCK;
+    + index,size,offset:UINTEGER;
+    ? {nb>0};
+    
+    (capacity = 0).if {
+      auto_install;
+    };
+    
+    ? {check_memory};
+    
+    (nb <= 128).if {       
+      // Small Allocation.
+      size  := (nb+1)&0FEh;
+      index := (size>>1)-1;
+      first_block := small_fat.item index;      
+      ((first_block = NULL) || {first_block.is_small_busy size}).if {
+	new_block:=big_allocation_intern 4096;
+	(new_block!=NULL).if {
+	  new_block.to_small;
+	  small_fat.put new_block to index;
+	  (first_block != NULL).if {	  	  
+	    lst_block:=first_block.prev_same;
+	    new_block  .set_next_same first_block;
+	    new_block  .set_prev_same lst_block;
+	    lst_block  .set_next_same new_block;
+	    first_block.set_prev_same new_block;
+	  };
+	};
+	first_block:=new_block;
+      };
+      (first_block!=NULL).if {	
+	offset := first_block.allocation size;      
+	((first_block.is_small_busy size) && {! first_block.next_same.is_small_busy size}).if {  
+	  small_fat.put (first_block.next_same) to index;
+	};
+	result:=first_block.get_adress + offset;
+      };
+    } else {
+      // Allocation of a big block
+      first_block:=big_allocation_intern nb;
+      (first_block != NULL).if {
+	result :=first_block.get_adress;
+      };
+    };
+
+    (result=0).if {
+      'E'.print;
+      'R'.print;
+      'R'.print;
+      ' '.print;
+      'M'.print;
+      'E'.print;
+      'M'.print;
+      `while (1)`;
+      //crash_with_message "Error : Not enough memory (blue screen :-)";
+    };
+    
+    ? {check_memory};
+
+    POINTER.from_uinteger result
+  );
+  
+  - free p:UINTEGER size nb:NUMERIC <-
+  ( + first_block,cur_block,p_block,n_block:MEM_BLOCK;
+    + size, index:INTEGER;
+
+//    ? {check_memory};
+    
+    (nb <= 128).if {
+      // It's a small_block
+      size  := (nb + 1) & 0FEh;
+      index := (size >> 1) - 1;
+      first_block := small_fat.item index;
+      ? {first_block!=NULL};
+      
+      cur_block:=first_block;
+      {cur_block.in_range p}.until_do {
+	cur_block := cur_block.next_same;
+      };
+      cur_block.free (p - cur_block.get_adress) size size;
+      cur_block.is_small_free.if {
+	n_block:=cur_block.next_same;	
+	p_block:=cur_block.prev_same;
+	n_block.set_prev_same p_block;
+	p_block.set_next_same n_block;
+	(cur_block=first_block).if {
+	  (n_block=cur_block).if {
+	    small_fat.put NULL to index;
+	  } else {
+	    small_fat.put n_block to index;
+	  };
+	};
+	big_free_intern cur_block;	
+      }.elseif {cur_block!=first_block} then {
+	n_block:=cur_block.next_same;
+	p_block:=cur_block.prev_same;
+	n_block.set_prev_same p_block;
+	p_block.set_next_same n_block;
+	
+	p_block:=first_block.prev_same;
+	cur_block.set_next_same first_block;
+	cur_block.set_prev_same p_block;
+	first_block.set_prev_same cur_block;
+	p_block.set_next_same cur_block;
+	small_fat.put cur_block to index;
+      };
+    } else {  
+      // It's a big block
+      big_free_intern (get_block (p - MEM_BLOCK.object_size));
+    }; // End if small or big block    
+    
+//    ? {check_memory};
+  );  
+  
+  - realloc old_ptr:POINTER size old_size:NUMERIC to new_size:NUMERIC :POINTER <-
+  // First version: always alloc new size, copy then free old block
+  ( + new_pointer:POINTER;
+    ? {old_ptr != NULL};
+    ? {new_size > 0};
+    new_pointer := allocation new_size;
+    copy new_pointer from old_ptr size old_size;
+//    free (old_ptr.to_uinteger) size old_size;
+    new_pointer
+  );
+  
+  - allocation_reserved begin:UINTEGER to end:UINTEGER <-
+  ( 
+    //not_yet_implemented;
+  );
+  
+  - copy dst:POINTER from src:POINTER size n:NUMERIC :POINTER <-
+  ( + dst_array_32,src_array_32:NATIVE_ARRAY[UINTEGER];
+    + dst_array_8 ,src_array_8 :NATIVE_ARRAY[USMALLINT];
+    + dst_int,src_int:UINTEGER;
+    + cpt:INTEGER;
+    ? {dst != NULL};
+    ? {src != NULL};
+    
+//    ? {check_memory};
+    
+    dst_int := dst.to_uinteger;
+    src_int := src.to_uinteger;
+    
+    cpt := n >> 2;
+    (cpt != 0).if {      
+      dst_array_32 := NATIVE_ARRAY[UINTEGER].force_conversion dst_int;
+      src_array_32 := NATIVE_ARRAY[UINTEGER].force_conversion src_int;
+      0.to (cpt-1) do { i:INTEGER;
+	dst_array_32.put (src_array_32.item i) to i;
+      };
+      dst_int := dst_int + (n & 0FFFFFFFCh);
+      src_int := src_int + (n & 0FFFFFFFCh);
+    };
+    
+    cpt := n & 11b;
+    (cpt != 0).if {
+      dst_array_8 := NATIVE_ARRAY[USMALLINT].force_conversion dst_int;
+      src_array_8 := NATIVE_ARRAY[USMALLINT].force_conversion src_int;      
+      0.to (cpt-1) do { i:INTEGER;
+	dst_array_8.put (src_array_8.item i) to i;
+      };
+    };
+
+//    ? {check_memory};
+
+    dst
+  );
+      
+  - print_capacity <-
+  // Print size of memory capacity in Mb
+  (
+    "System Memory: ".print;
+    ((end_memory + 1) >> 20).print;
+    "MB RAM\n".print;  
+  );
+  //
+  // Debug Print
+  //
+  
+  - print_nb nb:UINTEGER <-
+  // Display number without allocation.
+  ( + div,n:UINTEGER;
+    + car:SMALLINT;
+    + tst:BOOLEAN;
+    
+    n := nb;
+    div := 1000000000;
+    {div!=0}.while_do {
+      car := (n / div).to_smallint;
+      ((car!=0) && {!tst}).if {
+	tst:=TRUE;
+      };
+      tst.if {
+	('0'+car.to_character).print;
+      };
+      n   := n % div;
+      div := div / 10;
+    };
+    tst.if_false {
+      '0'.print;
+    };
+  );
+
+  - print_nbx n:UINTEGER <-
+  // Display number without allocation.
+  ( + car:SMALLINT;
+    
+    28.downto 0 by 4 do { shift:INTEGER; 
+      car := ((n >> shift)&0Fh).to_smallint;
+      (car >= 10).if {
+	('A'+(car-10).to_character).print;
+      } else {
+	('0'+car.to_character).print;
+      };
+    };
+  );
+  
+  - print <-
+  ( + cur:MEM_BLOCK;
+    
+    "Linear display:\n".print;
+    cur:=first_free;
+    {cur.prev!=NULL}.while_do {
+      cur:=cur.prev;
+    };
+    {cur!=NULL}.while_do {
+      cur.big_print;
+      cur:=get_next cur;
+    };
+/*   
+    "\nFree display:\n".print;
+    cur:=first_free;
+    {cur!=NULL}.while_do {
+      cur.big_print;
+      cur:=cur.next_same;
+    };
+*/    
+    "\nSmall display:\n".print;
+    0.to 63 do { j:INTEGER;
+      ((small_fat.item j)!=NULL).if {
+	(j*2+2).print;
+	':'.print;
+	cur:=small_fat.item j;
+	{
+	  cur.small_print;
+	  cur:=cur.next_same;
+	}.do_while {cur!=small_fat.item j};
+	'\n'.print;
+      };
+    };        
+  );
+
+section PRIVATE
+  
+  - auto_install <-
+  ( + begin:UINTEGER;
+    
+    begin_memory := SYSTEM.get_begin_memory;
+    capacity := SYSTEM.get_capacity_memory;
+    
+    '\n'.print;
+    'M'.print;
+    print_nbx begin_memory;
+    '-'.print;
+    print_nbx capacity;
+    '\n'.print;
+    
+    KEYBOARD.wait_key;
+    
+    begin := begin_memory.align_power 16;
+    end_memory := begin + capacity - 1;
+    small_fat := NATIVE_ARRAY[MEM_BLOCK].force_conversion begin;
+    small_fat.clear_all 63;
+    
+    begin := begin + 256;
+    last_block := get_block begin;
+    last_block.make (end_memory +1 - begin - MEM_BLOCK.object_size);
+    first_free:=last_block;    
+    
+    ? {check_memory};
+    KEYBOARD.wait_key;
+    ? {get_next last_block = NULL};
+    ? {small_fat!=NULL};      
+  );  
+    

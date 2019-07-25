@@ -1,0 +1,79 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  + name        := GUI_ITEM;
+  
+  - comment     := "Simple item.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_item:ITEM;
+    
+section PUBLIC  
+  
+  //
+  // Creation.
+  //
+  
+  - create_in f:AREA at x,y:INTEGER label txt:ABSTRACT_STRING action a:INBOX :SELF <-
+  ( + result:SELF;
+    + len:INTEGER;
+    
+    len := font_width txt + 3;
+    result:=clone;
+    result.make_in f at x,y size len,18 label txt action a;
+    
+    result
+  );
+  
+  //
+  // Action.
+  // 
+  
+  - receive msg:EVENT <-
+  (
+    receive_on msg;
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  (     
+    clipping x0,y0 to x1,y1;
+    
+    ((stat != -1)  && {(stat & 1b) != 0}).if {
+      color color_back_light;
+    } else {
+      color color_back;
+    };
+    rectangle_fill x_min,y_min to x_max,y_max;
+    (stat = -1).if {
+      color color_dark;
+    }.elseif {(stat & 1b) = 0} then {
+      color black;
+    } else {
+      color red;
+    };
+    print name to 2,1;
+  );
+  
+
+
+
+
+

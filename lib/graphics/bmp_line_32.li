@@ -25,6 +25,8 @@ section PRIVATE
   
   + storage:MAP_NATIVE_ARRAY[PIXEL_32];
   
+section PUBLIC  
+  
   - get_storage:NATIVE_ARRAY[USMALLINT] <- NATIVE_ARRAY[USMALLINT].force_conversion storage;
   
   - make n:INTEGER <-

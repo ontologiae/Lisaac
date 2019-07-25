@@ -145,6 +145,7 @@ section PUBLIC
   //  All element are set with the value x.
   (
     + old_count:INTEGER;
+    old_count := count;
     storage.set_all_with x until (count - 1);
     
     ? { count = old_count};

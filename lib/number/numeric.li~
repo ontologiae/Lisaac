@@ -1,0 +1,663 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+section HEADER
+  
+  - name        :=NUMERIC -> USMALLINT,  USHORTINT, UINTEGER,  ULONGINT,
+                             SMALLINT,   SHORTINT,  INTEGER,   LONGINT,
+                             UREAL_26_6, REAL_24_8, REAL_16_16,ULARGEINT,
+                             DOUBLE;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Generic number.";
+  
+  - type        := `int`;
+  - default     := 0;
+
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  //- parent:HASHABLE := HASHABLE;
+  
+section PUBLIC
+
+  - pointer_size:INTEGER <- object_size; 
+  
+  //
+  // Range.
+  //
+  
+  - maximum:LONGINT <- INTEGER.maximum;
+  
+  - minimum:LONGINT <- INTEGER.minimum;
+  
+  //
+  // Conversion format with test.
+  //
+  
+  - to_ulongint:ULONGINT   <- 
+  ( //? {self >=0};
+    //? {self <=# (ULONGINT.maximum)};
+    to_raw_ulongint
+  );
+  
+  - to_uinteger:UINTEGER   <- 
+  ( //? {self >=0};
+    //? {self <=# (UINTEGER.maximum)};
+    to_raw_uinteger
+  );
+  
+  - to_ushortint:USHORTINT <- 
+  ( //? {self >=0};
+    //? {self <=# (USHORTINT.maximum)};
+    to_raw_ushortint
+  );
+  
+  - to_usmallint:USMALLINT <- 
+  ( //? {self >=0};
+    //? {self <=# (USMALLINT.maximum)};
+    to_raw_usmallint
+  );
+  
+  - to_longint:LONGINT     <- 
+  ( //? {self >=# (LONGINT.minimum)};
+    //? {self <=# (LONGINT.maximum)};
+    to_raw_longint
+  );
+  
+  - to_integer:INTEGER     <- 
+  ( //? {self >= (INTEGER.minimum)};
+    //? {self <= (INTEGER.maximum)};
+    to_raw_integer
+  );
+  
+  - to_shortint:SHORTINT   <- 
+  ( //? {self >=# (SHORTINT.minimum)};
+    //? {self <=# (SHORTINT.maximum)};
+    to_raw_shortint
+  );
+  
+  - to_smallint:SMALLINT   <- 
+  ( //? {self >=# (SMALLINT.minimum)};
+    //? {self <=# (SMALLINT.maximum)};
+    to_raw_smallint
+  );
+  
+  - to_ureal_26_6:UREAL_26_6 <-
+  ( //? {in_range 0 to (UREAL_26_6.maximum)};
+    (to_uinteger<<6).to_raw_ureal_26_6
+  );
+  
+  - to_real_24_8:REAL_24_8 <-
+  ( //? {in_range (REAL_24_8.minimum) to (REAL_24_8.maximum)};
+    (to_integer<<8).to_raw_real_24_8
+  );
+
+  - to_real_16_16:REAL_16_16 <-
+  ( //? {in_range (REAL_16_16.minimum) to (REAL_16_16.maximum)};
+    (to_integer<<16).to_raw_real_16_16
+  );
+  
+  - to_double:DOUBLE <-
+  (
+    to_raw_double
+  );
+  
+  - to_ulargeint:ULARGEINT <- ULARGEINT.create self;
+  
+  - to_numeric:NUMERIC <- NUMERIC.force_conversion self;
+  
+  - to_binary:SELF <-
+  // Self is BCD formatted, convert to binary value
+  ( + result:SELF;
+    + val,mul:SELF;
+    
+    val := self;
+    mul := 1;
+    {val!=0}.while_do {
+      result := result + (val & 0Fh) * mul;
+      mul    := mul * 10;
+      val    := val >> 4;
+    };
+    
+    result
+  );
+  
+  - to_bcd:SELF <-
+  // Self is binary formatted, convert to bcd value
+  ( + result:SELF;
+    + val,mul:SELF;
+    
+    val := self;
+    {val!=0}.while_do {
+      result := result | ((val % 10) << mul);
+      mul    := mul + 4;
+      val    := val / 10;
+    };
+    
+    result    
+  );
+  
+  //
+  // binary operator :
+  //
+  
+  - '-'  left 80  other:SELF :SELF <- `2`;
+  
+  - '*'  left 100 other:SELF :SELF <- `3`;
+  
+  - '/'  left 100 other:SELF :SELF <- `4`; // ? {other/=0}
+  
+  - '%'  left 100 other:SELF :SELF <- self - ((self / other) * other);
+  
+  - '+'  left 80  other:SELF :SELF <- self - -other;
+  
+  - '**' right 120 exp:SELF :SELF <-
+  ( + result:SELF;
+    
+    (exp=0).if {
+      result := 1;
+    } else {
+      ((exp & 1)=0).if {
+	result :=	((self * self) ** (exp / 2));
+      } else {
+	result := (self * (self ** (exp-1)));
+      };
+    };
+    result
+  );
+  
+  // external- '>>' left 100 other:SELF :SELF <- (self / (2 ** other));
+  - '>>' left 100 other:NUMERIC :SELF <- `@self>>@other`:SELF;  
+  - '<<' left 100 other:NUMERIC :SELF <- `@self<<@other`:SELF; 
+  // external - '<<' left 100 other:SELF :SELF <- (self * (2 ** other));
+  
+  - '&'  left 100 other:SELF :SELF <- `5`;
+  
+  - '|'  left 80  other:SELF :SELF <- ~(~self & ~other);
+  
+  - '^'  left 80  other:SELF :SELF <- (~self & other) | (self & ~other);
+
+  //
+  // Compatibility Binary operator
+  //
+  
+  - '-#'  left 80  other:NUMERIC :SELF <- self - other;
+  
+  - '*#'  left 100 other:NUMERIC :SELF <- self * other;
+  
+  - '/#'  left 100 other:NUMERIC :SELF <- self / other;
+  
+  - '%#'  left 100 other:NUMERIC :SELF <- self % other;
+  
+  - '+#'  left 80  other:NUMERIC :SELF <- self + other;
+  
+  - '>#'  right 60 other:NUMERIC :BOOLEAN <- self > other;
+  
+  - '<#'   right 60 other:NUMERIC :BOOLEAN <- ! (self >=# other);
+  
+  - '<=#'  right 60 other:NUMERIC :BOOLEAN <- ! (self ># other);
+  
+  - '>=#'  right 60 other:NUMERIC :BOOLEAN <- (self ># other) | (self == other);
+
+  //
+  // Test binary operator :
+  //
+  
+  - '=='  right 60 other:SELF :BOOLEAN <- (self = other);
+  
+  - '!==' right 60 other:SELF :BOOLEAN <- ! (self == other);
+  
+  - '>'   right 60 other:SELF :BOOLEAN <- `1`;
+  
+  - '<'   right 60 other:SELF :BOOLEAN <- ! (self >= other);
+  
+  - '<='  right 60 other:SELF :BOOLEAN <- ! (self > other);
+  
+  - '>='  right 60 other:SELF :BOOLEAN <- (self > other) | (self == other);
+  
+  //
+  // Switch case :
+  //
+  
+  - when value:SELF then block:BLOCK :SELF <-
+  (
+    (self=value).if block;
+    self
+  );
+  
+  - when value1:SELF or value2:SELF then block:BLOCK :SELF <-
+  (
+    ((self=value1) || {self=value2}).if block;
+    self
+  );
+  
+  - when first_value:SELF to last_value:SELF then block:BLOCK :SELF <-
+  ( ? {first_value<=last_value};
+    
+    ((self>=first_value) && {self<=last_value}).if block;
+    self
+  );
+  
+  //
+  // prefix : Unary operator
+  //
+  
+  - '+' :SELF <- self;
+  
+  - '-' :SELF <- SELF.zero - self;
+  
+  - '~' :SELF <- (-SELF.one) - self;
+  
+  - align_power step:SELF :SELF <-
+  ( + a:SELF;
+    //? {step.is_power_2};
+    a := step - 1;
+    (self + a) & (~ a)
+  );
+  
+  - is_power_2:BOOLEAN <-
+  (
+    not_yet_implemented;
+  );
+  
+  //
+  // Looping.
+  //
+  
+  - to limit_up:SELF do blc:BLOCK <-
+  (
+    (self<=limit_up).if {
+      blc.value self;
+      (self+1).to limit_up do blc;
+    };
+  );
+  
+  - downto limit_down:SELF do blc:BLOCK <-
+  (
+    (self>=limit_down).if {
+      blc.value self;
+      (self-1).downto limit_down do blc;
+    };
+  );
+  
+  - to limit_up:SELF by step:SELF do blc:BLOCK <-
+  (
+    (self<=limit_up).if {
+      blc.value self;
+      (self+step).to limit_up by step do blc;
+    };
+  );
+  
+  - downto limit_down:SELF by step:SELF do blc:BLOCK <-
+  (
+    (self>=limit_down).if {
+      blc.value self;
+      (self-step).downto limit_down by step do blc;
+    };
+  );
+  
+  //
+  // Function :
+  //
+
+  - in_range low:NUMERIC to up:NUMERIC :BOOLEAN <- ((self>=#low) && {self<=#up});
+  
+  - one:SELF  <- 1; // Neutral element for `*' and `/'.
+  
+  - zero:SELF <- 0; // Neutral element for `+' and `-'.
+  
+  - sign:INTEGER <-
+  // Sign of Current (0 -1 or 1).
+  ( + result:INTEGER;
+    
+    (self>0).if {
+      result:=1;
+    }.elseif {self<0} then {
+      result:=-1;
+    };
+    
+    ? {-1<=result};
+    ? {result<=1};
+    result
+  );
+  
+  - sqrt:SELF <-
+  ( + r,x:SELF;
+    
+    x:=(self + 1) >> 1;
+    {x>r}.while_do {
+      x:=x-r;
+      r:=r+1;
+    };
+    r
+  );
+  
+  - factorial:SELF <-
+  ( + result,value:SELF;
+    ? {self>=0};
+    
+    result := 1;
+    value  := self;
+    {value <= 1}.until_do {
+      result := result * value;
+      value  := value - 1;
+    };
+    result
+  );
+  
+  - fibonacci:INTEGER <-
+  ( + result:INTEGER;
+    ? {self >= 0};
+    
+    (self <= 1).if {
+      result := 1;
+    } else {
+      result := (self-1).fibonacci + (self-2).fibonacci;
+    };
+    result
+  );
+  
+  - abs:SELF        <- ( deferred; 0);  // Absolute value of `self'.
+  
+  - is_odd:BOOLEAN  <- (self & 1) = 1;  // Is odd ?
+  
+  - is_even:BOOLEAN <- (self & 1) != 1; // Is even ?
+  
+  - gcd other:SELF :SELF <-
+  // Great Common Divisor of `self' and `other'.
+  ( + result:SELF;
+    ? {self>=0};
+    ? {other>=0};
+    
+    (other == 0).if {
+      result := self;
+    } else {
+      result := other.gcd (self % other);
+    };
+    
+ //   ? {result == other.gcd self};
+    result
+  );
+  
+  - min other:SELF :SELF <-
+  ( + result:SELF;
+    
+    (self>other).if {
+      result:=other;
+    } else {
+      result:=self;
+    };
+    result
+  );
+  
+  - max other:SELF :SELF <-
+  ( + result:SELF;
+    
+    (self>other).if {
+      result:=self;
+    } else {
+      result:=other;
+    };
+    result
+  );
+  
+  //
+  // Convertion
+  //
+  
+  - to_string:STRING <-
+  // Convert the decimal view of `self' into a new allocated STRING.
+  // For example, if `self' is -1 the new STRING is "-1".
+  // Note: see also `append_in' to save memory.
+  ( + result:STRING;
+    
+    result := STRING.create 11;
+    append_in result;
+    result
+  );
+  
+  - to_boolean:BOOLEAN <- self!=0;
+  
+  - append_in buffer:STRING <- deferred;
+  // Append in the `buffer' the equivalent of `to_string'. No new STRING
+  // creation during the process.
+  
+  - to_string_format s:SELF :STRING <-
+  // Same as `to_string' but the result is on `s' character and the
+  // number is right aligned.
+  // Note: see `append_in_format' to save memory.
+  ( + result:STRING;
+    ? {to_string.count<=s};
+    
+    result := to_string;
+    result.precede_multiple ' ' by ((s.to_integer) - result.count);
+    
+    ? {result.count == s};
+    result
+  );
+  
+  - append_in str:STRING format s:INTEGER <-
+  // Append the equivalent of `to_string_format' at the end of
+  // `str'. Thus you can save memory because no other
+  // STRING is allocate for the job.
+  ( 
+    append_in str format s with ' ';
+  );
+
+  - append_in str:STRING format s:INTEGER with char:CHARACTER <-
+  // Append the equivalent of `to_string_format' at the end of
+  // `str'. Thus you can save memory because no other
+  // STRING is allocate for the job.
+  ( + old_count:INTEGER;
+    ? {str!=NULL};
+    ? {to_string.count<=s};
+
+    old_count := str.count;
+    append_in str;
+    str.insert char to old_count on (s - (str.count-old_count));
+    
+    ? {str.count == (old_count + s)};
+  );
+  
+  - decimal_digit:CHARACTER <-
+  // Gives the corresponding CHARACTER for range 0..9.
+  ( + result:CHARACTER;
+    ? {in_range 0 to 9};
+    
+    result := (self.to_smallint + '0'.code).to_character;
+    
+    ? {"0123456789".has result};
+    ? {result.decimal_value=self};
+    result
+  );
+  
+  - digit:CHARACTER <- decimal_digit;
+  
+  - hexadecimal_digit:CHARACTER <-
+  // Gives the corresponding CHARACTER for range 0..15.
+  ( + result:CHARACTER;
+    ? {in_range 0 to 15};
+    
+    (self <= 9).if {
+      result := digit;
+    } else {
+      result := ('A'.code + (self - 10).to_smallint ).to_character;
+    };
+    
+    ? {"0123456789ABCDEF".has result};
+    result
+  );
+  
+  - to_character:CHARACTER <- to_smallint.to_character;
+  // Return the coresponding ASCII character.
+  
+  - to_octal:SELF <-
+  // Gives coresponding octal value.
+  ( + result:SELF;
+    
+    deferred;
+    result
+  );
+  
+  - to_hexadecimal:STRING <-
+  // Convert the hexadecimal view of `self' into a new allocated
+  // STRING. For example, if `self' is -1 the new STRING is
+  // "FFFFFFFF" on a 32 bit machine.
+  // Note: see also `to_hexadecimal_in' to save memory.
+  ( + result:STRING;
+    
+    result := STRING.create 8;
+    to_hexadecimal_in result;
+    result
+  );
+  
+  - to_hexadecimal_format s:INTEGER :STRING <-
+  // Convert the hexadecimal view of `self' into a new allocated
+  // STRING. For example, if `self' is -1 the new STRING is
+  // "FFFFFFFF" on a 32 bit machine.
+  // Note: see also `to_hexadecimal_in' to save memory.
+  ( + result:STRING;
+    
+    result := STRING.create 8;
+    to_hexadecimal_in result format s;
+    result
+  ); 
+  
+  - to_hexadecimal_in buffer:STRING <-
+  // Append in `buffer' the equivalent of `to_hexadecimal'. No new STRING
+  // creation during the process.
+  ( + val:SELF;
+    + i,old_count:INTEGER;
+    ? {buffer!=NULL};
+    
+    (self==0).if {
+      buffer.extend '0';
+    } else {
+      i := buffer.count + 1;
+      val := self;
+      {val != 0}.while_do { //JBJB 
+	buffer.extend ((val & 15).hexadecimal_digit);
+	val := val >> 4;
+      };
+      old_count := buffer.count;
+      {i >= old_count}.until_do {
+	buffer.swap i with old_count;
+	old_count := old_count - 1;
+	i := i + 1;
+      };
+    };
+  );
+  
+  - to_hexadecimal_in buffer:STRING format s:INTEGER <-
+  // Append in `buffer' the equivalent of `to_hexadecimal'. No new STRING
+  // creation during the process.
+  ( + val:SELF;
+    + i,old_count:INTEGER;
+    ? {buffer!=NULL};
+    
+    (self==0).if {
+      buffer.extend '0';
+    } else {
+      i := buffer.count + 1;
+      val := self;
+      {val != 0}.while_do { //JBJB 
+	buffer.extend ((val & 15).hexadecimal_digit);
+	val := val >> 4;
+      };
+      old_count := buffer.count;
+      {i >= old_count}.until_do {
+	buffer.swap i with old_count;
+	old_count := old_count - 1;
+	i := i + 1;
+      };
+    };
+    buffer.precede_multiple '0' by ((s.to_integer) - buffer.count);
+  ); 
+
+  - to_binary_in buffer:STRING format s:INTEGER <-
+  // Append in `buffer' the equivalent of `to_binary_string'. No new STRING
+  // creation during the process.
+  ( + val:SELF;
+    + i,old_count:INTEGER;
+    ? {buffer!=NULL};
+    
+    (self==0).if {
+      buffer.extend '0';
+    } else {
+      i := buffer.count + 1;
+      val := self;
+      {val != 0}.while_do { 
+	buffer.extend ('0' +# (val & 1));
+	val := val >> 1;
+      };
+      old_count := buffer.count;
+      {i >= old_count}.until_do {
+	buffer.swap i with old_count;
+	old_count := old_count - 1;
+	i := i + 1;
+      };
+    };
+    buffer.precede_multiple '0' by ((s.to_integer) - buffer.count);
+  ); 
+  
+  //
+  // Hashing:
+  //
+  
+  - hash_code:INTEGER <- ( deferred; 0);
+  
+section NUMERIC, CHARACTER
+  
+  //
+  // Convertion format without test.
+  //
+  
+  - to_raw_ulongint:ULONGINT   <- ULONGINT.force_conversion self;
+  
+  - to_raw_uinteger:UINTEGER   <- UINTEGER.force_conversion self;
+  
+  - to_raw_ushortint:USHORTINT <- USHORTINT.force_conversion self;
+  
+  - to_raw_usmallint:USMALLINT <- USMALLINT.force_conversion self;
+  
+  - to_raw_longint:LONGINT     <- LONGINT.force_conversion self;
+  
+  - to_raw_integer:INTEGER     <- INTEGER.force_conversion self;
+  
+  - to_raw_shortint:SHORTINT   <- SHORTINT.force_conversion self;
+  
+  - to_raw_smallint:SMALLINT   <- SMALLINT.force_conversion self;
+
+  - to_raw_ureal_26_6:UREAL_26_6 <- UREAL_26_6.force_conversion self;
+
+  - to_raw_real_24_8:REAL_24_8   <- REAL_24_8.force_conversion self;
+
+  - to_raw_real_16_16:REAL_16_16 <- REAL_16_16.force_conversion self;
+
+  - to_raw_double:DOUBLE <- DOUBLE.force_conversion self;
+
+  //
+  // Print
+  //
+  
+  - print <-
+  (
+    to_string.print;
+  );
+
+
+
+
+
+
+
+
+

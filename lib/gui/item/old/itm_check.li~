@@ -1,0 +1,82 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  + name        := ITM_CHECK;
+  
+  - comment     := "Check.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_gui_item:GUI_ITEM;
+    
+section PUBLIC  
+  
+  - is_check:BOOLEAN <- (stat & 10b) != 0;
+  
+  //
+  // Creation.
+  //
+  
+  - create_in f:AREA at x,y:INTEGER action a:INBOX with lab:GUI_LABEL :SELF <-
+  (
+    create_in f at x,y size (lab.width_min + 20),(lab.height_min) action a with lab
+  );
+  
+  - create_in f:AREA at x,y:INTEGER size w,h:INTEGER action a:INBOX with lab:GUI_LABEL :SELF <-
+  ( + result:SELF;
+        
+    result:=clone;
+    result.make_in f at x,y size w,h action a with lab;
+    
+    result
+  );
+  
+  - set_on <-
+  (
+    set_stat 10b;
+  );
+  
+  - set_off <-
+  (
+    set_stat 00b;
+  );
+  
+  
+  //
+  // Action.
+  // 
+  
+  - receive msg:EVENT <-
+  (
+    receive_on_off msg;
+  );
+  
+  //
+  // Display.
+  //
+  
+  - draw x0,y0:INTEGER to x1,y1:INTEGER <-
+  (     
+    clipping x0,y0 to x1,y1;    
+    
+    draw_check label stat stat; 
+  );
+  
+
+
+
+
+

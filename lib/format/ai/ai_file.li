@@ -1,0 +1,53 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := AI_FILE;
+  
+  - comment     := "Adobe Illustrator File";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";
+  
+section INHERIT
+  
+  * parent_std_file:STD_FILE;
+
+section PUBLIC
+
+  + width:INTEGER;
+
+  + height:INTEGER;
+
+  - fill_bitmap b:BITMAP scale s:REAL_16_16 <-
+  ( + tmp_buf:FIXED_ARRAY[CHARACTER];
+    + ai_parser:AI_PARSER;
+    
+    tmp_buf := FIXED_ARRAY[CHARACTER].create_with_capacity size;
+    read tmp_buf size size;
+    ai_parser := AI_PARSER.create tmp_buf;
+    width  := ai_parser.width;
+    height := ai_parser.height;
+    ai_parser.draw b scale s;
+  );  
+  
+  - is_type n:ABSTRACT_STRING :BOOLEAN <-
+  // Return true if the file name has '.ai' or '.AI' suffix
+  (
+    ? {n != NULL};
+    ? {! n.is_empty};
+    (n.has_suffix ".ai") || { n.has_suffix ".AI"}
+  );
+  
+
+
+

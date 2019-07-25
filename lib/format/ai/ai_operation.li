@@ -1,0 +1,41 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac                                        *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+section HEADER
+
+  - name    := AI_OPERATION;
+  
+  - category:= MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Operations of .AI document.";
+
+  - version :="1.0";  
+  - date    :="2003/04";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+  
+  //
+  // Draw.
+  //
+  
+  - draw_stroke b:BITMAP scale s:REAL_16_16 <- deferred;
+
+  - draw_fill b:BITMAP scale s:REAL_16_16 <- deferred;
+  
+  //
+  // Display.
+  //
+  
+  - display <- deferred;
+
+

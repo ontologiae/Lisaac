@@ -1,0 +1,171 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Isaac Library                                *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  + name        := GUI;
+  
+  - comment     := "GUI Plateform.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  * parent_window:AREA;
+  
+section PUBLIC
+    
+  + stat:INTEGER;
+  
+  + action:INBOX;
+  
+  - make_in father:AREA at x,y:INTEGER size w,h:INTEGER action obj:INBOX <-
+  (   
+    stat   := 0;
+    action := obj;
+    make father from x,y size w,h;
+  );
+  
+  - set_stat st:INTEGER <-
+  (
+    stat := st;
+    refresh;
+  );
+  
+  - set_actif b:BOOLEAN <-
+  (
+    b.if {
+      stat := 0;
+    } else {
+      stat := -1;
+    };
+    refresh;
+  );
+  
+  //
+  // Comportement.
+  //
+  
+  - receive_nothing msg:EVENT <-
+  ( + win:AREA;
+    + mouse:EVENT_MOUSE;
+
+    mouse ?= msg;
+    (mouse != NULL).if {
+      win := INTERFACE.get_object (mouse.x_current),(mouse.y_current);
+      (win != self).if {
+	INTERFACE.receive msg;
+      };
+    };
+  );
+
+  - receive_on msg:EVENT <-
+  // stat :
+  // -1 = Not actif
+  //  0 = out & off
+  //  1 = in  & off
+  //  2 = out & on
+  //  3 = in  & on
+  ( + mouse:EVENT_MOUSE;
+    + win:AREA;    
+    + new_stat:INTEGER;
+    
+    mouse ?= msg;
+    (mouse != NULL).if {
+      win := INTERFACE.get_object (mouse.x_current),(mouse.y_current);
+      new_stat := (win = self).to_numeric | (mouse.left.to_numeric.to_integer << 1);
+      (new_stat != stat).if {
+	(stat != -1).if {
+	  ((new_stat = 1) && {stat = 3}).if {
+	    // Action.
+	    stat := new_stat;
+	    send action;
+	  } else {
+	    stat := new_stat;
+	  };
+	  refresh;
+	};	  
+	(new_stat = 0).if {
+	  // Change Focus.
+	  INTERFACE.receive msg;
+	};
+      };
+    };
+  );
+  
+  - receive_on_off msg:EVENT <-
+  // stat :
+  // -1 = Not actif
+  //  0 = out & off
+  //  1 = in  & off
+  //  2 = out & on
+  //  3 = in  & on
+  ( + mouse:EVENT_MOUSE;
+    + win:AREA;    
+    + new_stat:INTEGER;
+    
+    mouse ?= msg;
+    (mouse != NULL).if {
+      win := INTERFACE.get_object (mouse.x_current),(mouse.y_current);
+      new_stat := (win = self).to_numeric | ((stat & 10b) ^ (mouse.left_up.to_numeric.to_integer << 1));
+      
+      (new_stat != stat).if {
+	(stat != -1).if {
+	  ((new_stat & 10b) != (stat & 10b)).if {
+	    // Action.
+	    stat := new_stat;
+	    send action;
+	  } else {
+	    stat := new_stat;
+	  };
+	  refresh;
+	};	  
+	((new_stat & 01b) = 0).if {
+	  // Change Focus.
+	  INTERFACE.receive msg;
+	};
+      };
+    };
+  );
+  
+  //
+  // Draw facility.
+  //
+  
+  - color_dark:UINTEGER      := 01E527Fh;
+  - color_light:UINTEGER     := 0D0E1EFh;
+  
+  - color_back:UINTEGER      := 083AAD3h;  
+  - color_back_light:UINTEGER:= color_back + 101010h;  
+
+  - draw_border_in x0,y0:INTEGER to x1,y1:INTEGER <-
+  (
+    color color_dark;
+    move_to x0,y1;
+    line_v_until y0;
+    line_h_until x1;
+    color color_light;
+    line_v_until y1;
+    line_h_until x0;
+  );
+  
+  - draw_border_out x0,y0:INTEGER to x1,y1:INTEGER <-
+  (
+    color color_light;
+    move_to x0,y1;
+    line_v_until y0;
+    line_h_until x1;
+    color color_dark;
+    line_v_until y1;
+    line_h_until x0;
+  );
+  

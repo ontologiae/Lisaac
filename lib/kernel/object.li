@@ -18,6 +18,12 @@ section HEADER
 
 section PUBLIC
   
+  // JBJB
+  - display <- 
+  (
+    "\nObject tout con".print;
+  );
+  
   //
   // Compiler consideration.
   //
@@ -52,7 +58,9 @@ section PUBLIC
   
   - check_crash <-
   (
-    crash_with_message "Check runtime error.\n";
+    print_runtime_stack;
+    die_with_code exit_failure_code;
+    //crash_with_message "Check runtime error.\n";
   );
   
   - crash <-

@@ -1,0 +1,260 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  + name        := STD_FILE;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";  
+
+  - comment     := "File for Linux/Unix and DOS/Windows: use C functions";
+
+  - external := 
+`
+#include <stdio.h>
+#include <sys/stat.h>
+`;
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+  
+  + name:STRING;
+  
+  - size:INTEGER <-
+  (
+    basic_size
+  );
+  
+  + cursor:UINTEGER;
+  
+  - set_cursor c:UINTEGER <-
+  (
+    cursor := c;
+  );
+  
+  - end_of_input:BOOLEAN <-
+  (
+    cursor = size;
+  );
+  
+  //
+  // Open / Close
+  //
+  
+  - make n:ABSTRACT_STRING <-
+  (
+    ? { n != NULL};
+    name := n.to_string.twin;
+  );
+  
+  - create n:ABSTRACT_STRING :STD_FILE <-
+  ( + result:SELF;
+    ? { n != NULL};
+    result := clone;
+    result.make n;
+    result.basic_open_new;
+    result
+  );
+  
+  //
+  // BSBS: Pour le compilo.
+  //
+  
+  - create_open n:ABSTRACT_STRING :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make_open n;
+    result
+  );
+  
+  - make_open n:ABSTRACT_STRING <-
+  (
+    name := n;
+    open;
+  );
+  
+  //
+  // BSBS: FIN.
+  //
+  
+  - open <-
+  (
+    basic_open;
+  ); 
+  
+  - is_open:BOOLEAN <-
+  (
+    stream != NULL
+  );
+  
+  - close <-
+  (
+    basic_close;
+  );
+  
+  //
+  // Read
+  //
+  
+section PRIVATE
+  
+  - tmp_buffer:NATIVE_ARRAY[USMALLINT] := NATIVE_ARRAY[USMALLINT].calloc 512; // 512 byte
+  
+section PUBLIC
+  
+  - read dst:OBJECT :INTEGER <- 
+  ( 
+    array_intern.make_with_map_object dst;
+    read array_intern size (dst.object_size)
+  ); 
+  
+  - read dest:ARRAYED size nb_elt:NUMERIC :INTEGER <-
+  ( + result:INTEGER;
+    + elt_size,size_byte:UINTEGER;
+    + size_block:UINTEGER;
+    
+    ? { is_open };
+    ? { nb_elt > 0};
+    ? {dest!=NULL};
+    
+    elt_size:=dest.element_sizeof.to_uinteger;
+    size_byte:=nb_elt.to_uinteger * elt_size;
+    basic_seek cursor;
+    cursor := cursor + size_byte;
+    size_block := 512;
+    array_intern.make_with_map_object tmp_buffer;
+    {size_byte > 0}.while_do {
+      (size_byte < 512).if {
+	size_block := size_byte;
+      };
+      result := result + basic_read tmp_buffer size size_block;
+      array_intern.set_upper ((size_block - 1).to_integer);
+      // BSBS: Ca doit pas marcher si la taille des objets n'est pas multiple de 512
+      dest.add_last_buffer array_intern from 0 to (size_block - 1);
+      size_byte := size_byte - size_block;
+      array_intern.clear;
+    };
+    result    
+  );
+  
+  - write src:ARRAYED from start:NUMERIC size nb_elt:NUMERIC :INTEGER <-
+  ( + result:INTEGER;
+    + elt_size,elt_ofs,size_byte:INTEGER;
+    + size_block:INTEGER;
+    + idx_elt:INTEGER;
+    ? {(start + nb_elt - 1) <= src.upper};
+    ? { is_open };
+    ? { nb_elt > 0};
+    ? {src!=NULL};
+    elt_size:=src.element_sizeof;
+    size_byte:=nb_elt * elt_size;
+    basic_seek cursor;
+    cursor := cursor + size_byte.to_uinteger;
+    size_block := 512;
+    idx_elt := start;
+    
+    {size_byte > 0}.while_do {
+      (size_byte < 512).if {
+	size_block := size_byte;
+      };
+      0.to (size_block - 1) do {i:INTEGER;
+	tmp_buffer.put (src.item_byte idx_elt offset elt_ofs) to i;
+	elt_ofs := elt_ofs+1;
+	(elt_ofs = elt_size).if {
+	  elt_ofs := 0;
+	  idx_elt := idx_elt + 1;
+	};
+      };
+      result := result + basic_write tmp_buffer size size_block;
+      size_byte := size_byte - size_block;
+    };
+    result        
+  );
+  
+  - print <-
+  (
+    size.print;
+    "       ".print;
+    (name != NULL).if {
+      name.print;
+    };
+    '\n'.print;
+  );
+  
+section PRIVATE
+  
+  + array_intern:FIXED_ARRAY[USMALLINT] := FIXED_ARRAY[USMALLINT].clone;
+  
+  + stream:POINTER;
+
+  // Read Write Open by default
+  - basic_open <-
+  ( + path_pointer:NATIVE_ARRAY[CHARACTER];
+    ? { name != NULL};
+    path_pointer := name.to_external;
+    stream := `fopen(((char*)(@path_pointer)),"r+b")`:POINTER; 
+  ); 
+  
+  - basic_open_new <-
+  ( + path_pointer:NATIVE_ARRAY[CHARACTER];
+    ? { name != NULL};
+    path_pointer := name.to_external;
+    stream := `fopen(((char*)(@path_pointer)),"w+b")`:POINTER;  
+  ); 
+  
+  - basic_seek pos:NUMERIC :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( + str:POINTER;
+    ? {is_open};
+    str := stream;    
+    `fseek((FILE*)(@str),@pos,SEEK_SET)`:(INTEGER)
+  );
+  
+  - basic_read buf:NATIVE_ARRAY[USMALLINT] size s:NUMERIC :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( + str:POINTER;
+    ? {is_open};
+    str := stream;    
+    `fread((void *)(@buf),(size_t)(1), (size_t)(@s),(FILE*)(@str))`:(INTEGER)
+  );
+  
+  - basic_write buf:NATIVE_ARRAY[USMALLINT] size s:NUMERIC :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( + str:POINTER;
+    ? {is_open};
+    str := stream;      
+    `fwrite((void *)(@buf),(size_t)(1), (size_t)(@s),(FILE*)(@str))`:(INTEGER)
+  );
+  
+  - basic_close <-
+  ( + str:POINTER;
+    ? { is_open};
+    str := stream;
+    `fclose((FILE*)(@str))`;
+    stream := NULL;
+  );
+  
+  - basic_size:INTEGER <-
+  ( + result:INTEGER;
+    + path_pointer:NATIVE_ARRAY[CHARACTER];
+    path_pointer := name.to_external;
+    `{struct stat buf;
+      stat(@path_pointer,&buf);
+      `;
+      result := `buf.st_size`:INTEGER;
+    `}`;
+    result        
+  );

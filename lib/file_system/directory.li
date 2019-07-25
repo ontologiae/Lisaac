@@ -1,0 +1,314 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        :=DIRECTORY;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+  - comment     :="Directory management";
+  
+  - external := `#include <dirent.h>`;
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+
+  + name:STRING;  // The directory path in use
+  
+  - make <-
+  // Make a new not assigned one.
+  (
+    ( list = NULL).if {
+      list := LINKED_LIST[STRING].create;
+    } else {
+      list.clear;
+    };
+    ? { is_empty };
+  );
+
+  // Disk access:
+
+  - open_current_directory <-
+  (
+    make;    
+    connect_to_current_directory;
+    is_connected.if {
+      name := last_entry.twin;
+      read_entry;
+      {end_of_input}.until_do {
+	list.add_last (last_entry.twin);
+	read_entry;
+      };
+      disconnect;
+      status := TRUE;
+    } else {
+      status := FALSE;
+    };    
+    ? { (! status) ->> is_empty};
+  );
+   
+ - print <- 
+  ( 
+    "\nNb entry:".print;
+    count.print;    
+    '\n'.print;
+    (count > 0).if {
+      (list.lower).to (list.upper) do { i:INTEGER;
+	list.item i.print;
+	'\n'.print;
+      };
+    };
+  );
+  
+  - create_file my_name:ABSTRACT_STRING :STD_FILE <-
+  // If the file already exist it is overwritting
+  ( 
+    STD_FILE.create my_name
+  );
+  
+  
+  - get_file my_name:ABSTRACT_STRING :STD_FILE <- 
+  ( + result:STD_FILE;
+    + i:INTEGER;
+    + ext:STRING;
+    (has my_name).if {      
+      result:= STD_FILE.clone;
+      result.make my_name;
+    };
+    result
+  );
+
+  - get_directory my_name:ABSTRACT_STRING :DIRECTORY <- 
+  ( + result:DIRECTORY;
+    (has my_name).if {
+      result:=DIRECTORY.clone;
+      result.change_directory my_name;
+    };      
+    result
+  );
+  
+  - change_directory directory_path:ABSTRACT_STRING <-
+  // Try to change the current working directory using some
+  // directory_path. When the operation is possible, the last_entry buffer
+  // is updated with the new current working directory path,
+  // otherwise, when the modification is not possible the last_entry
+  // buffer is_empty after this call. Whatever the result,
+  // directory_path is left unchanged.
+  ( + p:NATIVE_ARRAY[CHARACTER];
+    ? { ! is_connected };
+    ? { last_entry != directory_path };
+    
+    p := directory_path.to_external;
+    ( basic_change_directory p).if {
+      open_current_directory;
+      is_connected.if {
+	disconnect;
+	? {! last_entry.is_empty};
+      } else {
+	last_entry.clear;
+      };
+    } else {
+      last_entry.clear;
+    };   
+    
+    ? { ! is_connected };
+  );
+  
+section PRIVATE
+  
+  + status:BOOLEAN;
+  
+  + list:LINKED_LIST[STRING];
+  // Actual list of name of entries (files or subdirectories)..
+  
+  - has entry_name:ABSTRACT_STRING :BOOLEAN <-
+  // Does Current contain the `entry_name' (file or subdirectory) ?
+  ( + entry:STRING;
+    + i:INTEGER;
+    + result:BOOLEAN;    
+    ? { entry_name != NULL };
+    i := list.upper;
+    { result || {i < list.lower}}.until_do {
+      entry := list.item i;
+      result := entry.same_as entry_name;
+      i := i - 1
+    };
+    result
+  );
+  
+  - count:INTEGER <-
+  // Number of items (files or directories) in Current.
+  (
+    + result:INTEGER;
+    result := list.count;
+    ? { result >= 0 };
+    result
+  );
+    
+  - is_empty:BOOLEAN <-
+  (
+    count = 0
+  );
+  
+  - connect_to_current_directory <-
+  // Try to connect 'Current' to the current working directory.
+  // After this call, the client is supposed to use 'is_connected'
+  // to check that the stream is ready to be used and the 'last_entry'
+  // buffer to know about the name of the current working directory.
+  ( + path:NATIVE_ARRAY[CHARACTER];
+    ? { ! is_connected };
+    path := get_current_directory;    
+    (path != NULL).if {
+      last_entry.from_external_copy path;
+      basic_open path;
+      current_entry := stream;
+      (stream.is_null).if {
+	last_entry.clear;
+      };
+    } else {
+      last_entry.clear;
+    };
+    
+    ? { is_connected ->> ! end_of_input };
+  ); 
+  
+  + stream:POINTER;
+  // This pointer memorize the current directory stream being
+  // scanned (used to compute 'is_connected').
+
+  + current_entry:POINTER;
+  // When 'is_connected', memorize the current entry in the
+  // current  'directory_stream'.
+  
+  - is_connected:BOOLEAN <-
+  // Is 'Current' connected to some directory stream ?
+  (    
+    stream != NULL
+  );
+  
+  - end_of_input:BOOLEAN <-
+  // Is end of input reached ?
+  (
+    ? { is_connected };
+    current_entry = NULL
+  );
+  
+  - disconnect<-
+  // Do not forget to call this feature when you have finished
+  // with some previously opened directory stream.
+  (
+    ? { is_connected };
+    basic_close.if {
+      stream := NULL;
+      current_entry := NULL;
+    };
+    ? { ! is_connected };
+  );
+  
+  // Scanning:
+  
+  - last_entry:STRING := STRING.create 256;
+  // Global buffer to get the last information
+  // computed by many routines of this class: 'read_entry', 'connect_with'
+  // 'connect_to_current_working_directory', 'compute_parent_directory_of', ...
+  
+  - read_entry <-
+  // Read the next entry name and update 'last_entry' and 'end_of_input'
+  // accordingly.
+  ( + n:NATIVE_ARRAY[CHARACTER];    
+    ? { is_connected };
+    ? { ! end_of_input };    
+    current_entry := basic_read_entry;
+    (current_entry != NULL ).if {
+      n := basic_get_entry_name current_entry;
+      last_entry.from_external_copy n;
+    };
+  );
+  
+  - get_current_working_directory:STRING <-
+  // get the current path
+  ( + result:STRING;
+    result := STRING.create 256;
+    result.from_external_copy basic_current_working_directory;
+    result
+  );
+  
+section PRIVATE  
+  
+  - basic_open path_pointer:NATIVE_ARRAY[CHARACTER] <-
+  // Try to open some existing directory using 'path'. When 'Result'
+  // is not NULL, the directory is correctly opened and 'Result' is
+  // a valid handle for this directory. Using 'Result', one can
+  // then scan the content of the directory using function
+  // 'basic_directory_read_entry' and 'basic_directory_get_entry_name'. Finally,
+  // a not NULL directory must be closed using function
+  // 'basic_directory_close'.
+  (
+    ? { path_pointer != NULL};    
+    stream := `opendir((char*) @path_pointer)`:POINTER;
+  );
+  
+  - basic_read_entry:POINTER <-
+  // Read an return a new entry using the current directory stream
+  // obtained with function 'basic_directory_open'. When there is no more
+  // entry, the 'Result' becomes NULL
+  ( + str:POINTER;
+    ? { is_connected};
+    str := stream;
+    `readdir((DIR*) @str)`:(POINTER)
+  );
+
+  - basic_get_entry_name entry:POINTER :NATIVE_ARRAY[CHARACTER] <-
+  // Read an return a new entry using the directory handle 'dirstream'
+  // obtained with function 'basic_directory_open'.
+  // When there is no more entry, the 'Result' becomes 'is_null'.
+  (
+    ? { entry != NULL };
+    `((struct dirent*)@entry)->d_name`:NATIVE_ARRAY[CHARACTER]
+  );  
+  
+  - basic_current_working_directory:NATIVE_ARRAY[CHARACTER] <-
+  // Try to get the current working directory path.
+  (
+    + buf:NATIVE_ARRAY[CHARACTER];
+    buf := NATIVE_ARRAY[CHARACTER].calloc 256;
+    `getcwd((char *)@buf,256)`:NATIVE_ARRAY[CHARACTER]
+  );
+  
+  - basic_close:BOOLEAN <-
+  // Try to close the opened stream directory.
+  // A true result indicates that the directory is correctly
+  // closed.
+  ( + str:POINTER;
+    ? { is_connected };
+    str := stream;
+    `closedir((DIR*)@str)`:INTEGER = 0  
+  );
+  
+  - get_current_directory:NATIVE_ARRAY[CHARACTER] <-
+  // Try to get the current working directory path.
+  (
+    + buf:NATIVE_ARRAY[CHARACTER];
+    buf := NATIVE_ARRAY[CHARACTER].calloc 256;
+    `getcwd((char *)@buf,256)`:NATIVE_ARRAY[CHARACTER]
+  );
+ 
+  - basic_change_directory destination:NATIVE_ARRAY[CHARACTER] :BOOLEAN <-
+  // Try to change the current working directory using 'destination'.
+  (
+    `chdir((char*)@destination)`:INTEGER = 0
+  );
+  

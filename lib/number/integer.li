@@ -31,7 +31,7 @@ section PUBLIC
   // Range
   //
   
-  - maximum:ULONGINT <- 07FFFFFFFh; 
+  - maximum:LONGINT <- 07FFFFFFFh; 
   
   //
   // Conversion with test.

@@ -183,7 +183,7 @@ section PUBLIC
   );
   
   
-  - is_equal other:SELF :BOOLEAN <-
+  - '=='  right 60 other:SELF :BOOLEAN <-
   (
     + result:BOOLEAN;
     result := FALSE;

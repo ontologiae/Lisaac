@@ -257,7 +257,7 @@ section PUBLIC
   );
   
   
-  - is_equal other:SELF :BOOLEAN <-
+  - '=='  right 60 other:SELF :BOOLEAN <-
   ( + result:BOOLEAN;
     + lnk1, lnk2:LINK2[E];
     
@@ -274,7 +274,7 @@ section PUBLIC
 	lnk2 := lnk2.next;
       };
     };
-    ? { result -> (lower = other.lower & upper = other.upper)};
+    ? { result ->> {(lower = other.lower) & (upper = other.upper)}};
     result
   );
   
@@ -307,7 +307,7 @@ section PUBLIC
     };
     ? { lower <= result };
     ? { result <= upper + 1 };
-    ? { (result <= upper) -> ( element.is_equal (item result))};    
+    ? { (result <= upper) ->> { element == (item result)}};    
     result
   );
   
@@ -322,7 +322,7 @@ section PUBLIC
     };
     ? { lower <= result };
     ? { result <= upper + 1 };
-    ? { (result <= upper) -> ( element = item result)};    
+    ? { (result <= upper) ->> { element = item result}};    
     result
   );
   
@@ -551,6 +551,6 @@ section PUBLIC
   
   - invariant:BOOLEAN <-
   (
-    ( (first_link = NULL) -> ( (last_link = NULL) & (upper = 0) & (mem_idx = 0) & (mem_lnk = NULL))) &&
-    { ( first_link != NULL) -> ( (last_link != NULL) & (upper > 0) & (mem_idx > 0) & (mem_lnk != NULL))}
+    ( (first_link = NULL) ->>   { (last_link = NULL) & (upper = 0) & (mem_idx = 0) & (mem_lnk = NULL)}) &&
+    { ( first_link != NULL) ->> { (last_link != NULL) & (upper > 0) & (mem_idx > 0) & (mem_lnk != NULL)}}
   );

@@ -32,7 +32,7 @@ section PUBLIC
   - element_sizeof: INTEGER <- E.object_size;
   // The size in number of bytes for type `E'.
   
-  - calloc nb_elements:NUMERIC :MAP_NATIVE_ARRAY[E] <-
+  - calloc_intern nb_elements:INTEGER :MAP_NATIVE_ARRAY[E] <-
   // Allocate a new array of `nb_elements' of type `E'.
   // The new array is initialized with default values.
   ( + result:MAP_NATIVE_ARRAY[E];
@@ -43,6 +43,17 @@ section PUBLIC
     capacity := nb_elements * element_sizeof;
     p        :=MEMORY.allocation capacity;
     result   := `(void*)@p`:MAP_NATIVE_ARRAY[E];
+    result
+  );
+  
+  - calloc nb_elements:INTEGER :MAP_NATIVE_ARRAY[E] <-
+  // Allocate a new array of `nb_elements' of type `E'.
+  // The new array is initialized with default values.
+  ( 
+    + result:MAP_NATIVE_ARRAY[E];
+    ? {nb_elements > 0};
+    result:=calloc_intern nb_elements;
+    result.clear_all (nb_elements-1); 
     result
   );
   
@@ -81,7 +92,7 @@ section PUBLIC
   //
   // JBJB AJOUT A VOIR...
   // 
-  - copy_slice src:NATIVE_ARRAY[E] to dest:NUMERIC from src_min:NUMERIC to src_max:NUMERIC <-
+  - copy_slice src:NATIVE_ARRAY[E] to dest:INTEGER from src_min:INTEGER to src_max:INTEGER <-
   // Copy range [`src_min' .. `src_max'] of `src' to range
   // [`at' .. `at + src_max - src_min - 1'] of `Current'.
   // No subscript checking.
@@ -102,13 +113,13 @@ section PUBLIC
   // Comparison:
   //
   
-  - memcmp other:MAP_NATIVE_ARRAY[E] until capacity:NUMERIC :BOOLEAN <-
+  - memcmp other:MAP_NATIVE_ARRAY[E] until capacity:INTEGER :BOOLEAN <-
   // True if all elements in range [0..capacity-1] are
   // identical using `equal'. Assume Current and `other'
   // are big enough.
   // See also `fast_memcmp'.
   ( + i:INTEGER;
-    ? {(capacity > 0) -> other.is_not_null};
+    ? {(capacity > 0) ->> {other.is_not_null}};
     
     i:=capacity-1;
     {(i>=0) && {item i == other.item i}}.while_do {
@@ -117,10 +128,10 @@ section PUBLIC
     i<0
   );
     
-  - deep_memcmp other:MAP_NATIVE_ARRAY[E] until capacity:NUMERIC :BOOLEAN <-
+  - deep_memcmp other:MAP_NATIVE_ARRAY[E] until capacity:INTEGER :BOOLEAN <-
   // Same jobs as `memcmp' but uses `is_deep_equal' instead `equal'.
   ( + i:INTEGER;
-    ? {(capacity > 0) -> other.is_not_null};
+    ? {(capacity > 0) ->> {other.is_not_null}};
     
     i:=capacity-1;
     {(i>=0) && {(item i).is_deep_equal (other.item i)}}.while_do {
@@ -133,9 +144,9 @@ section PUBLIC
   // Searching:
   //
   
-  - index_of element:E until upper:NUMERIC :NUMERIC <-
+  - index_of element:E until upper:INTEGER :INTEGER <-
   // Give the index of the first occurrence of `element' using
-  // `is_equal' for comparison.
+  // `==' for comparison.
   // Answer `upper + 1' when `element' is not inside.
   ( + idx:INTEGER;
     ? {upper>=-1};
@@ -146,7 +157,7 @@ section PUBLIC
     idx
   );
   
-  - fast_index_of element:E until upper:NUMERIC :NUMERIC <-
+  - fast_index_of element:E until upper:INTEGER :INTEGER <-
   // Same as `index_of' but use basic `=' for comparison.
   ( + idx:INTEGER;
     ? {upper>=-1};
@@ -157,15 +168,15 @@ section PUBLIC
     idx
   );
   
-  - has element:E until upper:NUMERIC :BOOLEAN <-
-  // Look for `element' using `is_equal' for comparison.
+  - has element:E until upper:INTEGER :BOOLEAN <-
+  // Look for `element' using `==' for comparison.
   // Also consider `has' to choose the most appropriate.
   ( ? {upper >= -1};
     
     index_of element until upper <= upper
   );
   
-  - fast_has element:E until upper:NUMERIC :BOOLEAN <-
+  - fast_has element:E until upper:INTEGER :BOOLEAN <-
   // Look for `element' using basic `=' for comparison.
   // Also consider `has' to choose the most appropriate.
   ( ? {upper >= -1};
@@ -173,7 +184,14 @@ section PUBLIC
     fast_index_of element until upper <= upper
   );
   
-
+  - clear_all upper:INTEGER <-
+  // Set all elements in range [0 .. `upper'] with
+  // the default value.
+  ( 
+    upper.downto 0 do { i:INTEGER;
+      MEMORY.copy (item i.to_pointer) from (E.to_pointer) size (E.object_size);
+    };
+  );
 
 
 

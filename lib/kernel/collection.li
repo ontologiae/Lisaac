@@ -14,7 +14,7 @@ section HEADER
   - category    :=MICRO;
   
   - bibliography:="http://IsaacOS.com";
-  - author      :="Boutet Jerome (boutet@loria.fr)";
+  - author      :="Boutet Jerome (boutet@loria.fr), Benoit Sonntag (bsonntag@loria.fr)";
   - comment     :="Common abstract definition of a sequenceable collection  \
   \of objects. Such a collection is traversable using a     \
   \simple INTEGER index from `lower' to `upper'. Items can  \
@@ -54,8 +54,8 @@ section PUBLIC
   // True when `index' is valid (ie. inside actual
   // bounds of the collection).
   ( + result:BOOLEAN;
-    result := (lower <= index) && {index <= upper};
-    ? { result = (lower <= index) && {index <= upper}};
+    result := (lower <= index) && {upper >= index};
+    ? { result = ((lower <= index) && {upper >= index})};
     result
   );
   
@@ -133,9 +133,9 @@ section PUBLIC
   - swap i1:NUMERIC with i2:NUMERIC <-
   // Swap item at index `i1' with item at index `i2'.
   (
-    +old_item1:E;
-    +old_item2:E;
-    +old_count:INTEGER;
+    + old_item1:E;
+    + old_item2:E;
+    + old_count:INTEGER;
     + tmp:E;
     
     ? { valid_index i1};
@@ -150,7 +150,7 @@ section PUBLIC
     
     ? { item i1 = old_item2 };
     ? { item i2 = old_item1 };
-    ? { count = old count };
+    ? { count = old_count };
   );
   
   
@@ -360,7 +360,7 @@ section PUBLIC
   
   - index_of element:E :INTEGER <-
   // Give the index of the first occurrence of `element' using
-  // `is_equal' for comparison.
+  // `==' for comparison.
   // Answer `upper + 1' when `element' is not inside.
   // Also consider `fast_index_of' to choose the most appropriate.
   //
@@ -371,7 +371,7 @@ section PUBLIC
     deferred
     ? { lower <= result };
     ? { result <= upper + 1 };
-    ? { (result <= upper) -> ( element.is_equal (item result))};
+    ? { (result <= upper) ->> { element == (item result)}};
     result
   );
   
@@ -385,21 +385,21 @@ section PUBLIC
     deferred
     ? { lower <= result };
     ? { result <= upper + 1 };
-    ? { (result <= upper) -> ( element = item result)};
+    ? { (result <= upper) ->> { element = item result}};
     result
   );
   
   
   // Looking and comparison:
   
-  - is_equal other:SELF :BOOLEAN <-
+  - '=='  right 60 other:SELF :BOOLEAN <-
   // Do both collections have the same `lower', `upper', and
   // items?
   // The basic `=' is used for comparison of items.
   // See also `is_equal_map'.
   ( + result:BOOLEAN;
     deferred;
-    ? { result -> (lower = other.lower & upper = other.upper)};
+    ? { result ->> {(lower = other.lower) & (upper = other.upper)}};
     result
   );
   
@@ -407,11 +407,11 @@ section PUBLIC
   - is_equal_map other:SELF :BOOLEAN <-
   // Do both collections have the same `lower', `upper', and
   // items?
-  // Feature `is_equal' is used for comparison of items.
-  // See also `is_equal'.
+  // Feature `==' is used for comparison of items.
+  // See also `=='.
   ( + result:BOOLEAN;
     deferred;
-    ? { result -> (lower = other.lower & upper = other.upper)};
+    ? { result ->> {(lower = other.lower) & (upper = other.upper)}};
     result
   );
   
@@ -445,7 +445,7 @@ section PUBLIC
       }; // end until_do
     }; // end if
     
-    ? { result -> ( count = other.count)};
+    ? { result ->> { count = other.count}};
     
     result
   );

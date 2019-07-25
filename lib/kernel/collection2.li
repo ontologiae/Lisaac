@@ -206,7 +206,7 @@ section PUBLIC
     old_count:= count;
     
     set_all_with value;
-    ? { count = old count };
+    ? { count = old_count };
   );
   
   
@@ -235,7 +235,7 @@ section PUBLIC
     // deferred
     // ensure
     //  count1 = model.count;
-    //  count2 > 0 -> count2 = model.first.count
+    //  (count2 > 0) ->> {count2 = model.first.count}
   );
   
   
@@ -249,14 +249,14 @@ section PUBLIC
   
   
   - same_as other:COLLECTION2[E] :BOOLEAN <-
-  // Unlike `is_equal', this feature can be used to compare
+  // Unlike `==', this feature can be used to compare
   // distinct implementation of COLLECTION2.
   (
     ? { other != NULL };
     // deferred
     
     //ensure
-    // result -> standard_same_as(other)
+    // result ->> {standard_same_as(other)}
   );
   
   

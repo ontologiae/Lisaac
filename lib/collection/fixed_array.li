@@ -49,7 +49,7 @@ section PUBLIC
   );
   
   - make_with_map_object obj:OBJECT <-
-  ( ? {obj.object_size!=0};
+  ( //? {obj.object_size!=0};
     ? {element_sizeof = 1};
     
     storage := NATIVE_ARRAY[E].force_conversion obj;
@@ -69,7 +69,7 @@ section PUBLIC
     ? { new_count >= 0};
     
     old_capacity := capacity;
-    ( new_count > capacity).if {
+    ( new_count.to_integer > capacity).if {
       // The new one is bigger:
       storage := NATIVE_ARRAY[E].calloc new_count;
       capacity := new_count;
@@ -125,11 +125,10 @@ section PUBLIC
 	new_capacity := capacity * 2;
 	{ new_capacity >= new_count }.until_do {
 	  new_capacity := new_capacity * 2;
-	}; // end until_do
+	}; // end until_do      
+	storage := storage.realloc capacity with new_capacity;
+	capacity := new_capacity;	
       }; // end if
-      
-      storage := storage.realloc capacity with new_capacity;
-      capacity := new_capacity;
     }.elseif { new_count != count } then {
       storage.clear new_count to (count - 1);
     }; // end if
@@ -274,6 +273,41 @@ section PUBLIC
   ) ; // end set_all_with
   
   
+  //
+  // Sort    
+  //
+  
+  - bubble_sort <-
+  // Bubble sort :-( => BSBS: Optmize with Quick sort...
+  ( + low,up,idx,max:INTEGER;
+    + sw:BOOLEAN;
+    
+    max := upper-1;
+    
+    low := 0;
+    up  := max;
+    {
+      sw:=FALSE;
+      low.to up do { i:INTEGER;	
+	(item i > item (i+1)).if {
+	  swap i with (i+1);
+	  sw := TRUE;
+	};
+	
+	idx := max - i;
+	(item idx > item (idx+1)).if {
+	  swap idx with (idx+1);
+	  sw := TRUE;
+	};		
+      };
+      up  := up - 1;
+      low := low + 1;
+    }.do_while {sw};
+  );
+  
+  //
+  //
+  //
   
   - from_collection model:COLLECTION[E] <-
   ( + i1:INTEGER;
@@ -291,7 +325,7 @@ section PUBLIC
   
   
   
-  - is_equal other:SELF :BOOLEAN <-
+  - '=='  right 60 other:SELF :BOOLEAN <-
   ( + result:BOOLEAN;
     
     ( self = other).if {
@@ -299,9 +333,9 @@ section PUBLIC
     }.elseif { upper = other.upper } then {
       result := storage.fast_memcmp (other.storage) until (upper + 1) ;
     }; // end if
-    ? { result -> (lower = other.lower & upper = other.upper)};
+    ? { result ->> {(lower = other.lower) & (upper = other.upper)}};
     result
-  ); // end is_equal
+  ); // end ==
   
   
   
@@ -313,7 +347,7 @@ section PUBLIC
     }.elseif { upper = other.upper } then {
       result := storage.memcmp (other.storage) until (upper + 1);
     }; // end if
-    ? { result -> (lower = other.lower & upper = other.upper)};
+    ? { result ->> {(lower = other.lower) & (upper = other.upper)}};
     result
   ); // end is_equal_map
   
@@ -321,6 +355,7 @@ section PUBLIC
   
   - all_default :BOOLEAN <- 
   (
+    ? { storage != NULL};
     storage.all_default upper
   ); // end all_default
   
@@ -349,7 +384,7 @@ section PUBLIC
     result := storage.index_of element until upper;
     ? { lower <= result };
     ? { result <= upper + 1 };
-    ? { (result <= upper) -> ( element.is_equal (item result))};
+    ? { (result <= upper) ->> { element == (item result)}};
     result 
   ); // end index_of
   
@@ -367,7 +402,7 @@ section PUBLIC
     result := storage.fast_index_of element until upper;
     ? { lower <= result };
     ? { result <= upper + 1 };
-    ? { (result <= upper) -> ( element = item result)};
+    ? { (result <= upper) ->> { element = item result}};
     result
   ); // end fast_index_of
   
@@ -407,7 +442,7 @@ section PUBLIC
   - remove_first <- 
   ( + old_lower,old_upper,old_count:INTEGER;
     + void_storage:NATIVE_ARRAY[E];
-    ? { not is_empty };
+    ? { ! is_empty };
     old_lower := lower;
     old_upper := upper;
     old_count := count;
@@ -444,3 +479,11 @@ section PUBLIC
     ITERATOR_ON_COLLECTION[E].make self
   ); // end get_new_iterator
   
+  //
+  // Guru Section.
+  //
+  
+  - set_upper new_up:INTEGER <-
+  (
+    upper := new_up;
+  );

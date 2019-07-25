@@ -20,6 +20,8 @@ section INHERIT
   
   * parent_abstract_string:ABSTRACT_STRING;
   
+  - parent_arrayed:ARRAYED := ARRAYED;
+  
 section PUBLIC
   
   + capacity:INTEGER;
@@ -29,7 +31,7 @@ section PUBLIC
   //
   
   - set_storage tab:NATIVE_ARRAY[CHARACTER] <-
-  (
+  ( ? {tab != NULL};
     storage := tab;
   );
   
@@ -55,7 +57,7 @@ section PUBLIC
   - make needed_capacity:INTEGER <-
   // Initialize the string to have at least `needed_capacity'
   // characters of storage.
-  ( //? {needed_capacity >= 0};
+  ( ? {needed_capacity >= 0};
     (needed_capacity > 0).if {
       (capacity < needed_capacity).if	{
 	
@@ -105,7 +107,7 @@ section PUBLIC
     
     (new_count <= count).if {
     }.elseif { capacity < new_count } then {
-      (capacity == 0).if {
+      (capacity = 0).if {
 	storage := NATIVE_ARRAY[CHARACTER].calloc new_count;
       } else {
 	storage := storage.realloc capacity with new_count;
@@ -154,6 +156,7 @@ section PUBLIC
   - replace_all old_char:CHARACTER with new_char:CHARACTER <-
   // Replace all occurrences of the element `old_char' by `new_character'
   ( + old_count:INTEGER;
+    old_count := count;
     storage.fast_replace_all old_char with new_char until (count - 1);
     ? { count == old_count };
     ? { occurrences old_char = 0};
@@ -289,15 +292,6 @@ section PUBLIC
     1.to nb do { cpt:INTEGER; // Version bourin!!!
       insert ch to index;
     };
-
-    i:=count;
-    extend ' ';
-    {i = index}.until_do { i:INTEGER;
-      force (item i) to (i + nb);
-      i := i - 1;
-    };
-    put ch to (index + 1);
-
   );
     
   - shrink min_index:INTEGER to max_index:INTEGER <-
@@ -452,7 +446,7 @@ section PUBLIC
       };
       count := count - len;
     };
-    ? { count == old_count - end - start + 1};
+    ? { count = (old_count - (end - start + 1))};
   );
   
   - remove_suffix s:ABSTRACT_STRING <-
@@ -697,4 +691,25 @@ section PUBLIC
       add_last (p.item i);
       i := i + 1;
     };
+  );
+  
+  //
+  // Guru section.
+  //
+  
+  - element_sizeof:INTEGER <- 1;
+  
+  - add_last_buffer buf:FIXED_ARRAY[USMALLINT] from beg:NUMERIC to end:NUMERIC <-
+  (
+    beg.to end do { j:INTEGER;
+      add_last (buf.item j.to_character);
+    };
+  );
+    
+  - item_byte idx:NUMERIC offset ofs:NUMERIC :USMALLINT <-
+  ( + pos:INTEGER; 
+    + tab:NATIVE_ARRAY[USMALLINT];
+    ? {ofs = 0};
+    ? {idx <= upper};
+    item idx.to_usmallint
   );

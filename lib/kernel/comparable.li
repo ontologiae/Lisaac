@@ -24,7 +24,7 @@ section INHERIT
   
 section PUBLIC
   
-  - is_equal other:SELF :BOOLEAN <- (! (self < other)) && { ! (other < self)};
+   - '=='  right 60 other:SELF :BOOLEAN <- (! (self < other)) && { ! (other < self)};
 
   - '<' left 1 other:SELF :BOOLEAN <-
   // Is `self' strictly less than `other'?
@@ -41,7 +41,7 @@ section PUBLIC
     
     ? { other != NULL };
     result := ! (other < self);
-    ? { result = ((self < other) | is_equal other)};
+    ? { result = ((self < other) | == other)};
     
     result
   );
@@ -80,7 +80,7 @@ section PUBLIC
       result := 0;
     };
 	
-    ? { (result =  0) = ( is_equal other)};
+    ? { (result =  0) = ( == other)};
     ? { (result = -1) = (self < other)};
     ? { (result =  1) = (self > other)};
 

@@ -401,7 +401,7 @@ section PUBLIC
 	last_string.extend last_character;
       };
       
-      ? { !end_of_input -> (last_string.item 1 = first)};
+      ? { !end_of_input ->> {last_string.item 1 = first}};
       ? { last_string.count <= keyword.count };
       
       // Now we need as many characters as in `keyword':
@@ -409,7 +409,7 @@ section PUBLIC
 	read_character;
 	last_string.extend last_character;
       };
-      stop := last_string.is_equal keyword;
+      stop := last_string == keyword;
     };
     
     !end_of_input.if {
@@ -417,7 +417,7 @@ section PUBLIC
       unread_character;
     };
     
-    ? {!end_of_input -> ( last_string.is_equal keyword) };
+    ? {!end_of_input ->> { last_string == keyword} };
   );
   
   // Other features:

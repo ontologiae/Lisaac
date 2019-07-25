@@ -19,7 +19,7 @@ section HEADER
   
 section INHERIT
   
-  + parent_linked_collection:LINKED_COLLECTION[E] := LINKED_COLLECTION[E];
+  * parent_linked_collection:LINKED_COLLECTION[E];
   
 section PUBLIC
   
@@ -135,7 +135,7 @@ section PUBLIC
   
   - remove_first <-
   ( + old_lower,old_upper,old_count:INTEGER;
-    ? { not is_empty };
+    ? { ! is_empty };
     old_lower := lower;
     old_upper := upper;
     old_count := count;
@@ -169,7 +169,7 @@ section PUBLIC
 	go_item (index - 1);
       };
       link := mem_lnk.next;
-      mem_lnk.set_next link.next;
+      mem_lnk.set_next (link.next);
       upper := upper - 1;
     };
     ? { count = old_count - 1};
@@ -194,7 +194,7 @@ section PUBLIC
   
   - item index:NUMERIC :E <-
   (
-    ? { valid_index i};
+    ? { valid_index index};
     ( index != mem_idx).if {
       go_item index;
     };
@@ -209,16 +209,16 @@ section PUBLIC
   -  put element:E to index:NUMERIC <-
   ( + old_count:INTEGER;
     old_count := count;
-    ? { valid_index i};
+    ? { valid_index index};
     (index != mem_idx).if {
       go_item index;
     };
     mem_lnk.set_item element;
-    ? { item i = element};
+    ? { item index = element};
     ? { count = old_count};
   );
   
-  -  count:INTEGER <-
+  - count:INTEGER <-
   ( + result:INTEGER;
     result := upper;
     ? {result = upper - lower + 1};
@@ -239,7 +239,7 @@ section PUBLIC
     from_collection other;
   );
   
-  - is_equal other:SELF :BOOLEAN <-
+  - '=='  right 60 other:SELF :BOOLEAN <-
   ( + result:BOOLEAN;
     + lnk1, lnk2:LINK[E];
     
@@ -250,13 +250,13 @@ section PUBLIC
       result := TRUE;
       lnk1 := first_link;
       lnk2 := other.first_link;
-      { (lnk1 = NULL) || ! result}.until_do {
+      { (lnk1 = NULL) || {! result}}.until_do {
 	result := lnk1.item = lnk2.item;
 	lnk1 := lnk1.next;
 	lnk2 := lnk2.next;
       };
     };
-    ? { result -> (lower = other.lower & upper = other.upper)};
+    ? { result ->> {(lower = other.lower) & (upper = other.upper)}};
     result
   );
   
@@ -276,7 +276,7 @@ section PUBLIC
 	lnk2 := lnk2.next;
       };
     };
-    ? { result -> (lower = other.lower & upper = other.upper)};    
+    ? { result ->> {(lower = other.lower) & (upper = other.upper)}};    
     result
   );
   
@@ -288,7 +288,7 @@ section PUBLIC
     };
     ? { lower <= result };
     ? { result <= upper + 1 };
-    ? { (result <= upper) -> ( element.is_equal (item result))};    
+    ? { (result <= upper) ->> { element == (item result)}};    
     result
   );
   
@@ -302,7 +302,7 @@ section PUBLIC
     };
     ? { lower <= result };
     ? { result <= upper + 1 };
-    ? { (result <= upper) -> ( element = item result)};    
+    ? { (result <= upper) ->> { x = item result}};    
     result
   );
   
@@ -500,7 +500,7 @@ section PRIVATE
   
   - invariant:BOOLEAN <-
   (
-    ( (first_link = NULL) -> ( (last_link = NULL) & (upper = 0) & (mem_idx = 0) & (mem_lnk = NULL))) &&
-    { (first_link != NULL) -> ( (last_link != NULL) & (upper > 0) & (mem_idx > 0) & (mem_lnk != NULL))}
+    ( (first_link = NULL) ->>  { (last_link = NULL) & (upper = 0) & (mem_idx = 0) & (mem_lnk = NULL)}) &&
+    { (first_link != NULL) ->> { (last_link != NULL) & (upper > 0) & (mem_idx > 0) & (mem_lnk != NULL)}}
   );
   

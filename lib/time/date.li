@@ -47,31 +47,72 @@ section PUBLIC
   
   - day  :USMALLINT <-
   (
-    (to_raw & 0FFh).to_usmallint 
+    (to_raw & 01Fh).to_usmallint 
   );
+  
+  - week_day :USMALLINT <-
+  (
+    ((to_raw >> 5) & 0111b).to_usmallint
+  );
+  
   
 section PUBLIC
   
-  - create y:USHORTINT,m,d:USMALLINT :DATE <-
+  - create y:USHORTINT,m,d,wd:USMALLINT :DATE <-
   ( + date:UINTEGER;
-    
+    ? { m.in_range 1 to 12};
+    ? { d.in_range 1 to 31};
+    ? { wd.in_range 1 to 7};
     date := y.to_uinteger << 16;
     date := date | (m.to_uinteger << 8);
     date := date | d;
+    date := date | (wd << 5);
     force_conversion date
   );
   
+  - to_string:STRING <-
+  ( + result:STRING;
+    result := STRING.create 13;
+    append_in result;
+    result
+  );
+  
+  - append_in str:STRING <-
+  (
+    week_day
+    .when 1 then {
+      str.append "Mo";
+    }
+    .when 2 then {
+      str.append "Tu";
+    }
+    .when 3 then {
+      str.append "We";
+    }
+    .when 4 then {
+      str.append "Th";
+    }
+    .when 5 then {
+      str.append "Fr";
+    }
+    .when 6 then {
+      str.append "Sa";
+    }
+    .when 7 then {
+      str.append "Su";
+    };
+    str.add_last ' ';
+    day.append_in str format 2 with '0';
+    str.add_last '/';
+    month.append_in str format 2 with '0';
+    str.add_last '/';
+    year.append_in str format 4;           
+  );
+  
+  
   - print <-
   (
-    (day < 10).if {
-      '0'.print;
-    };
-    day.print;
-    '/'.print;
-    (month < 10).if {
-      '0'.print;
-    };
-    month.print;
-    '/'.print;
-    year.print;
+    to_string.print;
   );
+
+

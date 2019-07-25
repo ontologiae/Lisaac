@@ -23,8 +23,8 @@ section INHERIT
   
 section PUBLIC
   
-  - lower:NUMERIC := 1;
+  - lower:INTEGER := 1;
   // Lower index bound is frozen.
 
-  + upper:NUMERIC;
+  + upper:INTEGER;
   // Memorized upper index bound.

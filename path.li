@@ -1,0 +1,59 @@
+/***************************************************************************
+*                      Lisaac Path Directory System                        *
+*                   (c) INRIA 2003 (see 'licence.txt')                     *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+  // Lisaac Path Directory System (by Benoit Sonntag).
+  //
+  // Note:
+  // =====
+  //  This file is not a Lisaac prototype. 
+  //  It's define the profile path directory for to compile code, with a target.
+  //  `+' : append new string variable. 
+  //  `-' : append new directory. 
+  //  `*' : execute command after compilation. 
+  //
+  // Warning: 
+  // ========
+  //   - `lisaac' is environment variable value.
+  //   - `input_file' is input file name value.
+  //   - `output_file' is output file name value.
+  //   - `target' is a target value.
+  
+section DEFAULT  
+  
+  + target := UNIX;
+
+section COMMON
+  // Always valid path.
+
+  + lib   := lisaac + "lib/";
+  
+  // Standard library:
+  - lib + "time/";
+  - lib + "number/";
+  - lib + "kernel/";
+  - lib + "iterator/";
+  - lib + "collection/";
+  - lib + "base/";
+  
+  // Memory manager: (Libc)
+  - lib   + "system/";
+
+  // File manager: (Libc)
+  - lib   + "file_system/";
+  
+  // Input-Output: (Libc)
+  - lib + "io/";
+
+section UNIX
+  
+  * "gcc -O3 " + input_file + " -o " + output_file;
+  
+section DOS, WINDOWS
+  
+  * "gcc -O3 " + input_file + " -o " + output_file + ".exe";
+  

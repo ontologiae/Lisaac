@@ -8,7 +8,7 @@
 
 section HEADER
   
-  - name        :=ABSTRACT_STRING;
+  - name        :=ABSTRACT_STRING -> STRING;
   
   - category    :=MICRO;
   
@@ -53,6 +53,16 @@ section PUBLIC
     item index
   );
   
+  //
+  // Switch case :
+  //
+  
+  - when value:ABSTRACT_STRING then block:BLOCK :ABSTRACT_STRING <-
+  (
+    (self = value).if block;
+    self
+  );
+
   //
   // Testing.
   //
@@ -124,7 +134,7 @@ section PUBLIC
   );
   
   - same_as other:ABSTRACT_STRING :BOOLEAN <-
-  // Case insensitive `is_equal'.
+  // Case insensitive `=='.
   ( + s1, s2:NATIVE_ARRAY[CHARACTER];
     + i:INTEGER;
     + result:BOOLEAN;
@@ -151,7 +161,8 @@ section PUBLIC
   - '==' left 40 other:ABSTRACT_STRING :BOOLEAN <-
   // Has Current the same text as `other' ?
   ( + result:BOOLEAN;
-    (count == other.count).if {
+    ? {other != NULL};
+    (count = other.count).if {
       result:=storage.fast_memcmp (other.storage) until count;
     };
     result
@@ -170,16 +181,16 @@ section PUBLIC
   ( + result:INTEGER;
     ? { start_index.in_range 1 to (count + 1)};
     
-    result := start_index
+    result := start_index;
     
-    {(result > count) || {c = item result}}.until_do {
-      result := result + 1
+    {(result > count) || {ch = item result}}.until_do {
+      result := result + 1;
     };
     (result > count).if {
-      result := 0
+      result := 0;
     };
     
-    ? { (result != 0) -> (item result == c)};    
+    ? { (result != 0) ->> {item result == ch}};    
     result
   );
   
@@ -188,7 +199,7 @@ section PUBLIC
   // 0 if none.
   (+ result:INTEGER;
     result := 1 + storage.fast_index_of ch until (count - 1);    
-    ?	{(result != count + 1) -> (item result = ch)};    
+    ?	{(result != count + 1) ->> {item result = ch}};    
     result
   );
   
@@ -197,7 +208,22 @@ section PUBLIC
   (
     fast_index_of c
   );
+  
+  - fast_last_index_of ch:CHARACTER :INTEGER <-
+  // Gives the index of the last occurrence `ch' or
+  // 0 if none.
+  (+ result:INTEGER;
+    result := 1 + storage.fast_reverse_index_of ch from upper;    
+    ?	{(result != 0) ->> {item result = ch}};    
+    result
+  );
     
+  - last_index_of c:CHARACTER :INTEGER <-
+  // Index of last occurrence of `c' at index upper or before index upper.
+  (
+    fast_last_index_of c
+  );
+  
   - has ch:CHARACTER :BOOLEAN <- storage.fast_has ch until (count - 1);
   // True if `ch' is in the STRING.
   
@@ -208,7 +234,7 @@ section PUBLIC
   - occurrences c:CHARACTER :INTEGER <-
   // Number of times character `c' appears in the string.
   (
-    storage.fast_occurrences c until (count - 1);
+    storage.fast_occurrences c until (count - 1)
   );
   
   -  has_suffix s:ABSTRACT_STRING :BOOLEAN <-
@@ -268,6 +294,21 @@ section PUBLIC
     self == "TRUE"
   );
   
+  - is_bit:BOOLEAN <-
+  // True when the contents is a sequence of bits (i.e., mixed
+  // characters `0' and characters `1').
+  ( + i:INTEGER;
+    + result:BOOLEAN;
+    i := count;
+    result := TRUE;
+    { (! result) || { i = 0}}.until_do {
+      result := item i.is_bit;
+      i := i - 1
+    };
+    ? {result = (count = occurrences '0' + occurrences '1')};
+    result
+  );
+
   - is_integer:BOOLEAN <-
   // Does self represent an INTEGER?
   // `Result' is true if and only if the following two conditions hold:
@@ -528,7 +569,7 @@ section PUBLIC
     
     i := 1;
     d := 1;
-    
+
     {i > count}.until_do {
       cc := item i;
       ( state = 0).if {
@@ -549,11 +590,12 @@ section PUBLIC
 	};
       }.elseif { state = 2 } then {
 	cc.is_digit.if {
-	  value_int := 10 * value_int + cc.decimal_value;
+	  value_int := value_int * 10 + cc.decimal_value;
 	}.elseif { cc = '.' } then {
 	  state := 3;	
 	  value := value_int.to_real_16_16;
 	} else {  // cc is separator
+	  value := value_int.to_real_16_16;
 	  state := 4;
 	};
       }.elseif { state = 3 } then {
@@ -570,13 +612,17 @@ section PUBLIC
       
       i := i + 1;
     };
+    
+    (state = 2).if {
+      value := value_int.to_real_16_16;
+    };
+    
     negative.if {
       value := - value;
     };
     
     value
   );
-  
   
   //
   // Modification:
@@ -714,7 +760,7 @@ section PUBLIC
 	result := split_buffer.clone;
       };
     };
-    ? { (result != NULL) -> { ! result.is_empty }};
+    ? { (result != NULL) ->> { ! result.is_empty }};
     
     result
   );
@@ -785,7 +831,10 @@ section PUBLIC
   // Display.
   //
   
-  - print <- IO.put_string self;
+  - print <- 
+  (
+    IO.put_string self;
+  );
   
   //
   // The guru section
@@ -800,3 +849,4 @@ section PUBLIC
     deferred;
     NULL
   );
+  

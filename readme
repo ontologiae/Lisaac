@@ -1,15 +1,31 @@
            Welcome to the Lisaac compiler !
 
                         ~~~~
+The first compiler for Object Prototype Language !
+
+Install.
+========
 
 Note: If your system is Windows, you must install `djgpp' and `binutils'.
+      (Download on `www.IsaacOS.com')
 
+For the installation in your system, simply to tape : 
 
-For the installation in your system, simply: running `make'
+    make
+    install_lisaac
 
 Run `lisaac' to compile.
 
-End.
+Directory description.
+======================
+
+./lib	      : Standard Library for Lisaac.
+./bin	      : Executable file compiler (and C source).
+./emacs	      : Lisaac mode for Emacs editor.
+./manual      : Manual reference Lisaac language (PS format).
+./example     : Example Lisaac source code. 
+
+Good luck!
 
 
 

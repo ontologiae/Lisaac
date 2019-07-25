@@ -4,11 +4,10 @@
  * EXTERNAL
  */
 
-#include <dirent.h> /* BASIC_DIRECTORY */
-#include <stdio.h> /* OUTPUT_STREAM */
+#include <dirent.h> /* DIRECTORY */
 #include <stdio.h> /* INPUT_STREAM */
 
-#include <stdlib.h>
+#include <stdio.h>
 
 int print_char(char car)
 {
@@ -16,61 +15,72 @@ int print_char(char car)
 };
 
  /* SYSTEM */
+#include <stdio.h> /* OUTPUT_STREAM */
+
+#include <stdio.h>
+#include <sys/stat.h>
+ /* STD_FILE */
 
 /*
  * STRING CONSTANT
  */
 
-unsigned char *__string_0="./lib/";
-unsigned char *__string_1="/lib/";
-unsigned char *__string_2="system.txt";
-unsigned char *__string_3=".";
-unsigned char *__string_4="..";
-unsigned char *__string_5="\n";
-unsigned char *__string_6="/";
-unsigned char *__string_7="HOME";
-unsigned char *__string_8="SHELL";
-unsigned char *__string_9="bash";
-unsigned char *__string_10=".bashrc";
-unsigned char *__string_11="export LISAAC=";
-unsigned char *__string_12="export PATH=";
-unsigned char *__string_13="bin:$PATH\n\n";
-unsigned char *__string_14="No change need detected in your .bashrc file\n";
-unsigned char *__string_15="There was a previous install of Lisaac, in a different directory\n";
-unsigned char *__string_16="The following lines have been removed from your config file:\n";
-unsigned char *__string_17="\nYour .bashrc file has been updated with: \n";
-unsigned char *__string_18="\n# LISAAC COMPILER\n";
-unsigned char *__string_19="Your .bashrc file has been updated with: \n";
-unsigned char *__string_20="# LISAAC COMPILER\n";
-unsigned char *__string_21="A .bashrc file has been created with: \n";
-unsigned char *__string_22="tcsh";
-unsigned char *__string_23=".cshrc";
-unsigned char *__string_24="setenv LISAAC ";
-unsigned char *__string_25="set path=(";
-unsigned char *__string_26="bin $path)\n";
-unsigned char *__string_27="No change need detected in your .cshrc file\n";
-unsigned char *__string_28="setenv LISAAC";
-unsigned char *__string_29="\nYour .cshrc file has been updated with: \n";
-unsigned char *__string_30="Your .cshrc file has been updated with: \n";
-unsigned char *__string_31="A .cshrc file has been created with: \n";
-unsigned char *__string_32="\\";
-unsigned char *__string_33="set LISAAC=";
-unsigned char *__string_34="set path=%path%;";
-unsigned char *__string_35="bin\n";
-unsigned char *__string_36="autoexec.bat";
-unsigned char *__string_37="No change need detected in your autoexec.bat file\n";
-unsigned char *__string_38="set LISAAC";
-unsigned char *__string_39="set path=";
-unsigned char *__string_40="The following lines have been removed from your autoexec.bat file:\n";
-unsigned char *__string_41="\nYour autoexec.bat file has been updated with: \n";
-unsigned char *__string_42="\nREM ****** LISAAC COMPILER ******\n";
-unsigned char *__string_43="Your autoexec.bat file has been updated with: \n";
-unsigned char *__string_44="You'll have to reboot or run Autoexec.bat to acknowledge the changes\n";
-unsigned char *__string_45="You have to change your environment variables as following: \n";
-unsigned char *__string_46="Installation successfull.\n";
-unsigned char *__string_47="Welcome to the Lisaac World !\n";
-unsigned char *__string_48="Run 'lisaac' to compile\n";
-unsigned char *__string_49="?";
+unsigned char *__string_0="\t\t================================\n\t\t= Auto-Install Lisaac Compiler =\n\t\t================================\n\n";
+unsigned char *__string_1="HOME";
+unsigned char *__string_2="SHELL";
+unsigned char *__string_3="Step 1/4 : Detection system.\n============================\n";
+unsigned char *__string_4="bash";
+unsigned char *__string_5="/.bashrc";
+unsigned char *__string_6="Unix - bash";
+unsigned char *__string_7="export LISAAC=";
+unsigned char *__string_8="export PATH=";
+unsigned char *__string_9="/bin:$PATH";
+unsigned char *__string_10="tcsh";
+unsigned char *__string_11="/.cshrc";
+unsigned char *__string_12="Unix - tcsh";
+unsigned char *__string_13="setenv LISAAC ";
+unsigned char *__string_14="set path=(";
+unsigned char *__string_15="/bin $path)";
+unsigned char *__string_16="REM **** LISAAC COMPILER ****\n";
+unsigned char *__string_17="set LISAAC=";
+unsigned char *__string_18="set path=";
+unsigned char *__string_19="\\bin;%path%";
+unsigned char *__string_20="  System detect: ";
+unsigned char *__string_21="path.li";
+unsigned char *__string_22="  + target";
+unsigned char *__string_23="  + target := WINDOWS;\n";
+unsigned char *__string_24="  + target := UNIX;\n";
+unsigned char *__string_25="Step 2/4 : Installation of environment variables.\n=================================================\n";
+unsigned char *__string_26="  Auto-install fail !\n  You have to change your environment variables as following: \n    set LISAAC=";
+unsigned char *__string_27="\n    set path=";
+unsigned char *__string_28="\\bin;%path%\n\n";
+unsigned char *__string_29="\n\n";
+unsigned char *__string_30="Step 3/4 : Installation of `lisaac-mode' for Emacs.\n===================================================\n";
+unsigned char *__string_31="  Do you want to install the `lisaac-mode' for Emacs editor ? (y/n)";
+unsigned char *__string_32="  Not install `lisaac-mode' for Emacs editor.\n\n";
+unsigned char *__string_33="/.emacs";
+unsigned char *__string_34="(setq load-path (cons \"";
+unsigned char *__string_35="/emacs/\" load-path))\n";
+unsigned char *__string_36="(add-to-list 'auto-mode-alist '(\"\\\\.li\\\\'\" . lisaac-mode))\n(autoload 'lisaac-mode \"lisaac-mode\" \"Major mode for Lisaac Programs\" t)\n\n";
+unsigned char *__string_37="Step 4/4 : Compilation of Lisaac compiler.\n==========================================\n";
+unsigned char *__string_38="gcc -O3 bin/lisaac.c -o bin/lisaac.exe";
+unsigned char *__string_39="gcc -O3 bin/lisaac.c -o bin/lisaac";
+unsigned char *__string_40="  Execute command `";
+unsigned char *__string_41="' (please wait ...)\n";
+unsigned char *__string_42="  Auto-install fail !\n  You want to compile a `bin/lisaac.c' file.\n";
+unsigned char *__string_43="Welcome to the Lisaac World !\n=============================\n";
+unsigned char *__string_44="  Installation successfull.\n  Run `lisaac' to compile.\n  Note: You'll have to reboot or reloaded environnement\n        to acknowledge the changes.\n";
+unsigned char *__string_45="# **** LISAAC COMPILER ****\n";
+unsigned char *__string_46="\\autoexec.bat";
+unsigned char *__string_47="Windows - DOS";
+unsigned char *__string_48="Unknown";
+unsigned char *__string_49="  A `";
+unsigned char *__string_50="' file has no need to change. Current version is:\n";
+unsigned char *__string_51="' file has been updated. Old value is:\n";
+unsigned char *__string_52="  New value is:\n";
+unsigned char *__string_53="' file has been updated with:\n";
+unsigned char *__string_54="' file has been created with:\n";
+unsigned char *__string_55=";; **** LISAAC MODE ****\n";
 
 /*
  * STRUCT
@@ -82,57 +92,46 @@ struct __OBJ {
 };
 
 // ___CONTEXT
+#include <signal.h>
 struct ___CONTEXT {
-  unsigned short proto; 
-  unsigned short line; 
+  unsigned long code; 
   struct ___CONTEXT *back; 
 }; 
 // STRING_CONSTANT
-#define __STRING_CONSTANT__ 0
 struct __STRING_CONSTANT {
-  unsigned long __id;
-  signed char *storage__6F;
-  signed long count__7F;
+  signed char *storage__0H;
+  signed long count__1H;
 };
 
-// TEXT_FILE_WRITE
-struct __TEXT_FILE_WRITE {
-  signed char *buffer__28C;
-  signed long buffer_position__38C;
-  signed long capacity__48C;
-  void  *output_stream__58C;
-};
-
-// TEXT_FILE_READ
-struct __TEXT_FILE_READ {
-  void  *input_stream__S9E;
-  signed char *buffer__T9E;
-  signed long buffer_size__W9E;
-  signed long capacity__X9E;
+// MEM_BLOCK
+struct __MEM_BLOCK {
+  unsigned long size_and_flags__YS 	__attribute__ ((packed));
+  void *prev__ZS 	__attribute__ ((packed));
+  void *prev_same__0S 	__attribute__ ((packed));
+  void *next_same__1S 	__attribute__ ((packed));
+  unsigned short small_size__2S 	__attribute__ ((packed));
+  unsigned short first_free__3S 	__attribute__ ((packed));
 };
 
 // STRING
-#define __STRING__ 4
 struct __STRING {
-  unsigned long __id;
-  signed long capacity__1Z;
-  signed char *storage__6F;
-  signed long count__7F;
+  signed long capacity__Y8C;
+  signed char *storage__0H;
+  signed long count__1H;
+};
+
+// STD_FILE
+struct __STD_FILE {
+  void *name__V7D;
+  unsigned long cursor__X7D;
+  void *array_intern__C8D;
+  void  *stream__D8D;
+  signed long __array_intern__25E;
 };
 
 // FIXED_ARRAY
-struct __FIXED_ARRAY__STRING {
-  void **storage__ST;
-  signed long capacity__TT;
-  signed long upper__UT;
-};
-
-// BASIC_DIRECTORY
-struct __BASIC_DIRECTORY {
-  void  *directory_stream__SEB;
-  void  *current_entry__TEB;
-  void *notation__BFB;
-  signed long __notation__TAE;
+struct __FIXED_ARRAY__USMALLINT {
+  unsigned char *storage__J5E;
 };
 
 
@@ -149,2042 +148,2310 @@ struct __BASIC_DIRECTORY {
 // FALSE
 #define FALSE 0
 // STRING_CONSTANT
-struct __STRING_CONSTANT STRING_CONSTANT={__STRING_CONSTANT__};
+struct __STRING_CONSTANT STRING_CONSTANT;
 #define STRING_CONSTANT (&STRING_CONSTANT)
-// TEXT_FILE_WRITE
-struct __TEXT_FILE_WRITE TEXT_FILE_WRITE;
-#define TEXT_FILE_WRITE (&TEXT_FILE_WRITE)
-// TEXT_FILE_READ
-struct __TEXT_FILE_READ TEXT_FILE_READ;
-#define TEXT_FILE_READ (&TEXT_FILE_READ)
+// INSTALL_LISAAC
+void *path_current__RL;
+void *path_home__SL;
+void *shell__TL;
+void *system__UL;
+void *system_unix_bash__VL;
+void *system_unix_tcsh__WL;
+void *system_windows__XL;
+void *system_unknown__YL;
+void *file_bashrc__ZL;
+void *file_cshrc__0L;
+void *file_autoexec__1L;
+void *comment_windows__2L;
+void *comment_unix__3L;
+void *lisaac_bash__4L;
+void *lisaac_tcsh__5L;
+void *lisaac_windows__6L;
+void *path_bash__7L;
+void *path_tcsh__8L;
+void *path_windows__9L;
+void *path_bash_next__AM;
+void *path_tcsh_next__BM;
+void *path_windows_next__CM;
+void *lisaac_mode_comment__EM;
+void *lisaac_mode_path__FM;
+void *lisaac_mode_path_end__GM;
+void *lisaac_mode__HM;
+signed long __file_bashrc__GIE;
+signed long __system_unix_bash__5ME;
+signed long __comment_unix__FNE;
+signed long __lisaac_bash__ONE;
+signed long __path_bash__XNE;
+signed long __path_bash_next__6NE;
+signed long __file_cshrc__KPE;
+signed long __system_unix_tcsh__VPE;
+signed long __lisaac_tcsh__5PE;
+signed long __path_tcsh__EQE;
+signed long __path_tcsh_next__NQE;
+signed long __file_autoexec__8QE;
+signed long __system_windows__DWE;
+signed long __comment_windows__MWE;
+signed long __lisaac_windows__VWE;
+signed long __path_windows__4WE;
+signed long __path_windows_next__DXE;
+signed long __system_unknown__UXE;
+signed long __lisaac_mode_comment__DTH;
+signed long __lisaac_mode_path__PTH;
+signed long __lisaac_mode_path_end__2TH;
+signed long __lisaac_mode__DUH;
+// MEMORY
+void **small_fat__CR;
+void *first_free__DR;
+unsigned long begin_memory__ER;
+unsigned long end_memory__FR;
+unsigned long capacity__GR;
+void *last_block__HR;
+// MEM_BLOCK
+struct __MEM_BLOCK MEM_BLOCK;
+#define MEM_BLOCK (&MEM_BLOCK)
+// STD_INPUT
+signed char memory__8JC;
 // STRING
-struct __STRING STRING={__STRING__};
+struct __STRING STRING;
 #define STRING (&STRING)
-// DIRECTORY
-void *path__9Q;
-void *name_list__BR;
+// STD_FILE
+unsigned char *tmp_buffer__77D;
+signed long __tmp_buffer__97E;
+struct __STD_FILE STD_FILE;
+#define STD_FILE (&STD_FILE)
 // FIXED_ARRAY
-struct __FIXED_ARRAY__STRING FIXED_ARRAY__STRING;
-#define FIXED_ARRAY__STRING (&FIXED_ARRAY__STRING)
-// BASIC_DIRECTORY
-void *last_entry__0EB;
-signed long __last_entry__46B;
-struct __BASIC_DIRECTORY BASIC_DIRECTORY;
-#define BASIC_DIRECTORY (&BASIC_DIRECTORY)
+struct __FIXED_ARRAY__USMALLINT FIXED_ARRAY__USMALLINT;
+#define FIXED_ARRAY__USMALLINT (&FIXED_ARRAY__USMALLINT)
 
 /*
  * PROTOTYPE
  */
 
-int main(signed long ___count_arg__G,signed char **___list_arg__H);
-void *new_intern__JH(signed char *p__LH,signed long nb_char__MH);
-void make__IS();
-signed char *to_external__AHB(void *self__BHB);
-signed char *to_external__PVB(void *self__QVB);
-void  *basic_directory_open__M6B(signed char *path_pointer__O6B);
-void *last_entry__56B();
-void clear__G7B(void *self__H7B);
-char is_connected__F8B(void *self__G8B);
-void read_entry__08B();
-char end_of_input__KDC();
-void *twin__OEC(void *self__PEC);
-void add_last__6GC(void *self__7GC,void *element__8GC);
-void disconnect__0TC(void *self__1TC);
-void *get_current_working_directory__CWC();
-void *__infix_add__P0C(void *self__Q0C,void *other__R0C);
-void  *allocation__JP(signed long nb__LP);
-void copy__from__size__HQ(void  *dest__JQ,void  *source__KQ,signed long n__LQ);
-signed char *calloc__ILB(signed long nb_elements__KLB);
-void connect_to__2CD(void *self__3CD,void *new_path__4CD);
-char __infix_less_equal__P0B(signed long self__Q0B,signed long other__R0B);
-void *item__6FD(void *self__7FD,signed long i__8FD);
-char __infix_equal_equal__XGD(void *self__YGD,void *other__ZGD);
-void *create_from_string__TEC(void *str__VEC);
-void append__M1C(void *self__N1C,void *other__O1C);
-void append__45C(void *self__55C,void *other__65C);
-void write_string__NLD(void *self__OLD,void *s__PLD);
-signed long to_integer__K3(int self__L3);
-signed long __infix_add__TWB(signed long self__UWB,signed long other__VWB);
-void disconnect__SOD(void *self__TOD);
-void *get_environment_variable__PQD(void *variable__RQD);
-char has_substring__ZUD(void *self__0UD,void *other__1UD);
-void change_current_working_directory__31D(void *directory_path__51D);
-void scan_current_working_directory__56D();
-char has__V9D(void *entry_name__X9D);
-void *create__59E();
-void connect_to__MDF(void *self__NDF,void *new_path__ODF);
-void *create__SHB(signed long needed_capacity__UHB);
-void read_file_in__FGF(void *self__GGF,void *str__HGF);
-void disconnect__GKF(void *self__HKF);
-void *__infix_add__FLF(void *self__GLF,void *other__HLF);
-char has_substring__ENF(void *self__FNF,void *other__GNF);
-void print__ZTF(void *self__0TF);
-signed long first_substring_index__6UD(void *self__7UD,void *other__8UD);
-signed long substring_index__UVD(void *self__VVD,void *other__WVD,signed long start_index__XVD);
-void *substring__to__4ZF(void *self__5ZF,signed long start_index__6ZF,signed long end_index__7ZF);
-void print__A7F(void *self__B7F);
-void remove_between__to__U9F(void *self__V9F,signed long start__W9F,signed long end__X9F);
-void *__infix_add__ZDG(void *self__0DG,void *other__1DG);
-void insert_string__to__CFG(void *self__DFG,void *s__EFG,signed long i__FFG);
-void connect_for_appending_to__VUG(void *self__WUG,void *new_path__XUG);
-void write_string__VWG(void *self__WWG,void *s__XWG);
-char basic_directory_chdir__C3D(signed char *destination__E3D);
-void connect_to_current_working_directory__R3D(void *self__S3D);
-signed long __infix_sub__3RB(signed long self__4RB,signed long other__5RB);
-char __infix_greater_equal__77(signed long self__87,signed long other__97);
-signed char item__BTB(signed char *self__CTB,signed long index__DTB);
-void put__to__0OB(signed char *self__1OB,signed char element__2OB,signed long index__3OB);
-int to_numeric__6X(signed long self__7X);
-char __infix_greater__HY(int self__IY,int other__JY);
-void **calloc__I1(int nb_elements__K1);
-char __infix_greater__O7(signed long self__P7,signed long other__Q7);
-void put__to__Q5(void **self__R5,void *element__S5,signed long index__T5);
-int __prefix_sub__GBB();
-int __infix_sub__53(int self__63,int other__73);
-void *to_string__FHB(void *self__GHB);
-signed char item__OXB(void *self__PXB,signed long index__QXB);
-void put__to__RYB(void *self__SYB,signed char ch__TYB,signed long index__UYB);
-void add_last__7ZB(void *self__8ZB,signed char ch__9ZB);
-char is_not_null__K8B(void  *self__L8B);
-void from_external_copy__EBC(void *self__FBC,signed char *p__GBC);
-char is_null__2DC(void  *self__3DC);
-int __infix_mul__E3(int self__F3,int other__G3);
-signed long element_sizeof__R2();
-signed long __infix_mul__4MB(signed long self__5MB,signed long other__6MB);
-signed long __infix_sub__PNB(signed long self__QNB,signed long other__RNB);
-void clear_all__93(void **self__A4,int upper__B4);
-char __infix_greater_equal__Q4(int self__R4);
-void *item__KQC(void **self__LQC,signed long index__MQC);
-signed char *basic_directory_current_working_directory__UWC();
-signed long element_sizeof__RMB();
-void clear_all__1NB(signed char *self__2NB,int upper__3NB);
-char __infix_equal_equal__M8(signed long self__N8,signed long other__O8);
-char fast_memcmp__until__NHD(signed char *self__OHD,signed char *other__PHD,signed long capacity__QHD);
-char __infix_less__WKB(signed long self__XKB,signed long other__YKB);
-void copy_from__until__7RB(signed char *self__8RB,signed char *model__9RB,signed long upper__ASB);
-signed char *realloc__with__G2B(signed char *self__H2B,signed long old_nb_elts__I2B,signed long new_nb_elts__J2B);
-void copy__to__until__U3C(signed char *self__V3C,signed char *src__W3C,signed long dest__X3C,signed long src_capacity__Y3C);
-signed long upper__FMD(void *self__GMD);
-void write_buffer__CND(void *self__DND);
-char is_case_sensitive__LAE(void *self__MAE);
-signed char code__RCE(signed char self__SCE);
-signed char to_smallint__S2E(int self__T2E);
-char __infix_greater_equal__EME(signed char self__FME,signed char other__GME);
-char __infix_less_equal__G4E(signed char self__H4E,signed char other__I4E);
-signed char __infix_sub__74E(signed char self__84E,signed char other__94E);
-signed char item__LZD(void *self__MZD,signed long index__NZD);
-void put_character__WWF(signed char c__YWF);
-signed long upper__MXG(void *self__NXG);
-void *notation__UAE(void *self__VAE);
-signed char first__6AE(void *self__7AE);
-char __infix_equal_equal__KCE(signed char self__LCE,signed char other__MCE);
-char __infix_greater__4KE(signed char self__5KE,signed char other__6KE);
-char __infix_less__ULE(signed char self__VLE,signed char other__WLE);
-char has__RPE(void *self__SPE,signed char ch__TPE);
-char __infix_greater__FLE(signed char self__GLE,signed char other__HLE);
-char __infix_equal_equal__5DE(signed char self__6DE,signed char other__7DE);
+int main(signed long ___count_arg__LM,signed char **___list_arg__MM);
+static void *new_intern__SO(signed char *p__UO,signed long nb_char__VO);
+static void print__83C(void *self__93C);
+static signed long to_integer__C1(int self__D1);
+static void *create__TAD(signed long needed_capacity__VAD);
+static signed char *calloc__UED(signed long nb_elements__WED);
+static signed char item__X7C(signed char *self__Y7C,signed long index__Z7C);
+static void add_last__HMD(void *self__IMD,signed char ch__JMD);
+static signed long __infix_add__HAB(signed long self__IAB,signed long other__JAB);
+static void *get_environment_variable__KTD(void *variable__MTD);
+static void *create_from_string__G9D(void *str__I9D);
+static char has_substring__YBE(void *self__ZBE,void *other__0BE);
+static void append__RIE(void *self__SIE,void *other__TIE);
+static void *comment_unix__GNE();
+static void *file_autoexec__9QE();
+static void *create_open__KRE(void *n__MRE);
+static char is_open__2UE(void *self__3UE);
+static void close__NVE(void *self__OVE);
+static void *system_windows__EWE();
+static void *system_unknown__VXE();
+static void print__VJC(signed char self__WJC);
+static void update__idf__with__GZE(void *file__IZE,void *id__JZE,void *new_text__KZE);
+static void print__L6F(void *self__M6F);
+static void *create_from_string__H5G(void *str__J5G);
+static void append__V7G(void *self__W7G,void *other__X7G);
+static void update__idf__with__KAH(void *file__MAH,void *id__NAH,void *new_text__OAH);
+static void *lisaac_mode_comment__ETH();
+static signed char *to_external__EUD(void *self__FUD);
+static void  *allocation__CS(signed long nb__ES);
+static void copy__from__size__NNC(void  *dst__PNC,void  *src__QNC,signed long n__RNC);
+static char __infix_less_equal__E6C(signed long self__F6C,signed long other__G6C);
+static signed char item__56C(void *self__66C,signed long index__76C);
+static void put_character__HLC(signed char c__JLC);
+static char __infix_greater__ODD(signed long self__PDD,signed long other__QDD);
+static char __infix_less__8DD(signed long self__9DD,signed long other__AED);
+static signed long __infix_mul__BGD(signed long self__CGD,signed long other__DGD);
+static signed long __infix_sub__V4(signed long self__W4,signed long other__X4);
+static char __infix_greater_equal__I2(signed long self__J2,signed long other__K2);
+static void put__to__WHD(signed char *self__XHD,signed char element__YHD,signed long index__ZHD);
+static signed char *realloc__with__HOD(signed char *self__IOD,signed long old_nb_elts__JOD,signed long new_nb_elts__KOD);
+static signed long __prefix_sub__RAB(signed long self__SAB);
+static signed long __infix_sub__6AB(signed long self__7AB,signed long other__8AB);
+static void copy_from__until__MWD(signed char *self__NWD,signed char *model__OWD,signed long upper__PWD);
+static signed long first_substring_index__4BE(void *self__5BE,void *other__6BE);
+static signed long __infix_add__GEE(signed long self__HEE,signed long other__IEE);
+static void copy__to__until__ZKE(signed char *self__0KE,signed char *src__1KE,signed long dest__2KE,signed long src_capacity__3KE);
+static void *clone__SRE();
+static void *to_string__JUD(void *self__KUD);
+static void open__AUE(void *self__BUE);
+static signed long size__X0E(void *self__Y0E);
+static void read__size__P1E(void *self__Q1E,void *dest__R1E,signed long nb_elt__S1E);
+static signed long fast_occurrences__until__7OF(signed char *self__8OF,signed long upper__APF);
+static int to_numeric__QTC(signed long self__RTC);
+static char __infix_less_equal__1TC(int self__2TC,int other__3TC);
+static signed char item__V0D(void *self__W0D,signed long index__X0D);
+static void remove__CUF(void *self__DUF,signed long index__EUF);
+static int __infix_add__6EB(int self__7EB,int other__8EB);
+static char fast_memcmp__until__P2F(signed char *self__Q2F,signed char *other__R2F,signed long capacity__S2F);
+static void resize__EBG(void *self__FBG,signed long new_count__GBG);
+static void move__to__by__BIG(signed char *self__CIG,signed long lower__DIG,signed long upper__EIG,signed long offset__FIG);
+static void *twin__IPG(void *self__JPG);
+static void basic_open_new__YRG(void *self__ZRG);
+static void write__from__size__NSG(void *self__OSG,void *src__PSG,signed long nb_elt__RSG);
+static void *to_string__TBH(void *self__UBH);
+static signed char *to_external__OZD(void *self__PZD);
+static unsigned long to_uinteger__UW(int self__VW);
+static void realloc_c__PX(unsigned long nb__RX);
+static unsigned long __infix_add__SY(unsigned long self__TY,unsigned long other__UY);
+static unsigned long __infix_and__VZ(unsigned long self__WZ,unsigned long other__XZ);
+static unsigned long __infix_add__7Z(unsigned long self__8Z,unsigned long other__9Z);
+static unsigned long __infix_sub__M0(unsigned long self__N0,unsigned long other__O0);
+static void put__to__P3(void **self__Q3,signed long index__S3);
+static void *get_block__I6(unsigned long p__K6);
+static unsigned long __infix_sub__KZ(unsigned long self__LZ,unsigned long other__MZ);
+static void make__H7(void *self__I7,unsigned long size__J7);
+static char __infix_greater__T2(signed long self__U2,signed long other__V2);
+static signed long __infix_and__GBB(signed long self__HBB,signed long other__IBB);
+static unsigned long to_uinteger__PBB(signed long self__QBB);
+static char is_small_busy__F6B(void *self__G6B,unsigned long sz__H6B);
+static unsigned long size__GGB(void *self__HGB);
+static char __infix_less__VGB(unsigned long self__WGB,unsigned long other__XGB);
+static char is_free__JKB(void *self__KKB);
+static void set_size__MLB(void *self__NLB,unsigned long sz__OLB);
+static void set_prev__TOB(void *self__UOB,void *block__VOB);
+static void set_next_same__ZOB(void *self__0OB,void *block__1OB);
+static void set_prev_same__EPB(void *self__FPB,void *block__GPB);
+static void to_busy__ZPB(void *self__0PB);
+static char __infix_greater__ISB(unsigned long self__JSB,unsigned long other__KSB);
+static unsigned long get_adress__9SB(void *self__ATB);
+static void *get_next__GUB(void *block__IUB);
+static unsigned short to_ushortint__BXB(int self__CXB);
+static void put__to__YXB(void **self__ZXB,void *element__0XB,unsigned long index__1XB);
+static unsigned short __infix_sub__L5B(unsigned short self__M5B,unsigned short other__N5B);
+static unsigned long to_uinteger__V5B(unsigned short self__W5B);
+static unsigned long to_uinteger__JRC(void  *self__KRC);
+static unsigned long *force_conversion__WSC(unsigned long obj__YSC);
+static unsigned long item__VUC(unsigned long *self__WUC,signed long index__XUC);
+static void put__to__DVC(unsigned long *self__EVC,unsigned long element__FVC,signed long index__GVC);
+static unsigned long __infix_add__VXC(unsigned long self__WXC,unsigned long other__XXC);
+static unsigned char *force_conversion__KZC(unsigned long obj__MZC);
+static unsigned char item__00C(unsigned char *self__10C,signed long index__20C);
+static void put__to__I1C(unsigned char *self__J1C,unsigned char element__K1C,signed long index__L1C);
+static char __infix_equal_equal__12(signed long self__22,signed long other__32);
+static void basic_seek__P3E(void *self__Q3E,unsigned long pos__R3E);
+static void *array_intern__35E(void *self__45E);
+static unsigned char *tmp_buffer__A8E();
+static int __prefix_sub__BFB(int self__CFB);
+static char __infix_greater_equal__4GB(unsigned long self__5GB,unsigned long other__6GB);
+static unsigned char item__TJF(void *self__UJF,signed long i__VJF);
+static signed char to_character__EKF(unsigned char self__FKF);
+static void put__to__Y1D(void *self__Z1D,signed char ch__01D,signed long index__11D);
+static int __infix_sub__JFB(int self__KFB,int other__LFB);
+static char __infix_less__D5F(signed long self__E5F,signed long other__F5F);
+static void *create_from_string__MPG(void *str__OPG);
+static unsigned char item_byte__offset__VXG(void *self__WXG,signed long idx__XXG);
+static unsigned long __prefix_sub__3Y(unsigned long self__4Y);
+static unsigned long __prefix_logicnot__SMB(unsigned long self__TMB);
+static unsigned long __infix_and__KNB(unsigned long self__LNB,unsigned long other__MNB);
 
 /*
  * SOURCE CODE
  */
 
 //////////// MAIN ////////////
-int main(signed long ___count_arg__G,signed char **___list_arg__H)
+int main(signed long ___count_arg__LM,signed char **___list_arg__MM)
 // INSTALL_LISAAC - ANSI code -
 {
-  void *___tmp__6FB,*directory_path__WFB,*___tmp__FEC,*entry__WR;
-  signed long sz__DAD,index2__LYF,index3__MYF,index__1XF,index2__04G;
-  void *result__BAD,*result__G9C,*___tmp__TDH,*___tmp__3DH;
-  signed char *path_pointer__XFB,*___tmp__1FB,*p__2BH,*self__CFH;
-  signed long index3__14G,index__G4G,___tmp__WEH,self__ZFH,___tmp__5FH;
-  void *directory_path__1BH,*file_w__KE,*file_r__LE,*path_lisaac__ME;
-  void *path__NE,*path_home__OE,*shell__PE,*my_line__QE,*buffer__RE;
-  signed long index2__6MH,index3__7MH,index__MMH,self__7ED;
-  void *buffer2__SE,*buffer3__TE,*___tmp__UE;
-  void  *ptr__CAD;
-  signed char *___tmp__UEH;
-  signed long limit_up__8ED,self__GHH;
-  char ___tmp__HF;
-  ((struct __STRING_CONSTANT *)STRING_CONSTANT)->storage__6F=NULL;
-  ((struct __STRING_CONSTANT *)STRING_CONSTANT)->count__7F=0;
-  name_list__BR=NULL;
-  ((struct __FIXED_ARRAY__STRING *)FIXED_ARRAY__STRING)->capacity__TT=0;
-  ((struct __FIXED_ARRAY__STRING *)FIXED_ARRAY__STRING)->storage__ST=NULL;
-  ((struct __FIXED_ARRAY__STRING *)FIXED_ARRAY__STRING)->upper__UT=0;
-  path__9Q=NULL;
-  ((struct __STRING *)STRING)->capacity__1Z=0;
-  ((struct __STRING *)STRING)->storage__6F=NULL;
-  ((struct __STRING *)STRING)->count__7F=0;
-  ((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->directory_stream__SEB=NULL;
-  ((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->current_entry__TEB=NULL;
-  __last_entry__46B=1;
-  ((struct __TEXT_FILE_WRITE *)TEXT_FILE_WRITE)->buffer__28C=NULL;
-  ((struct __TEXT_FILE_WRITE *)TEXT_FILE_WRITE)->capacity__48C=0;
-  ((struct __TEXT_FILE_WRITE *)TEXT_FILE_WRITE)->output_stream__58C=NULL;
-  ((struct __TEXT_FILE_WRITE *)TEXT_FILE_WRITE)->buffer_position__38C=0;
-  ((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->__notation__TAE=1;
-  ((struct __TEXT_FILE_READ *)TEXT_FILE_READ)->input_stream__S9E=NULL;
-  ((struct __TEXT_FILE_READ *)TEXT_FILE_READ)->capacity__X9E=0;
-  ((struct __TEXT_FILE_READ *)TEXT_FILE_READ)->buffer__T9E=NULL;
-  ((struct __TEXT_FILE_READ *)TEXT_FILE_READ)->buffer_size__W9E=0;
-  buffer3__TE=NULL;
-  buffer2__SE=NULL;
-  buffer__RE=NULL;
-  file_r__LE=NULL;
-  shell__PE=NULL;
-  path_home__OE=NULL;
-  my_line__QE=NULL;
-  file_w__KE=NULL;
-  path__NE=NULL;
-  path_lisaac__ME=NULL;
-  ___tmp__UE=new_intern__JH(__string_0,6);
-  entry__WR=NULL;
-  make__IS();
-  path__9Q=___tmp__UE;
-  directory_path__WFB=path__9Q;
-  path_pointer__XFB=NULL;
-  if (((struct __OBJ *)directory_path__WFB)->__id==__STRING_CONSTANT__) {
-    ___tmp__1FB=to_external__AHB(directory_path__WFB);
-  } else {
-    ___tmp__1FB=to_external__PVB(directory_path__WFB);
+  void *self__YKD,*result__JAD,*___tmp__7HE,*___tmp__9HE,*___tmp__BIE;
+  void *___tmp__CIE,*___tmp__DIE,*___tmp__EIE,*___tmp__BPE,*___tmp__DPE;
+  void *___tmp__FPE,*___tmp__GPE,*___tmp__HPE,*___tmp__IPE,*___tmp__DVE;
+  void *___tmp__FVE,*___tmp__HVE,*___tmp__IVE,*___tmp__JVE,*___tmp__KVE;
+  void *___tmp__RXE,*___tmp__3QE,*___tmp__48D,*___tmp__58D,*___tmp__IYE;
+  void *___tmp__JYE,*___tmp__A9D,*___tmp__B9D,*std_file__L8D;
+  void *new_text__M8D,*file__N8D,*comment__O8D,*lisaac__P8D,*path__Q8D;
+  void *path_next__R8D,*___tmp__RSH,*___tmp__TSH,*___tmp__XSH;
+  void *___tmp__ZSH,*___tmp__1SH,*file_name__SPH,*new_text__TPH;
+  void *___tmp__2UH,*___tmp__3UH,*cmd__1UH;
+  signed char *buf__NKD,*p__ZKD,*___tmp__LAD,char__RPH;
+  signed long i__0KD;
+  char ___tmp__X8D;
+  capacity__GR= 0;
+  begin_memory__ER= 0;
+  end_memory__FR= 0;
+  small_fat__CR=NULL;
+  last_block__HR=NULL;
+  ((struct __MEM_BLOCK *)MEM_BLOCK)->size_and_flags__YS= 0;
+  ((struct __MEM_BLOCK *)MEM_BLOCK)->next_same__1S=NULL;
+  ((struct __MEM_BLOCK *)MEM_BLOCK)->prev_same__0S=NULL;
+  ((struct __MEM_BLOCK *)MEM_BLOCK)->prev__ZS=NULL;
+  first_free__DR=NULL;
+  ((struct __MEM_BLOCK *)MEM_BLOCK)->small_size__2S= 0;
+  ((struct __MEM_BLOCK *)MEM_BLOCK)->first_free__3S= 0;
+  ((struct __STRING_CONSTANT *)STRING_CONSTANT)->storage__0H=NULL;
+  ((struct __STRING_CONSTANT *)STRING_CONSTANT)->count__1H= 0;
+  ((struct __STRING *)STRING)->capacity__Y8C= 0;
+  ((struct __STRING *)STRING)->storage__0H=NULL;
+  ((struct __STRING *)STRING)->count__1H= 0;
+  path_current__RL=NULL;
+  path_home__SL=NULL;
+  shell__TL=NULL;
+  __file_bashrc__GIE= 1;
+  __system_unix_bash__5ME= 1;
+  system__UL=NULL;
+  __comment_unix__FNE= 1;
+  __lisaac_bash__ONE= 1;
+  __path_bash__XNE= 1;
+  __path_bash_next__6NE= 1;
+  __file_cshrc__KPE= 1;
+  __system_unix_tcsh__VPE= 1;
+  __lisaac_tcsh__5PE= 1;
+  __path_tcsh__EQE= 1;
+  __path_tcsh_next__NQE= 1;
+  __file_autoexec__8QE= 1;
+  ((struct __STD_FILE *)STD_FILE)->name__V7D=NULL;
+  ((struct __STD_FILE *)STD_FILE)->stream__D8D=NULL;
+  __system_windows__DWE= 1;
+  __comment_windows__MWE= 1;
+  __lisaac_windows__VWE= 1;
+  __path_windows__4WE= 1;
+  __path_windows_next__DXE= 1;
+  __system_unknown__UXE= 1;
+  ((struct __STD_FILE *)STD_FILE)->cursor__X7D= 0;
+  ((struct __STD_FILE *)STD_FILE)->__array_intern__25E= 1;
+  __tmp_buffer__97E= 1;
+  ((struct __FIXED_ARRAY__USMALLINT *)FIXED_ARRAY__USMALLINT)->storage__J5E=NULL;
+  memory__8JC='\0';
+  __lisaac_mode_comment__DTH= 1;
+  __lisaac_mode_path__PTH= 1;
+  __lisaac_mode_path_end__2TH= 1;
+  __lisaac_mode__DUH= 1;
+  print__83C(new_intern__SO(__string_0, 106));
+  result__JAD=NULL;
+  result__JAD=create__TAD(to_integer__C1( 256));
+  buf__NKD=NULL;
+  buf__NKD=calloc__UED(to_integer__C1( 256));
+  ___tmp__LAD=((signed char *)(getcwd((char *)(buf__NKD),256)));
+  self__YKD=result__JAD;
+  p__ZKD=___tmp__LAD;
+  i__0KD= 0;
+  i__0KD=to_integer__C1( 0);
+  ((struct __STRING *)self__YKD)->count__1H=to_integer__C1( 0);
+  while ((! (item__X7C(p__ZKD,i__0KD)=='\0'))) {
+    add_last__HMD(self__YKD,item__X7C(p__ZKD,i__0KD));
+    i__0KD=__infix_add__HAB(i__0KD,to_integer__C1( 1));
   };
-  path_pointer__XFB=___tmp__1FB;
-  ((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->directory_stream__SEB=basic_directory_open__M6B(path_pointer__XFB);
-  ((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->current_entry__TEB=((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->directory_stream__SEB;
-  if (__last_entry__46B==1) {
-    ___tmp__6FB=last_entry__56B();
-  } else {
-    ___tmp__6FB=last_entry__0EB;
-  };
-  clear__G7B(___tmp__6FB);
-  if (is_connected__F8B(BASIC_DIRECTORY)) {
-    read_entry__08B();
-    while ((! end_of_input__KDC())) {
-      if (__last_entry__46B==0) {
-        ___tmp__FEC=last_entry__0EB;
-      } else {
-        ___tmp__FEC=last_entry__56B();
-      };
-      entry__WR=twin__OEC(___tmp__FEC);
-      add_last__6GC(name_list__BR,entry__WR);
-      read_entry__08B();
-    };
-    disconnect__0TC(BASIC_DIRECTORY);
-  };
-  path_lisaac__ME=get_current_working_directory__CWC();
-  path__NE=__infix_add__P0C(path_lisaac__ME,new_intern__JH(__string_1,5));
-  result__G9C=NULL;
-  ptr__CAD=NULL;
-  result__BAD=NULL;
-  sz__DAD=0;
-  sz__DAD=sizeof(struct __TEXT_FILE_WRITE);
-  if ((sz__DAD==0)) {
-    result__BAD=TEXT_FILE_WRITE;
-  } else {
-    ptr__CAD=allocation__JP(sz__DAD);
-    copy__from__size__HQ(ptr__CAD,((void  *)((TEXT_FILE_WRITE))),sz__DAD);
-    result__BAD=((void *)((ptr__CAD)));
-  };
-  result__G9C=result__BAD;
-  ((struct __TEXT_FILE_WRITE *)result__G9C)->buffer__28C=calloc__ILB(32768);
-  ((struct __TEXT_FILE_WRITE *)result__G9C)->capacity__48C=32768;
-  file_w__KE=result__G9C;
-  connect_to__2CD(file_w__KE,new_intern__JH(__string_2,10));
-  self__7ED=0;
-  limit_up__8ED=((struct __FIXED_ARRAY__STRING *)name_list__BR)->upper__UT;
-  while (__infix_less_equal__P0B(self__7ED,limit_up__8ED)) {
-    if (((! __infix_equal_equal__XGD(item__6FD(name_list__BR,self__7ED),new_intern__JH(__string_3,1))) && (! __infix_equal_equal__XGD(item__6FD(name_list__BR,self__7ED),new_intern__JH(__string_4,2))))) {
-      my_line__QE=create_from_string__TEC(path__NE);
-      append__M1C(my_line__QE,item__6FD(name_list__BR,self__7ED));
-      append__45C(my_line__QE,new_intern__JH(__string_5,1));
-      write_string__NLD(file_w__KE,my_line__QE);
-    };
-    self__7ED=__infix_add__TWB(self__7ED,to_integer__K3(1));
-  };
-  disconnect__SOD(file_w__KE);
-  path__NE=__infix_add__P0C(get_current_working_directory__CWC(),new_intern__JH(__string_6,1));
-  path_home__OE=get_environment_variable__PQD(new_intern__JH(__string_7,4));
-  shell__PE=get_environment_variable__PQD(new_intern__JH(__string_8,5));
-  if (has_substring__ZUD(shell__PE,new_intern__JH(__string_9,4))) {
-    change_current_working_directory__31D(path_home__OE);
-    scan_current_working_directory__56D();
-    if (has__V9D(new_intern__JH(__string_10,7))) {
-      file_r__LE=create__59E();
-      connect_to__MDF(file_r__LE,new_intern__JH(__string_10,7));
-      buffer__RE=create__SHB(to_integer__K3(0));
-      read_file_in__FGF(file_r__LE,buffer__RE);
-      disconnect__GKF(file_r__LE);
-      buffer2__SE=__infix_add__P0C(__infix_add__FLF(new_intern__JH(__string_11,14),path__NE),new_intern__JH(__string_5,1));
-      buffer3__TE=__infix_add__P0C(__infix_add__FLF(new_intern__JH(__string_12,12),path__NE),new_intern__JH(__string_13,11));
-      if ((has_substring__ENF(buffer__RE,buffer2__SE) && has_substring__ENF(buffer__RE,buffer3__TE))) {
-        print__ZTF(new_intern__JH(__string_14,45));
-      } else {
-        index__1XF=0;
-        index__1XF=first_substring_index__6UD(buffer__RE,new_intern__JH(__string_11,14));
-        if ((index__1XF!=0)) {
-          index3__MYF=0;
-          index2__LYF=0;
-          index2__LYF=substring_index__UVD(buffer__RE,new_intern__JH(__string_5,1),index__1XF);
-          if (__infix_equal_equal__XGD(substring__to__4ZF(buffer__RE,__infix_add__TWB(index2__LYF,to_integer__K3(1)),__infix_add__TWB(index2__LYF,to_integer__K3(12))),new_intern__JH(__string_12,12))) {
-            index3__MYF=substring_index__UVD(buffer__RE,new_intern__JH(__string_5,1),__infix_add__TWB(index2__LYF,to_integer__K3(12)));
-          };
-          print__ZTF(new_intern__JH(__string_15,65));
-          print__ZTF(new_intern__JH(__string_16,61));
-          print__A7F(substring__to__4ZF(buffer__RE,index__1XF,index3__MYF));
-          remove_between__to__U9F(buffer__RE,index__1XF,index3__MYF);
-          insert_string__to__CFG(buffer__RE,__infix_add__ZDG(buffer2__SE,buffer3__TE),index__1XF);
-          connect_to__2CD(file_w__KE,new_intern__JH(__string_10,7));
-          write_string__NLD(file_w__KE,buffer__RE);
-          print__ZTF(new_intern__JH(__string_17,43));
-          print__A7F(buffer2__SE);
-          print__A7F(buffer3__TE);
-          disconnect__SOD(file_w__KE);
-        } else {
-          connect_for_appending_to__VUG(file_w__KE,new_intern__JH(__string_10,7));
-          write_string__VWG(file_w__KE,new_intern__JH(__string_18,19));
-          write_string__NLD(file_w__KE,buffer2__SE);
-          write_string__NLD(file_w__KE,buffer3__TE);
-          print__ZTF(new_intern__JH(__string_19,42));
-          print__A7F(buffer2__SE);
-          print__A7F(buffer3__TE);
-          disconnect__SOD(file_w__KE);
-        };
-      };
+  path_current__RL=result__JAD;
+  path_home__SL=get_environment_variable__KTD(new_intern__SO(__string_1, 4));
+  shell__TL=get_environment_variable__KTD(new_intern__SO(__string_2, 5));
+  print__83C(new_intern__SO(__string_3, 58));
+  new_text__M8D=NULL;
+  std_file__L8D=NULL;
+  path_next__R8D=NULL;
+  path__Q8D=NULL;
+  lisaac__P8D=NULL;
+  comment__O8D=NULL;
+  file__N8D=NULL;
+  file__N8D=create_from_string__G9D(path_home__SL);
+  if (has_substring__YBE(shell__TL,new_intern__SO(__string_4, 4))) {
+    if (__file_bashrc__GIE==1) {
+      file_bashrc__ZL=new_intern__SO(__string_5, 8);
+      __file_bashrc__GIE= 0;
+      ___tmp__7HE=file_bashrc__ZL;
     } else {
-      connect_to__2CD(file_w__KE,new_intern__JH(__string_10,7));
-      write_string__VWG(file_w__KE,new_intern__JH(__string_20,18));
-      write_string__NLD(file_w__KE,buffer2__SE);
-      write_string__NLD(file_w__KE,buffer3__TE);
-      print__ZTF(new_intern__JH(__string_21,39));
-      print__A7F(buffer2__SE);
-      print__A7F(buffer3__TE);
-      disconnect__SOD(file_w__KE);
+      ___tmp__7HE=file_bashrc__ZL;
     };
-    ___tmp__HF=TRUE;
-  } else {
-    ___tmp__HF=FALSE;
-  };
-  if (___tmp__HF) {
-  } else {
-    if (has_substring__ZUD(shell__PE,new_intern__JH(__string_22,4))) {
-      change_current_working_directory__31D(path_home__OE);
-      scan_current_working_directory__56D();
-      if (has__V9D(new_intern__JH(__string_23,6))) {
-        file_r__LE=create__59E();
-        connect_to__MDF(file_r__LE,new_intern__JH(__string_23,6));
-        buffer__RE=create__SHB(to_integer__K3(0));
-        read_file_in__FGF(file_r__LE,buffer__RE);
-        disconnect__GKF(file_r__LE);
-        buffer2__SE=__infix_add__P0C(__infix_add__FLF(new_intern__JH(__string_24,14),path__NE),new_intern__JH(__string_5,1));
-        buffer3__TE=__infix_add__P0C(__infix_add__FLF(new_intern__JH(__string_25,10),path__NE),new_intern__JH(__string_26,11));
-        if ((has_substring__ENF(buffer__RE,buffer2__SE) && has_substring__ENF(buffer__RE,buffer3__TE))) {
-          print__ZTF(new_intern__JH(__string_27,44));
-        } else {
-          index__G4G=0;
-          index__G4G=first_substring_index__6UD(buffer__RE,new_intern__JH(__string_28,13));
-          if ((index__G4G!=0)) {
-            index3__14G=0;
-            index2__04G=0;
-            index2__04G=substring_index__UVD(buffer__RE,new_intern__JH(__string_5,1),index__G4G);
-            if (__infix_equal_equal__XGD(substring__to__4ZF(buffer__RE,__infix_add__TWB(index2__04G,to_integer__K3(1)),__infix_add__TWB(index2__04G,to_integer__K3(10))),new_intern__JH(__string_25,10))) {
-              index3__14G=substring_index__UVD(buffer__RE,new_intern__JH(__string_5,1),__infix_add__TWB(index2__04G,to_integer__K3(10)));
-            };
-            print__ZTF(new_intern__JH(__string_15,65));
-            print__ZTF(new_intern__JH(__string_16,61));
-            print__A7F(substring__to__4ZF(buffer__RE,index__G4G,index3__14G));
-            remove_between__to__U9F(buffer__RE,index__G4G,index3__14G);
-            insert_string__to__CFG(buffer__RE,__infix_add__ZDG(buffer2__SE,buffer3__TE),index__G4G);
-            connect_to__2CD(file_w__KE,new_intern__JH(__string_23,6));
-            write_string__NLD(file_w__KE,buffer__RE);
-            print__ZTF(new_intern__JH(__string_29,42));
-            print__A7F(buffer2__SE);
-            print__A7F(buffer3__TE);
-            disconnect__SOD(file_w__KE);
-          } else {
-            connect_for_appending_to__VUG(file_w__KE,new_intern__JH(__string_23,6));
-            write_string__VWG(file_w__KE,new_intern__JH(__string_18,19));
-            write_string__NLD(file_w__KE,buffer2__SE);
-            write_string__NLD(file_w__KE,buffer3__TE);
-            print__ZTF(new_intern__JH(__string_30,41));
-            print__A7F(buffer2__SE);
-            print__A7F(buffer3__TE);
-            disconnect__SOD(file_w__KE);
-          };
-        };
-      } else {
-        connect_to__2CD(file_w__KE,new_intern__JH(__string_23,6));
-        write_string__VWG(file_w__KE,new_intern__JH(__string_20,18));
-        write_string__NLD(file_w__KE,buffer2__SE);
-        write_string__NLD(file_w__KE,buffer3__TE);
-        print__ZTF(new_intern__JH(__string_31,38));
-        print__A7F(buffer2__SE);
-        print__A7F(buffer3__TE);
-        disconnect__SOD(file_w__KE);
-      };
+    append__RIE(file__N8D,___tmp__7HE);
+    if (__system_unix_bash__5ME==1) {
+      system_unix_bash__VL=new_intern__SO(__string_6, 11);
+      __system_unix_bash__5ME= 0;
+      ___tmp__9HE=system_unix_bash__VL;
     } else {
-      directory_path__1BH=new_intern__JH(__string_32,1);
-      p__2BH=NULL;
-      p__2BH=to_external__AHB(directory_path__1BH);
-      if (basic_directory_chdir__C3D(p__2BH)) {
-        connect_to_current_working_directory__R3D(BASIC_DIRECTORY);
-        if (is_connected__F8B(BASIC_DIRECTORY)) {
-          disconnect__0TC(BASIC_DIRECTORY);
-        } else {
-          if (__last_entry__46B==0) {
-            ___tmp__TDH=last_entry__0EB;
-          } else {
-            ___tmp__TDH=last_entry__56B();
-          };
-          clear__G7B(___tmp__TDH);
-        };
+      ___tmp__9HE=system_unix_bash__VL;
+    };
+    system__UL=___tmp__9HE;
+    if (__comment_unix__FNE==1) {
+      ___tmp__BIE=comment_unix__GNE();
+    } else {
+      ___tmp__BIE=comment_unix__3L;
+    };
+    comment__O8D=___tmp__BIE;
+    if (__lisaac_bash__ONE==1) {
+      lisaac_bash__4L=new_intern__SO(__string_7, 14);
+      __lisaac_bash__ONE= 0;
+      ___tmp__CIE=lisaac_bash__4L;
+    } else {
+      ___tmp__CIE=lisaac_bash__4L;
+    };
+    lisaac__P8D=___tmp__CIE;
+    if (__path_bash__XNE==1) {
+      path_bash__7L=new_intern__SO(__string_8, 12);
+      __path_bash__XNE= 0;
+      ___tmp__DIE=path_bash__7L;
+    } else {
+      ___tmp__DIE=path_bash__7L;
+    };
+    path__Q8D=___tmp__DIE;
+    if (__path_bash_next__6NE==1) {
+      path_bash_next__AM=new_intern__SO(__string_9, 10);
+      __path_bash_next__6NE= 0;
+      ___tmp__EIE=path_bash_next__AM;
+    } else {
+      ___tmp__EIE=path_bash_next__AM;
+    };
+    path_next__R8D=___tmp__EIE;
+    ___tmp__X8D=TRUE;
+  } else {
+    ___tmp__X8D=FALSE;
+  };
+  if (___tmp__X8D) {
+  } else {
+    if (has_substring__YBE(shell__TL,new_intern__SO(__string_10, 4))) {
+      if (__file_cshrc__KPE==1) {
+        file_cshrc__0L=new_intern__SO(__string_11, 7);
+        __file_cshrc__KPE= 0;
+        ___tmp__BPE=file_cshrc__0L;
       } else {
-        if (__last_entry__46B==0) {
-          ___tmp__3DH=last_entry__0EB;
-        } else {
-          ___tmp__3DH=last_entry__56B();
-        };
-        clear__G7B(___tmp__3DH);
+        ___tmp__BPE=file_cshrc__0L;
       };
-      scan_current_working_directory__56D();
-      ___tmp__UEH=((struct __STRING *)path__NE)->storage__6F;
-      ___tmp__WEH=__infix_sub__3RB(((struct __STRING *)path__NE)->count__7F,to_integer__K3(1));
-      self__CFH=___tmp__UEH;
-      ___tmp__5FH=to_integer__K3(0);
-      self__ZFH=___tmp__WEH;
-      if (__infix_greater_equal__77(___tmp__WEH,___tmp__5FH)) {
-        if (('/'==item__BTB(self__CFH,self__ZFH))) {
-          put__to__0OB(self__CFH,'\\',self__ZFH);
-        };
-        self__GHH=__infix_sub__3RB(self__ZFH,to_integer__K3(1));
-        while (__infix_greater_equal__77(self__GHH,___tmp__5FH)) {
-          if (('/'==item__BTB(self__CFH,self__GHH))) {
-            put__to__0OB(self__CFH,'\\',self__GHH);
-          };
-          self__GHH=__infix_sub__3RB(self__GHH,to_integer__K3(1));
-        };
-      };
-      buffer2__SE=__infix_add__P0C(__infix_add__FLF(new_intern__JH(__string_33,11),path__NE),new_intern__JH(__string_5,1));
-      buffer3__TE=__infix_add__P0C(__infix_add__FLF(new_intern__JH(__string_34,16),path__NE),new_intern__JH(__string_35,4));
-      if (has__V9D(new_intern__JH(__string_36,12))) {
-        file_r__LE=create__59E();
-        connect_to__MDF(file_r__LE,new_intern__JH(__string_36,12));
-        buffer__RE=create__SHB(to_integer__K3(0));
-        read_file_in__FGF(file_r__LE,buffer__RE);
-        disconnect__GKF(file_r__LE);
-        if ((has_substring__ENF(buffer__RE,buffer2__SE) && has_substring__ENF(buffer__RE,buffer3__TE))) {
-          print__ZTF(new_intern__JH(__string_37,50));
-        } else {
-          index__MMH=0;
-          index__MMH=first_substring_index__6UD(buffer__RE,new_intern__JH(__string_38,10));
-          if ((index__MMH!=0)) {
-            index3__7MH=0;
-            index2__6MH=0;
-            index2__6MH=substring_index__UVD(buffer__RE,new_intern__JH(__string_5,1),index__MMH);
-            if (__infix_equal_equal__XGD(substring__to__4ZF(buffer__RE,__infix_add__TWB(index2__6MH,to_integer__K3(1)),__infix_add__TWB(index2__6MH,to_integer__K3(9))),new_intern__JH(__string_39,9))) {
-              index3__7MH=substring_index__UVD(buffer__RE,new_intern__JH(__string_5,1),__infix_add__TWB(index2__6MH,to_integer__K3(9)));
-            };
-            print__ZTF(new_intern__JH(__string_15,65));
-            print__ZTF(new_intern__JH(__string_40,67));
-            print__A7F(substring__to__4ZF(buffer__RE,index__MMH,index3__7MH));
-            remove_between__to__U9F(buffer__RE,index__MMH,index3__7MH);
-            insert_string__to__CFG(buffer__RE,__infix_add__ZDG(buffer2__SE,buffer3__TE),index__MMH);
-            connect_to__2CD(file_w__KE,new_intern__JH(__string_36,12));
-            write_string__NLD(file_w__KE,buffer__RE);
-            print__ZTF(new_intern__JH(__string_41,48));
-            print__A7F(buffer2__SE);
-            print__A7F(buffer3__TE);
-            disconnect__SOD(file_w__KE);
-          } else {
-            connect_for_appending_to__VUG(file_w__KE,new_intern__JH(__string_36,12));
-            write_string__VWG(file_w__KE,new_intern__JH(__string_42,35));
-            write_string__NLD(file_w__KE,buffer2__SE);
-            write_string__NLD(file_w__KE,buffer3__TE);
-            print__ZTF(new_intern__JH(__string_43,47));
-            print__A7F(buffer2__SE);
-            print__A7F(buffer3__TE);
-            disconnect__SOD(file_w__KE);
-          };
-        };
-        print__ZTF(new_intern__JH(__string_44,69));
+      append__RIE(file__N8D,___tmp__BPE);
+      if (__system_unix_tcsh__VPE==1) {
+        system_unix_tcsh__WL=new_intern__SO(__string_12, 11);
+        __system_unix_tcsh__VPE= 0;
+        ___tmp__DPE=system_unix_tcsh__WL;
       } else {
-        print__ZTF(new_intern__JH(__string_45,61));
-        print__A7F(buffer2__SE);
-        print__A7F(buffer3__TE);
+        ___tmp__DPE=system_unix_tcsh__WL;
+      };
+      system__UL=___tmp__DPE;
+      if (__comment_unix__FNE==1) {
+        ___tmp__FPE=comment_unix__GNE();
+      } else {
+        ___tmp__FPE=comment_unix__3L;
+      };
+      comment__O8D=___tmp__FPE;
+      if (__lisaac_tcsh__5PE==1) {
+        lisaac_tcsh__5L=new_intern__SO(__string_13, 14);
+        __lisaac_tcsh__5PE= 0;
+        ___tmp__GPE=lisaac_tcsh__5L;
+      } else {
+        ___tmp__GPE=lisaac_tcsh__5L;
+      };
+      lisaac__P8D=___tmp__GPE;
+      if (__path_tcsh__EQE==1) {
+        path_tcsh__8L=new_intern__SO(__string_14, 10);
+        __path_tcsh__EQE= 0;
+        ___tmp__HPE=path_tcsh__8L;
+      } else {
+        ___tmp__HPE=path_tcsh__8L;
+      };
+      path__Q8D=___tmp__HPE;
+      if (__path_tcsh_next__NQE==1) {
+        path_tcsh_next__BM=new_intern__SO(__string_15, 11);
+        __path_tcsh_next__NQE= 0;
+        ___tmp__IPE=path_tcsh_next__BM;
+      } else {
+        ___tmp__IPE=path_tcsh_next__BM;
+      };
+      path_next__R8D=___tmp__IPE;
+    } else {
+      if (__file_autoexec__8QE==1) {
+        ___tmp__3QE=file_autoexec__9QE();
+      } else {
+        ___tmp__3QE=file_autoexec__1L;
+      };
+      std_file__L8D=create_open__KRE(___tmp__3QE);
+      if (is_open__2UE(std_file__L8D)) {
+        close__NVE(std_file__L8D);
+        if (__file_autoexec__8QE==1) {
+          ___tmp__DVE=file_autoexec__9QE();
+        } else {
+          ___tmp__DVE=file_autoexec__1L;
+        };
+        append__RIE(file__N8D,___tmp__DVE);
+        if (__system_windows__DWE==1) {
+          ___tmp__FVE=system_windows__EWE();
+        } else {
+          ___tmp__FVE=system_windows__XL;
+        };
+        system__UL=___tmp__FVE;
+        if (__comment_windows__MWE==1) {
+          comment_windows__2L=new_intern__SO(__string_16, 30);
+          __comment_windows__MWE= 0;
+          ___tmp__HVE=comment_windows__2L;
+        } else {
+          ___tmp__HVE=comment_windows__2L;
+        };
+        comment__O8D=___tmp__HVE;
+        if (__lisaac_windows__VWE==1) {
+          lisaac_windows__6L=new_intern__SO(__string_17, 11);
+          __lisaac_windows__VWE= 0;
+          ___tmp__IVE=lisaac_windows__6L;
+        } else {
+          ___tmp__IVE=lisaac_windows__6L;
+        };
+        lisaac__P8D=___tmp__IVE;
+        if (__path_windows__4WE==1) {
+          path_windows__9L=new_intern__SO(__string_18, 9);
+          __path_windows__4WE= 0;
+          ___tmp__JVE=path_windows__9L;
+        } else {
+          ___tmp__JVE=path_windows__9L;
+        };
+        path__Q8D=___tmp__JVE;
+        if (__path_windows_next__DXE==1) {
+          path_windows_next__CM=new_intern__SO(__string_19, 11);
+          __path_windows_next__DXE= 0;
+          ___tmp__KVE=path_windows_next__CM;
+        } else {
+          ___tmp__KVE=path_windows_next__CM;
+        };
+        path_next__R8D=___tmp__KVE;
+      } else {
+        if (__system_unknown__UXE==1) {
+          ___tmp__RXE=system_unknown__VXE();
+        } else {
+          ___tmp__RXE=system_unknown__YL;
+        };
+        system__UL=___tmp__RXE;
       };
     };
   };
-  change_current_working_directory__31D(path_lisaac__ME);
-  print__ZTF(new_intern__JH(__string_46,26));
-  print__ZTF(new_intern__JH(__string_47,30));
-  print__ZTF(new_intern__JH(__string_48,24));
+  print__83C(new_intern__SO(__string_20, 17));
+  print__83C(system__UL);
+  print__VJC('\n');
+  ___tmp__48D=system__UL;
+  if (__system_unknown__UXE==1) {
+    ___tmp__58D=system_unknown__VXE();
+  } else {
+    ___tmp__58D=system_unknown__YL;
+  };
+  if ((___tmp__48D!=___tmp__58D)) {
+    ___tmp__IYE=system__UL;
+    if (__system_windows__DWE==1) {
+      ___tmp__JYE=system_windows__EWE();
+    } else {
+      ___tmp__JYE=system_windows__XL;
+    };
+    if ((___tmp__IYE==___tmp__JYE)) {
+      update__idf__with__GZE(new_intern__SO(__string_21, 7),new_intern__SO(__string_22, 10),new_intern__SO(__string_23, 23));
+    } else {
+      update__idf__with__GZE(new_intern__SO(__string_21, 7),new_intern__SO(__string_22, 10),new_intern__SO(__string_24, 20));
+    };
+  };
+  print__VJC('\n');
+  print__83C(new_intern__SO(__string_25, 100));
+  ___tmp__A9D=system__UL;
+  if (__system_unknown__UXE==1) {
+    ___tmp__B9D=system_unknown__VXE();
+  } else {
+    ___tmp__B9D=system_unknown__YL;
+  };
+  if ((___tmp__A9D==___tmp__B9D)) {
+    print__83C(new_intern__SO(__string_26, 100));
+    print__L6F(path_current__RL);
+    print__83C(new_intern__SO(__string_27, 14));
+    print__L6F(path_current__RL);
+    print__83C(new_intern__SO(__string_28, 13));
+  } else {
+    new_text__M8D=create_from_string__H5G(comment__O8D);
+    append__RIE(new_text__M8D,lisaac__P8D);
+    append__V7G(new_text__M8D,path_current__RL);
+    add_last__HMD(new_text__M8D,'\n');
+    append__RIE(new_text__M8D,path__Q8D);
+    append__V7G(new_text__M8D,path_current__RL);
+    append__RIE(new_text__M8D,path_next__R8D);
+    append__RIE(new_text__M8D,new_intern__SO(__string_29, 2));
+    update__idf__with__KAH(file__N8D,comment__O8D,new_text__M8D);
+  };
+  print__83C(new_intern__SO(__string_30, 104));
+  new_text__TPH=NULL;
+  file_name__SPH=NULL;
+  char__RPH='\0';
+  print__83C(new_intern__SO(__string_31, 67));
+  while (((char__RPH!='y') && (char__RPH!='n'))) {
+    memory__8JC=((signed char )(fgetc((((void  *)(stdin))))));
+    char__RPH=memory__8JC;
+  };
+  if ((char__RPH=='n')) {
+    print__83C(new_intern__SO(__string_32, 47));
+  } else {
+    file_name__SPH=create_from_string__G9D(path_home__SL);
+    append__RIE(file_name__SPH,new_intern__SO(__string_33, 7));
+    if (__lisaac_mode_comment__DTH==1) {
+      ___tmp__RSH=lisaac_mode_comment__ETH();
+    } else {
+      ___tmp__RSH=lisaac_mode_comment__EM;
+    };
+    new_text__TPH=create_from_string__H5G(___tmp__RSH);
+    if (__lisaac_mode_path__PTH==1) {
+      lisaac_mode_path__FM=new_intern__SO(__string_34, 23);
+      __lisaac_mode_path__PTH= 0;
+      ___tmp__TSH=lisaac_mode_path__FM;
+    } else {
+      ___tmp__TSH=lisaac_mode_path__FM;
+    };
+    append__RIE(new_text__TPH,___tmp__TSH);
+    append__V7G(new_text__TPH,path_current__RL);
+    if (__lisaac_mode_path_end__2TH==1) {
+      lisaac_mode_path_end__GM=new_intern__SO(__string_35, 21);
+      __lisaac_mode_path_end__2TH= 0;
+      ___tmp__XSH=lisaac_mode_path_end__GM;
+    } else {
+      ___tmp__XSH=lisaac_mode_path_end__GM;
+    };
+    append__RIE(new_text__TPH,___tmp__XSH);
+    if (__lisaac_mode__DUH==1) {
+      lisaac_mode__HM=new_intern__SO(__string_36, 133);
+      __lisaac_mode__DUH= 0;
+      ___tmp__ZSH=lisaac_mode__HM;
+    } else {
+      ___tmp__ZSH=lisaac_mode__HM;
+    };
+    append__RIE(new_text__TPH,___tmp__ZSH);
+    if (__lisaac_mode_comment__DTH==1) {
+      ___tmp__1SH=lisaac_mode_comment__ETH();
+    } else {
+      ___tmp__1SH=lisaac_mode_comment__EM;
+    };
+    update__idf__with__KAH(file_name__SPH,___tmp__1SH,new_text__TPH);
+  };
+  print__83C(new_intern__SO(__string_37, 86));
+  cmd__1UH=NULL;
+  ___tmp__2UH=system__UL;
+  if (__system_windows__DWE==1) {
+    ___tmp__3UH=system_windows__EWE();
+  } else {
+    ___tmp__3UH=system_windows__XL;
+  };
+  if ((___tmp__2UH==___tmp__3UH)) {
+    cmd__1UH=new_intern__SO(__string_38, 38);
+  } else {
+    cmd__1UH=new_intern__SO(__string_39, 34);
+  };
+  print__83C(new_intern__SO(__string_40, 19));
+  print__83C(cmd__1UH);
+  print__83C(new_intern__SO(__string_41, 20));
+  if ((((signed long )(system(((char*)((to_external__EUD(cmd__1UH)))))))!= 0)) {
+    print__83C(new_intern__SO(__string_42, 67));
+  };
+  print__VJC('\n');
+  print__83C(new_intern__SO(__string_43, 60));
+  print__83C(new_intern__SO(__string_44, 147));
 };
 
-void *new_intern__JH(signed char *p__LH,signed long nb_char__MH)
+static void *new_intern__SO(signed char *p__UO,signed long nb_char__VO)
 // STRING_CONSTANT new_intern(STRING_CONSTANT,NATIVE_ARRAY,INTEGER)
 {
-  void *result__NH,*result__RI;
-  void  *ptr__SI;
-  signed long sz__TI;
-  result__NH=NULL;
-  ptr__SI=NULL;
-  result__RI=NULL;
-  sz__TI=0;
-  sz__TI=sizeof(struct __STRING_CONSTANT);
-  if ((sz__TI==0)) {
-    result__RI=STRING_CONSTANT;
+  void *result__WO,*result__0P;
+  void  *ptr__1P;
+  signed long sz__2P;
+  result__WO=NULL;
+  ptr__1P=NULL;
+  result__0P=NULL;
+  sz__2P= 0;
+  sz__2P=sizeof(struct __STRING_CONSTANT);
+  if ((sz__2P== 0)) {
+    result__0P=STRING_CONSTANT;
   } else {
-    ptr__SI=allocation__JP(sz__TI);
-    copy__from__size__HQ(ptr__SI,((void  *)((STRING_CONSTANT))),sz__TI);
-    result__RI=((void *)((ptr__SI)));
+    ptr__1P=allocation__CS(sz__2P);
+    copy__from__size__NNC(ptr__1P,((void  *)((STRING_CONSTANT))),sz__2P);
+    result__0P=((void *)((ptr__1P)));
   };
-  result__NH=result__RI;
-  ((struct __STRING_CONSTANT *)result__NH)->storage__6F=p__LH;
-  ((struct __STRING_CONSTANT *)result__NH)->count__7F=nb_char__MH;
-  return(result__NH);
+  result__WO=result__0P;
+  ((struct __STRING_CONSTANT *)result__WO)->storage__0H=p__UO;
+  ((struct __STRING_CONSTANT *)result__WO)->count__1H=nb_char__VO;
+  return(result__WO);
 };
 
-void make__IS()
-// DIRECTORY make(DIRECTORY)
-{
-  void *result__6U,**___tmp__X8,*self__6W,*result__OU;
-  int self__49;
-  void  *ptr__7U;
-  signed long sz__8U,limit_up__59;
-  char result__A7,___tmp__DX;
-  if ((name_list__BR==NULL)) {
-    result__OU=NULL;
-    ptr__7U=NULL;
-    result__6U=NULL;
-    sz__8U=0;
-    sz__8U=sizeof(struct __FIXED_ARRAY__STRING);
-    if ((sz__8U==0)) {
-      result__6U=FIXED_ARRAY__STRING;
-    } else {
-      ptr__7U=allocation__JP(sz__8U);
-      copy__from__size__HQ(ptr__7U,((void  *)((FIXED_ARRAY__STRING))),sz__8U);
-      result__6U=((void *)((ptr__7U)));
-    };
-    result__OU=result__6U;
-    self__6W=result__OU;
-    if (__infix_greater__HY(0,to_numeric__6X(((struct __FIXED_ARRAY__STRING *)result__OU)->capacity__TT))) {
-      ((struct __FIXED_ARRAY__STRING *)self__6W)->storage__ST=calloc__I1(0);
-      ((struct __FIXED_ARRAY__STRING *)self__6W)->capacity__TT=to_integer__K3(0);
-      ___tmp__DX=TRUE;
-    } else {
-      ___tmp__DX=FALSE;
-    };
-    if (___tmp__DX) {
-    } else {
-      result__A7=FALSE;
-      result__A7=(__infix_greater__O7(((struct __FIXED_ARRAY__STRING *)self__6W)->capacity__TT,to_integer__K3(0)) && __infix_greater_equal__77(((struct __FIXED_ARRAY__STRING *)self__6W)->upper__UT,to_integer__K3(0)));
-      if (result__A7) {
-        ___tmp__X8=((struct __FIXED_ARRAY__STRING *)self__6W)->storage__ST;
-        self__49=0;
-        limit_up__59=((struct __FIXED_ARRAY__STRING *)self__6W)->upper__UT;
-        while ((! (self__49>limit_up__59))) {
-          put__to__Q5(___tmp__X8,NULL,to_integer__K3(self__49));
-          self__49=__infix_sub__53(self__49,__prefix_sub__GBB());
-        };
-      };
-    };
-    ((struct __FIXED_ARRAY__STRING *)self__6W)->upper__UT=to_integer__K3(__infix_sub__53(0,1));
-    name_list__BR=result__OU;
-  } else {
-    ((struct __FIXED_ARRAY__STRING *)name_list__BR)->upper__UT=to_integer__K3(__prefix_sub__GBB());
-  };
-};
-
-signed char *to_external__AHB(void *self__BHB)
-// STRING_CONSTANT to_external(STRING_CONSTANT)
-{
-  return(to_external__PVB(to_string__FHB(self__BHB)));
-};
-
-signed char *to_external__PVB(void *self__QVB)
-// STRING to_external(STRING)
-{
-  void *self__MWB;
-  signed char *result__SVB;
-  result__SVB=NULL;
-  if (__infix_greater__O7(((struct __STRING *)self__QVB)->capacity__1Z,((struct __STRING *)self__QVB)->count__7F)) {
-    self__MWB=self__QVB;
-    ((struct __STRING *)self__QVB)->count__7F=__infix_add__TWB(((struct __STRING *)self__QVB)->count__7F,to_integer__K3(1));
-    if ((item__OXB(self__QVB,((struct __STRING *)self__QVB)->count__7F)!='\0')) {
-      put__to__RYB(self__MWB,'\0',((struct __STRING *)self__MWB)->count__7F);
-    };
-  } else {
-    add_last__7ZB(self__QVB,'\0');
-  };
-  ((struct __STRING *)self__QVB)->count__7F=__infix_sub__3RB(((struct __STRING *)self__QVB)->count__7F,to_integer__K3(1));
-  result__SVB=((struct __STRING *)self__QVB)->storage__6F;
-  return(result__SVB);
-};
-
-void  *basic_directory_open__M6B(signed char *path_pointer__O6B)
-// BASIC_DIRECTORY basic_directory_open(BASIC_DIRECTORY,NULLxNATIVE_ARRAY)
-{
-  return(((void  *)(opendir((char*) (path_pointer__O6B)))));
-};
-
-void *last_entry__56B()
-// BASIC_DIRECTORY last_entry(BASIC_DIRECTORY)
-{
-  last_entry__0EB=create__SHB(to_integer__K3(256));
-  __last_entry__46B=0;
-  return(last_entry__0EB);
-};
-
-void clear__G7B(void *self__H7B)
-// STRING clear(STRING)
-{
-  ((struct __STRING *)self__H7B)->count__7F=to_integer__K3(0);
-};
-
-char is_connected__F8B(void *self__G8B)
-// BASIC_DIRECTORY is_connected(BASIC_DIRECTORY)
-{
-  return(is_not_null__K8B(((struct __BASIC_DIRECTORY *)self__G8B)->directory_stream__SEB));
-};
-
-void read_entry__08B()
-// BASIC_DIRECTORY read_entry(BASIC_DIRECTORY)
-{
-  void *___tmp__QAC;
-  signed char *name__28B;
-  name__28B=NULL;
-  ((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->current_entry__TEB=((void  *)(readdir((DIR*) (((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->directory_stream__SEB))));
-  if (is_not_null__K8B(((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->current_entry__TEB)) {
-    name__28B=((signed char *)(((struct dirent*)(((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->current_entry__TEB))->d_name));
-    if (__last_entry__46B==0) {
-      ___tmp__QAC=last_entry__0EB;
-    } else {
-      ___tmp__QAC=last_entry__56B();
-    };
-    from_external_copy__EBC(___tmp__QAC,name__28B);
-  };
-};
-
-char end_of_input__KDC()
-// BASIC_DIRECTORY end_of_input(BASIC_DIRECTORY)
-{
-  return(is_null__2DC(((struct __BASIC_DIRECTORY *)BASIC_DIRECTORY)->current_entry__TEB));
-};
-
-void *twin__OEC(void *self__PEC)
-// STRING twin(STRING)
-{
-  return(create_from_string__TEC(self__PEC));
-};
-
-void add_last__6GC(void *self__7GC,void *element__8GC)
-// FIXED_ARRAY add_last(FIXED_ARRAY,NULLxSTRING)
-{
-  signed long new_capacity__CHC,capacity__KNC,nb_elements__YMC,i__9PC;
-  void *self__CKC,**result__MNC,**result__ZMC,**new__OLC,**___tmp__XKC;
-  void *self__5KC;
-  int self__SPC;
-  void  *p__LNC;
-  signed long ___tmp__YKC;
-  char ___tmp__IHC;
-  new_capacity__CHC=0;
-  __infix_add__TWB(((struct __FIXED_ARRAY__STRING *)self__7GC)->upper__UT,to_integer__K3(1));
-  if (__infix_less_equal__P0B(__infix_add__TWB(((struct __FIXED_ARRAY__STRING *)self__7GC)->upper__UT,to_integer__K3(1)),__infix_sub__3RB(((struct __FIXED_ARRAY__STRING *)self__7GC)->capacity__TT,to_integer__K3(1)))) {
-    ((struct __FIXED_ARRAY__STRING *)self__7GC)->upper__UT=__infix_add__TWB(((struct __FIXED_ARRAY__STRING *)self__7GC)->upper__UT,to_integer__K3(1));
-    ___tmp__IHC=TRUE;
-  } else {
-    ___tmp__IHC=FALSE;
-  };
-  if (___tmp__IHC) {
-  } else {
-    if ((((struct __FIXED_ARRAY__STRING *)self__7GC)->capacity__TT==0)) {
-      self__CKC=self__7GC;
-      ((struct __FIXED_ARRAY__STRING *)self__7GC)->storage__ST=calloc__I1(2);
-      ((struct __FIXED_ARRAY__STRING *)self__CKC)->capacity__TT=to_integer__K3(2);
-      ((struct __FIXED_ARRAY__STRING *)self__CKC)->upper__UT=to_integer__K3(0);
-    } else {
-      self__5KC=self__7GC;
-      new_capacity__CHC=to_integer__K3(__infix_mul__E3(2,to_numeric__6X(((struct __FIXED_ARRAY__STRING *)self__7GC)->capacity__TT)));
-      ___tmp__XKC=((struct __FIXED_ARRAY__STRING *)self__7GC)->storage__ST;
-      ___tmp__YKC=((struct __FIXED_ARRAY__STRING *)self__7GC)->capacity__TT;
-      new__OLC=NULL;
-      nb_elements__YMC=new_capacity__CHC;
-      result__ZMC=NULL;
-      result__MNC=NULL;
-      p__LNC=NULL;
-      capacity__KNC=0;
-      capacity__KNC=to_integer__K3(to_numeric__6X(__infix_mul__4MB(nb_elements__YMC,to_integer__K3(to_numeric__6X(element_sizeof__R2())))));
-      p__LNC=allocation__JP(capacity__KNC);
-      result__MNC=((void **)((void*)(p__LNC)));
-      result__ZMC=result__MNC;
-      clear_all__93(result__ZMC,to_numeric__6X(__infix_sub__PNB(nb_elements__YMC,to_integer__K3(1))));
-      new__OLC=result__ZMC;
-      self__SPC=to_numeric__6X(__infix_sub__PNB(___tmp__YKC,to_integer__K3(1)));
-      while (__infix_greater_equal__Q4(self__SPC)) {
-        i__9PC=to_integer__K3(self__SPC);
-        put__to__Q5(new__OLC,item__KQC(___tmp__XKC,i__9PC),i__9PC);
-        self__SPC=__infix_sub__53(self__SPC,1);
-      };
-      ((struct __FIXED_ARRAY__STRING *)self__5KC)->storage__ST=new__OLC;
-      ((struct __FIXED_ARRAY__STRING *)self__5KC)->capacity__TT=new_capacity__CHC;
-      ((struct __FIXED_ARRAY__STRING *)self__5KC)->upper__UT=__infix_add__TWB(((struct __FIXED_ARRAY__STRING *)self__7GC)->upper__UT,to_integer__K3(1));
-    };
-  };
-  ((struct __FIXED_ARRAY__STRING *)self__7GC)->storage__ST[((struct __FIXED_ARRAY__STRING *)self__7GC)->upper__UT]=element__8GC;
-};
-
-void disconnect__0TC(void *self__1TC)
-// BASIC_DIRECTORY disconnect(BASIC_DIRECTORY)
-{
-  if ((((signed long )(closedir((DIR*)(((struct __BASIC_DIRECTORY *)self__1TC)->directory_stream__SEB))))==0)) {
-    ((struct __BASIC_DIRECTORY *)self__1TC)->directory_stream__SEB=NULL;
-    ((struct __BASIC_DIRECTORY *)self__1TC)->current_entry__TEB=NULL;
-  };
-};
-
-void *get_current_working_directory__CWC()
-// DIRECTORY get_current_working_directory(DIRECTORY)
-{
-  void *self__RYC,*result__JWC;
-  signed char *p__SYC,*___tmp__LWC;
-  signed long i__TYC;
-  result__JWC=NULL;
-  result__JWC=create__SHB(to_integer__K3(256));
-  ___tmp__LWC=basic_directory_current_working_directory__UWC();
-  self__RYC=result__JWC;
-  p__SYC=___tmp__LWC;
-  i__TYC=0;
-  i__TYC=to_integer__K3(0);
-  ((struct __STRING *)self__RYC)->count__7F=to_integer__K3(0);
-  while ((! (item__BTB(p__SYC,i__TYC)=='\0'))) {
-    add_last__7ZB(self__RYC,item__BTB(p__SYC,i__TYC));
-    i__TYC=__infix_add__TWB(i__TYC,to_integer__K3(1));
-  };
-  return(result__JWC);
-};
-
-void *__infix_add__P0C(void *self__Q0C,void *other__R0C)
-// ABSTRACT_STRING __infix_add(STRING,NULLxSTRING_CONSTANT)
-{
-  void *result__S0C;
-  result__S0C=NULL;
-  result__S0C=create__SHB(__infix_add__TWB(((struct __STRING *)self__Q0C)->count__7F,((struct __STRING_CONSTANT *)other__R0C)->count__7F));
-  append__M1C(result__S0C,self__Q0C);
-  append__45C(result__S0C,other__R0C);
-  return(result__S0C);
-};
-
-void  *allocation__JP(signed long nb__LP)
-// MEMORY allocation(MEMORY,INTEGER)
-{
-  return(((void  *)(malloc((nb__LP)))));
-};
-
-void copy__from__size__HQ(void  *dest__JQ,void  *source__KQ,signed long n__LQ)
-// MEMORY copy__from__size(MEMORY,NULLxPOINTER,POINTER,INTEGER)
-{
-  ((void  *)(memcpy((void*)(dest__JQ),(void*)(source__KQ),(n__LQ))));
-};
-
-signed char *calloc__ILB(signed long nb_elements__KLB)
-// NATIVE_ARRAY calloc(NATIVE_ARRAY,INTEGER)
-{
-  void  *p__8LB;
-  signed char *result__LLB,*result__9LB;
-  signed long capacity__7LB;
-  result__LLB=NULL;
-  result__9LB=NULL;
-  p__8LB=NULL;
-  capacity__7LB=0;
-  capacity__7LB=to_integer__K3(to_numeric__6X(__infix_mul__4MB(nb_elements__KLB,to_integer__K3(to_numeric__6X(element_sizeof__RMB())))));
-  p__8LB=allocation__JP(capacity__7LB);
-  result__9LB=((signed char *)((void*)(p__8LB)));
-  result__LLB=result__9LB;
-  clear_all__1NB(result__LLB,to_numeric__6X(__infix_sub__PNB(nb_elements__KLB,to_integer__K3(1))));
-  return(result__LLB);
-};
-
-void connect_to__2CD(void *self__3CD,void *new_path__4CD)
-// TEXT_FILE_WRITE connect_to(TEXT_FILE_WRITE,NULLxSTRING_CONSTANT)
-{
-  ((struct __TEXT_FILE_WRITE *)self__3CD)->output_stream__58C=((void  *)(fopen(((char*)((to_external__AHB(new_path__4CD)))),"w")));
-  if (is_not_null__K8B(((struct __TEXT_FILE_WRITE *)self__3CD)->output_stream__58C)) {
-    if ((((struct __TEXT_FILE_WRITE *)self__3CD)->capacity__48C==0)) {
-      ((struct __TEXT_FILE_WRITE *)self__3CD)->buffer__28C=calloc__ILB(32768);
-      ((struct __TEXT_FILE_WRITE *)self__3CD)->capacity__48C=32768;
-    };
-  };
-};
-
-char __infix_less_equal__P0B(signed long self__Q0B,signed long other__R0B)
-// NUMERIC __infix_less_equal(INTEGER,INTEGER)
-{
-  return((! __infix_greater__O7(self__Q0B,other__R0B)));
-};
-
-void *item__6FD(void *self__7FD,signed long i__8FD)
-// FIXED_ARRAY item(FIXED_ARRAY,INTEGER)
-{
-  return(item__KQC(((struct __FIXED_ARRAY__STRING *)self__7FD)->storage__ST,i__8FD));
-};
-
-char __infix_equal_equal__XGD(void *self__YGD,void *other__ZGD)
-// ABSTRACT_STRING __infix_equal_equal(STRING,NULLxSTRING_CONSTANT)
-{
-  char result__0GD;
-  result__0GD=FALSE;
-  if (__infix_equal_equal__M8(((struct __STRING *)self__YGD)->count__7F,((struct __STRING_CONSTANT *)other__ZGD)->count__7F)) {
-    result__0GD=fast_memcmp__until__NHD(((struct __STRING *)self__YGD)->storage__6F,((struct __STRING_CONSTANT *)other__ZGD)->storage__6F,((struct __STRING *)self__YGD)->count__7F);
-  };
-  return(result__0GD);
-};
-
-void *create_from_string__TEC(void *str__VEC)
-// STRING create_from_string(STRING,NULLxSTRING)
-{
-  void *result__WEC,*self__YFC,*self__4EC;
-  result__WEC=NULL;
-  result__WEC=create__SHB(((struct __STRING *)str__VEC)->count__7F);
-  self__4EC=result__WEC;
-  ((struct __STRING *)result__WEC)->count__7F=((struct __STRING *)str__VEC)->count__7F;
-  if (__infix_greater__O7(((struct __STRING *)self__4EC)->count__7F,to_integer__K3(0))) {
-    self__YFC=self__4EC;
-    if (__infix_less__WKB(((struct __STRING *)self__4EC)->capacity__1Z,((struct __STRING *)self__4EC)->count__7F)) {
-      ((struct __STRING *)self__YFC)->storage__6F=calloc__ILB(((struct __STRING *)self__YFC)->count__7F);
-      ((struct __STRING *)self__YFC)->capacity__1Z=((struct __STRING *)self__YFC)->count__7F;
-    };
-    copy_from__until__7RB(((struct __STRING *)self__4EC)->storage__6F,((struct __STRING *)str__VEC)->storage__6F,__infix_sub__3RB(((struct __STRING *)self__4EC)->count__7F,to_integer__K3(1)));
-  };
-  return(result__WEC);
-};
-
-void append__M1C(void *self__N1C,void *other__O1C)
-// STRING append(STRING,NULLxSTRING)
-{
-  void *self__V2C;
-  signed long other_count__P1C,needed_capacity__Q1C;
-  needed_capacity__Q1C=0;
-  other_count__P1C=0;
-  other_count__P1C=((struct __STRING *)other__O1C)->count__7F;
-  needed_capacity__Q1C=__infix_add__TWB(((struct __STRING *)self__N1C)->count__7F,other_count__P1C);
-  if (__infix_less__WKB(((struct __STRING *)self__N1C)->capacity__1Z,needed_capacity__Q1C)) {
-    self__V2C=self__N1C;
-    if ((((struct __STRING *)self__N1C)->capacity__1Z==0)) {
-      ((struct __STRING *)self__V2C)->capacity__1Z=needed_capacity__Q1C;
-      ((struct __STRING *)self__V2C)->storage__6F=calloc__ILB(((struct __STRING *)self__V2C)->capacity__1Z);
-    } else {
-      ((struct __STRING *)self__V2C)->storage__6F=realloc__with__G2B(((struct __STRING *)self__V2C)->storage__6F,((struct __STRING *)self__V2C)->capacity__1Z,needed_capacity__Q1C);
-      ((struct __STRING *)self__V2C)->capacity__1Z=needed_capacity__Q1C;
-    };
-  };
-  copy__to__until__U3C(((struct __STRING *)self__N1C)->storage__6F,((struct __STRING *)other__O1C)->storage__6F,((struct __STRING *)self__N1C)->count__7F,other_count__P1C);
-  ((struct __STRING *)self__N1C)->count__7F=needed_capacity__Q1C;
-};
-
-void append__45C(void *self__55C,void *other__65C)
-// STRING append(STRING,NULLxSTRING_CONSTANT)
-{
-  void *self__D7C;
-  signed long other_count__75C,needed_capacity__85C;
-  needed_capacity__85C=0;
-  other_count__75C=0;
-  other_count__75C=((struct __STRING_CONSTANT *)other__65C)->count__7F;
-  needed_capacity__85C=__infix_add__TWB(((struct __STRING *)self__55C)->count__7F,other_count__75C);
-  if (__infix_less__WKB(((struct __STRING *)self__55C)->capacity__1Z,needed_capacity__85C)) {
-    self__D7C=self__55C;
-    if ((((struct __STRING *)self__55C)->capacity__1Z==0)) {
-      ((struct __STRING *)self__D7C)->capacity__1Z=needed_capacity__85C;
-      ((struct __STRING *)self__D7C)->storage__6F=calloc__ILB(((struct __STRING *)self__D7C)->capacity__1Z);
-    } else {
-      ((struct __STRING *)self__D7C)->storage__6F=realloc__with__G2B(((struct __STRING *)self__D7C)->storage__6F,((struct __STRING *)self__D7C)->capacity__1Z,needed_capacity__85C);
-      ((struct __STRING *)self__D7C)->capacity__1Z=needed_capacity__85C;
-    };
-  };
-  copy__to__until__U3C(((struct __STRING *)self__55C)->storage__6F,((struct __STRING_CONSTANT *)other__65C)->storage__6F,((struct __STRING *)self__55C)->count__7F,other_count__75C);
-  ((struct __STRING *)self__55C)->count__7F=needed_capacity__85C;
-};
-
-void write_string__NLD(void *self__OLD,void *s__PLD)
-// TEXT_FILE_WRITE write_string(TEXT_FILE_WRITE,NULLxSTRING)
-{
-  if (__infix_less__WKB(upper__FMD(s__PLD),32768)) {
-    ((struct __TEXT_FILE_WRITE *)self__OLD)->buffer_position__38C=upper__FMD(s__PLD);
-  } else {
-    ((struct __TEXT_FILE_WRITE *)self__OLD)->buffer_position__38C=32768;
-  };
-  copy_from__until__7RB(((struct __TEXT_FILE_WRITE *)self__OLD)->buffer__28C,to_external__PVB(s__PLD),((struct __TEXT_FILE_WRITE *)self__OLD)->buffer_position__38C);
-  write_buffer__CND(self__OLD);
-};
-
-signed long to_integer__K3(int self__L3)
-// NUMERIC to_integer(NUMERIC)
-{
-  return(((signed long )((self__L3))));
-};
-
-signed long __infix_add__TWB(signed long self__UWB,signed long other__VWB)
-// NUMERIC __infix_add(INTEGER,INTEGER)
-{
-  return(__infix_sub__3RB(self__UWB,__infix_sub__3RB(to_integer__K3(0),other__VWB)));
-};
-
-void disconnect__SOD(void *self__TOD)
-// TEXT_FILE_WRITE disconnect(TEXT_FILE_WRITE)
-{
-  if (__infix_greater__O7(((struct __TEXT_FILE_WRITE *)self__TOD)->buffer_position__38C,to_integer__K3(0))) {
-    write_buffer__CND(self__TOD);
-  };
-  fclose((FILE*)((((struct __TEXT_FILE_WRITE *)self__TOD)->output_stream__58C)));
-};
-
-void *get_environment_variable__PQD(void *variable__RQD)
-// ENVIRONMENT get_environment_variable(ENVIRONMENT,NULLxSTRING_CONSTANT)
-{
-  void *result__SQD,*self__YRD;
-  signed char *p__TQD;
-  p__TQD=NULL;
-  result__SQD=NULL;
-  result__SQD=create__SHB(to_integer__K3(0));
-  p__TQD=((signed char *)(getenv((char*)(to_external__AHB(variable__RQD)))));
-  if ((p__TQD!=NULL)) {
-    self__YRD=result__SQD;
-    ((struct __STRING *)result__SQD)->storage__6F=p__TQD;
-    ((struct __STRING *)self__YRD)->count__7F=to_integer__K3(0);
-    while ((! (item__BTB(((struct __STRING *)self__YRD)->storage__6F,((struct __STRING *)self__YRD)->count__7F)=='\0'))) {
-      ((struct __STRING *)self__YRD)->count__7F=__infix_add__TWB(((struct __STRING *)self__YRD)->count__7F,to_integer__K3(1));
-    };
-    ((struct __STRING *)self__YRD)->capacity__1Z=__infix_add__TWB(((struct __STRING *)self__YRD)->count__7F,to_integer__K3(1));
-  };
-  return(result__SQD);
-};
-
-char has_substring__ZUD(void *self__0UD,void *other__1UD)
-// ABSTRACT_STRING has_substring(STRING,NULLxSTRING_CONSTANT)
-{
-  return((first_substring_index__6UD(self__0UD,other__1UD)!=0));
-};
-
-void change_current_working_directory__31D(void *directory_path__51D)
-// DIRECTORY change_current_working_directory(DIRECTORY,NULLxSTRING)
-{
-  void *___tmp__C6D,*___tmp__M6D;
-  signed char *p__D2D;
-  p__D2D=NULL;
-  p__D2D=to_external__PVB(directory_path__51D);
-  if (basic_directory_chdir__C3D(p__D2D)) {
-    connect_to_current_working_directory__R3D(BASIC_DIRECTORY);
-    if (is_connected__F8B(BASIC_DIRECTORY)) {
-      disconnect__0TC(BASIC_DIRECTORY);
-    } else {
-      if (__last_entry__46B==0) {
-        ___tmp__C6D=last_entry__0EB;
-      } else {
-        ___tmp__C6D=last_entry__56B();
-      };
-      clear__G7B(___tmp__C6D);
-    };
-  } else {
-    if (__last_entry__46B==0) {
-      ___tmp__M6D=last_entry__0EB;
-    } else {
-      ___tmp__M6D=last_entry__56B();
-    };
-    clear__G7B(___tmp__M6D);
-  };
-};
-
-void scan_current_working_directory__56D()
-// DIRECTORY scan_current_working_directory(DIRECTORY)
-{
-  void *entry__76D,*___tmp__N8D,*___tmp__Q7D;
-  entry__76D=NULL;
-  make__IS();
-  connect_to_current_working_directory__R3D(BASIC_DIRECTORY);
-  if (is_connected__F8B(BASIC_DIRECTORY)) {
-    if (__last_entry__46B==0) {
-      ___tmp__Q7D=last_entry__0EB;
-    } else {
-      ___tmp__Q7D=last_entry__56B();
-    };
-    path__9Q=twin__OEC(___tmp__Q7D);
-    read_entry__08B();
-    while ((! end_of_input__KDC())) {
-      if (__last_entry__46B==0) {
-        ___tmp__N8D=last_entry__0EB;
-      } else {
-        ___tmp__N8D=last_entry__56B();
-      };
-      entry__76D=twin__OEC(___tmp__N8D);
-      add_last__6GC(name_list__BR,entry__76D);
-      read_entry__08B();
-    };
-  };
-};
-
-char has__V9D(void *entry_name__X9D)
-// DIRECTORY has(DIRECTORY,NULLxSTRING_CONSTANT)
-{
-  signed char ___tmp__P1E,self__G3E,___tmp__I2E,self__M2E,___tmp__Q2E;
-  signed char ___tmp__92E,___tmp__C5E,___tmp__G5E,self__01E,other__11E;
-  void *entry__Z9D,*self__AZE,*other__BZE;
-  signed char ___tmp__O1E,*s1__CZE,*s2__DZE;
-  signed long i__09D,i__EZE;
-  char result__19D,result__21E,result__FZE;
-  entry__Z9D=NULL;
-  result__19D=FALSE;
-  i__09D=0;
-  is_case_sensitive__LAE(BASIC_DIRECTORY);
-  i__09D=((struct __FIXED_ARRAY__STRING *)name_list__BR)->upper__UT;
-  while ((! (result__19D || __infix_less__WKB(i__09D,0)))) {
-    entry__Z9D=item__6FD(name_list__BR,i__09D);
-    self__AZE=entry__Z9D;
-    other__BZE=entry_name__X9D;
-    s2__DZE=NULL;
-    s1__CZE=NULL;
-    result__FZE=FALSE;
-    i__EZE=0;
-    i__EZE=((struct __STRING *)self__AZE)->count__7F;
-    if ((i__EZE==((struct __STRING_CONSTANT *)other__BZE)->count__7F)) {
-      if (fast_memcmp__until__NHD(((struct __STRING *)self__AZE)->storage__6F,((struct __STRING_CONSTANT *)other__BZE)->storage__6F,i__EZE)) {
-        result__FZE=TRUE;
-      } else {
-        i__EZE=__infix_sub__3RB(i__EZE,to_integer__K3(1));
-        s1__CZE=((struct __STRING *)self__AZE)->storage__6F;
-        s2__DZE=((struct __STRING_CONSTANT *)other__BZE)->storage__6F;
-        result__FZE=TRUE;
-        while (((i__EZE!=0) & result__FZE)) {
-          ___tmp__O1E=item__BTB(s1__CZE,i__EZE);
-          ___tmp__P1E=item__BTB(s2__DZE,i__EZE);
-          self__01E=___tmp__O1E;
-          other__11E=___tmp__P1E;
-          result__21E=FALSE;
-          if ((self__01E==other__11E)) {
-            result__21E=TRUE;
-          } else {
-            self__M2E=self__01E;
-            ___tmp__I2E=code__RCE(self__01E);
-            ___tmp__Q2E=to_smallint__S2E(65);
-            ___tmp__92E=to_smallint__S2E(90);
-            self__G3E=___tmp__I2E;
-            if ((__infix_greater_equal__EME(___tmp__I2E,___tmp__Q2E) && __infix_less_equal__G4E(___tmp__I2E,___tmp__92E))) {
-              result__21E=(code__RCE(self__M2E)==__infix_sub__74E(code__RCE(other__11E),to_smallint__S2E(32)));
-            };
-            ___tmp__C5E=to_smallint__S2E(97);
-            ___tmp__G5E=to_smallint__S2E(122);
-            if ((__infix_greater_equal__EME(self__G3E,___tmp__C5E) && __infix_less_equal__G4E(self__G3E,___tmp__G5E))) {
-              result__21E=(code__RCE(self__M2E)==__infix_sub__74E(code__RCE(other__11E),__infix_sub__74E(to_smallint__S2E(0),to_smallint__S2E(32))));
-            };
-          };
-          result__FZE=result__21E;
-          i__EZE=__infix_sub__3RB(i__EZE,to_integer__K3(1));
-        };
-      };
-    };
-    result__19D=result__FZE;
-    i__09D=__infix_sub__3RB(i__09D,to_integer__K3(1));
-  };
-  return(result__19D);
-};
-
-void *create__59E()
-// TEXT_FILE_READ create(TEXT_FILE_READ)
-{
-  void *result__79E,*result__6AF;
-  void  *ptr__7AF;
-  signed long sz__8AF;
-  result__79E=NULL;
-  ptr__7AF=NULL;
-  result__6AF=NULL;
-  sz__8AF=0;
-  sz__8AF=sizeof(struct __TEXT_FILE_READ);
-  if ((sz__8AF==0)) {
-    result__6AF=TEXT_FILE_READ;
-  } else {
-    ptr__7AF=allocation__JP(sz__8AF);
-    copy__from__size__HQ(ptr__7AF,((void  *)((TEXT_FILE_READ))),sz__8AF);
-    result__6AF=((void *)((ptr__7AF)));
-  };
-  result__79E=result__6AF;
-  return(result__79E);
-};
-
-void connect_to__MDF(void *self__NDF,void *new_path__ODF)
-// TEXT_FILE_READ connect_to(TEXT_FILE_READ,NULLxSTRING_CONSTANT)
-{
-  void *self__7EF;
-  ((struct __TEXT_FILE_READ *)self__NDF)->input_stream__S9E=((void  *)(fopen(((char*)((to_external__AHB(new_path__ODF)))),"r")));
-  if (is_not_null__K8B(((struct __TEXT_FILE_READ *)self__NDF)->input_stream__S9E)) {
-    self__7EF=self__NDF;
-    if ((((struct __TEXT_FILE_READ *)self__NDF)->capacity__X9E==0)) {
-      ((struct __TEXT_FILE_READ *)self__7EF)->buffer__T9E=calloc__ILB(32768);
-      ((struct __TEXT_FILE_READ *)self__7EF)->capacity__X9E=32768;
-    };
-    to_integer__K3(0);
-    ((struct __TEXT_FILE_READ *)self__7EF)->buffer_size__W9E=to_integer__K3(0);
-  };
-};
-
-void *create__SHB(signed long needed_capacity__UHB)
-// STRING create(STRING,INTEGER)
-{
-  void *result__VHB,*result__4HB,*self__4JB;
-  void  *ptr__5HB;
-  signed long sz__6HB,needed_capacity__5JB;
-  result__VHB=NULL;
-  ptr__5HB=NULL;
-  result__4HB=NULL;
-  sz__6HB=0;
-  sz__6HB=sizeof(struct __STRING);
-  if ((sz__6HB==0)) {
-    result__4HB=STRING;
-  } else {
-    ptr__5HB=allocation__JP(sz__6HB);
-    copy__from__size__HQ(ptr__5HB,((void  *)((STRING))),sz__6HB);
-    result__4HB=((void *)((ptr__5HB)));
-  };
-  result__VHB=result__4HB;
-  self__4JB=result__VHB;
-  needed_capacity__5JB=needed_capacity__UHB;
-  if (__infix_greater__O7(needed_capacity__UHB,to_integer__K3(0))) {
-    if (__infix_less__WKB(((struct __STRING *)self__4JB)->capacity__1Z,needed_capacity__5JB)) {
-      ((struct __STRING *)self__4JB)->storage__6F=calloc__ILB(needed_capacity__5JB);
-      ((struct __STRING *)self__4JB)->capacity__1Z=needed_capacity__5JB;
-    };
-  };
-  ((struct __STRING *)self__4JB)->count__7F=to_integer__K3(0);
-  return(result__VHB);
-};
-
-void read_file_in__FGF(void *self__GGF,void *str__HGF)
-// TEXT_FILE_READ read_file_in(TEXT_FILE_READ,NULLxSTRING)
-{
-  void *self__0GF;
-  signed char last__1GF;
-  self__0GF=self__GGF;
-  last__1GF='\0';
-  if (__infix_greater__O7(((struct __TEXT_FILE_READ *)self__0GF)->buffer_size__W9E,to_integer__K3(0))) {
-    last__1GF=item__BTB(((struct __TEXT_FILE_READ *)self__0GF)->buffer__T9E,__infix_sub__3RB(((struct __TEXT_FILE_READ *)self__0GF)->buffer_size__W9E,to_integer__K3(1)));
-  };
-  ((struct __TEXT_FILE_READ *)self__0GF)->buffer_size__W9E=((signed long )(fread((void *)((((struct __TEXT_FILE_READ *)self__0GF)->buffer__T9E)),(size_t)(1), (size_t)((((struct __TEXT_FILE_READ *)self__0GF)->capacity__X9E)),(FILE*)((((struct __TEXT_FILE_READ *)self__0GF)->input_stream__S9E)))));
-  to_integer__K3(0);
-  if (__infix_less_equal__P0B(((struct __TEXT_FILE_READ *)self__0GF)->buffer_size__W9E,to_integer__K3(0))) {
-    ((struct __TEXT_FILE_READ *)self__0GF)->buffer__T9E[0]=last__1GF;
-    ((struct __TEXT_FILE_READ *)self__0GF)->buffer_size__W9E=to_integer__K3(1);
-    to_integer__K3(1);
-  };
-  from_external_copy__EBC(str__HGF,((struct __TEXT_FILE_READ *)self__GGF)->buffer__T9E);
-};
-
-void disconnect__GKF(void *self__HKF)
-// TEXT_FILE_READ disconnect(TEXT_FILE_READ)
-{
-  fclose((FILE*)((((struct __TEXT_FILE_READ *)self__HKF)->input_stream__S9E)));
-};
-
-void *__infix_add__FLF(void *self__GLF,void *other__HLF)
-// ABSTRACT_STRING __infix_add(STRING_CONSTANT,NULLxSTRING)
-{
-  void *result__ILF;
-  result__ILF=NULL;
-  result__ILF=create__SHB(__infix_add__TWB(((struct __STRING_CONSTANT *)self__GLF)->count__7F,((struct __STRING *)other__HLF)->count__7F));
-  append__45C(result__ILF,self__GLF);
-  append__M1C(result__ILF,other__HLF);
-  return(result__ILF);
-};
-
-char has_substring__ENF(void *self__FNF,void *other__GNF)
-// ABSTRACT_STRING has_substring(STRING,NULLxSTRING)
-{
-  void *self__8NF,*other__9NF;
-  signed long i__BOF,s__COF,result__DOF,___tmp__4NF;
-  ___tmp__4NF=to_integer__K3(1);
-  self__8NF=self__FNF;
-  other__9NF=other__GNF;
-  i__BOF=0;
-  result__DOF=0;
-  s__COF=0;
-  s__COF=___tmp__4NF;
-  while ((! ((result__DOF!=0) || __infix_greater__O7(__infix_sub__3RB(__infix_add__TWB(s__COF,((struct __STRING *)other__9NF)->count__7F),to_integer__K3(1)),((struct __STRING *)self__8NF)->count__7F)))) {
-    i__BOF=to_integer__K3(1);
-    while ((! (__infix_greater__O7(i__BOF,((struct __STRING *)other__9NF)->count__7F) || (item__OXB(self__8NF,__infix_sub__3RB(__infix_add__TWB(s__COF,i__BOF),to_integer__K3(1)))!=item__OXB(other__9NF,i__BOF))))) {
-      i__BOF=__infix_add__TWB(i__BOF,to_integer__K3(1));
-    };
-    if (__infix_greater__O7(i__BOF,((struct __STRING *)other__9NF)->count__7F)) {
-      result__DOF=s__COF;
-    } else {
-      s__COF=__infix_add__TWB(s__COF,to_integer__K3(1));
-    };
-  };
-  return((result__DOF!=0));
-};
-
-void print__ZTF(void *self__0TF)
+static void print__83C(void *self__93C)
 // ABSTRACT_STRING print(STRING_CONSTANT)
 {
-  signed long self__2VF,limit_up__3VF;
-  self__2VF=1;
-  limit_up__3VF=((struct __STRING_CONSTANT *)self__0TF)->count__7F;
-  while (__infix_less_equal__P0B(self__2VF,limit_up__3VF)) {
-    put_character__WWF(item__LZD(self__0TF,self__2VF));
-    self__2VF=__infix_add__TWB(self__2VF,to_integer__K3(1));
+  signed long self__55C,limit_up__65C;
+  self__55C= 1;
+  limit_up__65C=((struct __STRING_CONSTANT *)self__93C)->count__1H;
+  while (__infix_less_equal__E6C(self__55C,limit_up__65C)) {
+    put_character__HLC(item__56C(self__93C,self__55C));
+    self__55C=__infix_add__HAB(self__55C,to_integer__C1( 1));
   };
 };
 
-signed long first_substring_index__6UD(void *self__7UD,void *other__8UD)
-// ABSTRACT_STRING first_substring_index(STRING,NULLxSTRING_CONSTANT)
+static signed long to_integer__C1(int self__D1)
+// NUMERIC to_integer(NUMERIC)
 {
-  return(substring_index__UVD(self__7UD,other__8UD,to_integer__K3(1)));
+  return(((signed long )((self__D1))));
 };
 
-signed long substring_index__UVD(void *self__VVD,void *other__WVD,signed long start_index__XVD)
-// ABSTRACT_STRING substring_index(STRING,NULLxSTRING_CONSTANT,INTEGER)
+static void *create__TAD(signed long needed_capacity__VAD)
+// STRING create(STRING,INTEGER)
 {
-  signed long i__YVD,s__ZVD,result__0VD;
-  i__YVD=0;
-  result__0VD=0;
-  s__ZVD=0;
-  s__ZVD=start_index__XVD;
-  while ((! ((result__0VD!=0) || __infix_greater__O7(__infix_sub__3RB(__infix_add__TWB(s__ZVD,((struct __STRING_CONSTANT *)other__WVD)->count__7F),to_integer__K3(1)),((struct __STRING *)self__VVD)->count__7F)))) {
-    i__YVD=to_integer__K3(1);
-    while ((! (__infix_greater__O7(i__YVD,((struct __STRING_CONSTANT *)other__WVD)->count__7F) || (item__OXB(self__VVD,__infix_sub__3RB(__infix_add__TWB(s__ZVD,i__YVD),to_integer__K3(1)))!=item__LZD(other__WVD,i__YVD))))) {
-      i__YVD=__infix_add__TWB(i__YVD,to_integer__K3(1));
-    };
-    if (__infix_greater__O7(i__YVD,((struct __STRING_CONSTANT *)other__WVD)->count__7F)) {
-      result__0VD=s__ZVD;
-    } else {
-      s__ZVD=__infix_add__TWB(s__ZVD,to_integer__K3(1));
-    };
-  };
-  return(result__0VD);
-};
-
-void *substring__to__4ZF(void *self__5ZF,signed long start_index__6ZF,signed long end_index__7ZF)
-// ABSTRACT_STRING substring__to(STRING,INTEGER,INTEGER)
-{
-  void *result__9ZF;
-  signed char *___tmp__F0F,*___tmp__G0F;
-  signed long c__8ZF,___tmp__H0F,___tmp__I0F,i1__92F,i2__A3F;
-  result__9ZF=NULL;
-  c__8ZF=0;
-  c__8ZF=__infix_add__TWB(__infix_sub__3RB(end_index__7ZF,start_index__6ZF),to_integer__K3(1));
-  result__9ZF=create__SHB(c__8ZF);
-  ((struct __STRING *)result__9ZF)->count__7F=c__8ZF;
-  ___tmp__F0F=((struct __STRING *)result__9ZF)->storage__6F;
-  ___tmp__G0F=((struct __STRING *)self__5ZF)->storage__6F;
-  ___tmp__H0F=__infix_sub__3RB(start_index__6ZF,to_integer__K3(1));
-  ___tmp__I0F=__infix_sub__3RB(end_index__7ZF,to_integer__K3(1));
-  i2__A3F=0;
-  i1__92F=0;
-  i1__92F=to_integer__K3(0);
-  i2__A3F=___tmp__H0F;
-  while ((! __infix_greater__O7(i2__A3F,___tmp__I0F))) {
-    put__to__0OB(___tmp__F0F,item__BTB(___tmp__G0F,i2__A3F),i1__92F);
-    i2__A3F=__infix_add__TWB(i2__A3F,to_integer__K3(1));
-    i1__92F=__infix_add__TWB(i1__92F,to_integer__K3(1));
-  };
-  return(result__9ZF);
-};
-
-void print__A7F(void *self__B7F)
-// ABSTRACT_STRING print(STRING)
-{
-  signed long self__K8F,limit_up__L8F;
-  self__K8F=1;
-  limit_up__L8F=((struct __STRING *)self__B7F)->count__7F;
-  while (__infix_less_equal__P0B(self__K8F,limit_up__L8F)) {
-    put_character__WWF(item__OXB(self__B7F,self__K8F));
-    self__K8F=__infix_add__TWB(self__K8F,to_integer__K3(1));
-  };
-};
-
-void remove_between__to__U9F(void *self__V9F,signed long start__W9F,signed long end__X9F)
-// STRING remove_between__to(STRING,INTEGER,INTEGER)
-{
-  void *self__QBG;
-  signed long len__Y9F,___tmp__LBG,self__4BG;
-  len__Y9F=0;
-  len__Y9F=__infix_add__TWB(__infix_sub__3RB(end__X9F,start__W9F),to_integer__K3(1));
-  if (__infix_greater__O7(len__Y9F,to_integer__K3(0))) {
-    self__QBG=self__V9F;
-    ___tmp__LBG=((struct __STRING *)self__V9F)->count__7F;
-    self__4BG=__infix_add__TWB(end__X9F,to_integer__K3(1));
-    while (__infix_less_equal__P0B(self__4BG,___tmp__LBG)) {
-      put__to__RYB(self__QBG,item__OXB(self__QBG,self__4BG),__infix_sub__3RB(self__4BG,len__Y9F));
-      self__4BG=__infix_add__TWB(self__4BG,to_integer__K3(1));
-    };
-    ((struct __STRING *)self__QBG)->count__7F=__infix_sub__3RB(((struct __STRING *)self__V9F)->count__7F,len__Y9F);
-  };
-};
-
-void *__infix_add__ZDG(void *self__0DG,void *other__1DG)
-// ABSTRACT_STRING __infix_add(STRING,NULLxSTRING)
-{
-  void *result__2DG;
-  result__2DG=NULL;
-  result__2DG=create__SHB(__infix_add__TWB(((struct __STRING *)self__0DG)->count__7F,((struct __STRING *)other__1DG)->count__7F));
-  append__M1C(result__2DG,self__0DG);
-  append__M1C(result__2DG,other__1DG);
-  return(result__2DG);
-};
-
-void insert_string__to__CFG(void *self__DFG,void *s__EFG,signed long i__FFG)
-// STRING insert_string__to(STRING,NULLxSTRING,INTEGER)
-{
-  signed long j__GFG,k__HFG,___tmp__MFG,___tmp__RJG,___tmp__QJG;
-  signed long new_count__QGG,___tmp__9MG,___tmp__ANG,lower__XNG;
-  void *self__JIG,*self__PGG;
-  signed char *___tmp__PJG,*self__2PG,*self__TRG,*self__CPG,*___tmp__8MG;
-  signed long upper__YNG,offset__ZNG,self__5KG,self__8PG,self__ZRG;
-  char ___tmp__WGG;
-  k__HFG=0;
-  j__GFG=0;
-  j__GFG=((struct __STRING *)self__DFG)->count__7F;
-  k__HFG=((struct __STRING *)s__EFG)->count__7F;
-  ___tmp__MFG=__infix_add__TWB(j__GFG,k__HFG);
-  self__PGG=self__DFG;
-  new_count__QGG=___tmp__MFG;
-  if (__infix_less_equal__P0B(___tmp__MFG,((struct __STRING *)self__PGG)->count__7F)) {
-    ___tmp__WGG=TRUE;
+  void *result__WAD,*result__5AD,*self__2CD;
+  void  *ptr__6AD;
+  signed long sz__7AD,needed_capacity__3CD;
+  result__WAD=NULL;
+  ptr__6AD=NULL;
+  result__5AD=NULL;
+  sz__7AD= 0;
+  sz__7AD=sizeof(struct __STRING);
+  if ((sz__7AD== 0)) {
+    result__5AD=STRING;
   } else {
-    ___tmp__WGG=FALSE;
+    ptr__6AD=allocation__CS(sz__7AD);
+    copy__from__size__NNC(ptr__6AD,((void  *)((STRING))),sz__7AD);
+    result__5AD=((void *)((ptr__6AD)));
   };
-  if (___tmp__WGG) {
-  } else {
-    if (__infix_less__WKB(((struct __STRING *)self__PGG)->capacity__1Z,new_count__QGG)) {
-      self__JIG=self__PGG;
-      if (__infix_equal_equal__M8(((struct __STRING *)self__PGG)->capacity__1Z,to_integer__K3(0))) {
-        ((struct __STRING *)self__JIG)->storage__6F=calloc__ILB(new_count__QGG);
-      } else {
-        ((struct __STRING *)self__JIG)->storage__6F=realloc__with__G2B(((struct __STRING *)self__JIG)->storage__6F,((struct __STRING *)self__JIG)->capacity__1Z,new_count__QGG);
-      };
-      ((struct __STRING *)self__JIG)->capacity__1Z=new_count__QGG;
-    } else {
-      ___tmp__PJG=((struct __STRING *)self__PGG)->storage__6F;
-      ___tmp__QJG=((struct __STRING *)self__PGG)->count__7F;
-      ___tmp__RJG=__infix_sub__3RB(new_count__QGG,to_integer__K3(1));
-      self__5KG=___tmp__QJG;
-      while (__infix_less_equal__P0B(self__5KG,___tmp__RJG)) {
-        put__to__0OB(___tmp__PJG,'\0',self__5KG);
-        self__5KG=__infix_add__TWB(self__5KG,to_integer__K3(1));
-      };
+  result__WAD=result__5AD;
+  self__2CD=result__WAD;
+  needed_capacity__3CD=needed_capacity__VAD;
+  if (__infix_greater__ODD(needed_capacity__VAD,to_integer__C1( 0))) {
+    if (__infix_less__8DD(((struct __STRING *)self__2CD)->capacity__Y8C,needed_capacity__3CD)) {
+      ((struct __STRING *)self__2CD)->storage__0H=calloc__UED(needed_capacity__3CD);
+      ((struct __STRING *)self__2CD)->capacity__Y8C=needed_capacity__3CD;
     };
   };
-  ((struct __STRING *)self__PGG)->count__7F=new_count__QGG;
-  if (__infix_less_equal__P0B(i__FFG,j__GFG)) {
-    ___tmp__8MG=((struct __STRING *)self__DFG)->storage__6F;
-    ___tmp__9MG=__infix_sub__3RB(i__FFG,to_integer__K3(1));
-    ___tmp__ANG=__infix_sub__3RB(j__GFG,to_integer__K3(1));
-    lower__XNG=___tmp__9MG;
-    upper__YNG=___tmp__ANG;
-    offset__ZNG=k__HFG;
-    if ((k__HFG!=0)) {
-      self__CPG=___tmp__8MG;
-      if ((! __infix_greater_equal__77(offset__ZNG,to_integer__K3(0)))) {
-        self__2PG=self__CPG;
-        self__8PG=lower__XNG;
-        while (__infix_less_equal__P0B(self__8PG,upper__YNG)) {
-          put__to__0OB(self__2PG,item__BTB(self__2PG,self__8PG),__infix_add__TWB(self__8PG,offset__ZNG));
-          self__8PG=__infix_add__TWB(self__8PG,to_integer__K3(1));
-        };
-      } else {
-        self__TRG=self__CPG;
-        self__ZRG=upper__YNG;
-        while (__infix_greater_equal__77(self__ZRG,lower__XNG)) {
-          put__to__0OB(self__TRG,item__BTB(self__TRG,self__ZRG),__infix_add__TWB(self__ZRG,offset__ZNG));
-          self__ZRG=__infix_sub__3RB(self__ZRG,to_integer__K3(1));
-        };
-      };
+  ((struct __STRING *)self__2CD)->count__1H=to_integer__C1( 0);
+  return(result__WAD);
+};
+
+static signed char *calloc__UED(signed long nb_elements__WED)
+// NATIVE_ARRAY calloc(NATIVE_ARRAY,INTEGER)
+{
+  void  *p__KFD;
+  signed char *result__XED,*result__LFD,*self__UGD;
+  signed long capacity__JFD,___tmp__0ED,self__3GD,___tmp__9GD,self__BJD;
+  result__XED=NULL;
+  result__LFD=NULL;
+  p__KFD=NULL;
+  capacity__JFD= 0;
+  capacity__JFD=__infix_mul__BGD(nb_elements__WED, 1);
+  p__KFD=allocation__CS(capacity__JFD);
+  result__LFD=((signed char *)((void*)(p__KFD)));
+  result__XED=result__LFD;
+  ___tmp__0ED=__infix_sub__V4(nb_elements__WED,to_integer__C1( 1));
+  self__UGD=result__XED;
+  ___tmp__9GD=to_integer__C1( 0);
+  self__3GD=___tmp__0ED;
+  if (__infix_greater_equal__I2(___tmp__0ED,___tmp__9GD)) {
+    put__to__WHD(self__UGD,'\0',self__3GD);
+    self__BJD=__infix_sub__V4(self__3GD,to_integer__C1( 1));
+    while (__infix_greater_equal__I2(self__BJD,___tmp__9GD)) {
+      put__to__WHD(self__UGD,'\0',self__BJD);
+      self__BJD=__infix_sub__V4(self__BJD,to_integer__C1( 1));
     };
   };
-  copy__to__until__U3C(((struct __STRING *)self__DFG)->storage__6F,((struct __STRING *)s__EFG)->storage__6F,__infix_sub__3RB(i__FFG,to_integer__K3(1)),k__HFG);
+  return(result__XED);
 };
 
-void connect_for_appending_to__VUG(void *self__WUG,void *new_path__XUG)
-// TEXT_FILE_WRITE connect_for_appending_to(TEXT_FILE_WRITE,NULLxSTRING_CONSTANT)
-{
-  ((struct __TEXT_FILE_WRITE *)self__WUG)->output_stream__58C=((void  *)(fopen(((char*)((to_external__AHB(new_path__XUG)))),"a")));
-  if (is_not_null__K8B(((struct __TEXT_FILE_WRITE *)self__WUG)->output_stream__58C)) {
-    if ((((struct __TEXT_FILE_WRITE *)self__WUG)->capacity__48C==0)) {
-      ((struct __TEXT_FILE_WRITE *)self__WUG)->buffer__28C=calloc__ILB(32768);
-      ((struct __TEXT_FILE_WRITE *)self__WUG)->capacity__48C=32768;
-    };
-  };
-};
-
-void write_string__VWG(void *self__WWG,void *s__XWG)
-// TEXT_FILE_WRITE write_string(TEXT_FILE_WRITE,NULLxSTRING_CONSTANT)
-{
-  if (__infix_less__WKB(upper__MXG(s__XWG),32768)) {
-    ((struct __TEXT_FILE_WRITE *)self__WWG)->buffer_position__38C=upper__MXG(s__XWG);
-  } else {
-    ((struct __TEXT_FILE_WRITE *)self__WWG)->buffer_position__38C=32768;
-  };
-  copy_from__until__7RB(((struct __TEXT_FILE_WRITE *)self__WWG)->buffer__28C,to_external__AHB(s__XWG),((struct __TEXT_FILE_WRITE *)self__WWG)->buffer_position__38C);
-  write_buffer__CND(self__WWG);
-};
-
-char basic_directory_chdir__C3D(signed char *destination__E3D)
-// BASIC_DIRECTORY basic_directory_chdir(BASIC_DIRECTORY,NULLxNATIVE_ARRAY)
-{
-  return((((signed long )(chdir((char*)(destination__E3D))))==0));
-};
-
-void connect_to_current_working_directory__R3D(void *self__S3D)
-// BASIC_DIRECTORY connect_to_current_working_directory(BASIC_DIRECTORY)
-{
-  void *___tmp__54D,*___tmp__J4D,*self__S4D,*___tmp__F5D;
-  signed char *path__T3D;
-  path__T3D=NULL;
-  path__T3D=basic_directory_current_working_directory__UWC();
-  if ((path__T3D!=NULL)) {
-    self__S4D=self__S3D;
-    if (__last_entry__46B==0) {
-      ___tmp__J4D=last_entry__0EB;
-    } else {
-      ___tmp__J4D=last_entry__56B();
-    };
-    from_external_copy__EBC(___tmp__J4D,path__T3D);
-    ((struct __BASIC_DIRECTORY *)self__S4D)->directory_stream__SEB=basic_directory_open__M6B(path__T3D);
-    ((struct __BASIC_DIRECTORY *)self__S4D)->current_entry__TEB=((struct __BASIC_DIRECTORY *)self__S3D)->directory_stream__SEB;
-    if (is_null__2DC(((struct __BASIC_DIRECTORY *)self__S3D)->directory_stream__SEB)) {
-      if (__last_entry__46B==0) {
-        ___tmp__54D=last_entry__0EB;
-      } else {
-        ___tmp__54D=last_entry__56B();
-      };
-      clear__G7B(___tmp__54D);
-    };
-  } else {
-    if (__last_entry__46B==0) {
-      ___tmp__F5D=last_entry__0EB;
-    } else {
-      ___tmp__F5D=last_entry__56B();
-    };
-    clear__G7B(___tmp__F5D);
-  };
-};
-
-signed long __infix_sub__3RB(signed long self__4RB,signed long other__5RB)
-// NUMERIC __infix_sub(INTEGER,INTEGER)
-{
-  return((self__4RB-other__5RB));
-};
-
-char __infix_greater_equal__77(signed long self__87,signed long other__97)
-// NUMERIC __infix_greater_equal(INTEGER,INTEGER)
-{
-  return((__infix_greater__O7(self__87,other__97) | __infix_equal_equal__M8(self__87,other__97)));
-};
-
-signed char item__BTB(signed char *self__CTB,signed long index__DTB)
+static signed char item__X7C(signed char *self__Y7C,signed long index__Z7C)
 // NATIVE_ARRAY item(NATIVE_ARRAY,INTEGER)
 {
-  return(self__CTB[index__DTB]);
+  return(self__Y7C[index__Z7C]);
 };
 
-void put__to__0OB(signed char *self__1OB,signed char element__2OB,signed long index__3OB)
-// NATIVE_ARRAY put__to(NATIVE_ARRAY,CHARACTER,INTEGER)
-{
-  self__1OB[index__3OB]=element__2OB;
-};
-
-int to_numeric__6X(signed long self__7X)
-// NUMERIC to_numeric(INTEGER)
-{
-  return(((int )((self__7X))));
-};
-
-char __infix_greater__HY(int self__IY,int other__JY)
-// NUMERIC __infix_greater(NUMERIC,NUMERIC)
-{
-  return((self__IY>other__JY));
-};
-
-void **calloc__I1(int nb_elements__K1)
-// NATIVE_ARRAY calloc(NATIVE_ARRAY,NUMERIC)
-{
-  void **result__L1,**result__91;
-  void  *p__81;
-  signed long capacity__71;
-  result__L1=NULL;
-  result__91=NULL;
-  p__81=NULL;
-  capacity__71=0;
-  capacity__71=to_integer__K3(__infix_mul__E3(nb_elements__K1,to_numeric__6X(element_sizeof__R2())));
-  p__81=allocation__JP(capacity__71);
-  result__91=((void **)((void*)(p__81)));
-  result__L1=result__91;
-  clear_all__93(result__L1,__infix_sub__53(nb_elements__K1,1));
-  return(result__L1);
-};
-
-char __infix_greater__O7(signed long self__P7,signed long other__Q7)
-// NUMERIC __infix_greater(INTEGER,INTEGER)
-{
-  return((self__P7>other__Q7));
-};
-
-void put__to__Q5(void **self__R5,void *element__S5,signed long index__T5)
-// NATIVE_ARRAY put__to(NATIVE_ARRAY,NULL,INTEGER)
-{
-  self__R5[index__T5]=element__S5;
-};
-
-int __prefix_sub__GBB()
-// NUMERIC __prefix_sub(NUMERIC)
-{
-  return(__infix_sub__53(0,1));
-};
-
-int __infix_sub__53(int self__63,int other__73)
-// NUMERIC __infix_sub(NUMERIC,NUMERIC)
-{
-  return((self__63-other__73));
-};
-
-void *to_string__FHB(void *self__GHB)
-// STRING_CONSTANT to_string(STRING_CONSTANT)
-{
-  void *new__HHB,*self__BRB,*self__HQB,*other__IQB;
-  signed char *___tmp__7QB,*___tmp__6QB;
-  signed long ___tmp__JQB;
-  new__HHB=NULL;
-  new__HHB=create__SHB(((struct __STRING_CONSTANT *)self__GHB)->count__7F);
-  self__HQB=new__HHB;
-  other__IQB=self__GHB;
-  if (((struct __OBJ *)self__GHB)->__id==__STRING_CONSTANT__) {
-    ___tmp__JQB=((struct __STRING_CONSTANT *)other__IQB)->count__7F;
-  } else {
-    ___tmp__JQB=((struct __STRING *)other__IQB)->count__7F;
-  };
-  ((struct __STRING *)self__HQB)->count__7F=___tmp__JQB;
-  if (__infix_greater__O7(((struct __STRING *)self__HQB)->count__7F,to_integer__K3(0))) {
-    self__BRB=self__HQB;
-    if (__infix_less__WKB(((struct __STRING *)self__HQB)->capacity__1Z,((struct __STRING *)self__HQB)->count__7F)) {
-      ((struct __STRING *)self__BRB)->storage__6F=calloc__ILB(((struct __STRING *)self__BRB)->count__7F);
-      ((struct __STRING *)self__BRB)->capacity__1Z=((struct __STRING *)self__BRB)->count__7F;
-    };
-    ___tmp__6QB=((struct __STRING *)self__HQB)->storage__6F;
-    if (((struct __OBJ *)other__IQB)->__id==__STRING_CONSTANT__) {
-      ___tmp__7QB=((struct __STRING_CONSTANT *)other__IQB)->storage__6F;
-    } else {
-      ___tmp__7QB=((struct __STRING *)other__IQB)->storage__6F;
-    };
-    copy_from__until__7RB(___tmp__6QB,___tmp__7QB,__infix_sub__3RB(((struct __STRING *)self__HQB)->count__7F,to_integer__K3(1)));
-  };
-  return(new__HHB);
-};
-
-signed char item__OXB(void *self__PXB,signed long index__QXB)
-// ABSTRACT_STRING item(STRING,INTEGER)
-{
-  return(item__BTB(((struct __STRING *)self__PXB)->storage__6F,__infix_sub__3RB(index__QXB,to_integer__K3(1))));
-};
-
-void put__to__RYB(void *self__SYB,signed char ch__TYB,signed long index__UYB)
-// STRING put__to(STRING,CHARACTER,INTEGER)
-{
-  put__to__0OB(((struct __STRING *)self__SYB)->storage__6F,ch__TYB,__infix_sub__3RB(index__UYB,to_integer__K3(1)));
-};
-
-void add_last__7ZB(void *self__8ZB,signed char ch__9ZB)
+static void add_last__HMD(void *self__IMD,signed char ch__JMD)
 // STRING add_last(STRING,CHARACTER)
 {
-  void *self__31B,*self__60B;
-  signed long new_capacity__A0B;
-  new_capacity__A0B=0;
-  if (__infix_less_equal__P0B(((struct __STRING *)self__8ZB)->capacity__1Z,((struct __STRING *)self__8ZB)->count__7F)) {
-    self__60B=self__8ZB;
-    if ((((struct __STRING *)self__8ZB)->capacity__1Z==0)) {
-      ((struct __STRING *)self__60B)->capacity__1Z=to_integer__K3(32);
-      ((struct __STRING *)self__60B)->storage__6F=calloc__ILB(((struct __STRING *)self__60B)->capacity__1Z);
+  void *self__4ND,*self__7MD;
+  signed long new_capacity__KMD;
+  new_capacity__KMD= 0;
+  if (__infix_less_equal__E6C(((struct __STRING *)self__IMD)->capacity__Y8C,((struct __STRING *)self__IMD)->count__1H)) {
+    self__7MD=self__IMD;
+    if ((((struct __STRING *)self__IMD)->capacity__Y8C== 0)) {
+      ((struct __STRING *)self__7MD)->capacity__Y8C=to_integer__C1( 32);
+      ((struct __STRING *)self__7MD)->storage__0H=calloc__UED(((struct __STRING *)self__7MD)->capacity__Y8C);
     } else {
-      self__31B=self__60B;
-      new_capacity__A0B=(((struct __STRING *)self__60B)->capacity__1Z*to_integer__K3(2));
-      ((struct __STRING *)self__31B)->storage__6F=realloc__with__G2B(((struct __STRING *)self__60B)->storage__6F,((struct __STRING *)self__60B)->capacity__1Z,new_capacity__A0B);
-      ((struct __STRING *)self__31B)->capacity__1Z=new_capacity__A0B;
+      self__4ND=self__7MD;
+      new_capacity__KMD=(((struct __STRING *)self__7MD)->capacity__Y8C*to_integer__C1( 2));
+      ((struct __STRING *)self__4ND)->storage__0H=realloc__with__HOD(((struct __STRING *)self__7MD)->storage__0H,((struct __STRING *)self__7MD)->capacity__Y8C,new_capacity__KMD);
+      ((struct __STRING *)self__4ND)->capacity__Y8C=new_capacity__KMD;
     };
   };
-  put__to__0OB(((struct __STRING *)self__8ZB)->storage__6F,ch__9ZB,((struct __STRING *)self__8ZB)->count__7F);
-  ((struct __STRING *)self__8ZB)->count__7F=__infix_add__TWB(((struct __STRING *)self__8ZB)->count__7F,to_integer__K3(1));
+  put__to__WHD(((struct __STRING *)self__IMD)->storage__0H,ch__JMD,((struct __STRING *)self__IMD)->count__1H);
+  ((struct __STRING *)self__IMD)->count__1H=__infix_add__HAB(((struct __STRING *)self__IMD)->count__1H,to_integer__C1( 1));
 };
 
-char is_not_null__K8B(void  *self__L8B)
-// POINTER is_not_null(POINTER)
+static signed long __infix_add__HAB(signed long self__IAB,signed long other__JAB)
+// NUMERIC __infix_add(INTEGER,NUMERIC)
 {
-  return((self__L8B!=NULL));
+  return(__infix_sub__6AB(self__IAB,__prefix_sub__RAB(other__JAB)));
 };
 
-void from_external_copy__EBC(void *self__FBC,signed char *p__GBC)
-// STRING from_external_copy(STRING,NULLxNATIVE_ARRAY)
+static void *get_environment_variable__KTD(void *variable__MTD)
+// ENVIRONMENT get_environment_variable(ENVIRONMENT,NULLxSTRING_CONSTANT)
 {
-  signed long i__HBC;
-  i__HBC=0;
-  i__HBC=to_integer__K3(0);
-  ((struct __STRING *)self__FBC)->count__7F=to_integer__K3(0);
-  while ((! (item__BTB(p__GBC,i__HBC)=='\0'))) {
-    add_last__7ZB(self__FBC,item__BTB(p__GBC,i__HBC));
-    i__HBC=__infix_add__TWB(i__HBC,to_integer__K3(1));
+  void *result__NTD,*self__O4D;
+  signed char *p__OTD;
+  p__OTD=NULL;
+  result__NTD=NULL;
+  result__NTD=create__TAD(to_integer__C1( 0));
+  p__OTD=((signed char *)(getenv((char*)(to_external__EUD(variable__MTD)))));
+  if ((p__OTD!=NULL)) {
+    self__O4D=result__NTD;
+    ((struct __STRING *)result__NTD)->storage__0H=p__OTD;
+    ((struct __STRING *)self__O4D)->count__1H=to_integer__C1( 0);
+    while ((! (item__X7C(((struct __STRING *)self__O4D)->storage__0H,((struct __STRING *)self__O4D)->count__1H)=='\0'))) {
+      ((struct __STRING *)self__O4D)->count__1H=__infix_add__HAB(((struct __STRING *)self__O4D)->count__1H,to_integer__C1( 1));
+    };
+    ((struct __STRING *)self__O4D)->capacity__Y8C=__infix_add__HAB(((struct __STRING *)self__O4D)->count__1H,to_integer__C1( 1));
   };
+  return(result__NTD);
 };
 
-char is_null__2DC(void  *self__3DC)
-// POINTER is_null(POINTER)
+static void *create_from_string__G9D(void *str__I9D)
+// STRING create_from_string(STRING,NULLxSTRING)
 {
-  return((! is_not_null__K8B(self__3DC)));
-};
-
-int __infix_mul__E3(int self__F3,int other__G3)
-// NUMERIC __infix_mul(NUMERIC,NUMERIC)
-{
-  return((self__F3*other__G3));
-};
-
-signed long element_sizeof__R2()
-// NATIVE_ARRAY element_sizeof(NATIVE_ARRAY)
-{
-  return(((signed long )(sizeof(void *))));
-};
-
-signed long __infix_mul__4MB(signed long self__5MB,signed long other__6MB)
-// NUMERIC __infix_mul(INTEGER,NUMERIC)
-{
-  return((self__5MB*other__6MB));
-};
-
-signed long __infix_sub__PNB(signed long self__QNB,signed long other__RNB)
-// NUMERIC __infix_sub(INTEGER,NUMERIC)
-{
-  return((self__QNB-other__RNB));
-};
-
-void clear_all__93(void **self__A4,int upper__B4)
-// NATIVE_ARRAY clear_all(NATIVE_ARRAY,NUMERIC)
-{
-  int self__I4;
-  self__I4=upper__B4;
-  while (__infix_greater_equal__Q4(self__I4)) {
-    put__to__Q5(self__A4,NULL,to_integer__K3(self__I4));
-    self__I4=__infix_sub__53(self__I4,1);
+  void *result__J9D,*self__LAE,*self__R9D;
+  result__J9D=NULL;
+  result__J9D=create__TAD(((struct __STRING *)str__I9D)->count__1H);
+  self__R9D=result__J9D;
+  ((struct __STRING *)result__J9D)->count__1H=((struct __STRING *)str__I9D)->count__1H;
+  if (__infix_greater__ODD(((struct __STRING *)self__R9D)->count__1H,to_integer__C1( 0))) {
+    self__LAE=self__R9D;
+    if (__infix_less__8DD(((struct __STRING *)self__R9D)->capacity__Y8C,((struct __STRING *)self__R9D)->count__1H)) {
+      ((struct __STRING *)self__LAE)->storage__0H=calloc__UED(((struct __STRING *)self__LAE)->count__1H);
+      ((struct __STRING *)self__LAE)->capacity__Y8C=((struct __STRING *)self__LAE)->count__1H;
+    };
+    copy_from__until__MWD(((struct __STRING *)self__R9D)->storage__0H,((struct __STRING *)str__I9D)->storage__0H,__infix_sub__V4(((struct __STRING *)self__R9D)->count__1H,to_integer__C1( 1)));
   };
+  return(result__J9D);
 };
 
-char __infix_greater_equal__Q4(int self__R4)
-// NUMERIC __infix_greater_equal(NUMERIC,NUMERIC)
+static char has_substring__YBE(void *self__ZBE,void *other__0BE)
+// ABSTRACT_STRING has_substring(STRING,NULLxSTRING_CONSTANT)
 {
-  return((__infix_greater__HY(self__R4,0) | (self__R4==0)));
+  return((first_substring_index__4BE(self__ZBE,other__0BE)!= 0));
 };
 
-void *item__KQC(void **self__LQC,signed long index__MQC)
-// NATIVE_ARRAY item(NATIVE_ARRAY,INTEGER)
+static void append__RIE(void *self__SIE,void *other__TIE)
+// STRING append(STRING,NULLxSTRING_CONSTANT)
 {
-  return(self__LQC[index__MQC]);
-};
-
-signed char *basic_directory_current_working_directory__UWC()
-// BASIC_DIRECTORY basic_directory_current_working_directory(BASIC_DIRECTORY)
-{
-  void  *p__PXC;
-  signed char *buf__WWC,*result__QXC,*result__3WC;
-  signed long capacity__OXC;
-  buf__WWC=NULL;
-  result__3WC=NULL;
-  result__QXC=NULL;
-  p__PXC=NULL;
-  capacity__OXC=0;
-  capacity__OXC=to_integer__K3(__infix_mul__E3(256,to_numeric__6X(element_sizeof__RMB())));
-  p__PXC=allocation__JP(capacity__OXC);
-  result__QXC=((signed char *)((void*)(p__PXC)));
-  result__3WC=result__QXC;
-  clear_all__1NB(result__3WC,__infix_sub__53(256,1));
-  buf__WWC=result__3WC;
-  return(((signed char *)(getcwd((char *)(buf__WWC),256))));
-};
-
-signed long element_sizeof__RMB()
-// NATIVE_ARRAY element_sizeof(NATIVE_ARRAY)
-{
-  return(1);
-};
-
-void clear_all__1NB(signed char *self__2NB,int upper__3NB)
-// NATIVE_ARRAY clear_all(NATIVE_ARRAY,NUMERIC)
-{
-  int self__9NB;
-  self__9NB=upper__3NB;
-  while (__infix_greater_equal__Q4(self__9NB)) {
-    put__to__0OB(self__2NB,'\0',to_integer__K3(self__9NB));
-    self__9NB=__infix_sub__53(self__9NB,1);
-  };
-};
-
-char __infix_equal_equal__M8(signed long self__N8,signed long other__O8)
-// NUMERIC __infix_equal_equal(INTEGER,INTEGER)
-{
-  return((self__N8==other__O8));
-};
-
-char fast_memcmp__until__NHD(signed char *self__OHD,signed char *other__PHD,signed long capacity__QHD)
-// NATIVE_ARRAY fast_memcmp__until(NATIVE_ARRAY,NULLxNATIVE_ARRAY,INTEGER)
-{
-  signed long i__RHD;
-  i__RHD=0;
-  i__RHD=to_integer__K3(to_numeric__6X(__infix_sub__PNB(capacity__QHD,to_integer__K3(1))));
-  while ((__infix_greater_equal__77(i__RHD,to_integer__K3(0)) && (item__BTB(self__OHD,i__RHD)==item__BTB(other__PHD,i__RHD)))) {
-    i__RHD=__infix_sub__3RB(i__RHD,to_integer__K3(1));
-  };
-  return(__infix_less__WKB(i__RHD,to_integer__K3(0)));
-};
-
-char __infix_less__WKB(signed long self__XKB,signed long other__YKB)
-// NUMERIC __infix_less(INTEGER,INTEGER)
-{
-  return((! __infix_greater_equal__77(self__XKB,other__YKB)));
-};
-
-void copy_from__until__7RB(signed char *self__8RB,signed char *model__9RB,signed long upper__ASB)
-// NATIVE_ARRAY copy_from__until(NATIVE_ARRAY,NULLxNATIVE_ARRAY,INTEGER)
-{
-  signed long self__HSB,___tmp__NSB,self__6TB;
-  ___tmp__NSB=to_integer__K3(0);
-  self__HSB=upper__ASB;
-  if (__infix_greater_equal__77(upper__ASB,___tmp__NSB)) {
-    put__to__0OB(self__8RB,item__BTB(model__9RB,self__HSB),self__HSB);
-    self__6TB=__infix_sub__3RB(self__HSB,to_integer__K3(1));
-    while (__infix_greater_equal__77(self__6TB,___tmp__NSB)) {
-      put__to__0OB(self__8RB,item__BTB(model__9RB,self__6TB),self__6TB);
-      self__6TB=__infix_sub__3RB(self__6TB,to_integer__K3(1));
+  void *self__0JE;
+  signed long other_count__UIE,needed_capacity__VIE;
+  needed_capacity__VIE= 0;
+  other_count__UIE= 0;
+  other_count__UIE=((struct __STRING_CONSTANT *)other__TIE)->count__1H;
+  needed_capacity__VIE=__infix_add__GEE(((struct __STRING *)self__SIE)->count__1H,other_count__UIE);
+  if (__infix_less__8DD(((struct __STRING *)self__SIE)->capacity__Y8C,needed_capacity__VIE)) {
+    self__0JE=self__SIE;
+    if ((((struct __STRING *)self__SIE)->capacity__Y8C== 0)) {
+      ((struct __STRING *)self__0JE)->capacity__Y8C=needed_capacity__VIE;
+      ((struct __STRING *)self__0JE)->storage__0H=calloc__UED(((struct __STRING *)self__0JE)->capacity__Y8C);
+    } else {
+      ((struct __STRING *)self__0JE)->storage__0H=realloc__with__HOD(((struct __STRING *)self__0JE)->storage__0H,((struct __STRING *)self__0JE)->capacity__Y8C,needed_capacity__VIE);
+      ((struct __STRING *)self__0JE)->capacity__Y8C=needed_capacity__VIE;
     };
   };
+  copy__to__until__ZKE(((struct __STRING *)self__SIE)->storage__0H,((struct __STRING_CONSTANT *)other__TIE)->storage__0H,((struct __STRING *)self__SIE)->count__1H,other_count__UIE);
+  ((struct __STRING *)self__SIE)->count__1H=needed_capacity__VIE;
 };
 
-signed char *realloc__with__G2B(signed char *self__H2B,signed long old_nb_elts__I2B,signed long new_nb_elts__J2B)
-// NATIVE_ARRAY realloc__with(NATIVE_ARRAY,INTEGER,INTEGER)
+static void *comment_unix__GNE()
+// INSTALL_LISAAC comment_unix(INSTALL_LISAAC)
 {
-  int self__F4B;
-  signed char *new__K2B;
-  signed long i__W4B;
-  new__K2B=NULL;
-  new__K2B=calloc__ILB(new_nb_elts__J2B);
-  self__F4B=to_numeric__6X(__infix_sub__PNB(old_nb_elts__I2B,to_integer__K3(1)));
-  while (__infix_greater_equal__Q4(self__F4B)) {
-    i__W4B=to_integer__K3(self__F4B);
-    put__to__0OB(new__K2B,item__BTB(self__H2B,i__W4B),i__W4B);
-    self__F4B=__infix_sub__53(self__F4B,1);
-  };
-  return(new__K2B);
+  comment_unix__3L=new_intern__SO(__string_45, 28);
+  __comment_unix__FNE= 0;
+  return(comment_unix__3L);
 };
 
-void copy__to__until__U3C(signed char *self__V3C,signed char *src__W3C,signed long dest__X3C,signed long src_capacity__Y3C)
-// NATIVE_ARRAY copy__to__until(NATIVE_ARRAY,NULLxNATIVE_ARRAY,INTEGER,INTEGER)
+static void *file_autoexec__9QE()
+// INSTALL_LISAAC file_autoexec(INSTALL_LISAAC)
 {
-  signed long i1__Z3C,i2__03C;
-  i2__03C=0;
-  i1__Z3C=0;
-  i1__Z3C=dest__X3C;
-  while ((! (i2__03C==src_capacity__Y3C))) {
-    put__to__0OB(self__V3C,item__BTB(src__W3C,i2__03C),i1__Z3C);
-    i2__03C=__infix_add__TWB(i2__03C,to_integer__K3(1));
-    i1__Z3C=__infix_add__TWB(i1__Z3C,to_integer__K3(1));
-  };
+  file_autoexec__1L=new_intern__SO(__string_46, 13);
+  __file_autoexec__8QE= 0;
+  return(file_autoexec__1L);
 };
 
-signed long upper__FMD(void *self__GMD)
-// ABSTRACT_STRING upper(STRING)
+static void *create_open__KRE(void *n__MRE)
+// STD_FILE create_open(STD_FILE,NULLxSTRING_CONSTANT)
 {
-  return(((struct __STRING *)self__GMD)->count__7F);
+  void *result__NRE;
+  result__NRE=NULL;
+  result__NRE=clone__SRE();
+  ((struct __STD_FILE *)result__NRE)->name__V7D=to_string__JUD(n__MRE);
+  open__AUE(result__NRE);
+  return(result__NRE);
 };
 
-void write_buffer__CND(void *self__DND)
-// TEXT_FILE_WRITE write_buffer(TEXT_FILE_WRITE)
+static char is_open__2UE(void *self__3UE)
+// STD_FILE is_open(STD_FILE)
 {
-  if (__infix_greater__O7(((struct __TEXT_FILE_WRITE *)self__DND)->buffer_position__38C,to_integer__K3(0))) {
-    fwrite((void *)((((struct __TEXT_FILE_WRITE *)self__DND)->buffer__28C)),(size_t)(1), (size_t)((((struct __TEXT_FILE_WRITE *)self__DND)->buffer_position__38C)),(FILE*)((((struct __TEXT_FILE_WRITE *)self__DND)->output_stream__58C)));
-    ((struct __TEXT_FILE_WRITE *)self__DND)->buffer_position__38C=to_integer__K3(0);
-  };
+  return((((struct __STD_FILE *)self__3UE)->stream__D8D!=NULL));
 };
 
-char is_case_sensitive__LAE(void *self__MAE)
-// BASIC_DIRECTORY is_case_sensitive(BASIC_DIRECTORY)
+static void close__NVE(void *self__OVE)
+// STD_FILE close(STD_FILE)
 {
-  void *___tmp__OAE,*___tmp__OEE,*___tmp__CJE,*self__XIE,*___tmp__MHE;
-  char result__NAE,result__SJE,result__JPE,result__7TE,___tmp__TOE;
-  void *___tmp__AKE,*___tmp__3OE,*___tmp__RTE,*___tmp__NUE,*self__WOE;
-  char ___tmp__UOE,result__3UE,___tmp__BOE,result__QKE,___tmp__UFE;
-  void *___tmp__7WE,*self__DOE,*self__OFE,*some_path__PFE,*___tmp__HFE;
-  void *___tmp__TEE,*self__WEE,*self__GEE;
-  char ___tmp__VFE;
-  result__NAE=FALSE;
-  if (((struct __BASIC_DIRECTORY *)self__MAE)->__notation__TAE==1) {
-    ___tmp__OAE=notation__UAE(self__MAE);
+  void *self__SVE;
+  void  *str__TVE;
+  self__SVE=self__OVE;
+  str__TVE=NULL;
+  str__TVE=((struct __STD_FILE *)self__SVE)->stream__D8D;
+  fclose((FILE*)((str__TVE)));
+  ((struct __STD_FILE *)self__SVE)->stream__D8D=NULL;
+};
+
+static void *system_windows__EWE()
+// INSTALL_LISAAC system_windows(INSTALL_LISAAC)
+{
+  system_windows__XL=new_intern__SO(__string_47, 13);
+  __system_windows__DWE= 0;
+  return(system_windows__XL);
+};
+
+static void *system_unknown__VXE()
+// INSTALL_LISAAC system_unknown(INSTALL_LISAAC)
+{
+  system_unknown__YL=new_intern__SO(__string_48, 7);
+  __system_unknown__UXE= 0;
+  return(system_unknown__YL);
+};
+
+static void print__VJC(signed char self__WJC)
+//- CHARACTER print(CHARACTER)
+{
+  put_character__HLC(self__WJC);
+};
+
+static void update__idf__with__GZE(void *file__IZE,void *id__JZE,void *new_text__KZE)
+// INSTALL_LISAAC update__idf__with(INSTALL_LISAAC,NULLxSTRING_CONSTANT,NULLxSTRING_CONSTANT,NULLxSTRING_CONSTANT)
+{
+  void *old_buffer__MZE,*input__NZE,*std_file__OZE,*self__S1F;
+  void *other__T1F,*self__39F,*s__49F,*result__COG;
+  int limit_up__OSF,self__QZF;
+  signed long index__LZE,j__69F,k__79F,i__59F;
+  char result__U1F;
+  old_buffer__MZE=NULL;
+  index__LZE= 0;
+  input__NZE=NULL;
+  std_file__OZE=NULL;
+  print__83C(new_intern__SO(__string_49, 5));
+  print__83C(file__IZE);
+  std_file__OZE=create_open__KRE(file__IZE);
+  if (is_open__2UE(std_file__OZE)) {
+    input__NZE=create__TAD(__infix_add__GEE(size__X0E(std_file__OZE),((struct __STRING_CONSTANT *)new_text__KZE)->count__1H));
+    read__size__P1E(std_file__OZE,input__NZE,size__X0E(std_file__OZE));
+    close__NVE(std_file__OZE);
+    index__LZE=first_substring_index__4BE(input__NZE,id__JZE);
+    if ((index__LZE!= 0)) {
+      old_buffer__MZE=create__TAD(to_integer__C1( 200));
+      limit_up__OSF=to_numeric__QTC(fast_occurrences__until__7OF(((struct __STRING_CONSTANT *)new_text__KZE)->storage__0H,__infix_sub__V4(((struct __STRING_CONSTANT *)new_text__KZE)->count__1H,to_integer__C1( 1))));
+      if (__infix_less_equal__1TC( 1,limit_up__OSF)) {
+        to_integer__C1( 1);
+        while ((item__V0D(input__NZE,index__LZE)!='\n')) {
+          add_last__HMD(old_buffer__MZE,item__V0D(input__NZE,index__LZE));
+          remove__CUF(input__NZE,index__LZE);
+        };
+        add_last__HMD(old_buffer__MZE,item__V0D(input__NZE,index__LZE));
+        remove__CUF(input__NZE,index__LZE);
+        self__QZF=__infix_add__6EB( 1, 1);
+        while (__infix_less_equal__1TC(self__QZF,limit_up__OSF)) {
+          to_integer__C1(self__QZF);
+          while ((item__V0D(input__NZE,index__LZE)!='\n')) {
+            add_last__HMD(old_buffer__MZE,item__V0D(input__NZE,index__LZE));
+            remove__CUF(input__NZE,index__LZE);
+          };
+          add_last__HMD(old_buffer__MZE,item__V0D(input__NZE,index__LZE));
+          remove__CUF(input__NZE,index__LZE);
+          self__QZF=__infix_add__6EB(self__QZF, 1);
+        };
+      };
+      self__S1F=old_buffer__MZE;
+      other__T1F=new_text__KZE;
+      result__U1F=FALSE;
+      if ((((struct __STRING *)self__S1F)->count__1H==((struct __STRING_CONSTANT *)other__T1F)->count__1H)) {
+        result__U1F=fast_memcmp__until__P2F(((struct __STRING *)self__S1F)->storage__0H,((struct __STRING_CONSTANT *)other__T1F)->storage__0H,((struct __STRING *)self__S1F)->count__1H);
+      };
+      if (result__U1F) {
+        print__83C(new_intern__SO(__string_50, 50));
+      } else {
+        print__83C(new_intern__SO(__string_51, 39));
+        print__L6F(old_buffer__MZE);
+        print__83C(new_intern__SO(__string_52, 16));
+      };
+    } else {
+      print__83C(new_intern__SO(__string_53, 30));
+      add_last__HMD(input__NZE,'\n');
+      index__LZE=__infix_add__HAB(((struct __STRING *)input__NZE)->count__1H,to_integer__C1( 1));
+    };
+    print__83C(new_text__KZE);
+    self__39F=input__NZE;
+    s__49F=new_text__KZE;
+    i__59F=index__LZE;
+    k__79F= 0;
+    j__69F= 0;
+    j__69F=((struct __STRING *)self__39F)->count__1H;
+    k__79F=((struct __STRING_CONSTANT *)s__49F)->count__1H;
+    resize__EBG(self__39F,__infix_add__GEE(j__69F,k__79F));
+    if (__infix_less_equal__E6C(i__59F,j__69F)) {
+      move__to__by__BIG(((struct __STRING *)self__39F)->storage__0H,__infix_sub__V4(i__59F,to_integer__C1( 1)),__infix_sub__V4(j__69F,to_integer__C1( 1)),k__79F);
+    };
+    copy__to__until__ZKE(((struct __STRING *)self__39F)->storage__0H,((struct __STRING_CONSTANT *)s__49F)->storage__0H,__infix_sub__V4(i__59F,to_integer__C1( 1)),k__79F);
   } else {
-    ___tmp__OAE=((struct __BASIC_DIRECTORY *)self__MAE)->notation__BFB;
+    print__83C(new_intern__SO(__string_54, 30));
+    print__83C(new_text__KZE);
+    input__NZE=to_string__JUD(new_text__KZE);
   };
-  if (__infix_equal_equal__KCE(first__6AE(___tmp__OAE),'?')) {
-    self__GEE=self__MAE;
-    connect_to_current_working_directory__R3D(self__MAE);
-    if (is_connected__F8B(self__MAE)) {
-      self__WEE=self__GEE;
-      if (__last_entry__46B==0) {
-        ___tmp__OEE=last_entry__0EB;
+  result__COG=NULL;
+  result__COG=clone__SRE();
+  ((struct __STD_FILE *)result__COG)->name__V7D=twin__IPG(to_string__JUD(file__IZE));
+  basic_open_new__YRG(result__COG);
+  std_file__OZE=result__COG;
+  write__from__size__NSG(std_file__OZE,input__NZE,((struct __STRING *)input__NZE)->count__1H);
+  close__NVE(std_file__OZE);
+};
+
+static void print__L6F(void *self__M6F)
+// ABSTRACT_STRING print(STRING)
+{
+  signed long self__U7F,limit_up__V7F;
+  self__U7F= 1;
+  limit_up__V7F=((struct __STRING *)self__M6F)->count__1H;
+  while (__infix_less_equal__E6C(self__U7F,limit_up__V7F)) {
+    put_character__HLC(item__V0D(self__M6F,self__U7F));
+    self__U7F=__infix_add__HAB(self__U7F,to_integer__C1( 1));
+  };
+};
+
+static void *create_from_string__H5G(void *str__J5G)
+// STRING create_from_string(STRING,NULLxSTRING_CONSTANT)
+{
+  void *result__K5G,*self__M6G,*self__S5G;
+  result__K5G=NULL;
+  result__K5G=create__TAD(((struct __STRING_CONSTANT *)str__J5G)->count__1H);
+  self__S5G=result__K5G;
+  ((struct __STRING *)result__K5G)->count__1H=((struct __STRING_CONSTANT *)str__J5G)->count__1H;
+  if (__infix_greater__ODD(((struct __STRING *)self__S5G)->count__1H,to_integer__C1( 0))) {
+    self__M6G=self__S5G;
+    if (__infix_less__8DD(((struct __STRING *)self__S5G)->capacity__Y8C,((struct __STRING *)self__S5G)->count__1H)) {
+      ((struct __STRING *)self__M6G)->storage__0H=calloc__UED(((struct __STRING *)self__M6G)->count__1H);
+      ((struct __STRING *)self__M6G)->capacity__Y8C=((struct __STRING *)self__M6G)->count__1H;
+    };
+    copy_from__until__MWD(((struct __STRING *)self__S5G)->storage__0H,((struct __STRING_CONSTANT *)str__J5G)->storage__0H,__infix_sub__V4(((struct __STRING *)self__S5G)->count__1H,to_integer__C1( 1)));
+  };
+  return(result__K5G);
+};
+
+static void append__V7G(void *self__W7G,void *other__X7G)
+// STRING append(STRING,NULLxSTRING)
+{
+  void *self__48G;
+  signed long other_count__Y7G,needed_capacity__Z7G;
+  needed_capacity__Z7G= 0;
+  other_count__Y7G= 0;
+  other_count__Y7G=((struct __STRING *)other__X7G)->count__1H;
+  needed_capacity__Z7G=__infix_add__GEE(((struct __STRING *)self__W7G)->count__1H,other_count__Y7G);
+  if (__infix_less__8DD(((struct __STRING *)self__W7G)->capacity__Y8C,needed_capacity__Z7G)) {
+    self__48G=self__W7G;
+    if ((((struct __STRING *)self__W7G)->capacity__Y8C== 0)) {
+      ((struct __STRING *)self__48G)->capacity__Y8C=needed_capacity__Z7G;
+      ((struct __STRING *)self__48G)->storage__0H=calloc__UED(((struct __STRING *)self__48G)->capacity__Y8C);
+    } else {
+      ((struct __STRING *)self__48G)->storage__0H=realloc__with__HOD(((struct __STRING *)self__48G)->storage__0H,((struct __STRING *)self__48G)->capacity__Y8C,needed_capacity__Z7G);
+      ((struct __STRING *)self__48G)->capacity__Y8C=needed_capacity__Z7G;
+    };
+  };
+  copy__to__until__ZKE(((struct __STRING *)self__W7G)->storage__0H,((struct __STRING *)other__X7G)->storage__0H,((struct __STRING *)self__W7G)->count__1H,other_count__Y7G);
+  ((struct __STRING *)self__W7G)->count__1H=needed_capacity__Z7G;
+};
+
+static void update__idf__with__KAH(void *file__MAH,void *id__NAH,void *new_text__OAH)
+// INSTALL_LISAAC update__idf__with(INSTALL_LISAAC,NULLxSTRING,NULLxSTRING_CONSTANT,NULLxSTRING)
+{
+  void *old_buffer__QAH,*input__RAH,*std_file__SAH,*result__FBH;
+  void *self__AIH,*other__BIH,*self__2KH,*s__3KH,*result__8NH;
+  int limit_up__7DH,self__9FH;
+  signed long index__PAH,j__5KH,k__6KH,i__4KH;
+  char result__CIH;
+  old_buffer__QAH=NULL;
+  index__PAH= 0;
+  input__RAH=NULL;
+  std_file__SAH=NULL;
+  print__83C(new_intern__SO(__string_49, 5));
+  print__L6F(file__MAH);
+  result__FBH=NULL;
+  result__FBH=clone__SRE();
+  ((struct __STD_FILE *)result__FBH)->name__V7D=to_string__TBH(file__MAH);
+  open__AUE(result__FBH);
+  std_file__SAH=result__FBH;
+  if (is_open__2UE(std_file__SAH)) {
+    input__RAH=create__TAD(__infix_add__GEE(size__X0E(std_file__SAH),((struct __STRING *)new_text__OAH)->count__1H));
+    read__size__P1E(std_file__SAH,input__RAH,size__X0E(std_file__SAH));
+    close__NVE(std_file__SAH);
+    index__PAH=first_substring_index__4BE(input__RAH,id__NAH);
+    if ((index__PAH!= 0)) {
+      old_buffer__QAH=create__TAD(to_integer__C1( 200));
+      limit_up__7DH=to_numeric__QTC(fast_occurrences__until__7OF(((struct __STRING *)new_text__OAH)->storage__0H,__infix_sub__V4(((struct __STRING *)new_text__OAH)->count__1H,to_integer__C1( 1))));
+      if (__infix_less_equal__1TC( 1,limit_up__7DH)) {
+        to_integer__C1( 1);
+        while ((item__V0D(input__RAH,index__PAH)!='\n')) {
+          add_last__HMD(old_buffer__QAH,item__V0D(input__RAH,index__PAH));
+          remove__CUF(input__RAH,index__PAH);
+        };
+        add_last__HMD(old_buffer__QAH,item__V0D(input__RAH,index__PAH));
+        remove__CUF(input__RAH,index__PAH);
+        self__9FH=__infix_add__6EB( 1, 1);
+        while (__infix_less_equal__1TC(self__9FH,limit_up__7DH)) {
+          to_integer__C1(self__9FH);
+          while ((item__V0D(input__RAH,index__PAH)!='\n')) {
+            add_last__HMD(old_buffer__QAH,item__V0D(input__RAH,index__PAH));
+            remove__CUF(input__RAH,index__PAH);
+          };
+          add_last__HMD(old_buffer__QAH,item__V0D(input__RAH,index__PAH));
+          remove__CUF(input__RAH,index__PAH);
+          self__9FH=__infix_add__6EB(self__9FH, 1);
+        };
+      };
+      self__AIH=old_buffer__QAH;
+      other__BIH=new_text__OAH;
+      result__CIH=FALSE;
+      if ((((struct __STRING *)self__AIH)->count__1H==((struct __STRING *)other__BIH)->count__1H)) {
+        result__CIH=fast_memcmp__until__P2F(((struct __STRING *)self__AIH)->storage__0H,((struct __STRING *)other__BIH)->storage__0H,((struct __STRING *)self__AIH)->count__1H);
+      };
+      if (result__CIH) {
+        print__83C(new_intern__SO(__string_50, 50));
       } else {
-        ___tmp__OEE=last_entry__56B();
+        print__83C(new_intern__SO(__string_51, 39));
+        print__L6F(old_buffer__QAH);
+        print__83C(new_intern__SO(__string_52, 16));
       };
-      if ((! __infix_equal_equal__M8(((struct __STRING *)___tmp__OEE)->count__7F,to_integer__K3(0)))) {
-        if (__last_entry__46B==0) {
-          ___tmp__HFE=last_entry__0EB;
-        } else {
-          ___tmp__HFE=last_entry__56B();
-        };
-        self__OFE=self__WEE;
-        some_path__PFE=___tmp__HFE;
-        if (((__infix_equal_equal__KCE(first__6AE(___tmp__HFE),'/') || __infix_equal_equal__KCE(first__6AE(___tmp__HFE),'.')) || __infix_equal_equal__KCE(first__6AE(___tmp__HFE),'~'))) {
-          if (((struct __BASIC_DIRECTORY *)self__OFE)->__notation__TAE==0) {
-            ___tmp__MHE=((struct __BASIC_DIRECTORY *)self__OFE)->notation__BFB;
-          } else {
-            ___tmp__MHE=notation__UAE(self__OFE);
-          };
-          put__to__RYB(___tmp__MHE,'U',to_integer__K3(1));
-          if (__infix_greater_equal__77(((struct __STRING *)some_path__PFE)->count__7F,to_integer__K3(4))) {
-            if (__infix_equal_equal__KCE(item__OXB(some_path__PFE,to_integer__K3(2)),'/')) {
-              self__XIE=self__OFE;
-              if (__infix_equal_equal__KCE(item__OXB(some_path__PFE,to_integer__K3(4)),'/')) {
-                if (((struct __BASIC_DIRECTORY *)self__XIE)->__notation__TAE==0) {
-                  ___tmp__CJE=((struct __BASIC_DIRECTORY *)self__XIE)->notation__BFB;
-                } else {
-                  ___tmp__CJE=notation__UAE(self__XIE);
-                };
-                put__to__RYB(___tmp__CJE,'C',to_integer__K3(1));
-              };
-            };
-          };
-          ___tmp__UFE=TRUE;
-        } else {
-          ___tmp__UFE=FALSE;
-        };
-        if (___tmp__UFE) {
-          ___tmp__VFE=TRUE;
-        } else {
-          result__SJE=FALSE;
-          result__SJE=__infix_equal_equal__KCE(first__6AE(some_path__PFE),'\\');
-          if (result__SJE) {
-            if (((struct __BASIC_DIRECTORY *)self__OFE)->__notation__TAE==0) {
-              ___tmp__AKE=((struct __BASIC_DIRECTORY *)self__OFE)->notation__BFB;
-            } else {
-              ___tmp__AKE=notation__UAE(self__OFE);
-            };
-            put__to__RYB(___tmp__AKE,'W',to_integer__K3(1));
-          };
-          ___tmp__VFE=result__SJE;
-        };
-        if (___tmp__VFE) {
-        } else {
-          result__QKE=FALSE;
-          result__QKE=((__infix_greater__4KE(first__6AE(some_path__PFE),'a') && __infix_less__ULE(first__6AE(some_path__PFE),'z')) || (__infix_greater__4KE(first__6AE(some_path__PFE),'A') && __infix_less__ULE(first__6AE(some_path__PFE),'Z')));
-          if (result__QKE) {
-            if (__infix_greater_equal__77(((struct __STRING *)some_path__PFE)->count__7F,to_integer__K3(2))) {
-              self__DOE=self__OFE;
-              if (__infix_equal_equal__KCE(item__OXB(some_path__PFE,to_integer__K3(2)),':')) {
-                self__WOE=self__DOE;
-                if ((((struct __STRING *)some_path__PFE)->count__7F==2)) {
-                  if (((struct __BASIC_DIRECTORY *)self__WOE)->__notation__TAE==0) {
-                    ___tmp__3OE=((struct __BASIC_DIRECTORY *)self__WOE)->notation__BFB;
-                  } else {
-                    ___tmp__3OE=notation__UAE(self__WOE);
-                  };
-                  put__to__RYB(___tmp__3OE,'W',to_integer__K3(1));
-                  ___tmp__TOE=TRUE;
-                } else {
-                  ___tmp__TOE=FALSE;
-                };
-                if (___tmp__TOE) {
-                  ___tmp__UOE=TRUE;
-                } else {
-                  result__JPE=FALSE;
-                  result__JPE=has__RPE(some_path__PFE,'\\');
-                  if (result__JPE) {
-                    if (((struct __BASIC_DIRECTORY *)self__WOE)->__notation__TAE==0) {
-                      ___tmp__RTE=((struct __BASIC_DIRECTORY *)self__WOE)->notation__BFB;
-                    } else {
-                      ___tmp__RTE=notation__UAE(self__WOE);
-                    };
-                    put__to__RYB(___tmp__RTE,'W',to_integer__K3(1));
-                  };
-                  ___tmp__UOE=result__JPE;
-                };
-                if (___tmp__UOE) {
-                } else {
-                  result__7TE=FALSE;
-                  result__7TE=has__RPE(some_path__PFE,'/');
-                  if (result__7TE) {
-                    if (((struct __BASIC_DIRECTORY *)self__WOE)->__notation__TAE==0) {
-                      ___tmp__NUE=((struct __BASIC_DIRECTORY *)self__WOE)->notation__BFB;
-                    } else {
-                      ___tmp__NUE=notation__UAE(self__WOE);
-                    };
-                    put__to__RYB(___tmp__NUE,'C',to_integer__K3(1));
-                  };
-                };
-                ___tmp__BOE=TRUE;
-              } else {
-                ___tmp__BOE=FALSE;
-              };
-              if (___tmp__BOE) {
-              } else {
-                result__3UE=FALSE;
-                result__3UE=((__infix_greater__4KE(item__OXB(some_path__PFE,to_integer__K3(2)),'a') && __infix_less__ULE(item__OXB(some_path__PFE,to_integer__K3(2)),'z')) || (__infix_greater__4KE(item__OXB(some_path__PFE,to_integer__K3(2)),'A') && __infix_less__ULE(item__OXB(some_path__PFE,to_integer__K3(2)),'Z')));
-                if (result__3UE) {
-                  if (((struct __BASIC_DIRECTORY *)self__DOE)->__notation__TAE==0) {
-                    ___tmp__7WE=((struct __BASIC_DIRECTORY *)self__DOE)->notation__BFB;
-                  } else {
-                    ___tmp__7WE=notation__UAE(self__DOE);
-                  };
-                  put__to__RYB(___tmp__7WE,'U',to_integer__K3(1));
-                };
-              };
-            };
-          };
-        };
+    } else {
+      print__83C(new_intern__SO(__string_53, 30));
+      add_last__HMD(input__RAH,'\n');
+      index__PAH=__infix_add__HAB(((struct __STRING *)input__RAH)->count__1H,to_integer__C1( 1));
+    };
+    print__L6F(new_text__OAH);
+    self__2KH=input__RAH;
+    s__3KH=new_text__OAH;
+    i__4KH=index__PAH;
+    k__6KH= 0;
+    j__5KH= 0;
+    j__5KH=((struct __STRING *)self__2KH)->count__1H;
+    k__6KH=((struct __STRING *)s__3KH)->count__1H;
+    resize__EBG(self__2KH,__infix_add__GEE(j__5KH,k__6KH));
+    if (__infix_less_equal__E6C(i__4KH,j__5KH)) {
+      move__to__by__BIG(((struct __STRING *)self__2KH)->storage__0H,__infix_sub__V4(i__4KH,to_integer__C1( 1)),__infix_sub__V4(j__5KH,to_integer__C1( 1)),k__6KH);
+    };
+    copy__to__until__ZKE(((struct __STRING *)self__2KH)->storage__0H,((struct __STRING *)s__3KH)->storage__0H,__infix_sub__V4(i__4KH,to_integer__C1( 1)),k__6KH);
+  } else {
+    print__83C(new_intern__SO(__string_54, 30));
+    print__L6F(new_text__OAH);
+    input__RAH=to_string__TBH(new_text__OAH);
+  };
+  result__8NH=NULL;
+  result__8NH=clone__SRE();
+  ((struct __STD_FILE *)result__8NH)->name__V7D=twin__IPG(to_string__TBH(file__MAH));
+  basic_open_new__YRG(result__8NH);
+  std_file__SAH=result__8NH;
+  write__from__size__NSG(std_file__SAH,input__RAH,((struct __STRING *)input__RAH)->count__1H);
+  close__NVE(std_file__SAH);
+};
+
+static void *lisaac_mode_comment__ETH()
+// INSTALL_LISAAC lisaac_mode_comment(INSTALL_LISAAC)
+{
+  lisaac_mode_comment__EM=new_intern__SO(__string_55, 25);
+  __lisaac_mode_comment__DTH= 0;
+  return(lisaac_mode_comment__EM);
+};
+
+static signed char *to_external__EUD(void *self__FUD)
+// STRING_CONSTANT to_external(STRING_CONSTANT)
+{
+  return(to_external__OZD(to_string__JUD(self__FUD)));
+};
+
+static void  *allocation__CS(signed long nb__ES)
+// MEMORY allocation(MEMORY,INTEGER)
+{
+  void *first_block__PT,*lst_block__QT,*new_block__RT,**self__V1;
+  void **___tmp__9V,*cur_block__4DB,*p_block__5DB,*n_block__6DB;
+  unsigned long result__TS,index__ST,size__TT,offset__UT,begin__TU;
+  void *new_block__7DB,*self__MWB,*self__3ZB,*cur_block__87B;
+  unsigned long size__8DB,new_size__9DB,add_size__AEB,size__C8B;
+  unsigned short result__5ZB;
+  void *p_block__97B,*n_block__A8B,*new_block__B8B;
+  unsigned long new_size__D8B,add_size__E8B;
+  signed long self__51,___tmp__B2,___tmp__A1,self__64;
+  result__TS= 0;
+  offset__UT= 0;
+  lst_block__QT=NULL;
+  new_block__RT=NULL;
+  first_block__PT=NULL;
+  index__ST= 0;
+  size__TT= 0;
+  if ((capacity__GR== 0)) {
+    begin__TU= 0;
+    capacity__GR=to_uinteger__UW( 524288000);
+    realloc_c__PX(capacity__GR);
+    begin__TU=__infix_and__VZ(__infix_add__SY(begin_memory__ER,to_uinteger__UW( 15)),to_uinteger__UW( 4294967280LU));
+    end_memory__FR=__infix_sub__M0(__infix_add__7Z(begin__TU,capacity__GR),to_uinteger__UW( 1));
+    small_fat__CR=((void **)((begin__TU)));
+    ___tmp__9V=small_fat__CR;
+    ___tmp__A1=to_integer__C1( 63);
+    self__V1=___tmp__9V;
+    ___tmp__B2=to_integer__C1( 0);
+    self__51=___tmp__A1;
+    if (__infix_greater_equal__I2(___tmp__A1,___tmp__B2)) {
+      put__to__P3(self__V1,self__51);
+      self__64=__infix_sub__V4(self__51,to_integer__C1( 1));
+      while (__infix_greater_equal__I2(self__64,___tmp__B2)) {
+        put__to__P3(self__V1,self__64);
+        self__64=__infix_sub__V4(self__64,to_integer__C1( 1));
       };
-      disconnect__0TC(self__GEE);
-      if (((struct __BASIC_DIRECTORY *)self__GEE)->__notation__TAE==0) {
-        ___tmp__TEE=((struct __BASIC_DIRECTORY *)self__GEE)->notation__BFB;
+    };
+    begin__TU=__infix_add__SY(begin__TU,to_uinteger__UW( 256));
+    last_block__HR=get_block__I6(begin__TU);
+    make__H7(last_block__HR,__infix_sub__M0(__infix_sub__KZ(__infix_add__SY(end_memory__FR,to_uinteger__UW( 1)),begin__TU),to_uinteger__UW( 16)));
+    first_free__DR=last_block__HR;
+  };
+  if ((! __infix_greater__T2(nb__ES,to_integer__C1( 128)))) {
+    size__TT=to_uinteger__PBB(__infix_and__GBB(__infix_add__HAB(nb__ES,to_integer__C1( 1)),to_integer__C1( 254)));
+    index__ST=__infix_sub__M0(((unsigned long )((size__TT)>>( 1))),to_uinteger__UW( 1));
+    first_block__PT=small_fat__CR[index__ST];
+    if (((first_block__PT==NULL) || is_small_busy__F6B(first_block__PT,size__TT))) {
+      new_block__7DB=NULL;
+      new_size__9DB= 0;
+      n_block__6DB=NULL;
+      p_block__5DB=NULL;
+      add_size__AEB= 0;
+      cur_block__4DB=NULL;
+      size__8DB= 0;
+      size__8DB=to_uinteger__UW((__infix_add__6EB( 4096, 15)& 4294967280LU));
+      cur_block__4DB=first_free__DR;
+      while (((cur_block__4DB!=NULL) && __infix_less__VGB(size__GGB(cur_block__4DB),size__8DB))) {
+        cur_block__4DB=((struct __MEM_BLOCK *)cur_block__4DB)->next_same__1S;
+      };
+      if ((cur_block__4DB==NULL)) {
+        add_size__AEB=__infix_and__VZ(__infix_add__SY(__infix_add__SY(size__8DB,to_uinteger__UW( 16)),to_uinteger__UW( 1048575)),to_uinteger__UW( 4293918720LU));
+        capacity__GR=__infix_add__7Z(capacity__GR,add_size__AEB);
+        realloc_c__PX(capacity__GR);
+        if (is_free__JKB(last_block__HR)) {
+          cur_block__4DB=last_block__HR;
+          set_size__MLB(cur_block__4DB,__infix_add__7Z(size__GGB(cur_block__4DB),add_size__AEB));
+        } else {
+          cur_block__4DB=get_block__I6(__infix_add__SY(end_memory__FR,to_uinteger__UW( 1)));
+          make__H7(cur_block__4DB,__infix_sub__M0(add_size__AEB,to_uinteger__UW( 16)));
+          set_prev__TOB(cur_block__4DB,last_block__HR);
+          last_block__HR=cur_block__4DB;
+          set_next_same__ZOB(cur_block__4DB,first_free__DR);
+          if ((first_free__DR!=NULL)) {
+            set_prev_same__EPB(first_free__DR,cur_block__4DB);
+          };
+          first_free__DR=cur_block__4DB;
+        };
+        end_memory__FR=__infix_add__7Z(end_memory__FR,add_size__AEB);
+      };
+      to_busy__ZPB(cur_block__4DB);
+      p_block__5DB=((struct __MEM_BLOCK *)cur_block__4DB)->prev_same__0S;
+      n_block__6DB=((struct __MEM_BLOCK *)cur_block__4DB)->next_same__1S;
+      if ((p_block__5DB==NULL)) {
+        first_free__DR=n_block__6DB;
       } else {
-        ___tmp__TEE=notation__UAE(self__GEE);
+        set_next_same__ZOB(p_block__5DB,n_block__6DB);
       };
-      if ((first__6AE(___tmp__TEE)!='?')) {
-        result__NAE=is_case_sensitive__LAE(self__WEE);
+      if ((n_block__6DB!=NULL)) {
+        set_prev_same__EPB(n_block__6DB,p_block__5DB);
+      };
+      new_size__9DB=__infix_sub__KZ(__infix_sub__KZ(size__GGB(cur_block__4DB),size__8DB), 16);
+      if (__infix_greater__ISB(new_size__9DB,to_uinteger__UW( 128))) {
+        new_block__7DB=get_block__I6(__infix_add__7Z(get_adress__9SB(cur_block__4DB),size__8DB));
+        make__H7(new_block__7DB,new_size__9DB);
+        if ((first_free__DR!=NULL)) {
+          set_prev_same__EPB(first_free__DR,new_block__7DB);
+        };
+        set_next_same__ZOB(new_block__7DB,first_free__DR);
+        first_free__DR=new_block__7DB;
+        set_size__MLB(cur_block__4DB,size__8DB);
+        set_prev__TOB(new_block__7DB,cur_block__4DB);
+        n_block__6DB=get_next__GUB(new_block__7DB);
+        if ((n_block__6DB==NULL)) {
+          last_block__HR=new_block__7DB;
+        } else {
+          set_prev__TOB(n_block__6DB,new_block__7DB);
+        };
+      };
+      new_block__RT=cur_block__4DB;
+      if ((new_block__RT!=NULL)) {
+        self__MWB=new_block__RT;
+        ((struct __MEM_BLOCK *)new_block__RT)->small_size__2S=to_ushortint__BXB( 4);
+        ((struct __MEM_BLOCK *)self__MWB)->first_free__3S=to_ushortint__BXB( 0);
+        ((struct __MEM_BLOCK *)self__MWB)->next_same__1S=self__MWB;
+        ((struct __MEM_BLOCK *)self__MWB)->prev_same__0S=((struct __MEM_BLOCK *)self__MWB)->next_same__1S;
+        put__to__YXB(small_fat__CR,new_block__RT,index__ST);
+        if ((first_block__PT!=NULL)) {
+          lst_block__QT=((struct __MEM_BLOCK *)first_block__PT)->prev_same__0S;
+          ((struct __MEM_BLOCK *)new_block__RT)->next_same__1S=first_block__PT;
+          ((struct __MEM_BLOCK *)new_block__RT)->prev_same__0S=lst_block__QT;
+          set_next_same__ZOB(lst_block__QT,new_block__RT);
+          set_prev_same__EPB(first_block__PT,new_block__RT);
+        };
+      };
+      first_block__PT=new_block__RT;
+    };
+    if ((first_block__PT!=NULL)) {
+      self__3ZB=first_block__PT;
+      result__5ZB= 0;
+      if ((((struct __MEM_BLOCK *)self__3ZB)->first_free__3S== 0)) {
+        result__5ZB=((struct __MEM_BLOCK *)self__3ZB)->small_size__2S;
+      } else {
+        result__5ZB=((unsigned short )((((struct __MEM_BLOCK *)self__3ZB)->first_free__3S)<<( 1)));
+        ((struct __MEM_BLOCK *)self__3ZB)->first_free__3S=((unsigned short *)((get_adress__9SB(self__3ZB))))[((struct __MEM_BLOCK *)self__3ZB)->first_free__3S];
+      };
+      ((struct __MEM_BLOCK *)self__3ZB)->small_size__2S=__infix_sub__L5B(((struct __MEM_BLOCK *)self__3ZB)->small_size__2S,__infix_sub__L5B(to_ushortint__BXB( 0),((unsigned short )((size__TT)))));
+      offset__UT=to_uinteger__V5B(result__5ZB);
+      if ((is_small_busy__F6B(first_block__PT,size__TT) && (! is_small_busy__F6B(((struct __MEM_BLOCK *)first_block__PT)->next_same__1S,size__TT)))) {
+        put__to__YXB(small_fat__CR,((struct __MEM_BLOCK *)first_block__PT)->next_same__1S,index__ST);
+      };
+      result__TS=__infix_add__7Z(get_adress__9SB(first_block__PT),offset__UT);
+    };
+  } else {
+    new_block__B8B=NULL;
+    new_size__D8B= 0;
+    n_block__A8B=NULL;
+    p_block__97B=NULL;
+    add_size__E8B= 0;
+    cur_block__87B=NULL;
+    size__C8B= 0;
+    size__C8B=to_uinteger__PBB(__infix_and__GBB(__infix_add__HAB(nb__ES,to_integer__C1( 15)),to_integer__C1( 4294967280LU)));
+    cur_block__87B=first_free__DR;
+    while (((cur_block__87B!=NULL) && __infix_less__VGB(size__GGB(cur_block__87B),size__C8B))) {
+      cur_block__87B=((struct __MEM_BLOCK *)cur_block__87B)->next_same__1S;
+    };
+    if ((cur_block__87B==NULL)) {
+      add_size__E8B=__infix_and__VZ(__infix_add__SY(__infix_add__SY(size__C8B,to_uinteger__UW( 16)),to_uinteger__UW( 1048575)),to_uinteger__UW( 4293918720LU));
+      capacity__GR=__infix_add__7Z(capacity__GR,add_size__E8B);
+      realloc_c__PX(capacity__GR);
+      if (is_free__JKB(last_block__HR)) {
+        cur_block__87B=last_block__HR;
+        set_size__MLB(cur_block__87B,__infix_add__7Z(size__GGB(cur_block__87B),add_size__E8B));
+      } else {
+        cur_block__87B=get_block__I6(__infix_add__SY(end_memory__FR,to_uinteger__UW( 1)));
+        make__H7(cur_block__87B,__infix_sub__M0(add_size__E8B,to_uinteger__UW( 16)));
+        set_prev__TOB(cur_block__87B,last_block__HR);
+        last_block__HR=cur_block__87B;
+        set_next_same__ZOB(cur_block__87B,first_free__DR);
+        if ((first_free__DR!=NULL)) {
+          set_prev_same__EPB(first_free__DR,cur_block__87B);
+        };
+        first_free__DR=cur_block__87B;
+      };
+      end_memory__FR=__infix_add__7Z(end_memory__FR,add_size__E8B);
+    };
+    to_busy__ZPB(cur_block__87B);
+    p_block__97B=((struct __MEM_BLOCK *)cur_block__87B)->prev_same__0S;
+    n_block__A8B=((struct __MEM_BLOCK *)cur_block__87B)->next_same__1S;
+    if ((p_block__97B==NULL)) {
+      first_free__DR=n_block__A8B;
+    } else {
+      set_next_same__ZOB(p_block__97B,n_block__A8B);
+    };
+    if ((n_block__A8B!=NULL)) {
+      set_prev_same__EPB(n_block__A8B,p_block__97B);
+    };
+    new_size__D8B=__infix_sub__KZ(__infix_sub__KZ(size__GGB(cur_block__87B),size__C8B), 16);
+    if (__infix_greater__ISB(new_size__D8B,to_uinteger__UW( 128))) {
+      new_block__B8B=get_block__I6(__infix_add__7Z(get_adress__9SB(cur_block__87B),size__C8B));
+      make__H7(new_block__B8B,new_size__D8B);
+      if ((first_free__DR!=NULL)) {
+        set_prev_same__EPB(first_free__DR,new_block__B8B);
+      };
+      set_next_same__ZOB(new_block__B8B,first_free__DR);
+      first_free__DR=new_block__B8B;
+      set_size__MLB(cur_block__87B,size__C8B);
+      set_prev__TOB(new_block__B8B,cur_block__87B);
+      n_block__A8B=get_next__GUB(new_block__B8B);
+      if ((n_block__A8B==NULL)) {
+        last_block__HR=new_block__B8B;
+      } else {
+        set_prev__TOB(n_block__A8B,new_block__B8B);
+      };
+    };
+    first_block__PT=cur_block__87B;
+    if ((first_block__PT!=NULL)) {
+      result__TS=get_adress__9SB(first_block__PT);
+    };
+  };
+  if ((result__TS== 0)) {
+    print__VJC('E');
+    print__VJC('R');
+    print__VJC('R');
+    print__VJC(' ');
+    print__VJC('M');
+    print__VJC('E');
+    print__VJC('M');
+    while (1);
+  };
+  return(((void  *)((result__TS))));
+};
+
+static void copy__from__size__NNC(void  *dst__PNC,void  *src__QNC,signed long n__RNC)
+// MEMORY copy__from__size(MEMORY,POINTERxNULL,POINTER,INTEGER)
+{
+  unsigned long *dst_array_32__WOC,*src_array_32__XOC,dst_int__JQC;
+  int limit_up__HTC,limit_up__4ZC,self__LWC,self__Q2C;
+  unsigned char *dst_array_8__HQC,*src_array_8__IQC;
+  unsigned long src_int__KQC;
+  signed long cpt__LQC,i__KUC,i__2WC,i__P0C,i__72C;
+  src_array_8__IQC=NULL;
+  dst_array_8__HQC=NULL;
+  src_array_32__XOC=NULL;
+  dst_array_32__WOC=NULL;
+  cpt__LQC= 0;
+  src_int__KQC= 0;
+  dst_int__JQC= 0;
+  dst_int__JQC=to_uinteger__JRC(dst__PNC);
+  src_int__KQC=to_uinteger__JRC(src__QNC);
+  cpt__LQC=((signed long )((n__RNC)>>( 2)));
+  if ((cpt__LQC!= 0)) {
+    dst_array_32__WOC=force_conversion__WSC(dst_int__JQC);
+    src_array_32__XOC=force_conversion__WSC(src_int__KQC);
+    limit_up__HTC=to_numeric__QTC(__infix_sub__V4(cpt__LQC,to_integer__C1( 1)));
+    if (__infix_less_equal__1TC( 0,limit_up__HTC)) {
+      i__KUC=to_integer__C1( 0);
+      put__to__DVC(dst_array_32__WOC,item__VUC(src_array_32__XOC,i__KUC),i__KUC);
+      self__LWC=__infix_add__6EB( 0, 1);
+      while (__infix_less_equal__1TC(self__LWC,limit_up__HTC)) {
+        i__2WC=to_integer__C1(self__LWC);
+        put__to__DVC(dst_array_32__WOC,item__VUC(src_array_32__XOC,i__2WC),i__2WC);
+        self__LWC=__infix_add__6EB(self__LWC, 1);
+      };
+    };
+    dst_int__JQC=__infix_add__VXC(dst_int__JQC,to_uinteger__PBB(__infix_and__GBB(n__RNC,to_integer__C1( 4294967292LU))));
+    src_int__KQC=__infix_add__VXC(src_int__KQC,to_uinteger__PBB(__infix_and__GBB(n__RNC,to_integer__C1( 4294967292LU))));
+  };
+  cpt__LQC=__infix_and__GBB(n__RNC,to_integer__C1( 3));
+  if ((cpt__LQC!= 0)) {
+    dst_array_8__HQC=force_conversion__KZC(dst_int__JQC);
+    src_array_8__IQC=force_conversion__KZC(src_int__KQC);
+    limit_up__4ZC=to_numeric__QTC(__infix_sub__V4(cpt__LQC,to_integer__C1( 1)));
+    if (__infix_less_equal__1TC( 0,limit_up__4ZC)) {
+      i__P0C=to_integer__C1( 0);
+      put__to__I1C(dst_array_8__HQC,item__00C(src_array_8__IQC,i__P0C),i__P0C);
+      self__Q2C=__infix_add__6EB( 0, 1);
+      while (__infix_less_equal__1TC(self__Q2C,limit_up__4ZC)) {
+        i__72C=to_integer__C1(self__Q2C);
+        put__to__I1C(dst_array_8__HQC,item__00C(src_array_8__IQC,i__72C),i__72C);
+        self__Q2C=__infix_add__6EB(self__Q2C, 1);
       };
     };
   };
-  return(result__NAE);
 };
 
-signed char code__RCE(signed char self__SCE)
-// CHARACTER code(CHARACTER)
+static char __infix_less_equal__E6C(signed long self__F6C,signed long other__G6C)
+// NUMERIC __infix_less_equal(INTEGER,INTEGER)
 {
-  signed char result__TCE;
-  result__TCE=0;
-  result__TCE=((signed char )((self__SCE)));
-  return(result__TCE);
+  return((! __infix_greater__T2(self__F6C,other__G6C)));
 };
 
-signed char to_smallint__S2E(int self__T2E)
-// NUMERIC to_smallint(NUMERIC)
-{
-  return(((signed char )((self__T2E))));
-};
-
-char __infix_greater_equal__EME(signed char self__FME,signed char other__GME)
-// NUMERIC __infix_greater_equal(SMALLINT,SMALLINT)
-{
-  char ___tmp__HME;
-  ___tmp__HME=__infix_greater__FLE(self__FME,other__GME);
-  return((___tmp__HME | __infix_equal_equal__5DE(self__FME,other__GME)));
-};
-
-char __infix_less_equal__G4E(signed char self__H4E,signed char other__I4E)
-// NUMERIC __infix_less_equal(SMALLINT,SMALLINT)
-{
-  return((! __infix_greater__FLE(self__H4E,other__I4E)));
-};
-
-signed char __infix_sub__74E(signed char self__84E,signed char other__94E)
-// NUMERIC __infix_sub(SMALLINT,SMALLINT)
-{
-  return((self__84E-other__94E));
-};
-
-signed char item__LZD(void *self__MZD,signed long index__NZD)
+static signed char item__56C(void *self__66C,signed long index__76C)
 // ABSTRACT_STRING item(STRING_CONSTANT,INTEGER)
 {
-  return(item__BTB(((struct __STRING_CONSTANT *)self__MZD)->storage__6F,__infix_sub__3RB(index__NZD,to_integer__K3(1))));
+  return(item__X7C(((struct __STRING_CONSTANT *)self__66C)->storage__0H,__infix_sub__V4(index__76C,to_integer__C1( 1))));
 };
 
-void put_character__WWF(signed char c__YWF)
-// STD_OUTPUT put_character(IO,CHARACTER)
+static void put_character__HLC(signed char c__JLC)
+//- STD_OUTPUT put_character(IO,CHARACTER)
 {
-  fputc((int)(c__YWF),(((void  *)(stdout))));
+  fputc((int)(c__JLC),(((void  *)(stdout))));
 };
 
-signed long upper__MXG(void *self__NXG)
-// ABSTRACT_STRING upper(STRING_CONSTANT)
+static char __infix_greater__ODD(signed long self__PDD,signed long other__QDD)
+// NUMERIC __infix_greater(INTEGER,NUMERIC)
 {
-  return(((struct __STRING_CONSTANT *)self__NXG)->count__7F);
+  return((self__PDD>other__QDD));
 };
 
-void *notation__UAE(void *self__VAE)
-// BASIC_DIRECTORY notation(BASIC_DIRECTORY)
+static char __infix_less__8DD(signed long self__9DD,signed long other__AED)
+// NUMERIC __infix_less(INTEGER,INTEGER)
 {
-  ((struct __BASIC_DIRECTORY *)self__VAE)->notation__BFB=to_string__FHB(new_intern__JH(__string_49,1));
-  ((struct __BASIC_DIRECTORY *)self__VAE)->__notation__TAE=0;
-  return(((struct __BASIC_DIRECTORY *)self__VAE)->notation__BFB);
+  return((! __infix_greater_equal__I2(self__9DD,other__AED)));
 };
 
-signed char first__6AE(void *self__7AE)
-// ABSTRACT_STRING first(STRING)
+static signed long __infix_mul__BGD(signed long self__CGD,signed long other__DGD)
+// NUMERIC __infix_mul(INTEGER,INTEGER)
 {
-  signed char result__8AE;
-  result__8AE='\0';
-  result__8AE=((struct __STRING *)self__7AE)->storage__6F[0];
-  return(result__8AE);
+  return((self__CGD*other__DGD));
 };
 
-char __infix_equal_equal__KCE(signed char self__LCE,signed char other__MCE)
-// CHARACTER __infix_equal_equal(CHARACTER,CHARACTER)
+static signed long __infix_sub__V4(signed long self__W4,signed long other__X4)
+// NUMERIC __infix_sub(INTEGER,NUMERIC)
 {
-  return(__infix_equal_equal__5DE(code__RCE(self__LCE),code__RCE(other__MCE)));
+  return((self__W4-other__X4));
 };
 
-char __infix_greater__4KE(signed char self__5KE,signed char other__6KE)
-// CHARACTER __infix_greater(CHARACTER,CHARACTER)
+static char __infix_greater_equal__I2(signed long self__J2,signed long other__K2)
+// NUMERIC __infix_greater_equal(INTEGER,INTEGER)
 {
-  return(__infix_greater__FLE(code__RCE(self__5KE),code__RCE(other__6KE)));
+  return((__infix_greater__T2(self__J2,other__K2) | __infix_equal_equal__12(self__J2,other__K2)));
 };
 
-char __infix_less__ULE(signed char self__VLE,signed char other__WLE)
-// CHARACTER __infix_less(CHARACTER,CHARACTER)
+static void put__to__WHD(signed char *self__XHD,signed char element__YHD,signed long index__ZHD)
+//- NATIVE_ARRAY put__to(NATIVE_ARRAY,CHARACTER,INTEGER)
 {
-  return((! __infix_greater_equal__EME(code__RCE(self__VLE),code__RCE(other__WLE))));
+  self__XHD[index__ZHD]=element__YHD;
 };
 
-char has__RPE(void *self__SPE,signed char ch__TPE)
-// ABSTRACT_STRING has(STRING,CHARACTER)
+static signed char *realloc__with__HOD(signed char *self__IOD,signed long old_nb_elts__JOD,signed long new_nb_elts__KOD)
+// NATIVE_ARRAY realloc__with(NATIVE_ARRAY,INTEGER,INTEGER)
 {
-  signed char *___tmp__UPE,*self__9PE,element__AQE;
-  signed long ___tmp__WPE,self__WQE,___tmp__2QE,self__9RE;
-  char result__CQE;
-  ___tmp__UPE=((struct __STRING *)self__SPE)->storage__6F;
-  ___tmp__WPE=__infix_sub__3RB(((struct __STRING *)self__SPE)->count__7F,to_integer__K3(1));
-  self__9PE=___tmp__UPE;
-  element__AQE=ch__TPE;
-  result__CQE=FALSE;
-  result__CQE=FALSE;
-  ___tmp__2QE=to_integer__K3(0);
-  self__WQE=___tmp__WPE;
-  if (__infix_greater_equal__77(___tmp__WPE,___tmp__2QE)) {
-    if ((element__AQE==item__BTB(self__9PE,self__WQE))) {
-      result__CQE=TRUE;
-    };
-    self__9RE=__infix_sub__3RB(self__WQE,to_integer__K3(1));
-    while (__infix_greater_equal__77(self__9RE,___tmp__2QE)) {
-      if ((element__AQE==item__BTB(self__9PE,self__9RE))) {
-        result__CQE=TRUE;
-      };
-      self__9RE=__infix_sub__3RB(self__9RE,to_integer__K3(1));
+  signed char *new__LOD,*self__5PD,*model__6PD;
+  signed long ___tmp__QOD,self__EQD,___tmp__KQD,self__NRD;
+  new__LOD=NULL;
+  new__LOD=calloc__UED(new_nb_elts__KOD);
+  ___tmp__QOD=__infix_sub__V4(old_nb_elts__JOD,to_integer__C1( 1));
+  self__5PD=new__LOD;
+  model__6PD=self__IOD;
+  ___tmp__KQD=to_integer__C1( 0);
+  self__EQD=___tmp__QOD;
+  if (__infix_greater_equal__I2(___tmp__QOD,___tmp__KQD)) {
+    put__to__WHD(self__5PD,item__X7C(model__6PD,self__EQD),self__EQD);
+    self__NRD=__infix_sub__V4(self__EQD,to_integer__C1( 1));
+    while (__infix_greater_equal__I2(self__NRD,___tmp__KQD)) {
+      put__to__WHD(self__5PD,item__X7C(model__6PD,self__NRD),self__NRD);
+      self__NRD=__infix_sub__V4(self__NRD,to_integer__C1( 1));
     };
   };
-  return(result__CQE);
+  return(new__LOD);
 };
 
-char __infix_greater__FLE(signed char self__GLE,signed char other__HLE)
-// NUMERIC __infix_greater(SMALLINT,SMALLINT)
+static signed long __prefix_sub__RAB(signed long self__SAB)
+// NUMERIC __prefix_sub(INTEGER)
 {
-  return((self__GLE>other__HLE));
+  return(__infix_sub__6AB(to_integer__C1( 0),self__SAB));
 };
 
-char __infix_equal_equal__5DE(signed char self__6DE,signed char other__7DE)
-// NUMERIC __infix_equal_equal(SMALLINT,SMALLINT)
+static signed long __infix_sub__6AB(signed long self__7AB,signed long other__8AB)
+// NUMERIC __infix_sub(INTEGER,INTEGER)
 {
-  return((self__6DE==other__7DE));
+  return((self__7AB-other__8AB));
+};
+
+static void copy_from__until__MWD(signed char *self__NWD,signed char *model__OWD,signed long upper__PWD)
+// NATIVE_ARRAY copy_from__until(NATIVE_ARRAY,NULLxNATIVE_ARRAY,INTEGER)
+{
+  signed long self__WWD,___tmp__2WD,self__5XD;
+  ___tmp__2WD=to_integer__C1( 0);
+  self__WWD=upper__PWD;
+  if (__infix_greater_equal__I2(upper__PWD,___tmp__2WD)) {
+    put__to__WHD(self__NWD,item__X7C(model__OWD,self__WWD),self__WWD);
+    self__5XD=__infix_sub__V4(self__WWD,to_integer__C1( 1));
+    while (__infix_greater_equal__I2(self__5XD,___tmp__2WD)) {
+      put__to__WHD(self__NWD,item__X7C(model__OWD,self__5XD),self__5XD);
+      self__5XD=__infix_sub__V4(self__5XD,to_integer__C1( 1));
+    };
+  };
+};
+
+static signed long first_substring_index__4BE(void *self__5BE,void *other__6BE)
+// ABSTRACT_STRING first_substring_index(STRING,NULLxSTRING_CONSTANT)
+{
+  void *self__SCE,*other__TCE;
+  signed long ___tmp__OCE,i__VCE,s__WCE,result__XCE;
+  ___tmp__OCE=to_integer__C1( 1);
+  self__SCE=self__5BE;
+  other__TCE=other__6BE;
+  i__VCE= 0;
+  result__XCE= 0;
+  s__WCE= 0;
+  s__WCE=___tmp__OCE;
+  while ((! ((result__XCE!= 0) || __infix_greater__T2(__infix_sub__V4(__infix_add__GEE(s__WCE,((struct __STRING_CONSTANT *)other__TCE)->count__1H),to_integer__C1( 1)),((struct __STRING *)self__SCE)->count__1H)))) {
+    i__VCE=to_integer__C1( 1);
+    while ((! (__infix_greater__T2(i__VCE,((struct __STRING_CONSTANT *)other__TCE)->count__1H) || (item__V0D(self__SCE,__infix_sub__V4(__infix_add__GEE(s__WCE,i__VCE),to_integer__C1( 1)))!=item__56C(other__TCE,i__VCE))))) {
+      i__VCE=__infix_add__HAB(i__VCE,to_integer__C1( 1));
+    };
+    if (__infix_greater__T2(i__VCE,((struct __STRING_CONSTANT *)other__TCE)->count__1H)) {
+      result__XCE=s__WCE;
+    } else {
+      s__WCE=__infix_add__HAB(s__WCE,to_integer__C1( 1));
+    };
+  };
+  return(result__XCE);
+};
+
+static signed long __infix_add__GEE(signed long self__HEE,signed long other__IEE)
+// NUMERIC __infix_add(INTEGER,INTEGER)
+{
+  return(__infix_sub__6AB(self__HEE,__prefix_sub__RAB(other__IEE)));
+};
+
+static void copy__to__until__ZKE(signed char *self__0KE,signed char *src__1KE,signed long dest__2KE,signed long src_capacity__3KE)
+// NATIVE_ARRAY copy__to__until(NATIVE_ARRAY,NULLxNATIVE_ARRAY,INTEGER,INTEGER)
+{
+  signed long i1__4KE,i2__5KE;
+  i2__5KE= 0;
+  i1__4KE= 0;
+  i1__4KE=dest__2KE;
+  while ((! (i2__5KE==src_capacity__3KE))) {
+    put__to__WHD(self__0KE,item__X7C(src__1KE,i2__5KE),i1__4KE);
+    i2__5KE=__infix_add__HAB(i2__5KE,to_integer__C1( 1));
+    i1__4KE=__infix_add__HAB(i1__4KE,to_integer__C1( 1));
+  };
+};
+
+static void *clone__SRE()
+// OBJECT clone(STD_FILE)
+{
+  void *result__URE;
+  void  *ptr__VRE;
+  signed long sz__WRE;
+  ptr__VRE=NULL;
+  result__URE=NULL;
+  sz__WRE= 0;
+  sz__WRE=sizeof(struct __STD_FILE);
+  if ((sz__WRE== 0)) {
+    result__URE=STD_FILE;
+  } else {
+    ptr__VRE=allocation__CS(sz__WRE);
+    copy__from__size__NNC(ptr__VRE,((void  *)((STD_FILE))),sz__WRE);
+    result__URE=((void *)((ptr__VRE)));
+  };
+  return(result__URE);
+};
+
+static void *to_string__JUD(void *self__KUD)
+// STRING_CONSTANT to_string(STRING_CONSTANT)
+{
+  void *new__LUD,*self__TVD,*self__ZUD;
+  new__LUD=NULL;
+  new__LUD=create__TAD(((struct __STRING_CONSTANT *)self__KUD)->count__1H);
+  self__ZUD=new__LUD;
+  ((struct __STRING *)new__LUD)->count__1H=((struct __STRING_CONSTANT *)self__KUD)->count__1H;
+  if (__infix_greater__ODD(((struct __STRING *)self__ZUD)->count__1H,to_integer__C1( 0))) {
+    self__TVD=self__ZUD;
+    if (__infix_less__8DD(((struct __STRING *)self__ZUD)->capacity__Y8C,((struct __STRING *)self__ZUD)->count__1H)) {
+      ((struct __STRING *)self__TVD)->storage__0H=calloc__UED(((struct __STRING *)self__TVD)->count__1H);
+      ((struct __STRING *)self__TVD)->capacity__Y8C=((struct __STRING *)self__TVD)->count__1H;
+    };
+    copy_from__until__MWD(((struct __STRING *)self__ZUD)->storage__0H,((struct __STRING_CONSTANT *)self__KUD)->storage__0H,__infix_sub__V4(((struct __STRING *)self__ZUD)->count__1H,to_integer__C1( 1)));
+  };
+  return(new__LUD);
+};
+
+static void open__AUE(void *self__BUE)
+// STD_FILE open(STD_FILE)
+{
+  void *self__FUE;
+  signed char *path_pointer__GUE;
+  self__FUE=self__BUE;
+  path_pointer__GUE=NULL;
+  path_pointer__GUE=to_external__OZD(((struct __STD_FILE *)self__FUE)->name__V7D);
+  ((struct __STD_FILE *)self__FUE)->stream__D8D=((void  *)(fopen(((char*)((path_pointer__GUE))),"r+b")));
+};
+
+static signed long size__X0E(void *self__Y0E)
+// STD_FILE size(STD_FILE)
+{
+  signed char *path_pointer__40E;
+  signed long result__30E;
+  result__30E= 0;
+  path_pointer__40E=NULL;
+  path_pointer__40E=to_external__OZD(((struct __STD_FILE *)self__Y0E)->name__V7D);
+  {struct stat buf;
+      stat((path_pointer__40E),&buf);
+      ;
+  result__30E=((signed long )(buf.st_size));
+  };
+  return(result__30E);
+};
+
+static void read__size__P1E(void *self__Q1E,void *dest__R1E,signed long nb_elt__S1E)
+// STD_FILE read__size(STD_FILE,NULLxSTRING,INTEGER)
+{
+  unsigned long elt_size__U1E,size_byte__V1E,size_block__W1E;
+  void *___tmp__91E,*self__SIF,*buf__TIF,*___tmp__LFF;
+  int self__PLF;
+  unsigned char *___tmp__A2E,*___tmp__EFF;
+  unsigned long ___tmp__MFF;
+  void  *str__NGF;
+  signed long result__T1E;
+  result__T1E= 0;
+  size_block__W1E= 0;
+  size_byte__V1E= 0;
+  elt_size__U1E= 0;
+  elt_size__U1E=to_uinteger__PBB( 1);
+  size_byte__V1E=(to_uinteger__PBB(nb_elt__S1E)*elt_size__U1E);
+  basic_seek__P3E(self__Q1E,((struct __STD_FILE *)self__Q1E)->cursor__X7D);
+  ((struct __STD_FILE *)self__Q1E)->cursor__X7D=__infix_add__7Z(((struct __STD_FILE *)self__Q1E)->cursor__X7D,size_byte__V1E);
+  size_block__W1E=to_uinteger__UW( 512);
+  if (((struct __STD_FILE *)self__Q1E)->__array_intern__25E==1) {
+    ___tmp__91E=array_intern__35E(self__Q1E);
+  } else {
+    ___tmp__91E=((struct __STD_FILE *)self__Q1E)->array_intern__C8D;
+  };
+  if (__tmp_buffer__97E==1) {
+    ___tmp__A2E=tmp_buffer__A8E();
+  } else {
+    ___tmp__A2E=tmp_buffer__77D;
+  };
+  ((struct __FIXED_ARRAY__USMALLINT *)___tmp__91E)->storage__J5E=((unsigned char *)((___tmp__A2E)));
+  to_integer__C1(__prefix_sub__BFB( 1));
+  while (__infix_greater__ISB(size_byte__V1E,to_uinteger__UW( 0))) {
+    if ((! __infix_greater_equal__4GB(size_byte__V1E,to_uinteger__UW( 512)))) {
+      size_block__W1E=size_byte__V1E;
+    };
+    if (__tmp_buffer__97E==1) {
+      ___tmp__EFF=tmp_buffer__A8E();
+    } else {
+      ___tmp__EFF=tmp_buffer__77D;
+    };
+    str__NGF=NULL;
+    str__NGF=((struct __STD_FILE *)self__Q1E)->stream__D8D;
+    result__T1E=__infix_add__GEE(result__T1E,((signed long )(fread((void *)((___tmp__EFF)),(size_t)(1), (size_t)((size_block__W1E)),(FILE*)((str__NGF))))));
+    if (((struct __STD_FILE *)self__Q1E)->__array_intern__25E==1) {
+      array_intern__35E(self__Q1E);
+    };
+    __infix_sub__M0(size_block__W1E,to_uinteger__UW( 1));
+    if (((struct __STD_FILE *)self__Q1E)->__array_intern__25E==1) {
+      ___tmp__LFF=array_intern__35E(self__Q1E);
+    } else {
+      ___tmp__LFF=((struct __STD_FILE *)self__Q1E)->array_intern__C8D;
+    };
+    ___tmp__MFF=__infix_sub__M0(size_block__W1E,to_uinteger__UW( 1));
+    self__SIF=dest__R1E;
+    buf__TIF=___tmp__LFF;
+    if (__infix_less_equal__1TC( 0,___tmp__MFF)) {
+      add_last__HMD(self__SIF,to_character__EKF(item__TJF(buf__TIF,to_integer__C1( 0))));
+      self__PLF=__infix_add__6EB( 0, 1);
+      while (__infix_less_equal__1TC(self__PLF,___tmp__MFF)) {
+        add_last__HMD(self__SIF,to_character__EKF(item__TJF(buf__TIF,to_integer__C1(self__PLF))));
+        self__PLF=__infix_add__6EB(self__PLF, 1);
+      };
+    };
+    size_byte__V1E=__infix_sub__KZ(size_byte__V1E,size_block__W1E);
+    if (((struct __STD_FILE *)self__Q1E)->__array_intern__25E==1) {
+      array_intern__35E(self__Q1E);
+    };
+    to_integer__C1(__prefix_sub__BFB( 1));
+  };
+};
+
+static signed long fast_occurrences__until__7OF(signed char *self__8OF,signed long upper__APF)
+// NATIVE_ARRAY fast_occurrences__until(NATIVE_ARRAY,CHARACTER,INTEGER)
+{
+  signed long count__BPF,self__IPF,___tmp__OPF,self__3QF;
+  count__BPF= 0;
+  ___tmp__OPF=to_integer__C1( 0);
+  self__IPF=upper__APF;
+  if (__infix_greater_equal__I2(upper__APF,___tmp__OPF)) {
+    if (('\n'==item__X7C(self__8OF,self__IPF))) {
+      count__BPF=__infix_add__HAB(count__BPF,to_integer__C1( 1));
+    };
+    self__3QF=__infix_sub__V4(self__IPF,to_integer__C1( 1));
+    while (__infix_greater_equal__I2(self__3QF,___tmp__OPF)) {
+      if (('\n'==item__X7C(self__8OF,self__3QF))) {
+        count__BPF=__infix_add__HAB(count__BPF,to_integer__C1( 1));
+      };
+      self__3QF=__infix_sub__V4(self__3QF,to_integer__C1( 1));
+    };
+  };
+  return(count__BPF);
+};
+
+static int to_numeric__QTC(signed long self__RTC)
+// NUMERIC to_numeric(INTEGER)
+{
+  return(((int )((self__RTC))));
+};
+
+static char __infix_less_equal__1TC(int self__2TC,int other__3TC)
+// NUMERIC __infix_less_equal(NUMERIC,NUMERIC)
+{
+  return((! (self__2TC>other__3TC)));
+};
+
+static signed char item__V0D(void *self__W0D,signed long index__X0D)
+// ABSTRACT_STRING item(STRING,INTEGER)
+{
+  return(item__X7C(((struct __STRING *)self__W0D)->storage__0H,__infix_sub__V4(index__X0D,to_integer__C1( 1))));
+};
+
+static void remove__CUF(void *self__DUF,signed long index__EUF)
+// STRING remove(STRING,INTEGER)
+{
+  void *self__VWF,*self__0UF;
+  signed long ___tmp__QWF,len__3UF,end__2UF,self__9WF;
+  self__0UF=self__DUF;
+  end__2UF=index__EUF;
+  len__3UF= 0;
+  len__3UF=__infix_add__HAB(__infix_sub__6AB(end__2UF,index__EUF),to_integer__C1( 1));
+  if (__infix_greater__ODD(len__3UF,to_integer__C1( 0))) {
+    self__VWF=self__0UF;
+    ___tmp__QWF=((struct __STRING *)self__0UF)->count__1H;
+    self__9WF=__infix_add__HAB(end__2UF,to_integer__C1( 1));
+    while (__infix_less_equal__E6C(self__9WF,___tmp__QWF)) {
+      put__to__Y1D(self__VWF,item__V0D(self__VWF,self__9WF),__infix_sub__6AB(self__9WF,len__3UF));
+      self__9WF=__infix_add__HAB(self__9WF,to_integer__C1( 1));
+    };
+    ((struct __STRING *)self__VWF)->count__1H=__infix_sub__6AB(((struct __STRING *)self__0UF)->count__1H,len__3UF);
+  };
+};
+
+static int __infix_add__6EB(int self__7EB,int other__8EB)
+// NUMERIC __infix_add(NUMERIC,NUMERIC)
+{
+  return(__infix_sub__JFB(self__7EB,__prefix_sub__BFB(other__8EB)));
+};
+
+static char fast_memcmp__until__P2F(signed char *self__Q2F,signed char *other__R2F,signed long capacity__S2F)
+// NATIVE_ARRAY fast_memcmp__until(NATIVE_ARRAY,NULLxNATIVE_ARRAY,INTEGER)
+{
+  signed long i__T2F,___tmp__23F;
+  i__T2F= 0;
+  i__T2F=__infix_sub__V4(capacity__S2F,to_integer__C1( 1));
+  while_do__J3F:
+  {
+    ___tmp__23F=to_integer__C1( 0);
+    if (((__infix_greater__T2(i__T2F,___tmp__23F) | __infix_equal_equal__12(i__T2F,___tmp__23F)) && (item__X7C(self__Q2F,i__T2F)==item__X7C(other__R2F,i__T2F)))) {
+      i__T2F=__infix_sub__V4(i__T2F,to_integer__C1( 1));
+      goto while_do__J3F;
+    };
+  };
+  return(__infix_less__D5F(i__T2F,to_integer__C1( 0)));
+};
+
+static void resize__EBG(void *self__FBG,signed long new_count__GBG)
+// STRING resize(STRING,INTEGER)
+{
+  void *self__8CG;
+  signed char *___tmp__7DG;
+  signed long ___tmp__9DG,___tmp__8DG,self__NFG;
+  if (__infix_less_equal__E6C(new_count__GBG,((struct __STRING *)self__FBG)->count__1H)) {
+  } else {
+    if (__infix_less__8DD(((struct __STRING *)self__FBG)->capacity__Y8C,new_count__GBG)) {
+      self__8CG=self__FBG;
+      if ((((struct __STRING *)self__FBG)->capacity__Y8C== 0)) {
+        ((struct __STRING *)self__8CG)->storage__0H=calloc__UED(new_count__GBG);
+      } else {
+        ((struct __STRING *)self__8CG)->storage__0H=realloc__with__HOD(((struct __STRING *)self__8CG)->storage__0H,((struct __STRING *)self__8CG)->capacity__Y8C,new_count__GBG);
+      };
+      ((struct __STRING *)self__8CG)->capacity__Y8C=new_count__GBG;
+    } else {
+      ___tmp__7DG=((struct __STRING *)self__FBG)->storage__0H;
+      ___tmp__8DG=((struct __STRING *)self__FBG)->count__1H;
+      ___tmp__9DG=__infix_sub__V4(new_count__GBG,to_integer__C1( 1));
+      self__NFG=___tmp__8DG;
+      while (__infix_less_equal__E6C(self__NFG,___tmp__9DG)) {
+        put__to__WHD(___tmp__7DG,'\0',self__NFG);
+        self__NFG=__infix_add__HAB(self__NFG,to_integer__C1( 1));
+      };
+    };
+  };
+  ((struct __STRING *)self__FBG)->count__1H=new_count__GBG;
+};
+
+static void move__to__by__BIG(signed char *self__CIG,signed long lower__DIG,signed long upper__EIG,signed long offset__FIG)
+//- NATIVE_ARRAY move__to__by(NATIVE_ARRAY,INTEGER,INTEGER,INTEGER)
+{
+  signed char *self__9JG,*self__WLG,*self__SJG;
+  signed long self__FKG,self__2LG;
+  if ((offset__FIG!= 0)) {
+    self__SJG=self__CIG;
+    if (__infix_less__D5F(offset__FIG,to_integer__C1( 0))) {
+      self__9JG=self__SJG;
+      self__FKG=lower__DIG;
+      while (__infix_less_equal__E6C(self__FKG,upper__EIG)) {
+        put__to__WHD(self__9JG,item__X7C(self__9JG,self__FKG),__infix_add__GEE(self__FKG,offset__FIG));
+        self__FKG=__infix_add__HAB(self__FKG,to_integer__C1( 1));
+      };
+    } else {
+      self__WLG=self__SJG;
+      self__2LG=upper__EIG;
+      while (__infix_greater_equal__I2(self__2LG,lower__DIG)) {
+        put__to__WHD(self__WLG,item__X7C(self__WLG,self__2LG),__infix_add__GEE(self__2LG,offset__FIG));
+        self__2LG=__infix_sub__V4(self__2LG,to_integer__C1( 1));
+      };
+    };
+  };
+};
+
+static void *twin__IPG(void *self__JPG)
+// STRING twin(STRING)
+{
+  return(create_from_string__MPG(self__JPG));
+};
+
+static void basic_open_new__YRG(void *self__ZRG)
+// STD_FILE basic_open_new(STD_FILE)
+{
+  signed char *path_pointer__0RG;
+  path_pointer__0RG=NULL;
+  path_pointer__0RG=to_external__OZD(((struct __STD_FILE *)self__ZRG)->name__V7D);
+  ((struct __STD_FILE *)self__ZRG)->stream__D8D=((void  *)(fopen(((char*)((path_pointer__0RG))),"w+b")));
+};
+
+static void write__from__size__NSG(void *self__OSG,void *src__PSG,signed long nb_elt__RSG)
+// STD_FILE write__from__size(STD_FILE,NULLxSTRING,INTEGER,INTEGER)
+{
+  signed long result__SSG,elt_size__TSG,elt_ofs__USG,size_byte__VSG;
+  int limit_up__UWG,self__7ZG;
+  unsigned char *___tmp__GXG,*___tmp__P0G,*___tmp__ZVG;
+  void  *str__91G;
+  signed long size_block__WSG,idx_elt__XSG,___tmp__NXG,___tmp__W0G;
+  result__SSG= 0;
+  elt_ofs__USG= 0;
+  idx_elt__XSG= 0;
+  size_block__WSG= 0;
+  size_byte__VSG= 0;
+  elt_size__TSG= 0;
+  elt_size__TSG= 1;
+  size_byte__VSG=__infix_mul__BGD(nb_elt__RSG,elt_size__TSG);
+  basic_seek__P3E(self__OSG,((struct __STD_FILE *)self__OSG)->cursor__X7D);
+  ((struct __STD_FILE *)self__OSG)->cursor__X7D=__infix_add__7Z(((struct __STD_FILE *)self__OSG)->cursor__X7D,to_uinteger__PBB(size_byte__VSG));
+  size_block__WSG=to_integer__C1( 512);
+  idx_elt__XSG= 1;
+  while (__infix_greater__ODD(size_byte__VSG,to_integer__C1( 0))) {
+    if (__infix_less__D5F(size_byte__VSG,to_integer__C1( 512))) {
+      size_block__WSG=size_byte__VSG;
+    };
+    limit_up__UWG=to_numeric__QTC(__infix_sub__V4(size_block__WSG,to_integer__C1( 1)));
+    if (__infix_less_equal__1TC( 0,limit_up__UWG)) {
+      ___tmp__NXG=to_integer__C1( 0);
+      if (__tmp_buffer__97E==1) {
+        ___tmp__GXG=tmp_buffer__A8E();
+      } else {
+        ___tmp__GXG=tmp_buffer__77D;
+      };
+      put__to__I1C(___tmp__GXG,item_byte__offset__VXG(src__PSG,idx_elt__XSG),___tmp__NXG);
+      elt_ofs__USG=__infix_add__HAB(elt_ofs__USG,to_integer__C1( 1));
+      if ((elt_ofs__USG==elt_size__TSG)) {
+        elt_ofs__USG=to_integer__C1( 0);
+        idx_elt__XSG=__infix_add__HAB(idx_elt__XSG,to_integer__C1( 1));
+      };
+      self__7ZG=__infix_add__6EB( 0, 1);
+      while (__infix_less_equal__1TC(self__7ZG,limit_up__UWG)) {
+        ___tmp__W0G=to_integer__C1(self__7ZG);
+        if (__tmp_buffer__97E==1) {
+          ___tmp__P0G=tmp_buffer__A8E();
+        } else {
+          ___tmp__P0G=tmp_buffer__77D;
+        };
+        put__to__I1C(___tmp__P0G,item_byte__offset__VXG(src__PSG,idx_elt__XSG),___tmp__W0G);
+        elt_ofs__USG=__infix_add__HAB(elt_ofs__USG,to_integer__C1( 1));
+        if ((elt_ofs__USG==elt_size__TSG)) {
+          elt_ofs__USG=to_integer__C1( 0);
+          idx_elt__XSG=__infix_add__HAB(idx_elt__XSG,to_integer__C1( 1));
+        };
+        self__7ZG=__infix_add__6EB(self__7ZG, 1);
+      };
+    };
+    if (__tmp_buffer__97E==1) {
+      ___tmp__ZVG=tmp_buffer__A8E();
+    } else {
+      ___tmp__ZVG=tmp_buffer__77D;
+    };
+    str__91G=NULL;
+    str__91G=((struct __STD_FILE *)self__OSG)->stream__D8D;
+    result__SSG=__infix_add__GEE(result__SSG,((signed long )(fwrite((void *)((___tmp__ZVG)),(size_t)(1), (size_t)((size_block__WSG)),(FILE*)((str__91G))))));
+    size_byte__VSG=__infix_sub__6AB(size_byte__VSG,size_block__WSG);
+  };
+};
+
+static void *to_string__TBH(void *self__UBH)
+// ABSTRACT_STRING to_string(STRING)
+{
+  return(create_from_string__MPG(self__UBH));
+};
+
+static signed char *to_external__OZD(void *self__PZD)
+// STRING to_external(STRING)
+{
+  void *self__L0D;
+  signed char *result__RZD;
+  result__RZD=NULL;
+  if (__infix_greater__T2(((struct __STRING *)self__PZD)->capacity__Y8C,((struct __STRING *)self__PZD)->count__1H)) {
+    self__L0D=self__PZD;
+    ((struct __STRING *)self__PZD)->count__1H=__infix_add__HAB(((struct __STRING *)self__PZD)->count__1H,to_integer__C1( 1));
+    if ((item__V0D(self__PZD,((struct __STRING *)self__PZD)->count__1H)!='\0')) {
+      put__to__Y1D(self__L0D,'\0',((struct __STRING *)self__L0D)->count__1H);
+    };
+  } else {
+    add_last__HMD(self__PZD,'\0');
+  };
+  ((struct __STRING *)self__PZD)->count__1H=__infix_sub__V4(((struct __STRING *)self__PZD)->count__1H,to_integer__C1( 1));
+  result__RZD=((struct __STRING *)self__PZD)->storage__0H;
+  return(result__RZD);
+};
+
+static unsigned long to_uinteger__UW(int self__VW)
+// NUMERIC to_uinteger(NUMERIC)
+{
+  return(((unsigned long )((self__VW))));
+};
+
+static void realloc_c__PX(unsigned long nb__RX)
+// MEMORY realloc_c(MEMORY,UINTEGER)
+{
+  unsigned long beg__SX;
+  beg__SX= 0;
+  beg__SX=begin_memory__ER;
+  begin_memory__ER=((unsigned long )(realloc((void *)(beg__SX),(nb__RX)+15)));
+};
+
+static unsigned long __infix_add__SY(unsigned long self__TY,unsigned long other__UY)
+// NUMERIC __infix_add(UINTEGER,NUMERIC)
+{
+  return(__infix_sub__KZ(self__TY,__prefix_sub__3Y(other__UY)));
+};
+
+static unsigned long __infix_and__VZ(unsigned long self__WZ,unsigned long other__XZ)
+// NUMERIC __infix_and(UINTEGER,NUMERIC)
+{
+  return((self__WZ&other__XZ));
+};
+
+static unsigned long __infix_add__7Z(unsigned long self__8Z,unsigned long other__9Z)
+// NUMERIC __infix_add(UINTEGER,UINTEGER)
+{
+  return(__infix_sub__KZ(self__8Z,__prefix_sub__3Y(other__9Z)));
+};
+
+static unsigned long __infix_sub__M0(unsigned long self__N0,unsigned long other__O0)
+// NUMERIC __infix_sub(UINTEGER,NUMERIC)
+{
+  return((self__N0-other__O0));
+};
+
+static void put__to__P3(void **self__Q3,signed long index__S3)
+//- NATIVE_ARRAY put__to(NATIVE_ARRAY,NULL,INTEGER)
+{
+  self__Q3[index__S3]=NULL;
+};
+
+static void *get_block__I6(unsigned long p__K6)
+// MEMORY get_block(MEMORY,UINTEGER)
+{
+  return(((void *)((p__K6))));
+};
+
+static unsigned long __infix_sub__KZ(unsigned long self__LZ,unsigned long other__MZ)
+// NUMERIC __infix_sub(UINTEGER,UINTEGER)
+{
+  return((self__LZ-other__MZ));
+};
+
+static void make__H7(void *self__I7,unsigned long size__J7)
+// MEM_BLOCK make(MEM_BLOCK,UINTEGER)
+{
+  ((struct __MEM_BLOCK *)self__I7)->size_and_flags__YS=size__J7;
+  ((struct __MEM_BLOCK *)self__I7)->next_same__1S=NULL;
+  ((struct __MEM_BLOCK *)self__I7)->prev_same__0S=((struct __MEM_BLOCK *)self__I7)->next_same__1S;
+  ((struct __MEM_BLOCK *)self__I7)->prev__ZS=((struct __MEM_BLOCK *)self__I7)->prev_same__0S;
+};
+
+static char __infix_greater__T2(signed long self__U2,signed long other__V2)
+// NUMERIC __infix_greater(INTEGER,INTEGER)
+{
+  return((self__U2>other__V2));
+};
+
+static signed long __infix_and__GBB(signed long self__HBB,signed long other__IBB)
+// NUMERIC __infix_and(INTEGER,NUMERIC)
+{
+  return((self__HBB&other__IBB));
+};
+
+static unsigned long to_uinteger__PBB(signed long self__QBB)
+// INTEGER to_uinteger(INTEGER)
+{
+  return(((unsigned long )((self__QBB))));
+};
+
+static char is_small_busy__F6B(void *self__G6B,unsigned long sz__H6B)
+// MEM_BLOCK is_small_busy(MEM_BLOCK,UINTEGER)
+{
+  return(__infix_less__VGB((size__GGB(self__G6B)-to_uinteger__V5B(((struct __MEM_BLOCK *)self__G6B)->small_size__2S)),sz__H6B));
+};
+
+static unsigned long size__GGB(void *self__HGB)
+// MEM_BLOCK size(MEM_BLOCK)
+{
+  return(__infix_and__VZ(((struct __MEM_BLOCK *)self__HGB)->size_and_flags__YS,to_uinteger__UW( 4294967294LU)));
+};
+
+static char __infix_less__VGB(unsigned long self__WGB,unsigned long other__XGB)
+// NUMERIC __infix_less(UINTEGER,UINTEGER)
+{
+  return((! __infix_greater_equal__4GB(self__WGB,other__XGB)));
+};
+
+static char is_free__JKB(void *self__KKB)
+// MEM_BLOCK is_free(MEM_BLOCK)
+{
+  return((! (__infix_and__VZ(((struct __MEM_BLOCK *)self__KKB)->size_and_flags__YS,to_uinteger__UW( 1))!= 0)));
+};
+
+static void set_size__MLB(void *self__NLB,unsigned long sz__OLB)
+//- MEM_BLOCK set_size(MEM_BLOCK,UINTEGER)
+{
+  ((struct __MEM_BLOCK *)self__NLB)->size_and_flags__YS=__prefix_logicnot__SMB(__infix_and__KNB(__prefix_logicnot__SMB(sz__OLB),__prefix_logicnot__SMB(__infix_and__VZ(((struct __MEM_BLOCK *)self__NLB)->size_and_flags__YS,to_uinteger__UW( 1)))));
+};
+
+static void set_prev__TOB(void *self__UOB,void *block__VOB)
+//- MEM_BLOCK set_prev(MEM_BLOCK,MEM_BLOCKxNULL)
+{
+  ((struct __MEM_BLOCK *)self__UOB)->prev__ZS=block__VOB;
+};
+
+static void set_next_same__ZOB(void *self__0OB,void *block__1OB)
+//- MEM_BLOCK set_next_same(MEM_BLOCK,MEM_BLOCKxNULL)
+{
+  ((struct __MEM_BLOCK *)self__0OB)->next_same__1S=block__1OB;
+};
+
+static void set_prev_same__EPB(void *self__FPB,void *block__GPB)
+//- MEM_BLOCK set_prev_same(MEM_BLOCK,MEM_BLOCKxNULL)
+{
+  ((struct __MEM_BLOCK *)self__FPB)->prev_same__0S=block__GPB;
+};
+
+static void to_busy__ZPB(void *self__0PB)
+//- MEM_BLOCK to_busy(MEM_BLOCK)
+{
+  ((struct __MEM_BLOCK *)self__0PB)->size_and_flags__YS=__prefix_logicnot__SMB(__infix_and__KNB(__prefix_logicnot__SMB(((struct __MEM_BLOCK *)self__0PB)->size_and_flags__YS),__prefix_logicnot__SMB(to_uinteger__UW( 1))));
+};
+
+static char __infix_greater__ISB(unsigned long self__JSB,unsigned long other__KSB)
+// NUMERIC __infix_greater(UINTEGER,NUMERIC)
+{
+  return((self__JSB>other__KSB));
+};
+
+static unsigned long get_adress__9SB(void *self__ATB)
+// MEM_BLOCK get_adress(MEM_BLOCK)
+{
+  return(__infix_add__7Z(((unsigned long )((self__ATB))), 16));
+};
+
+static void *get_next__GUB(void *block__IUB)
+// MEMORY get_next(MEMORY,MEM_BLOCKxNULL)
+{
+  void *result__JUB;
+  unsigned long next__KUB;
+  result__JUB=NULL;
+  next__KUB= 0;
+  next__KUB=__infix_sub__M0(__infix_add__7Z(get_adress__9SB(block__IUB),size__GGB(block__IUB)),to_uinteger__UW( 1));
+  if ((next__KUB!=end_memory__FR)) {
+    result__JUB=get_block__I6(next__KUB);
+  };
+  return(result__JUB);
+};
+
+static unsigned short to_ushortint__BXB(int self__CXB)
+// NUMERIC to_ushortint(NUMERIC)
+{
+  return(((unsigned short )((self__CXB))));
+};
+
+static void put__to__YXB(void **self__ZXB,void *element__0XB,unsigned long index__1XB)
+//- NATIVE_ARRAY put__to(NATIVE_ARRAY,MEM_BLOCKxNULL,UINTEGER)
+{
+  self__ZXB[index__1XB]=element__0XB;
+};
+
+static unsigned short __infix_sub__L5B(unsigned short self__M5B,unsigned short other__N5B)
+// NUMERIC __infix_sub(USHORTINT,USHORTINT)
+{
+  return((self__M5B-other__N5B));
+};
+
+static unsigned long to_uinteger__V5B(unsigned short self__W5B)
+// USHORTINT to_uinteger(USHORTINT)
+{
+  return(((unsigned long )((self__W5B))));
+};
+
+static unsigned long to_uinteger__JRC(void  *self__KRC)
+// POINTER to_uinteger(POINTER)
+{
+  return(((unsigned long )((self__KRC))));
+};
+
+static unsigned long *force_conversion__WSC(unsigned long obj__YSC)
+// OBJECT force_conversion(NATIVE_ARRAY,UINTEGER)
+{
+  return(((unsigned long *)((obj__YSC))));
+};
+
+static unsigned long item__VUC(unsigned long *self__WUC,signed long index__XUC)
+// NATIVE_ARRAY item(NATIVE_ARRAY,INTEGER)
+{
+  return(self__WUC[index__XUC]);
+};
+
+static void put__to__DVC(unsigned long *self__EVC,unsigned long element__FVC,signed long index__GVC)
+//- NATIVE_ARRAY put__to(NATIVE_ARRAY,UINTEGER,INTEGER)
+{
+  self__EVC[index__GVC]=element__FVC;
+};
+
+static unsigned long __infix_add__VXC(unsigned long self__WXC,unsigned long other__XXC)
+// NUMERIC __infix_add(UINTEGER,INTEGER)
+{
+  return(__infix_sub__KZ(self__WXC,__prefix_sub__3Y(other__XXC)));
+};
+
+static unsigned char *force_conversion__KZC(unsigned long obj__MZC)
+// OBJECT force_conversion(NATIVE_ARRAY,UINTEGER)
+{
+  return(((unsigned char *)((obj__MZC))));
+};
+
+static unsigned char item__00C(unsigned char *self__10C,signed long index__20C)
+// NATIVE_ARRAY item(NATIVE_ARRAY,INTEGER)
+{
+  return(self__10C[index__20C]);
+};
+
+static void put__to__I1C(unsigned char *self__J1C,unsigned char element__K1C,signed long index__L1C)
+//- NATIVE_ARRAY put__to(NATIVE_ARRAY,USMALLINT,INTEGER)
+{
+  self__J1C[index__L1C]=element__K1C;
+};
+
+static char __infix_equal_equal__12(signed long self__22,signed long other__32)
+// NUMERIC __infix_equal_equal(INTEGER,INTEGER)
+{
+  return((self__22==other__32));
+};
+
+static void basic_seek__P3E(void *self__Q3E,unsigned long pos__R3E)
+// STD_FILE basic_seek(STD_FILE,UINTEGER)
+{
+  void  *str__S3E;
+  str__S3E=NULL;
+  str__S3E=((struct __STD_FILE *)self__Q3E)->stream__D8D;
+  ((signed long )(fseek((FILE*)((str__S3E)),(pos__R3E),SEEK_SET)));
+};
+
+static void *array_intern__35E(void *self__45E)
+// STD_FILE array_intern(STD_FILE)
+{
+  void *result__F6E;
+  void  *ptr__G6E;
+  signed long sz__H6E;
+  ptr__G6E=NULL;
+  result__F6E=NULL;
+  sz__H6E= 0;
+  sz__H6E=sizeof(struct __FIXED_ARRAY__USMALLINT);
+  if ((sz__H6E== 0)) {
+    result__F6E=FIXED_ARRAY__USMALLINT;
+  } else {
+    ptr__G6E=allocation__CS(sz__H6E);
+    copy__from__size__NNC(ptr__G6E,((void  *)((FIXED_ARRAY__USMALLINT))),sz__H6E);
+    result__F6E=((void *)((ptr__G6E)));
+  };
+  ((struct __STD_FILE *)self__45E)->array_intern__C8D=result__F6E;
+  ((struct __STD_FILE *)self__45E)->__array_intern__25E= 0;
+  return(((struct __STD_FILE *)self__45E)->array_intern__C8D);
+};
+
+static unsigned char *tmp_buffer__A8E()
+// STD_FILE tmp_buffer(STD_FILE)
+{
+  signed long capacity__98E,___tmp__Q8E,self__YAF,___tmp__4AF;
+  unsigned char *result__B9E,*self__PAF,*result__N8E;
+  void  *p__A9E;
+  signed long nb_elements__M8E,self__4BF;
+  nb_elements__M8E=to_integer__C1( 512);
+  result__N8E=NULL;
+  result__B9E=NULL;
+  p__A9E=NULL;
+  capacity__98E= 0;
+  capacity__98E=__infix_mul__BGD(nb_elements__M8E, 1);
+  p__A9E=allocation__CS(capacity__98E);
+  result__B9E=((unsigned char *)((void*)(p__A9E)));
+  result__N8E=result__B9E;
+  ___tmp__Q8E=__infix_sub__V4(nb_elements__M8E,to_integer__C1( 1));
+  self__PAF=result__N8E;
+  ___tmp__4AF=to_integer__C1( 0);
+  self__YAF=___tmp__Q8E;
+  if (__infix_greater_equal__I2(___tmp__Q8E,___tmp__4AF)) {
+    put__to__I1C(self__PAF, 0,self__YAF);
+    self__4BF=__infix_sub__V4(self__YAF,to_integer__C1( 1));
+    while (__infix_greater_equal__I2(self__4BF,___tmp__4AF)) {
+      put__to__I1C(self__PAF, 0,self__4BF);
+      self__4BF=__infix_sub__V4(self__4BF,to_integer__C1( 1));
+    };
+  };
+  tmp_buffer__77D=result__N8E;
+  __tmp_buffer__97E= 0;
+  return(tmp_buffer__77D);
+};
+
+static int __prefix_sub__BFB(int self__CFB)
+// NUMERIC __prefix_sub(NUMERIC)
+{
+  return(__infix_sub__JFB( 0,self__CFB));
+};
+
+static char __infix_greater_equal__4GB(unsigned long self__5GB,unsigned long other__6GB)
+//- NUMERIC __infix_greater_equal(UINTEGER,UINTEGER)
+{
+  char ___tmp__AHB;
+  ___tmp__AHB=(self__5GB>other__6GB);
+  return((___tmp__AHB | (self__5GB==other__6GB)));
+};
+
+static unsigned char item__TJF(void *self__UJF,signed long i__VJF)
+// FIXED_ARRAY item(FIXED_ARRAY,INTEGER)
+{
+  return(item__00C(((struct __FIXED_ARRAY__USMALLINT *)self__UJF)->storage__J5E,i__VJF));
+};
+
+static signed char to_character__EKF(unsigned char self__FKF)
+// USMALLINT to_character(USMALLINT)
+{
+  return(((signed char )((self__FKF))));
+};
+
+static void put__to__Y1D(void *self__Z1D,signed char ch__01D,signed long index__11D)
+//- STRING put__to(STRING,CHARACTER,INTEGER)
+{
+  put__to__WHD(((struct __STRING *)self__Z1D)->storage__0H,ch__01D,__infix_sub__V4(index__11D,to_integer__C1( 1)));
+};
+
+static int __infix_sub__JFB(int self__KFB,int other__LFB)
+// NUMERIC __infix_sub(NUMERIC,NUMERIC)
+{
+  return((self__KFB-other__LFB));
+};
+
+static char __infix_less__D5F(signed long self__E5F,signed long other__F5F)
+// NUMERIC __infix_less(INTEGER,NUMERIC)
+{
+  return((! __infix_greater_equal__I2(self__E5F,other__F5F)));
+};
+
+static void *create_from_string__MPG(void *str__OPG)
+// STRING create_from_string(STRING,STRING)
+{
+  void *result__PPG,*self__RQG,*self__XPG;
+  result__PPG=NULL;
+  result__PPG=create__TAD(((struct __STRING *)str__OPG)->count__1H);
+  self__XPG=result__PPG;
+  ((struct __STRING *)result__PPG)->count__1H=((struct __STRING *)str__OPG)->count__1H;
+  if (__infix_greater__ODD(((struct __STRING *)self__XPG)->count__1H,to_integer__C1( 0))) {
+    self__RQG=self__XPG;
+    if (__infix_less__8DD(((struct __STRING *)self__XPG)->capacity__Y8C,((struct __STRING *)self__XPG)->count__1H)) {
+      ((struct __STRING *)self__RQG)->storage__0H=calloc__UED(((struct __STRING *)self__RQG)->count__1H);
+      ((struct __STRING *)self__RQG)->capacity__Y8C=((struct __STRING *)self__RQG)->count__1H;
+    };
+    copy_from__until__MWD(((struct __STRING *)self__XPG)->storage__0H,((struct __STRING *)str__OPG)->storage__0H,__infix_sub__V4(((struct __STRING *)self__XPG)->count__1H,to_integer__C1( 1)));
+  };
+  return(result__PPG);
+};
+
+static unsigned char item_byte__offset__VXG(void *self__WXG,signed long idx__XXG)
+// STRING item_byte__offset(STRING,INTEGER,INTEGER)
+{
+  return(((unsigned char )((item__V0D(self__WXG,idx__XXG)))));
+};
+
+static unsigned long __prefix_sub__3Y(unsigned long self__4Y)
+// NUMERIC __prefix_sub(UINTEGER)
+{
+  return(__infix_sub__KZ(to_uinteger__UW( 0),self__4Y));
+};
+
+static unsigned long __prefix_logicnot__SMB(unsigned long self__TMB)
+// NUMERIC __prefix_logicnot(UINTEGER)
+{
+  return(__infix_sub__KZ(__prefix_sub__3Y(to_uinteger__UW( 1)),self__TMB));
+};
+
+static unsigned long __infix_and__KNB(unsigned long self__LNB,unsigned long other__MNB)
+// NUMERIC __infix_and(UINTEGER,UINTEGER)
+{
+  return((self__LNB&other__MNB));
 };
 

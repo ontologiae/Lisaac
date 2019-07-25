@@ -82,19 +82,12 @@ section PUBLIC
   
   - '?' <-
   (
-    /*
-    (! value).if { 
-      'E'.print;
-      'R'.print;
-      'R'.print;
-      ' '.print;
-      'A'.print;
-      'V'.print;
-      
-      `while (1);`;
+    (is_debug_mode && {! value}).if {
+//      VIDEO.is_active.if {
+//	VIDEO.close;
+//      };
+      check_crash; 
     };
-    */
-    (is_debug_mode && {! value}).if { check_crash; };
   );
   
   - '??':BOOLEAN <-

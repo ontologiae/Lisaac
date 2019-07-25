@@ -34,9 +34,9 @@ section PUBLIC
   // Range.
   //
   
-  - maximum:ULONGINT <- INTEGER.maximum;
+  - maximum:LONGINT <- INTEGER.maximum;
   
-  - minimum:LONGINT  <- INTEGER.minimum;
+  - minimum:LONGINT <- INTEGER.minimum;
   
   //
   // Conversion format with test.
@@ -111,6 +111,37 @@ section PUBLIC
   );
   
   - to_numeric:NUMERIC <- NUMERIC.force_conversion self;
+  
+  - to_binary:SELF <-
+  // Self is BCD formatted, convert to binary value
+  ( + result:SELF;
+    + val,mul:SELF;
+    
+    val := self;
+    mul := 1;
+    {val!=0}.while_do {
+      result := result + (val & 0Fh) * mul;
+      mul    := mul * 10;
+      val    := val >> 4;
+    };
+    
+    result
+  );
+  
+  - to_bcd:SELF <-
+  // Self is binary formatted, convert to bcd value
+  ( + result:SELF;
+    + val,mul:SELF;
+    
+    val := self;
+    {val!=0}.while_do {
+      result := result | ((val % 10) << mul);
+      mul    := mul + 4;
+      val    := val / 10;
+    };
+    
+    result    
+  );
   
   //
   // binary operator :
@@ -387,7 +418,7 @@ section PUBLIC
     ? {to_string.count<=s};
     
     result := to_string;
-    result.precede_multiple ' ',(s - result.count);
+    result.precede_multiple ' ' by (s - result.count);
     
     ? {result.count == s};
     result
@@ -408,10 +439,10 @@ section PUBLIC
   ( + old_count:INTEGER;
     ? {str!=NULL};
     ? {to_string.count<=s};
-    // A REVOIR! (Doute sur la chose!)
+
     old_count := str.count;
     append_in str;
-    str.insert char to old_count on (str.count-old_count);
+    str.insert char to old_count on (s - (str.count-old_count));
     
     ? {str.count == (old_count + s)};
   );
@@ -492,7 +523,7 @@ section PUBLIC
       };
     };
   );
-  
+
   //
   // Hashing:
   //

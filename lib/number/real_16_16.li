@@ -46,12 +46,12 @@ section PUBLIC
   
   - to_ulongint:ULONGINT   <- 
   ( ? {in_range 0 to (ULONGINT.maximum)};
-    floor    
+    floor.to_ulongint
   );
   
   - to_uinteger:UINTEGER   <- 
   ( ? {in_range 0 to (UINTEGER.maximum)};
-    floor
+    floor.to_uinteger
   );
   
   - to_ushortint:USHORTINT <- 
@@ -70,7 +70,7 @@ section PUBLIC
   );
   
   - to_integer:INTEGER     <- 
-  ( ? {in_range (INTEGER.minimum) to (INTEGER.maximum)};
+  ( 
     floor.to_integer
   );
   
@@ -101,8 +101,8 @@ section PUBLIC
   ( + result:INTEGER;
     
     result:=to_raw_integer >> 16;
-    ? {self <= result.to_real_16_16};
-    ? {(self - result.to_real_16_16) < 1};
+    //? {self <= result.to_real_16_16};
+    //? {(self - result.to_real_16_16) < 1};
     result
   );
   

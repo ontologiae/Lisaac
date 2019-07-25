@@ -39,8 +39,23 @@ section PUBLIC
   
   - make i:E next n:SELF <-
   (
+    // JBJB
+    /*
+    "\nIn link:".print;
+    " At @".print;
+    INTEGER.force_conversion i.print;
+    i.display;
+    */
+    //`/* Avant affectation */`;
     item := i;
+    //`/* Apres affectation */`;
     next := n;
+    /*
+    "\nTjs in link:".print;    
+    " At @".print;
+    INTEGER.force_conversion item.print;
+    item.display;
+    */
   );
   
   
@@ -68,3 +83,4 @@ section PUBLIC
       lnk := lnk.next;
     };
   );
+

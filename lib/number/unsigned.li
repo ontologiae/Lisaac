@@ -96,4 +96,4 @@ section PUBLIC
   // Hashing:
   //
   
-  - hash_code:UINT <- self;
+  - hash_code:INTEGER <- (self.to_integer);

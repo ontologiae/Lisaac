@@ -14,10 +14,11 @@
 ;;   <Ctrl>+C E     : ".if { <Cursor> } else { };".
 ;;   <Ctrl>+C U     : ".until_do { <Cursor> };".
 ;;   <Ctrl>+C W     : ".while_do { <Cursor> };".
+;;   <Echap>  G     : Goto line.
 
 ;; BUG REPORT
 ;;   - number: hexa, octal, ...
-;;   - (+ to:INTEGER;  truc.put 't' to 10; // to -> black!
+;;   - ( + to:INTEGER;  truc.put 't' to 10; // to -> black!
 
 
 ;;
@@ -110,7 +111,7 @@
     ("`[^`\n]*`" 0 highlight nil)
 
     ;; Major keywords :
-    ("section.*$" 0 font-lock-keyword-face nil)
+    ("^section.*$" 0 font-lock-keyword-face nil)
 
     ;; Number Hexa :
     ; ("[0-9][0-9a-fA-F]*[hobd]?" 0 (li-number) nil)
@@ -131,7 +132,7 @@
     ("\{\\|\}" 0 font-lock-comment-face nil)
 
     ;; Assignment :
-    ("<-\\|:=" 0 0 nil) 
+    ("<-\\|:=\\|?=" 0 0 nil) 
 
     ;; Symbol declaration :
     ("^  \\(\\+\\|-\\|\\*\\)" 0 font-lock-warning-face nil)
@@ -313,6 +314,32 @@
     (if (= li-char ?/)
 	(if (= (char-after (+ li-point 1)) ?/)
 	    (setq li-test 1)))  ;; Stop
+    ;; String " "
+    (if (= li-char ?")
+        (progn        
+        (while (= li-test 0)
+          (setq li-point (+ li-point 1))
+          (setq li-char (char-after li-point))
+          (if (= li-char ?\n)
+	     (setq li-test 1)) ;; Stop
+          (if (= li-char ?")
+	     (setq li-test 1)) ;; Stop
+        )
+        (setq li-test 0))
+    )
+    ;; String ' '
+    (if (= li-char ?')
+        (progn        
+        (while (= li-test 0)
+          (setq li-point (+ li-point 1))
+          (setq li-char (char-after li-point))
+          (if (= li-char ?\n)
+	     (setq li-test 1)) ;; Stop
+          (if (= li-char ?')
+	     (setq li-test 1)) ;; Stop
+        )
+        (setq li-test 0))
+    )
     ;; Next character.
     (setq li-point (+ li-point 1))
   )
@@ -349,6 +376,32 @@
     (if (= li-char ?/)
 	(if (= (char-after (+ li-point 1)) ?/)
 	    (setq li-indent-2 0)))  
+    ;; String " "
+    (if (= li-char ?")
+        (progn        
+        (while (= li-test 0)
+          (setq li-point (- li-point 1))
+          (setq li-char (char-after li-point))
+          (if (= li-char ?\n)
+	     (setq li-test 1)) ;; Stop
+          (if (= li-char ?")
+	     (setq li-test 1)) ;; Stop
+        )
+        (setq li-test 0))
+    )
+    ;; String ' '
+    (if (= li-char ?')
+        (progn        
+        (while (= li-test 0)
+          (setq li-point (- li-point 1))
+          (setq li-char (char-after li-point))
+          (if (= li-char ?\n)
+	     (setq li-test 1)) ;; Stop
+          (if (= li-char ?')
+	     (setq li-test 1)) ;; Stop
+        )
+        (setq li-test 0))
+    )
   )
 
   ; On supprime tous les espaces.
@@ -407,9 +460,8 @@
 
   ;; compatibility MS-DOS
   (replace-string "" "")
-
-  ;; Light-color On
   (global-font-lock-mode t)
+  (global-set-key "\M-g" 'goto-line)
 
   (kill-all-local-variables)
   (setq mode-name "Lisaac")
@@ -429,18 +481,5 @@
 ;; Fin du mode Lisaac.
 ;;
 (provide 'lisaac-mode)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

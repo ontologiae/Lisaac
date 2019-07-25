@@ -145,7 +145,7 @@ section PUBLIC
   - invariant :BOOLEAN <-
   (
     (capacity >= (upper - lower + 1)) && 
-    { capacity > 0 -> storage.is_not_null}
+    { (capacity > 0) ->> { storage.is_not_null}}
   );
 
   //
@@ -158,23 +158,65 @@ section PUBLIC
   ( + result:BOOLEAN;
     
     result := ! E.is_clonable;
-    result := result && {(s % element_sizeof)=0};
+    result := result && {(s.to_integer % element_sizeof)=0};
     result := result && {E.object_size!=0};
     result
   );
   
-  - add_last_byte byte:USMALLINT offset ofs:INTEGER <-
+  + ofs_buf:INTEGER;
+    
+  - add_last_buffer buf:FIXED_ARRAY[USMALLINT] from beg:NUMERIC to end:NUMERIC <-
+  ( + tab:NATIVE_ARRAY[USMALLINT];
+    + pos_beg,size,new_capacity:INTEGER;
+    
+    ? {! E.is_clonable};
+    
+    pos_beg := count * element_sizeof + ofs_buf;
+    size    := end - beg + 1;
+    
+    new_capacity := (pos_beg + end - beg + element_sizeof) / element_sizeof;
+    (capacity < new_capacity).if {
+      "cap:".print;
+      capacity.print;
+      "new:".print;
+      new_capacity.print;
+      "Crash !\n".print;
+      crash;
+    };
+    
+    tab := NATIVE_ARRAY[USMALLINT].force_conversion storage;
+    tab.copy (buf.storage + beg) to pos_beg until size;
+    ofs_buf := (pos_beg + size) % element_sizeof;
+    upper   := (pos_beg + size - 1) / element_sizeof;
+  );
+
+  - add_last_buffer_bug buf:FIXED_ARRAY[USMALLINT] from beg:NUMERIC to end:NUMERIC <-
   ( + e:E;
     + tab:NATIVE_ARRAY[USMALLINT];
-    + pos:INTEGER;
-    ? {ofs < element_sizeof};
-      
-    (ofs=0).if {
-      add_last e;
+    + pos,ofs:INTEGER;
+    ? {! E.is_clonable};
+    ? {((end - beg + 1) % element_sizeof) = 0};
+    
+    // BSBS: A refaire plus rapide en utilisant directement le storage...
+    beg.to end do { j:UINTEGER;      
+      (ofs=0).if {
+	add_last e;
+      };
+      tab := NATIVE_ARRAY[USMALLINT].force_conversion storage;
+      pos := upper * element_sizeof + ofs.to_integer;
+      tab.put (buf.item j) to pos;
+      ofs := (ofs + 1) % element_sizeof;
     };
-    tab := NATIVE_ARRAY[USMALLINT].force_conversion storage;
-    pos := upper * element_sizeof + ofs;
-    tab.put byte to pos;
   );
+
+  - item_byte idx:NUMERIC offset ofs:NUMERIC :USMALLINT <-
+  ( + pos:INTEGER; 
+    + tab:NATIVE_ARRAY[USMALLINT];
+    ? {ofs < element_sizeof};
+    pos := idx * element_sizeof + ofs;
+    tab := NATIVE_ARRAY[USMALLINT].force_conversion storage;
+    tab.item pos    
+  );
+
 
 

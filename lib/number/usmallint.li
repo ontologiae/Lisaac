@@ -33,7 +33,7 @@ section PUBLIC
   // Range.
   //
   
-  - maximum:ULONGINT := 255;
+  - maximum:LONGINT := 255;
   
   //
   // Conversion with test.

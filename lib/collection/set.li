@@ -57,20 +57,18 @@ section PUBLIC
   + capacity:INTEGER;
   // Of the `buckets' storage area.
   
-  - lower:INTEGER := 1;
-  
-  
+
   // NONE
   
   - create:SELF <-
   (
     + result:SELF;
-    result := SELF.clone;
+    result := clone;
     result.make;
     result
   );
   
-  -make <-
+  - make <-
   // Create an empty set. Internal storage `capacity' of the set is
   // initialized using the `Default_size' value. Then, tuning of needed
   // storage size is done automatically according to usage. If you
@@ -82,6 +80,13 @@ section PUBLIC
     ? { capacity = default_size };
   );
   
+  - create_with_capacity sz:NUMERIC :SELF <-
+  (
+    + result:SELF;
+    result := clone;
+    result.with_capacity sz;
+    result
+  );
   
   - with_capacity medium_size:NUMERIC <-
   // Create an empty set using `medium_size' as an appropriate value
@@ -117,16 +122,48 @@ section PUBLIC
   
   
   // Adding and removing:
+  - fast_add e:E <-
+  // Add a new item to the set:the mathematical definition of
+  // adding in a set is followed.
+  ( + h, idx:INTEGER;
+    + node:SET_NODE[E];
+    + old_has:BOOLEAN;
+    + old_count:INTEGER;
+    //? { e != NULL };
+    old_has := fast_has e;
+    old_count := count;
+    
+    cache_user := -1;
+    h := e.hash_code;
+    idx := h % capacity;
+    node := buckets.item idx;
+    
+    { (node = NULL) || {node.item = e}}.until_do {
+      node := node.next;
+    };
+    (node = NULL).if {
+      (capacity = count).if {
+	increase_capacity;
+	idx := h % capacity;
+      };
+      node := SET_NODE[E].create e next (buckets.item idx);
+      buckets.put node to idx;
+      count := count + 1;
+    };
+    
+    ? { fast_has e};
+    ? {! old_has ->> {count = old_count + 1}};
+    ? {  old_has ->> {count = old_count}};
+  );  
   
   - add e:E <-
   // Add a new item to the set:the mathematical definition of
   // adding in a set is followed.
-  (
-    + h, idx:INTEGER;
+  ( + h, idx:INTEGER;
     + node:SET_NODE[E];
     + old_has:BOOLEAN;
     + old_count:INTEGER;
-    
+    //? { e != NULL }; // BSBS: A voir avec SET[INTEGER] 
     old_has := has e;
     old_count := count;
     
@@ -135,7 +172,7 @@ section PUBLIC
     idx := h % capacity;
     node := buckets.item idx;
     
-    { (node = NULL) || {node.item.is_equal e}}.until_do {
+    { (node = NULL) || {node.item == e}}.until_do {
       node := node.next;
     };
     (node = NULL).if {
@@ -149,11 +186,28 @@ section PUBLIC
     };
     
     ? { has e};
-    ? {!old_has -> (count = old_count + 1)};
-    ? { old_has -> (count = old_count)};
+    ? {!old_has ->> {count = old_count + 1}};
+    ? { old_has ->> {count = old_count}};
   );
   
-  
+  - force e:E <-  
+  // Add a new item to the set: the mathematical definition of
+  // adding in a set is followed.
+  ( + h, idx: INTEGER;
+    + node:SET_NODE[E];
+    ? {! fast_has e};
+    h := e.hash_code;
+    cache_user := -1;
+    (capacity = count).if {
+      increase_capacity;
+    };
+    idx := h % capacity;
+    node := SET_NODE[E].create e next (buckets.item idx);
+    buckets.put node to idx;
+    count := count + 1;
+    ? {fast_has e};
+  );
+	 
   - remove e:E <-
   // Remove item `e' from the set:the mathematical definition of
   // removing from a set is followed.
@@ -171,14 +225,14 @@ section PUBLIC
     idx := h % capacity;
     node := buckets.item idx;
     ( node != NULL).if {
-      ( node.item.is_equal e).if {
+      ( node.item == e).if {
 	count := count - 1;
 	node := node.next;
 	buckets.put node to idx;
       } else {
 	previous_node := node;
 	node := node.next;
-	{ (node = NULL) || {node.item.is_equal e}}.until_do {
+	{ (node = NULL) || {node.item == e}}.until_do {
 	  previous_node := node;
 	  node := node.next;
 	};
@@ -190,10 +244,49 @@ section PUBLIC
     };
     
     ? {! has e};
-    ? {!old_has -> (count = old_count)};
-    ? {old_has -> (count = old_count - 1)};
+    ? {!old_has ->> {count = old_count}};
+    ? {old_has ->> {count = old_count - 1}};
   );
   
+  - fast_remove e:E <-
+  // Remove item `e' from the set:the mathematical definition of
+  // removing from a set is followed.
+  (
+    + h, idx:INTEGER;
+    + node, previous_node:SET_NODE[E];
+    + old_has:BOOLEAN;
+    + old_count:INTEGER;
+    
+    old_has := fast_has e;
+    old_count := count;
+    
+    cache_user := -1;
+    h := e.hash_code;
+    idx := h % capacity;
+    node := buckets.item idx;
+    ( node != NULL).if {
+      ( node.item = e).if {
+	count := count - 1;
+	node := node.next;
+	buckets.put node to idx;
+      } else {
+	previous_node := node;
+	node := node.next;
+	{ (node = NULL) || {node.item = e}}.until_do {
+	  previous_node := node;
+	  node := node.next;
+	};
+	( node != NULL).if {
+	  count := count - 1;
+	  previous_node.set_next (node.next);
+	};
+      };
+    };
+    
+    ? {! fast_has e};
+    ? {(! old_has) ->> {count = old_count}};
+    ? {old_has ->> {count = old_count - 1}};
+  );
   
   - clear <-
   // Empty the current set.
@@ -209,32 +302,94 @@ section PUBLIC
   
   - has e:E :BOOLEAN <-
   // Is element `e' in the set?
-  (
-    + idx:INTEGER;
+  ( + idx:INTEGER;
     + node:SET_NODE[E];
     + result:BOOLEAN;
-    
+    //? { e != NULL }; // A voir avec SET[INTEGER]
+
     idx := e.hash_code % capacity;
     node := buckets.item idx;
-    { (node = NULL) || {node.item.is_equal e}}.until_do {
+    { (node = NULL) || {node.item == e}}.until_do {
       node := node.next;
     };
     result := (node != NULL);
     
-    ? {result -> ! is_empty};
+    ? {result ->> {! is_empty}};
     
     result
   );
   
+  - fast_has e:E :BOOLEAN <-
+  // Is element `e' in the set?
+  ( + idx:INTEGER;
+    + node:SET_NODE[E];
+    + result:BOOLEAN;
+    //? { e != NULL }; BSBS : A voir avec un SET[INTEGER]
+    idx := e.hash_code % capacity;
+    node := buckets.item idx;
+    { (node = NULL) || {node.item = e}}.until_do {
+      node := node.next;
+    };
+    result := (node != NULL);
+    
+    ? {result ->> {! is_empty}};
+    
+    result
+  );
+  
+  - search e:E :E <-
+  // Is element `e' in the set?
+  ( + idx:INTEGER;
+    + node:SET_NODE[E];
+    + result:E;
+    ? { e != NULL };
+    idx := e.hash_code % capacity;
+    node := buckets.item idx;
+    { (node = NULL) || {node.item == e}}.until_do {
+      node := node.next;
+    };
+    (node !=NULL).if {
+      result := node.item;
+    };
+    result
+  );
+
+  - fast_search e:E :E <-
+  // Is element `e' in the set?
+  ( + idx:INTEGER;
+    + node:SET_NODE[E];
+    + result:E;
+    ? { e != NULL };
+    idx := e.hash_code % capacity;
+    node := buckets.item idx;
+    { (node = NULL) || {node.item = e}}.until_do {
+      node := node.next;
+    };
+    (node !=NULL).if {
+      result := node.item;
+    };
+    result
+  );
   
   // To provide iterating facilities:
+  
+  - lower:INTEGER := 1;
   
   - upper:INTEGER <-
   (
     count
   );
   
+  - first:E <-
+  (
+    item lower
+  );
   
+  - last:E <-
+  (
+    item count
+  );
+
   - valid_index index:NUMERIC :BOOLEAN <-
   (
     (1 <= index) && {index <= count}
@@ -249,7 +404,8 @@ section PUBLIC
     
     set_cache_user index;
     result := cache_node.item;
-    ? { has result};
+
+//    ? { fast_has result};
     
     result
   );
@@ -260,21 +416,45 @@ section PUBLIC
   );
   
   
+  - fast_index_of elt:E :INTEGER <-
+  ( + result:INTEGER;
+    
+    result := upper;
+    {(result<lower) || {item result = elt}}.until_do {
+      result := result - 1;
+    };
+    result
+  );
+
   // Mathematical operations:
   
   - union other:SELF <-
   // Make the union of the `self' set with `other'.
-  (
-    + e:E;
-    ? { other != NULL};
+  ( + e:E;
+    + old_count:INTEGER;
+    
+    ? {old_count := count; 
+       other != NULL};
     
     lower.to (other.count) do { i:INTEGER;
       e := other.item i;
-      (! has e).if {
-	add e;
-      };
+      add e;
     };
-    ? { count <= old count + other.count};
+    ? { count <= (old_count + other.count)};
+  );
+
+  - fast_union other:SELF <-
+  // Make the union of the `self' set with `other'.
+  ( + old_count:INTEGER;
+    + e:E;
+    ? {old_count := count; 
+       other != NULL};
+    
+    lower.to (other.count) do { i:INTEGER;
+      e := other.item i;
+      fast_add e;
+    };
+    ? { count <= (old_count + other.count)};
   );
   
   
@@ -337,7 +517,38 @@ section PUBLIC
     ? {	count <= other.count.min(old_count)};
   );
   
-  
+  - is_disjoint other:SELF :BOOLEAN <-
+  ( + j:INTEGER;
+    + result:BOOLEAN;
+     
+    (other.count<count).if {
+      result := other.is_disjoint self;
+    } else {
+      j:=upper;
+      {(j<lower) || {other.has (item j)}}.until_do {
+	j := j-1;
+      };
+      result := (j=0);
+    };
+    result
+  ); 
+
+  - fast_is_disjoint other:SELF :BOOLEAN <-
+  ( + j:INTEGER;
+    + result:BOOLEAN;
+     
+    (other.count<count).if {
+      result := other.fast_is_disjoint self;
+    } else {
+      j:=upper;
+      {(j<lower) || {other.fast_has (item j)}}.until_do {
+	j := j-1;
+      };
+      result := (j=0);
+    };
+    result
+  );
+ 
   - '^' other:SELF :SELF <-
   // Return the intersection of the `self' set with `other'.
   (
@@ -405,7 +616,7 @@ section PUBLIC
 	i := i + 1;
       };
     };
-    ? { result -> (count <= other.count)};
+    ? { result ->> {count <= other.count}};
     
     result
   );
@@ -442,7 +653,7 @@ section PUBLIC
   );
   
   
-  - is_equal other:SELF :BOOLEAN <-
+  - '=='  right 60 other:SELF :BOOLEAN <-
   // Is the `self' set equal to `other'?
   (
     + i:INTEGER;
@@ -455,12 +666,12 @@ section PUBLIC
       result := TRUE;
       i := 1;
       { ! result || {i > count}}.until_do {
-	result := other.has (item i);
+	result := other.fast_has (item i);
 	i := i + 1;
       };
     };
     //ensure then
-    ? { result = (is_subset_of other) & (other.is_subset_of self)};
+    //? { result = ((is_subset_of other) & (other.is_subset_of self))};
     
     result
   );
@@ -477,8 +688,24 @@ section PUBLIC
       clear;
     };
     
-    lower.to (other.count) do {
+    lower.to (other.count) do { i:INTEGER;
       add (other.item i);
+    };
+  );
+
+  - fast_copy other:SELF <-
+  // Copy 'other' into the current set
+  (
+    // Note:this is a naive implementation because we should
+    // recycle already allocated nodes of `self'.
+    ( capacity = 0 ).if {
+      with_capacity (other.count + 1);
+    } else {
+      clear;
+    };
+    
+    lower.to (other.count) do { i:INTEGER;
+      fast_add (other.item i);
     };
   );
   
@@ -488,12 +715,13 @@ section PUBLIC
   - increase_capacity <-
   // There is no more free slots:the set must grow.
   (
-    + i,idx, new_capacity:INTEGER;
+    + i,idx, new_capacity,old_capacity,old_count:INTEGER;
     + old_buckets:NATIVE_ARRAY[SET_NODE[E]];
     + node1, node2:SET_NODE[E];
     
     ? { capacity = count};
-    
+    old_capacity := capacity;
+    old_count := count;
     new_capacity := HASH_TABLE_SIZE.prime_number_ceiling (capacity + 1);
     old_buckets := buckets;
     buckets := buckets.calloc new_capacity;
@@ -512,8 +740,8 @@ section PUBLIC
     };
     cache_user := -1;
     
-    ? { capacity > old capacity };
-    ? { count = old count};
+    ? { capacity > old_capacity };
+    ? { count = old_count};
   );
   
   
@@ -545,7 +773,7 @@ section PUBLIC
     };
     
     ? { cache_user = index};
-    ? { cache_buckets.in_range 0,(capacity - 1)};
+    ? { cache_buckets.in_range 0 to (capacity - 1)};
     ? { cache_node != NULL};
   );
   
@@ -555,7 +783,7 @@ section PUBLIC
     ( capacity > 0) &&
     { capacity >= count} &&
     { cache_user.in_range (-1) to count} &&
-    { (cache_user > 0) -> (cache_node != NULL)} &&
-    { (cache_user > 0) -> (cache_buckets.in_range 0 to (capacity - 1))}
+    { (cache_user > 0) ->> {cache_node != NULL}} &&
+    { (cache_user > 0) ->> {cache_buckets.in_range 0 to (capacity - 1)}}
   );
   

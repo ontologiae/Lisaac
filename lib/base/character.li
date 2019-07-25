@@ -86,6 +86,42 @@ section PUBLIC
     ((self>=first_value) && {self<=last_value}).if block;
     self
   );
+
+  //
+  // Looping.
+  //
+  
+  - to limit_up:SELF do blc:BLOCK <-
+  (
+    (self<=limit_up).if {
+      blc.value self;
+      (self+1.to_character).to limit_up do blc;
+    };
+  );
+  
+  - downto limit_down:SELF do blc:BLOCK <-
+  (
+    (self>=limit_down).if {
+      blc.value self;
+      (self-1.to_character).downto limit_down do blc;
+    };
+  );
+  
+  - to limit_up:SELF by step:SELF do blc:BLOCK <-
+  (
+    (self<=limit_up).if {
+      blc.value self;
+      (self+step.to_character).to limit_up by step do blc;
+    };
+  );
+  
+  - downto limit_down:SELF by step:SELF do blc:BLOCK <-
+  (
+    (self>=limit_down).if {
+      blc.value self;
+      (self-step.to_character).downto limit_down by step do blc;
+    };
+  );
   
   //
   // Binary operator :
@@ -94,6 +130,8 @@ section PUBLIC
   - '+' other:CHARACTER :CHARACTER <- (code+other.code).to_character;
   
   - '-' other:CHARACTER :CHARACTER <- (code-other.code).to_character;
+  
+  - '+#' other:NUMERIC :CHARACTER <- (code + other).to_character;
   
   - '!==' other:CHARACTER :BOOLEAN <- (code !== other.code);
   // Comparison using `code'.
@@ -169,7 +207,7 @@ section PUBLIC
       .when 97 to 122 then {
 	result:=(code = (other.code + 32));
       };
-      ? {result -> ((to_lower = other) | (to_upper = other))};
+      ? {result ->> {(to_lower = other) | (to_upper = other)}};
     };
     result
   );

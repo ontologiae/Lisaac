@@ -22,24 +22,22 @@ section INHERIT
   
 section PUBLIC
   
+  - upper:INTEGER <- deferred;
+  
   - element_sizeof:INTEGER <- 
   ( + result:INTEGER;
     deferred;
     result
-  );
-    
+  );  
   
-  - valid_stream s:NUMERIC :BOOLEAN <-
-  ( + result:BOOLEAN;
-    deferred;
-    result
-  );
-  
-  - add_last_byte byte:USMALLINT offset ofs:INTEGER <-
+  - add_last_buffer buf:FIXED_ARRAY[USMALLINT] from beg:NUMERIC to end:NUMERIC <-
   (
     deferred;
   );
-
-
+    
+  - item_byte idx:NUMERIC offset ofs:NUMERIC :USMALLINT <-
+  (
+    deferred;
+  );
 
 

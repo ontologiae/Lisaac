@@ -175,7 +175,7 @@ section PUBLIC
       .when 97 to 122 then {
 	result:=(code = (other.code + 32));
       };
-      ? {result -> ((to_lower = other) | (to_upper = other))};
+      ? {result ->> {(to_lower = other) | (to_upper = other)}};
     };
     result
   );

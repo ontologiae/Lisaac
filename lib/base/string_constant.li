@@ -8,7 +8,10 @@
 
 section HEADER
   
-  + name        :=STRING_CONSTANT -> STRING;
+  + name        :=STRING_CONSTANT ; //-> STRING; // BSBS: Je ne pense pas que 
+  // ce soit le bon plan de le mettre, une conversion en STRING est couteux en memoire.
+  // Le faire automatique => fuite de mémoire a l'inssu du codeur...
+  
   
   - category    :=MICRO;
   
@@ -19,7 +22,7 @@ section HEADER
 section INHERIT
   
   * parent_abstract_string:ABSTRACT_STRING;
-  
+
 section PUBLIC
   
   - to_string:STRING <-
@@ -68,3 +71,25 @@ section PRIVATE
   (
     to_string.to_external
   );
+
+  - create_copy other:ABSTRACT_STRING :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make_copy other;
+    result
+  );
+  
+  - make_copy other:ABSTRACT_STRING <-
+  ( + c:INTEGER;
+    
+    c := other.count;
+    (c != 0).if {
+      storage := NATIVE_ARRAY[CHARACTER].calloc c;
+      storage.copy_from (other.storage) until (c-1);
+      count := c;
+    };
+  );
+
+
+

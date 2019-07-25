@@ -359,7 +359,7 @@ section PUBLIC
     result := lower + storage.index_of element,(upper - lower);
     ? { lower <= result };
     ? { result <= upper + 1 };
-    ? { (result <= upper) -> ( element.is_equal (item result))};
+    ? { (result <= upper) ->> { element == (item result)}};
     result    
   );
   
@@ -368,18 +368,18 @@ section PUBLIC
     result := lower + storage.fast_index_of element,(upper - lower);
     ? { lower <= result };
     ? { result <= upper + 1 };
-    ? { (result <= upper) -> ( element = item result)};
+    ? { (result <= upper) ->> { element = item result}};
     result
   );
   
-  - is_equal other:SELF :BOOLEAN <-
+  - '=='  right 60 other:SELF :BOOLEAN <-
   ( + result:BOOLEAN;    
     ( self = other ).if {
       result := true;
     }.elseif { (lower = other.lower) && { upper = other.upper }} then {
       result := storage.fast_memcmp (other.storage),count;
     };
-    ? { result -> (lower = other.lower & upper = other.upper)};
+    ? { result ->> {lower = other.lower & upper = other.upper}};
     result
   );
   
@@ -390,7 +390,7 @@ section PUBLIC
     }.elseif { (lower = other.lower) && { upper = other.upper }} then {
       result := storage.memcmp (other.storage),count;
     };
-    ? { result -> (lower = other.lower & upper = other.upper)};
+    ? { result ->> {(lower = other.lower) & (upper = other.upper)}};
     result
   );
   

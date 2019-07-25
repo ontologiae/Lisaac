@@ -70,6 +70,8 @@ section PRIVATE
   - '^'  left 10  other:BOOLEAN :BOOLEAN <- ! other;
   
   - '->'  right 25 other:BOOLEAN :BOOLEAN <- other;
+
+  - '->>' right 25 other:BLOCK  :BOOLEAN <- other.value;
   
   - '=>' s:ABSTRACT_STRING <-
   (
@@ -87,7 +89,7 @@ section PRIVATE
   // Conversion
   //
   
-  - to_string:STRING       <- "true";
+  - to_string:STRING       <- "true".to_string; // BSBS: A revoir ...
   
   - to_numeric:NUMERIC     <- 1;
   

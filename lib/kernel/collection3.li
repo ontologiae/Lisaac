@@ -305,8 +305,8 @@ section PUBLIC
     deferred;
     //? {
     // count1 = model.count;
-    // count2 > 0 -> count2 = model.first.count;
-    // count3 > 0 -> count3 = model.first.first.count
+    // count2 > 0 ->> {count2 = model.first.count};
+    // count3 > 0 ->> {count3 = model.first.first.count}
   );
   
 
@@ -320,14 +320,14 @@ section PUBLIC
 
 
   - same_as other:COLLECTION3[E] :BOOLEAN <-
-  // Unlike `is_equal', this feature can be used to compare
+  // Unlike `==', this feature can be used to compare
   // distinct implementation of COLLECTION3.
   (
     ? { other != NULL};
     
     deferred;
     // ? {
-    //	 result -> standard_same_as(other)
+    //	 result ->> {standard_same_as(other)}
   );
   
   

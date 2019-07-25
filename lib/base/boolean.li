@@ -1,6 +1,6 @@
 /***************************************************************************
 *                             Lisaac Library                               *
-*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                   (c) INRIA 2003 (see 'licence.txt')                     *
 *                      LORIA - UHP - INRIA - FRANCE                        *
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
 *                          http://www.IsaacOS.com                          *
@@ -23,6 +23,15 @@ section INHERIT
   
   - parent_object:OBJECT := OBJECT;
   
+section PRIVATE  
+  
+  - deferred_boolean:BOOLEAN <-
+  ( + result:BOOLEAN;
+    
+    deferred;
+    result
+  );
+  
 section PUBLIC
 
   //
@@ -35,9 +44,9 @@ section PUBLIC
   
   - if true_block:BLOCK else false_block:BLOCK <- deferred;
   
-  - if true_block:BLOCK :BOOLEAN <- deferred;
+  - if true_block:BLOCK :BOOLEAN <- deferred_boolean;
   
-  - elseif cond:BLOCK then block:BLOCK :BOOLEAN <- deferred;
+  - elseif cond:BLOCK then block:BLOCK :BOOLEAN <- deferred_boolean;
   
   - elseif cond:BLOCK then block:BLOCK else block_else:BLOCK <- deferred;
   
@@ -45,17 +54,19 @@ section PUBLIC
   // Binary operator :
   //
   
-  - '||' left 10  other:BLOCK   :BOOLEAN <- deferred;
+  - '||' left 10  other:BLOCK   :BOOLEAN <- deferred_boolean;
   
-  - '&&' left 20  other:BLOCK   :BOOLEAN <- deferred;
+  - '&&' left 20  other:BLOCK   :BOOLEAN <- deferred_boolean; 
   
-  - '|'  left 10  other:BOOLEAN :BOOLEAN <- deferred;
+  - '|'  left 10  other:BOOLEAN :BOOLEAN <- deferred_boolean;
   
-  - '&'  left 20  other:BOOLEAN :BOOLEAN <- deferred;
+  - '&'  left 20  other:BOOLEAN :BOOLEAN <- deferred_boolean;
   
-  - '^' left 10  other:BOOLEAN :BOOLEAN <- deferred;
+  - '^' left 10  other:BOOLEAN :BOOLEAN  <- deferred_boolean;
   
-  - '->' right 25 other:BOOLEAN :BOOLEAN <- deferred;
+  - '->' right 25 other:BOOLEAN :BOOLEAN <- deferred_boolean;
+
+  - '->>' right 25 other:BLOCK  :BOOLEAN <- deferred_boolean;
   
   - '=>' s:ABSTRACT_STRING <- deferred;
   
@@ -69,10 +80,29 @@ section PUBLIC
   // Convertion
   //
   
-  - to_string:STRING <- deferred;
+  - to_string:STRING <- 
+  ( + result:STRING;
+    
+    deferred;
+    result
+  );
   
-  - to_numeric:NUMERIC <- deferred;
+  - to_numeric:NUMERIC <- 
+  ( + result:NUMERIC;
+    
+    deferred;
+    result
+  );
   
-  - to_character:CHARACTER <- deferred;
+  - to_character:CHARACTER <- 
+  ( + result:CHARACTER;
+    
+    deferred;
+    result
+  );
   
   - append_in str:STRING <- str.append to_string;
+
+
+
+

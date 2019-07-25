@@ -82,6 +82,8 @@ section PUBLIC
   
   - '->'  right 25 other:BOOLEAN :BOOLEAN <- TRUE;
   
+  - '->>' right 25 other:BLOCK  :BOOLEAN <- TRUE;
+  
   - '=>' s:ABSTRACT_STRING <-
   (
   );
@@ -96,7 +98,7 @@ section PUBLIC
   // Convertion
   //
   
-  - to_string:STRING       <- "false";
+  - to_string:STRING       <- "false".to_string;
   
   - to_numeric:NUMERIC     <- 0;
   

@@ -64,8 +64,9 @@ section PUBLIC
   - make new_count:NUMERIC <-
   // Make array with range [0 .. `new_count' - 1].
   // When `new_count' = 0 the array is empty.
-  (   
+  ( + adr:INTEGER;  
     storage := MAP_NATIVE_ARRAY[E].calloc new_count;
+    
     upper := new_count - 1;
     capacity := new_count;
     
@@ -142,12 +143,12 @@ section PUBLIC
   // True when `index' is valid (ie. inside actual
   // bounds of the collection).
   ( + result:BOOLEAN;
-    result := (lower <= index) && {index <= upper};
-    ? { result = (lower <= index) && {index <= upper}};
+    result := (lower <= index.to_integer) && {upper >= index.to_integer};
+    ? { result = (lower <= index.to_integer) && {upper >= index.to_integer}};
     result
   );
   
-  - is_equal other:SELF :BOOLEAN <-
+  - '=='  right 60 other:SELF :BOOLEAN <-
   ( + result:BOOLEAN;
     
     ( self = other).if {
@@ -155,9 +156,9 @@ section PUBLIC
     }.elseif { upper = other.upper } then {
       result := storage.fast_memcmp (other.storage) until (upper + 1) ;
     }; // end if
-    ? { result -> (lower = other.lower & upper = other.upper)};
+    ? { result ->> {(lower = other.lower) & (upper = other.upper)}};
     result
-  ); // end is_equal
+  ); // end ==
   
   
   
@@ -169,35 +170,69 @@ section PUBLIC
     }.elseif { upper = other.upper } then {
       result := storage.memcmp (other.storage) until (upper + 1);
     }; // end if
-    ? { result -> (lower = other.lower & upper = other.upper)};
+    ? { result ->> {(lower = other.lower) & (upper = other.upper)}};
     result
   ); // end is_equal_map
   
   - element_sizeof:INTEGER <- E.object_size;
-    
+/*    
   - valid_stream s:NUMERIC :BOOLEAN <-
   ( + result:BOOLEAN;
     
-    ? {(s % element_sizeof)=0};
+    ? {(s % element_sizeof.to_uinteger)=0};
     ? {E.object_size!=0};
     
-    result := (s % element_sizeof)=0;
+    result := (s % element_sizeof.to_uinteger)=0;
     result := result && {E.object_size!=0};
     result
   );
+  */  
   
-  - add_last_byte byte:USMALLINT offset ofs:INTEGER <-
-  ( + e:E;
-    + tab:NATIVE_ARRAY[USMALLINT];
-    + pos:INTEGER;
-    ? {ofs < element_sizeof};
+  
+  + ofs_buf:INTEGER;
     
-    (ofs=0).if {
-      ? {count < capacity};
-      upper := upper + 1;	
+  - add_last_buffer buf:FIXED_ARRAY[USMALLINT] from beg:NUMERIC to end:NUMERIC <-
+  ( + tab:NATIVE_ARRAY[USMALLINT];
+    + pos_beg,size,new_capacity:INTEGER;
+    
+    ? {! E.is_clonable};
+    
+    pos_beg := count * element_sizeof + ofs_buf;
+    size    := end - beg + 1;
+    
+    new_capacity := (pos_beg + end - beg + element_sizeof) / element_sizeof;
+    (capacity < new_capacity).if {
+      "cap map:".print;
+      capacity.print;
+      "new:".print;
+      new_capacity.print;
+      "Crash !\n".print;
+      crash;
     };
+    
     tab := NATIVE_ARRAY[USMALLINT].force_conversion storage;
-    pos := upper * element_sizeof + ofs;
-    tab.put byte to pos;
+    tab.copy (buf.storage + beg) to pos_beg until size;
+    ofs_buf := (pos_beg + size) % element_sizeof;
+    upper   := (pos_beg + size - 1) / element_sizeof;
+  );
+  
+  - add_last_buffer_bug buf:FIXED_ARRAY[USMALLINT] from beg:NUMERIC to end:NUMERIC <-
+  ( + pos,ofs:INTEGER;
+    + tab:NATIVE_ARRAY[USMALLINT];
+    
+    ? {! E.is_clonable};
+    ? {((end - beg + 1) % element_sizeof) = 0};
+    
+    // BSBS: Peu faire mieux directement avec les storages...
+    beg.to end do { j:INTEGER;
+      (ofs=0).if {
+	? {count < capacity};
+	upper := upper + 1;	
+      };
+      tab := NATIVE_ARRAY[USMALLINT].force_conversion storage;
+      pos := upper * element_sizeof + ofs;
+      tab.put (buf.item j) to pos;
+      ofs := (ofs + 1) % element_sizeof;
+    };
   );
   

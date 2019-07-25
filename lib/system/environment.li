@@ -8,7 +8,7 @@
 
 section HEADER
   
-  - name        := ENVIRONMENT; // expanded
+  - name        := ENVIRONMENT;
   
   - category    := MICRO;
   

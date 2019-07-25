@@ -125,7 +125,7 @@ section PUBLIC
       result := node.item;
     };
     
-    ? { has k -> {result = at k}};
+    ? { has k ->> {result = at k}};
     
     result
   );
@@ -138,7 +138,7 @@ section PUBLIC
   (
     + h, idx:INTEGER;
     + node:DICTIONARY_NODE[V,K];
-    
+    //? { k != NULL}; // BSBS : a voir si k=INTEGER
     cache_user := -1;
     
     h := k.hash_code;
@@ -167,21 +167,22 @@ section PUBLIC
   - add v:V to k:K <-
   // To add a new entry `k' with its associated value `v'. Actually, this
   // is equivalent to call `put', but may run a little bit faster.
-  (
+  ( + old_count:INTEGER;
     + idx:INTEGER;
-    +  node:DICTIONARY_NODE[V,K];
+    + node:DICTIONARY_NODE[V,K];
     
     ? {!has k};
+    old_count := count;
     cache_user := -1;
     (capacity = count ).if {
       increase_capacity;
     };
-    idx := k.hash_code \\ capacity;
+    idx := k.hash_code % capacity;
     node:= DICTIONARY_NODE[V,K].create v to k next (buckets.item idx);
     buckets.put node to idx;
     count := count + 1;
     
-    ? { count = 1 + old count };
+    ? { count = 1 + old_count };
     ? { v = at k };
   );
   
@@ -270,7 +271,7 @@ section PUBLIC
     +  node, previous_node:DICTIONARY_NODE[V,K]; 
     cache_user := -1;
     h := k.hash_code;
-    idx := h \\ capacity;
+    idx := h % capacity;
     node := buckets.item idx;
     (node != NULL ).if {
       (node.key == k ).if {
@@ -286,7 +287,7 @@ section PUBLIC
 	};
 	(node != NULL ).if {
 	  count := count - 1;
-	  previous_node.set_next node.next;
+	  previous_node.set_next (node.next);
 	};
       };
     };
@@ -297,13 +298,13 @@ section PUBLIC
   
   - clear <-
   // Discard all items.
-  (
+  ( + old_capacity:INTEGER;
+    old_capacity := capacity;
     buckets.set_all_with NULL until (capacity - 1);
     cache_user := -1;
     count := 0;
-    ensure
-    is_empty;
-    ? { capacity = old capacity};
+    ? { is_empty };
+    ? { capacity = old_capacity};
   );
   
   
@@ -374,13 +375,13 @@ section PUBLIC
     
     old_count := buffer.count;     
     node := buckets.item idx;
-    count.downto 1 do {	    
+    count.downto 1 do { i:INTEGER;	    
       {node != NULL}.until_do {
 	idx := idx + 1;
 	? {idx < capacity};
 	node := buckets.item idx;
       }; // end until_do
-      buffer.add_last node.key;
+      buffer.add_last (node.key);
       node := node.next;
     }; // end do
     
@@ -400,13 +401,13 @@ section PUBLIC
     
     old_count := buffer.count;
     node := buckets.item idx;
-    count.downto 1 do {
+    count.downto 1 do { i:INTEGER;
       {node != NULL}.until_do {
 	idx := idx + 1;
 	? {idx < capacity};
 	node := buckets.item idx;
       }; // end until_do
-      buffer.add_last node.item;
+      buffer.add_last (node.item);
       node := node.next;
     }; // end do
     
@@ -414,9 +415,9 @@ section PUBLIC
   );
   
   
-  - is_equal other:SELF :BOOLEAN <-
+  - '=='  right 60 other:SELF :BOOLEAN <-
   // do both dictionaries have the same set of associations?
-  // Keys are compared with `is_equal' and values are comnpared
+  // Keys are compared with `==' and values are comnpared
   // with the basic = operator. See also `is_equal_map'.
   (
     + i:INTEGER;
@@ -440,7 +441,7 @@ section PUBLIC
       }; // end until_do
     }; // end if
     
-    ? { result -> count = other.count };
+    ? { result ->> {count = other.count} };
     
     result
   );
@@ -448,7 +449,7 @@ section PUBLIC
   
   - is_equal_map other:SELF :BOOLEAN <-
   // Do both dictionaries have the same set of associations?
-  // Both keys and values are compared with `is_equal'. See also `is_equal'.
+  // Both keys and values are compared with `=='. See also `=='.
   (
     + i:INTEGER;
     + k:K; 
@@ -533,9 +534,6 @@ section PUBLIC
     old_buckets  := buckets;
     new_capacity := HASH_TABLE_SIZE.prime_number_ceiling (capacity + 1);
     
-    "New cap : ".print;
-    new_capacity.print;
-        
     buckets := NATIVE_ARRAY[DICTIONARY_NODE[V,K]].calloc new_capacity;
     capacity := new_capacity;
     (old_capacity - 1).downto 0 do { i:INTEGER;
@@ -639,8 +637,8 @@ section PUBLIC
     ( capacity > 0) && 
     { capacity >= count} &&
     { cache_user.in_range (-1) to count} &&
-    { cache_user > 0 -> cache_node != NULL} &&
-    { cache_user > 0 -> cache_buckets.in_range 0 to (capacity - 1)}
+    { (cache_user > 0) ->> {cache_node != NULL}} &&
+    { (cache_user > 0) ->> {cache_buckets.in_range 0 to (capacity - 1)}}
   );
   
   

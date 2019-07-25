@@ -83,7 +83,7 @@ section PRIVATE
   
   - basic_system_execute_command system_command_line:NATIVE_ARRAY[CHARACTER] :INTEGER <-
   (
-    `system(((char*)(@system_command_line)))`:INTEGER
+    `system(((char*)(@system_command_line)))`:(INTEGER)
   );
 
 

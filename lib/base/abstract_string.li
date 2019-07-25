@@ -556,8 +556,7 @@ section PUBLIC
   (
     + i, state, value_int: INTEGER;
     + value:REAL_16_16;
-    + negative: BOOLEAN;
-    + result:BOOLEAN;
+    + negative: BOOLEAN;    
     + cc: CHARACTER;
     + d:INTEGER;
     

@@ -103,6 +103,11 @@ section PUBLIC
   // Get.
   //
   
+  - get_color n:INTEGER :UINTEGER <-
+  ( ? {n.in_range 0 to upper};    
+    item n.rgbcolor
+  );
+  
   - item n:INTEGER :PIXEL <-
   ( + result:PIXEL;
     
@@ -118,6 +123,8 @@ section PUBLIC
   - item_16 n:INTEGER :PIXEL_16 <- item n.to_pixel_16;
 
   - item_24 n:INTEGER :PIXEL_24 <- item n.to_pixel_24;
+
+  - item_32 n:INTEGER :PIXEL_32 <- item n.to_pixel_32;
   
   - item_ascii n:INTEGER :PIXEL_ASCII <- item n.to_pixel_ascii; // JBJB For text mode
   //

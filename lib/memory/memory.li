@@ -1,5 +1,5 @@
 /***************************************************************************
-*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
 *                      LORIA - UHP - INRIA - FRANCE                        *
 *                   Jerome BOUTET  - boutet@loria.fr                       *
 *                   Benoit SONNTAG - bsonntag@loria.fr                     *
@@ -20,7 +20,7 @@ section INHERIT
   
   - parent_object:OBJECT := OBJECT; 
   
-section PRIVATE
+section MEMORY, MEM_BLOCK
       
   - small_fat:NATIVE_ARRAY[MEM_BLOCK];
     
@@ -29,7 +29,7 @@ section PRIVATE
   - begin_memory:UINTEGER;
   
   - end_memory:UINTEGER;
-  
+ 
   - capacity:UINTEGER;
   
   - last_block:MEM_BLOCK;
@@ -48,14 +48,17 @@ section PRIVATE
     ? {get_next last_block = NULL};
     
     // Free Linked list.
-    (first_free != NULL).if {
-      first_free.check_block;
+    cur := first_free;
+    {cur != NULL}.while_do {
+      ? {cur.is_free};
+      ? {(cur.prev_same != NULL) ->> {cur.prev_same.next_same = cur}};      
+      cur := cur.next_same;
     };
     
     // Linear memory verification.
     cur := last_block;
     {cur != NULL}.while_do {
-      cur.check_block;
+      cur.check_big;
       cur_prev := cur.prev;
       ? {(cur_prev != NULL) ->> {get_next cur_prev = cur}};
       cur := cur_prev;
@@ -65,7 +68,7 @@ section PRIVATE
     0.to 63 do { j:INTEGER;
       cur := small_fat.item j;
       (cur != NULL).if {
-	cur.check_block;
+	cur.check_small;
       };
     };
     TRUE
@@ -106,7 +109,7 @@ section PRIVATE
 //	add_size := (size + 16 + 00000FFFFh) & 0FFFF0000h; // + 64Ko
 	capacity := capacity + add_size;
 	? {get_next last_block = NULL};
-	realloc_c capacity;
+	SYSTEM.realloc_c begin_memory,capacity;
 	
 	(last_block.is_free).if {
 	  cur_block := last_block;
@@ -124,9 +127,29 @@ section PRIVATE
 	};
 	end_memory := end_memory + add_size;	      
       } else {
+	// No Big Block left
 	'M'.print;
 	'E'.print;
 	'M'.print;
+	':'.print;
+	'N'.print;
+	'O'.print;
+	' '.print;
+	'B'.print;
+	'I'.print;
+	'G'.print;
+	' '.print;
+	'B'.print;
+	'L'.print;
+	'O'.print;
+	'C'.print;
+	'K'.print;
+	' '.print;
+	'F'.print;
+	'R'.print;
+	'E'.print;
+	'E'.print;
+	
       };
     };
     
@@ -220,7 +243,6 @@ section PRIVATE
     };
 
     ? {get_next last_block = NULL};
-
   );
     
 section PUBLIC  
@@ -237,7 +259,7 @@ section PUBLIC
       auto_install;
     };
     
-    //? {check_memory};
+//    ? {check_memory};
     
     (nb <= 128).if {       
       // Small Allocation.
@@ -275,30 +297,47 @@ section PUBLIC
     };
 
     (result=0).if {
+      // Not enough memory
+      'M'.print;
       'E'.print;
-      'R'.print;
-      'R'.print;
+      'M'.print;
+      ':'.print;
+      'N'.print;
+      'O'.print;
+      'T'.print;
+      ' '.print;
+      'E'.print;
+      'N'.print;
+      'O'.print;
+      'U'.print;
+      'G'.print;
+      'H'.print;
       ' '.print;
       'M'.print;
       'E'.print;
       'M'.print;
+      'O'.print;
+      'R'.print;
+      'Y'.print;
       `while (1)`;
       //crash_with_message "Error : Not enough memory (blue screen :-)";
     };
-
-//    ? {check_memory};
     
+//    ? {check_memory};
+
     POINTER.from_uinteger result
   );
   
   - free p:UINTEGER size nb:NUMERIC <-
   ( + first_block,cur_block,p_block,n_block:MEM_BLOCK;
     + size, index:INTEGER;
+
+//    ? {check_memory};
     
     (nb <= 128).if {
       // It's a small_block
-      size  := (nb+1)&0FEh;
-      index := (size>>1)-1;
+      size  := (nb + 1) & 0FEh;
+      index := (size >> 1) - 1;
       first_block := small_fat.item index;
       ? {first_block!=NULL};
       
@@ -337,6 +376,8 @@ section PUBLIC
       // It's a big block
       big_free_intern (get_block (p - MEM_BLOCK.object_size));
     }; // End if small or big block    
+    
+//    ? {check_memory};
   );  
   
   - realloc old_ptr:POINTER size old_size:NUMERIC to new_size:NUMERIC :POINTER <-
@@ -350,7 +391,7 @@ section PUBLIC
     new_pointer
   );
   
-  - allocation_reserved begin:UINTEGER until end:UINTEGER <-
+  - allocation_reserved begin:UINTEGER to end:UINTEGER <-
   ( 
     //not_yet_implemented;
   );
@@ -396,20 +437,21 @@ section PUBLIC
   - print_capacity <-
   // Print size of memory capacity in Mb
   (
-    "System Memory: ".print;
-    ((end_memory + 1) >> 20).print;
+    "System Memory (Used for Isaac): ".print;
+    (capacity >> 20).print;
     "MB RAM\n".print;  
   );
   //
   // Debug Print
   //
   
-  - print_nb n:UINTEGER <-
+  - print_nb nb:UINTEGER <-
   // Display number without allocation.
-  ( + div:UINTEGER;
+  ( + div,n:UINTEGER;
     + car:SMALLINT;
     + tst:BOOLEAN;
     
+    n := nb;
     div := 1000000000;
     {div!=0}.while_do {
       car := (n / div).to_smallint;
@@ -480,30 +522,12 @@ section PRIVATE
   
   - auto_install <-
   ( + begin:UINTEGER;
-    + all_memory:NATIVE_ARRAY[SMALLINT];
-    + byte:SMALLINT;
+    begin_memory := SYSTEM.get_begin_memory;
+    capacity := SYSTEM.get_capacity_memory;
     
-    (is_ansi).if {
-      //
-      // C ANSI system.
-      //
-      capacity := 1000000h; // 16MB 
-      realloc_c capacity;
-    } else {
-      //
-      // ISAAC system.
-      //
-      begin_memory := 200000h; // 2 MB
-      all_memory := NATIVE_ARRAY[SMALLINT].force_conversion begin_memory;
-      {
-	capacity := capacity + 200000h;
-	byte := all_memory.item capacity;
-	all_memory.force_put (~byte) to capacity;
-      }.do_until {byte != ~all_memory.item capacity};
-    };
-      
-    begin := (begin_memory+15) & 0FFFFFFF0h;
+    begin := begin_memory.align_power 16;
     end_memory := begin + capacity - 1;
+    
     small_fat := NATIVE_ARRAY[MEM_BLOCK].force_conversion begin;
     small_fat.clear_all 63;
     
@@ -511,20 +535,9 @@ section PRIVATE
     last_block := get_block begin;
     last_block.make (end_memory +1 - begin - MEM_BLOCK.object_size);
     first_free:=last_block;    
-   
+    
+//    ? {check_memory};    
     ? {get_next last_block = NULL};
     ? {small_fat!=NULL};      
   );  
-  
-  //
-  // C ANSI System.
-  //
-  
-  - realloc_c nb:NUMERIC <-
-  ( + beg:UINTEGER;
-    beg := begin_memory;
-    begin_memory := `realloc((void *)@beg,@nb+15)`:UINTEGER;
-    ? {(beg != 0) ->> {beg = begin_memory}};
-    ? {begin_memory != 0};
-  );
-  
+    

@@ -37,4 +37,19 @@ section PUBLIC
     `(unsigned long long)time(NULL)`:ULONGINT
   );
 
-
+  // Memory Management
+  
+  - get_begin_memory:UINTEGER := realloc_c 0,get_capacity_memory;
+  
+  - get_capacity_memory:UINTEGER := 1000000h; // 16MB
+  
+section SYSTEM,MEMORY
+  
+  - realloc_c beg:UINTEGER,nb:NUMERIC :UINTEGER <-
+  ( + result:UINTEGER;
+    result := `realloc((void *)@beg,@nb+15)`:UINTEGER;
+    ? {(beg != 0) ->> {beg = result}};
+    ? {result != 0};
+    result
+  );
+  

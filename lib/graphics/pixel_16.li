@@ -58,34 +58,37 @@ section PRIVATE
   );
       
 section PUBLIC
-  
+    
   - red:USMALLINT <- 
   (
-    convert_5_to_8.item (real_color >> 11)
+    (((real_color >> 11) & 1Fh)  << 3).to_usmallint
+    //convert_5_to_8.item (real_color >> 11)
   );
   
   - green:USMALLINT <- 
   (
-    convert_6_to_8.item ((real_color >> 5) & 03Fh)
+    (((real_color >> 5) & 3Fh) << 2).to_usmallint
+    //convert_6_to_8.item ((real_color >> 5) & 03Fh)
   );
 
   - blue:USMALLINT <- 
   (
-    convert_5_to_8.item (real_color & 01Fh)
+    ((real_color & 1Fh) << 3).to_usmallint
+//    convert_5_to_8.item (real_color & 01Fh)
   );
   
   - color col:UINTEGER <-
-  (
-    real_color := (((col >> 16)        .to_ushortint << 8) & 0F800h) |
-                  (((col & 00FF00h)>>8).to_ushortint << 3) & 007E0h) |
-                   ((col & 0000FFh)    >> 3);
+  (     
+    real_color := (((col & 0F80000h) >> 8) |
+                   ((col & 000FC00h) >> 5) |
+                   ((col & 00000F8h) >> 3)).to_ushortint;
   );
   
   - color_rgb r,g,b:USMALLINT <-
-  (
-    real_color := ((r.to_ushortint << 8) & 0F800h) |
-                  ((g.to_ushortint << 3) & 007E0h) |
-                   (b >> 3);
+  ( 
+    real_color := ((r & 0F8h).to_ushortint << 8) |
+                  ((g & 0FCh).to_ushortint << 3) |
+		  ((b & 0F8h).to_ushortint >> 3);
   );
   
   - size:USMALLINT       := 16; 
@@ -104,5 +107,4 @@ section PUBLIC
   );
   
   - to_pixel_16:PIXEL_16 <- self;
-  
 

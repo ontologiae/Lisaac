@@ -62,16 +62,16 @@ section PUBLIC
   
   - color col:UINTEGER <-
   (
-    real_color := (((col >> 16)        .to_ushortint << 7) & 07C00h) |
-                  (((col & 00FF00h)>>8).to_ushortint << 3) & 003E0h) |
-                   ((col & 0000FFh)    >>3);
+    real_color := (((col & 0F80000h) >> 9) |
+                   ((col & 000F800h) >> 6) |
+                   ((col & 00000F8h) >> 3)).to_ushortint;      
   );
   
   - color_rgb r,g,b:USMALLINT <-
   (
-    real_color := ((r.to_ushortint << 7) & 07C00h) |
-                  ((g.to_ushortint << 3) & 003E0h) |
-                  (b >> 3);
+    real_color := ((r & 0F8h).to_ushortint << 7) |
+                  ((g & 0F8h).to_ushortint << 2) |
+                  ((b & 0F8h).to_ushortint >> 3);
   );
   
   - is_transparent:BOOLEAN <- 
@@ -79,13 +79,13 @@ section PUBLIC
     (real_color & 08000h) != 0
   );  
   
-  - size:USMALLINT       := 16; 
-  - red_size:USMALLINT   := 5;
-  - red_pos:USMALLINT    := 10;
-  - green_size:USMALLINT := 5;
-  - green_pos:USMALLINT  := 5;
-  - blue_size:USMALLINT  := 5;
-  - blue_pos:USMALLINT   := 0;
+  - size:USMALLINT          := 16; 
+  - red_size:USMALLINT      := 5;
+  - red_pos:USMALLINT       := 10;
+  - green_size:USMALLINT    := 5;
+  - green_pos:USMALLINT     := 5;
+  - blue_size:USMALLINT     := 5;
+  - blue_pos:USMALLINT      := 0;
   - reserved_size:USMALLINT := 1;
   - reserved_pos:USMALLINT  :=15;
   

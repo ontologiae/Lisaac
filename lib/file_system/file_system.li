@@ -1,0 +1,86 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        :=FILE_SYSTEM;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";  
+
+  - comment     :="Standard File System manager";
+  
+section INHERIT  
+  
+  - parent_object:OBJECT := OBJECT;
+
+section PRIVATE
+  
+   + file_type:DICTIONARY[STD_FILE,STRING]; 
+
+section PUBLIC
+  
+  - make <-
+  (
+    current_dir := DIRECTORY.clone;
+    current_dir.open_current_directory;
+  );
+  
+  //
+  // Directory
+  //
+  
+  + current_dir:DIRECTORY;  // Current directory
+  
+  - get_directory n:ABSTRACT_STRING :DIRECTORY <-
+  (
+    ? {n != NULL};
+    // ? {current_dir != NULL};
+    (current_dir = NULL).if {
+      // FILE_SYSTEM Not Initialized
+      make;
+    };
+    current_dir.get_directory n
+  );
+  
+  - change_directory n:ABSTRACT_STRING <-
+  (
+    current_dir := get_directory n;
+  );
+  
+  //
+  // File
+  //
+  
+  - create_file n:ABSTRACT_STRING :STD_FILE <-
+  (
+    ? {n != NULL};
+    (current_dir = NULL).if {
+      // FILE_SYSTEM Not Initialized
+      make;
+    };    
+    current_dir.create_file n
+  );
+  
+  - get_file n:ABSTRACT_STRING :STD_FILE <-
+  (
+    ? {n != NULL};
+    // ? {current_dir != NULL};
+    (current_dir = NULL).if {
+      // FILE_SYSTEM Not Initialized
+      make;
+    };
+    current_dir.get_file n
+  );
+  
+  
+  

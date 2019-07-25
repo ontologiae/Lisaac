@@ -22,7 +22,7 @@ section INHERIT
   
   - parent_object:OBJECT := OBJECT;
   
-section PRIVATE
+section PUBLIC
 
   - object_size:INTEGER <- pointer_size;
 

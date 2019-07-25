@@ -23,7 +23,7 @@ section INHERIT
   
   - parent_boolean:BOOLEAN := BOOLEAN;
   
-section PRIVATE
+section PUBLIC
   
   //
   // Conditional :

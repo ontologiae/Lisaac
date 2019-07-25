@@ -64,7 +64,7 @@ section PUBLIC
   - make new_count:NUMERIC <-
   // Make array with range [0 .. `new_count' - 1].
   // When `new_count' = 0 the array is empty.
-  ( + adr:INTEGER;  
+  (
     storage := MAP_NATIVE_ARRAY[E].calloc new_count;
     
     upper := new_count - 1;

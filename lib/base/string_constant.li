@@ -32,7 +32,7 @@ section PUBLIC
     new
   );
   
-section PRIVATE
+section PUBLIC
 
   - capacity:INTEGER <- count;
   

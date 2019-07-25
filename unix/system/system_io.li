@@ -21,10 +21,16 @@ section HEADER
 
   - external    := `#include <stdio.h>
   
-  // Hardware 
+// Hardware 'print_char'
 int print_char(char car)
 {
   fputc(car,stdout);
+};
+
+// Hardware 'exit'
+int die_with_code(int code)
+{
+  exit(code);
 };
 
 `;

@@ -39,7 +39,6 @@ section PUBLIC
     + p:POINTER;
     + result  :NATIVE_ARRAY[E];
     ? {nb_elements > 0};
-    
     capacity := nb_elements * element_sizeof;
     p        :=MEMORY.allocation capacity;
     result   := `(void*)@p`:NATIVE_ARRAY[E];

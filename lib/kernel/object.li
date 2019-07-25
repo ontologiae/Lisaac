@@ -52,9 +52,9 @@ section PUBLIC
   
   - check_crash <-
   (
-    //print_runtime_stack;
-    //die_with_code exit_failure_code;
-    crash_with_message "Check runtime error.\n";  
+    print_runtime_stack;
+    die_with_code exit_failure_code;
+    //crash_with_message "Check runtime error.\n";  
   );
   
   - crash <-
@@ -87,7 +87,6 @@ section PUBLIC
     + ptr:POINTER;
     + sz:INTEGER;
     ? {is_clonable};
-    
     sz := object_size;
     (sz = 0).if {
       result := self;

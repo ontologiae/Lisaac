@@ -23,6 +23,7 @@ section INHERIT
 section PUBLIC
   
   - upper:INTEGER <- deferred;
+  - count:INTEGER <- deferred;
   
   - element_sizeof:INTEGER <- 
   ( + result:INTEGER;
@@ -40,4 +41,8 @@ section PUBLIC
     deferred;
   );
 
+  - set_capacity new_capacity:NUMERIC <-
+  (
+    deferred;
+  );
 

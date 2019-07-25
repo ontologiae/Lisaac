@@ -129,6 +129,24 @@ section PUBLIC
     ? {count == new_count};
     ? {capacity >= old_capacity};    
   );
+
+  - set_capacity new_capacity:NUMERIC <-
+  // Resize `capacity' self, but not count.
+  ( + old_capacity:INTEGER;
+    ? { new_capacity >= 0 };
+    old_capacity := capacity;
+    
+    (new_capacity > capacity).if {   
+      (capacity = 0).if {
+	storage := NATIVE_ARRAY[CHARACTER].calloc new_capacity;
+      } else {
+	storage := storage.realloc capacity with new_capacity;
+      };
+      capacity := new_capacity;
+    };
+    
+    ? {(new_capacity > old_capacity) ->> {new_capacity = capacity}};    
+  );
   
   - clear <-
   // Clear out the current STRING.
@@ -293,7 +311,7 @@ section PUBLIC
 
   - insert ch:CHARACTER to index:INTEGER on nb:INTEGER <-
   // Insert `ch' after position `index'.
-  ( + i:INTEGER;
+  ( 
     ? {0 <= index};
     ? {index <= count};
 

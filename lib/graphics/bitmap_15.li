@@ -25,19 +25,21 @@ section PUBLIC
   
   - pixel_geometry:PIXEL := PIXEL_15;
   
-section PRIVATE  
+section BITMAP 
   
   //
   // Data.
   //
   
   // Mapping memory bitmap.
-  + image:FIXED_ARRAY[BMP_LINE_15];
+  + image:FIXED_ARRAY[BMP_LINE];
   
   - get_line y:INTEGER :BMP_LINE <-
   (
     image.item y
   );
+  
+section PUBLIC
   
   //
   // Creation. 
@@ -48,7 +50,7 @@ section PRIVATE
     width  := w;
     height := h;
     bytes_per_line:=(w * PIXEL_15.size + 7)>>3;
-    image := FIXED_ARRAY[BMP_LINE_15].create h;
+    image := FIXED_ARRAY[BMP_LINE].create h;
     0.to (image.upper) do { y:INTEGER;
       image.put (BMP_LINE_15.create w) to y;
     };
@@ -60,7 +62,7 @@ section PRIVATE
     
     width  := w;
     height := h;    
-    image := FIXED_ARRAY[BMP_LINE_15].create h;
+    image := FIXED_ARRAY[BMP_LINE].create h;
     offset:=offset_begin;
     0.to (image.upper) do { y:INTEGER;
       image.put (BMP_LINE_15.create w at offset) to y;

@@ -32,22 +32,23 @@ section MAPPING
 
   + red:USMALLINT;
     
-  + transparent:USMALLINT;
+  + alpha:USMALLINT;
   
 section PUBLIC
   
   - color col:UINTEGER <-
   (
-    red   :=  (col >> 16).to_usmallint;
-    green := ((col & 00FF00h) >> 8).to_usmallint;
-    blue  :=  (col & 0000FFh).to_usmallint;
+    alpha := ((col & 0FF000000h) >> 24).to_usmallint;
+    red   := ((col & 000FF0000h) >> 16).to_usmallint;
+    green := ((col & 00000FF00h) >>  8).to_usmallint;
+    blue  :=  (col & 0000000FFh).to_usmallint;    
   );
   
   - color_rgb r,g,b:USMALLINT <-
   (
-    red := r;
+    red   := r;
     green := g;
-    blue := b;
+    blue  := b;
   );
   
   - is_transparent:BOOLEAN <- 
@@ -64,7 +65,16 @@ section PUBLIC
   - blue_pos:USMALLINT   := 0;
   - reserved_size:USMALLINT :=8;
   - reserved_pos:USMALLINT  :=24;
+      
+  - copy other:SELF <-  
+  (
+    alpha := other.alpha;
+    blue  := other.blue;
+    green := other.green;
+    red   := other.red;
+  );
 
+  - to_pixel_32:PIXEL_32 <- self;
   
 
 

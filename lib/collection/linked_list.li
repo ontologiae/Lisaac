@@ -192,11 +192,11 @@ section PUBLIC
     result
   );
   
-  - item index:NUMERIC :E <-
+  - item i:NUMERIC :E <-
   (
-    ? { valid_index index};
-    ( index != mem_idx).if {
-      go_item index;
+    ? { valid_index i};
+    ( i != mem_idx).if {
+      go_item i;
     };
     mem_lnk.item
   );

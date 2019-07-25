@@ -57,10 +57,10 @@ section PUBLIC
     result
   );
   
-  - create_at adress:POINTER <-
+  - create_at adress:UINTEGER :MAP_NATIVE_ARRAY[E] <-
   // Create a MAP_NATIVE_ARRAY[E] at `adress'.
   (
-    `@adress`:MAP_NATIVE_ARRAY[E];
+    `@adress`:MAP_NATIVE_ARRAY[E]
   );
     
   - item index:NUMERIC :E <-
@@ -192,15 +192,4 @@ section PUBLIC
       MEMORY.copy (item i.to_pointer) from (E.to_pointer) size (E.object_size);
     };
   );
-
-
-
-
-
-
-
-
-
-
-
 

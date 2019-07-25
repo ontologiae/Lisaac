@@ -50,34 +50,34 @@ section PUBLIC
   // Function.
   // 
   
-  - make x0,y0:INTEGER add inc:INTEGER <-
+  - make xx,yy:INTEGER add inc:INTEGER <-
   // Flat.
   (    
     next_y   := NULL;
     is_point := TRUE;
     dx       := inc;    
     width    := 0;
-    x := x0;
-    y := y0;
+    x := xx;
+    y := yy;
   );
   
-  - make x0,y0:INTEGER to x1,y1:INTEGER <-
+  - make xx,yy:INTEGER to xx1,yy1:INTEGER <-
   // Line.
   ( 
     next_y   := NULL;
     is_point := FALSE;
-    (is_down := y0 < y1).if {
+    (is_down := yy < yy1).if {
       // Down.
-      y  := y0;
-      x  := x0;            
-      dx := x1;
-      width := y1;
+      y  := yy;
+      x  := xx;            
+      dx := xx1;
+      width := yy1;
     } else {
       // up.
-      y  := y1;
-      x  := x1;            
-      dx := x0;
-      width := y0;
+      y  := yy1;
+      x  := xx1;            
+      dx := xx;
+      width := yy;
     };
   );
       

@@ -146,7 +146,7 @@ section PUBLIC
   
   - make w,h:NUMERIC <- deferred;
   
-  - create w,h:NUMERIC at offset_begin:UINTEGER bytes_per_line lx:NUMERIC <-   
+  - create w,h:NUMERIC at offset_begin:UINTEGER bytes_per_line lx:NUMERIC :SELF <-   
   ( + result:SELF;
         
     result:=clone;
@@ -161,6 +161,8 @@ section BITMAP
   //
   // Low level.
   //   
+  
+  - image:FIXED_ARRAY[BMP_LINE]  <- ( deferred; NULL); // BSBS: Bug (Dynamic inheritance)
   
   - get_line y:INTEGER :BMP_LINE <- ( deferred; NULL);
   
@@ -298,16 +300,19 @@ section PUBLIC
   // Line
   //
   
-  - line_h x0,y0:INTEGER until x1:INTEGER image line:BMP_LINE :BOOLEAN <-
+  - line_h x,y:INTEGER until x_end:INTEGER image line:BMP_LINE :BOOLEAN <-
   (
     + result:BOOLEAN;
-    + x02:INTEGER;
-    ? {x0 >= 0};
-    ? {y0 >= 0};
-    ? {x1 >= 0};
+    + x02,x1,x0:INTEGER;
+    ? {x >= 0};
+    ? {y >= 0};
+    ? {x_end >= 0};
     ? {line != NULL};
-    spot_x := x1;    
-    (y0.in_range clip_y0 to clip_y1).if {
+    
+    x0 := x;
+    x1 := x_end;
+    spot_x := x1;        
+    (y.in_range clip_y0 to clip_y1).if {
       result := TRUE;
       ( x0 > x1 ).if {
 	x02 := x0;
@@ -327,17 +332,18 @@ section PUBLIC
       };
       
       ( x0 <= x1 ).if {
-	line_h_hard x02,y0 until x1 image line offset (x02-x0);
+	line_h_hard x02,y until x1 image line offset (x02-x0);
       };
     };
     result
   );
   
-  - line_h_until x1:INTEGER :BOOLEAN <-
+  - line_h_until x:INTEGER :BOOLEAN <-
   ( + result:BOOLEAN;
-    + x0:INTEGER;
-    ? {x1 >= 0};
+    + x0,x1:INTEGER;
+    ? {x >= 0};
     x0 := spot_x;
+    x1 := x;
     spot_x := x1;
     
     (spot_y.in_range clip_y0 to clip_y1).if {
@@ -388,11 +394,12 @@ section PUBLIC
     line_h x0,y0 until x1
   );
   
-  - line_v_until y1:INTEGER :BOOLEAN <-
-  ( + y0:INTEGER;
+  - line_v_until y:INTEGER :BOOLEAN <-
+  ( + y0,y1:INTEGER;
     + result:BOOLEAN;
     
     y0 := spot_y;
+    y1 := y;
     spot_y := y1;
     
     (spot_x.in_range clip_x0 to clip_x1).if {
@@ -726,13 +733,15 @@ section PUBLIC
     rectangle x0,y0 to x1,y1
   );
   
-  - rectangle_fill_to x1,y1:INTEGER :BOOLEAN <-
+  - rectangle_fill_to x,y:INTEGER :BOOLEAN <-
   (
-    + x0,y0,tmp:INTEGER;
+    + x0,y0,x1,y1,tmp:INTEGER;
     + col:UINTEGER;
     + result:BOOLEAN;
     x0 := spot_x;
     y0 := spot_y;
+    x1 := x;
+    y1 := y;
     ( x0 > x1).if {
       tmp := x0;
       x0 := x1;
@@ -896,7 +905,13 @@ section PUBLIC
   //
   // Spline
   //
-
+  
+section PRIVATE  
+  
+  - delta_spline:REAL_16_16 := 32768.to_raw_real_16_16;
+  
+section PUBLIC  
+  
   - spline_w1 px0,py0:INTEGER w2 px1,py1:INTEGER to x1,y1:INTEGER :BOOLEAN <-
   ( + result:BOOLEAN;
     + x0,y0,d_x,d_y:INTEGER;
@@ -908,7 +923,6 @@ section PUBLIC
     + dt, dt2, dt3:REAL_16_16;
     + xdt2_term, xdt3_term:REAL_16_16;
     + ydt2_term, ydt3_term:REAL_16_16;
-    + delta:REAL_16_16;  // JBJB en - car commun tous les spline
     
     x0 := spot_x;
     y0 := spot_y;
@@ -956,10 +970,9 @@ section PUBLIC
     ddy  := ydt3_term *# -6 + ydt2_term *# 2;
     dy   := ydt3_term - ydt2_term + dt *# ((py0 - y0)*3); 
     y    := y0.to_real_16_16;
-    
-    delta:=32768.to_raw_real_16_16; // A Optimiser !
-    x := x + delta;
-    y := y + delta;
+        
+    x := x + delta_spline;
+    y := y + delta_spline;
     
     1.to (num_points - 1) do { i:INTEGER;
       ddx := ddx + dddx;
@@ -1000,8 +1013,8 @@ section PUBLIC
   //*         Il faut juste faire attention à appeler dans l'ordre suivant :    *
   //*         => poly_move_to poly_line_to ... poly_trace                       *
   //*                                                                           *
-  //* Rmq. : Il reste des optimisations à faire pour le tri et utiliser des     *
-  //*        MAP_FIXED_ARRAY capable de s'agrandir dynamiquement ...            *
+  //* Rmq. : Il reste des optimisations à faire pour le tri (qsort) et utiliser *
+  //*        des MAP_FIXED_ARRAY capable de s'agrandir dynamiquement ...        *
   //*                                                                           *
   //*                                                           BeN inside      *
   //*****************************************************************************
@@ -1013,7 +1026,7 @@ section PRIVATE
   + edges_upper:INTEGER;
   + poly_ymax:INTEGER := INTEGER.minimum.to_integer;
   
-  + poly_list_y:FIXED_ARRAY[EDGE] := FIXED_ARRAY[EDGE].create_with_capacity 16;
+  + poly_list_y:FIXED_ARRAY[EDGE];
     
   + begin_y:EDGE;  
   + begin_idx:INTEGER;
@@ -1093,7 +1106,8 @@ section PUBLIC
   (     
     
     (edges = NULL).if {
-      edges := FIXED_ARRAY[EDGE].create 64;
+      poly_list_y := FIXED_ARRAY[EDGE].create_with_capacity 16;
+      edges := FIXED_ARRAY[EDGE].create 64;      
       0.to 63 do { n:INTEGER;
 	edges.put (EDGE.clone) to n;
       };
@@ -1114,7 +1128,6 @@ section PUBLIC
   - poly_line_to x1,y1:INTEGER <-
   ( + edge,edge2:EDGE;
     + x0,y0:INTEGER;
-    + inc:INTEGER;
     
     x0:=spot_x; 
     y0:=spot_y; 
@@ -1190,7 +1203,6 @@ section PUBLIC
     + dt, dt2, dt3:REAL_16_16;
     + xdt2_term, xdt3_term:REAL_16_16;
     + ydt2_term, ydt3_term:REAL_16_16;
-    + delta:REAL_16_16;  // JBJB DELTA en -
     
     x0 := spot_x;
     y0 := spot_y;
@@ -1237,20 +1249,34 @@ section PUBLIC
     ddy  := ydt3_term *# -6 + ydt2_term *# 2;
     dy   := ydt3_term - ydt2_term + dt *# ((py0 - y0)*3); 
     y    := y0.to_real_16_16;
-    
-    delta:=32768.to_raw_real_16_16; // A Optimiser !
-    x := x + delta;
-    y := y + delta;
+        
+    x := x + delta_spline;
+    y := y + delta_spline;
     
     1.to (num_points - 1) do { i:INTEGER;
       ddx := ddx + dddx;
-      dx := dx + ddx;
-      x := x + dx;
+      dx  := dx + ddx;
+      x   := x + dx;
       ddy := ddy + dddy;
-      dy := dy + ddy;
-      y := y + dy;
+      dy  := dy + ddy;
+      y   := y + dy;
       poly_line_to (x.to_integer),(y.to_integer); 
     };    
+  );
+  
+  - poly_ellipse x,y:INTEGER rays ray_x,ray_y:INTEGER <-
+  ( + x0,y0,x1,y1,dx,dy:INTEGER;
+    x0 := x - ray_x;
+    x1 := x + ray_x;
+    y0 := y - ray_y;
+    y1 := y + ray_y;
+    dx := (ray_x * 5) / 9;
+    dy := (ray_y * 5) / 9;
+    poly_move_to x,y0;    
+    poly_spline_w1 (x+dx),y0 w2 x1,(y-dy) to x1,y ;
+    poly_spline_w1 x1,(y+dy) w2 (x+dx),y1 to x ,y1;
+    poly_spline_w1 (x-dx),y1 w2 x0,(y+dy) to x0,y ;
+    poly_spline_w1 x0,(y-dy) w2 (x-dx),y0 to x ,y0;    
   );
   
   - poly_trace <-
@@ -1278,7 +1304,7 @@ section PUBLIC
 	  poly_list_y.put edge to j;	  
 	};
       };
-      
+
       // Sort on Y.    
       sort_list_y;
 
@@ -1385,7 +1411,7 @@ section PUBLIC
   //****************************************************************************
   
   - put_bitmap bmp:BITMAP to x,y:INTEGER <-
-  ( + dec_x,dec_y,x1,y1,x0,y0:INTEGER;
+  ( + x1,y1,x0,y0:INTEGER;
     + y_src,x_src:INTEGER;
     + line:BMP_LINE;
 

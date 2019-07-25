@@ -118,36 +118,13 @@ section PUBLIC
   - read dst:OBJECT :INTEGER <- 
   ( 
     array_intern.make_with_map_object dst;
-    read array_intern size (dst.object_size)
+    read_bound array_intern size (dst.object_size)
   ); 
   
   - read dest:ARRAYED size nb_elt:NUMERIC :INTEGER <-
-  ( + result:INTEGER;
-    + elt_size,size_byte:UINTEGER;
-    + size_block:UINTEGER;
-    
-    ? { is_open };
-    ? { nb_elt > 0};
-    ? {dest!=NULL};
-    
-    elt_size:=dest.element_sizeof.to_uinteger;
-    size_byte:=nb_elt.to_uinteger * elt_size;
-    basic_seek cursor;
-    cursor := cursor + size_byte;
-    size_block := 512;
-    
-    array_intern2.make_with_map_object tmp_buffer;
-    {size_byte > 0}.while_do {
-      (size_byte < 512).if {
-	size_block := size_byte;
-      };
-      result := result + basic_read tmp_buffer size size_block;
-      array_intern2.set_upper ((size_block - 1).to_integer);
-      dest.add_last_buffer array_intern2 from 0 to (size_block - 1);
-      size_byte := size_byte - size_block;
-      array_intern2.clear;
-    };
-    result    
+  ( 
+    dest.set_capacity (dest.count + nb_elt);
+    read_bound dest size nb_elt
   );
   
   - write src:ARRAYED from start:NUMERIC size nb_elt:NUMERIC :INTEGER <-
@@ -196,6 +173,35 @@ section PUBLIC
   
 section PRIVATE
   
+  - read_bound dest:ARRAYED size nb_elt:NUMERIC :INTEGER <-
+  ( + result:INTEGER;
+    + elt_size,size_byte:UINTEGER;
+    + size_block:UINTEGER;
+    
+    ? { is_open };
+    ? { nb_elt > 0};
+    ? {dest!=NULL};
+    
+    elt_size:=dest.element_sizeof.to_uinteger;
+    size_byte:=nb_elt.to_uinteger * elt_size;
+    basic_seek cursor;
+    cursor := cursor + size_byte;
+    size_block := 512;
+    
+    array_intern2.make_with_map_object tmp_buffer;
+    {size_byte > 0}.while_do {
+      (size_byte < 512).if {
+	size_block := size_byte;
+      };
+      result := result + basic_read tmp_buffer size size_block;
+      array_intern2.set_upper ((size_block - 1).to_integer);
+      dest.add_last_buffer array_intern2 from 0 to (size_block - 1);
+      size_byte := size_byte - size_block;
+      array_intern2.clear;
+    };
+    result    
+  );
+    
   + array_intern:FIXED_ARRAY[USMALLINT] := FIXED_ARRAY[USMALLINT].clone;
   
   + array_intern2:FIXED_ARRAY[USMALLINT] := FIXED_ARRAY[USMALLINT].clone;

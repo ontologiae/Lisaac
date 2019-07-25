@@ -77,6 +77,12 @@ section PUBLIC
     PIXEL_24.color_rgb red,green,blue;
     PIXEL_24
   );
+
+  - to_pixel_32:PIXEL_32 <-
+  (
+    PIXEL_32.color_rgb red,green,blue;
+    PIXEL_32
+  );
   
   //
   // For Text Mode

@@ -254,6 +254,13 @@ section PUBLIC
   
   - '~' :SELF <- (-SELF.one) - self;
   
+  - align_power step:SELF :SELF <-
+  ( + a:SELF;
+    //? {step.is_power_2};
+    a := step - 1;
+    (self + a) & (~ a)
+  );
+  
   //
   // Looping.
   //

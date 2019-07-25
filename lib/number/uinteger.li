@@ -42,7 +42,8 @@ section PUBLIC
   - to_uinteger:UINTEGER   <- self;
   
   - to_ushortint:USHORTINT <- 
-  ( ? {self <=# (USHORTINT.maximum)};
+  ( 
+    ? {self <=# (USHORTINT.maximum)};
     to_raw_ushortint
   );
   

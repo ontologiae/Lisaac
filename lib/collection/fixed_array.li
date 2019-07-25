@@ -48,6 +48,14 @@ section PUBLIC
     result
   );
   
+  - create_with_native_array_byte na:NATIVE_ARRAY[USMALLINT] size s:INTEGER :SELF <-
+  (
+    + result:SELF;
+    result := clone;
+    result.make_with_native_array_byte na size s;
+    result
+  );
+  
   - make_with_map_object obj:OBJECT <-
   ( //? {obj.object_size!=0};
     ? {element_sizeof = 1};
@@ -58,7 +66,16 @@ section PUBLIC
     
     ? {storage!=NULL};
   );
-    
+  
+  - make_with_native_array_byte na:NATIVE_ARRAY[USMALLINT] size s:INTEGER <-
+  (
+    ? {s > 0};
+    ? {na != NULL};
+    storage := na;
+    capacity := s;
+    upper := -1;
+    ? {storage != NULL};
+  );
   
   - make new_count:NUMERIC <-
   // Make array with range [0 .. `new_count' - 1].
@@ -88,7 +105,6 @@ section PUBLIC
   // Create an empty array with at least `needed_capacity'.
   (
     ? { needed_capacity >= 0 };
-    
     ( capacity < needed_capacity).if {
       storage := NATIVE_ARRAY[E].calloc needed_capacity;
       capacity := needed_capacity;
@@ -96,7 +112,6 @@ section PUBLIC
       storage.clear 0 to upper;
     }; // end if
     upper := -1;
-    
     ? { capacity >= needed_capacity };
     ? { is_empty };
     
@@ -105,6 +120,26 @@ section PUBLIC
   
   
   // Modification:
+
+  - set_capacity new_capacity:NUMERIC <-
+  // Resize capacity the array, but not count.
+  (
+    + old_capacity:INTEGER;
+    
+    ? {new_capacity >= 0};
+    
+    old_capacity := capacity;
+    (new_capacity > capacity).if {
+      ( capacity = 0).if {
+	storage := NATIVE_ARRAY[E].calloc new_capacity;
+      } else {
+	storage := storage.realloc capacity with new_capacity;	
+      }; // end if
+      capacity := new_capacity;	
+    }; // end if        
+    
+    ? { capacity >= old_capacity };    
+  ); // end resize
   
   - resize new_count:NUMERIC <-
   // Resize the array. When `new_count' is greater than

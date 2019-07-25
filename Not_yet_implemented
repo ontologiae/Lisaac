@@ -2,8 +2,7 @@ Specification 0.2 :
 ===================
 * Invariant of prototype.
 * Require / Ensure on data slot.
-* Import / Export with genericity type.
-* Genericity type in argument function.
+* Parameter type in argument function.
 * Section with genericity type.
 
 Specification 0.3 :

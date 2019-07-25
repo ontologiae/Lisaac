@@ -25,14 +25,18 @@ Section Header
   - bibliography := "http://IsaacOS.com";
   - author       := "Xavier Oswald (x.oswald@free.fr)";
   - comment      := "Language shootout - startup"; 
-  
+    
 Section Inherit
   
   - parent_any:OBJECT := OBJECT;
 
 Section Public
-
+    
   - main <-
-  (
-    "hello world\n".print;
+  ( + tmp:INTEGER;
+    + st:STRING_CONSTANT;
+    st := "hello world\n";
+    tmp := st.count;
+    `/* @tmp */`;  // BUG COMPILO 0.12
+    st.println;
   );

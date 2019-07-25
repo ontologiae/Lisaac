@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name := SET[E];
+  + name := SET[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -32,9 +32,9 @@ Section Header
   
 Section Inherit
   
-  + parent_traversable:TRAVERSABLE[E] := TRAVERSABLE[E];
+  + parent_traversable:TRAVERSABLE[V] := TRAVERSABLE[V];
   
-  + parent_safe_equal:SAFE_EQUAL[E] := SAFE_EQUAL[E];
+  + parent_safe_equal:SAFE_EQUAL[V] := SAFE_EQUAL[V];
   
 Section Public
   //
@@ -55,7 +55,7 @@ Section Public
   // Adding and removing:
   //
   
-  - add e:E <-
+  - add e:V <-
   // Add new item `e' to the set. The mathematical definition of adding 
   // in a set is followed, i.e. the element `e' is added only and only 
   // if it is not yet present in the set.
@@ -74,7 +74,7 @@ Section Public
     "In then not added." +? {(Old has e) -> (count = Old count)};
   ];
 
-  - fast_add e:E <-
+  - fast_add e:V <-
   // Same job as `add', but uses basic `=' for comparison.
   [ ...
     -? {e != NULL}; 
@@ -88,7 +88,7 @@ Section Public
     "In then not added." +? {(Old fast_has e) -> (count = Old count)};
   ];
 
-  - remove e:E <-
+  - remove e:V <-
   // Remove item `e' from the set: the mathematical definition of
   // removing from a set is followed.
   [ ...
@@ -103,7 +103,7 @@ Section Public
     "In then removed." +? {(Old has e) -> (count = Old count - 1)};
   ];
 
-  - fast_remove e:E <-
+  - fast_remove e:V <-
   // Same job as `remove', but uses basic `=' for comparison.
   [ ...
     -? {e != NULL}; 
@@ -150,7 +150,7 @@ Section Public
   // Looking and searching:
   //
   
-  - has e:E :BOOLEAN <-
+  - has e:V :BOOLEAN <-
   // Is element `e' in the set?
   // As this query is actually using `is_equal', you may consider to use 
   // `fast_has' for expanded objects as well while trying to get the very 
@@ -166,7 +166,7 @@ Section Public
     +? {Result -> ! is_empty}; 
   ];
   
-  - fast_has e:E :BOOLEAN <-
+  - fast_has e:V :BOOLEAN <-
   // Is element `e' actually stored in the set?
   // Warning: this query is using basic `=' for comparison. 
   //
@@ -181,7 +181,7 @@ Section Public
     //+? {Result ->> {e = reference_at e}}; // BSBS: Pb with '=='
   ];
 
-  - reference_at e:E :E <-
+  - reference_at e:V :V <-
   // Non Void when `e' is in the set. In such a situation, `Result' is the 
   // object which is actually stored in the `Current' set (see ensure assertion).
   [ ...
@@ -208,7 +208,7 @@ Section Public
     +? {Result = count}; 
   ];
 
-  - item i:INTEGER :E <-
+  - item i:INTEGER :V <-
   // Item at the corresponding index `i'.
   //
   // See also `lower', `upper', `valid_index'.
@@ -216,7 +216,7 @@ Section Public
   // SETs are intrinsically unordered, so there is no guarantee that 
   // `item'(i) after performing an `add' or `remove' operation is related 
   // in any way to `item'(i) before that operation.
-  ( + result:E;
+  ( + result:V;
     
     deferred;
     result
@@ -225,7 +225,7 @@ Section Public
     +? {fast_has Result}; 
   ]; 
 
-  - first:E <- item lower;
+  - first:V <- item lower;
   // The very `first' item.
   //
   // See also `last', `item'.
@@ -234,7 +234,7 @@ Section Public
   // `first' after performing an `add' or `remove' operation is related 
   // in any way to `first' before that operation.
 
-  - last:E <- item upper;
+  - last:V <- item upper;
   // The `last' item.
   //
   // See also `first', `item'.
@@ -253,13 +253,34 @@ Section Public
     -? {other != NULL}; 
   ]
   ( + i:INTEGER;
-    + e:E;
+    + e:V;
 		
     i := 1;
     {i > other.count}.until_do {
       e := other.item i;
       (! has e).if {
 	add e;
+      };
+      i := i + 1;
+    };
+  )
+  [ ...
+    +? {count <= Old count + other.count}; 
+  ];
+  
+  - fast_union other:SELF <-
+  // Make the union of the `Current' set with `other'.
+  [ ...
+    -? {other != NULL}; 
+  ]
+  ( + i:INTEGER;
+    + e:V;
+		
+    i := 1;
+    {i > other.count}.until_do {
+      e := other.item i;
+      (! fast_has e).if {
+	fast_add e;
       };
       i := i + 1;
     };
@@ -290,7 +311,7 @@ Section Public
     -? {other != NULL}; 
   ]
   ( + i:INTEGER; 
-    + e:E;
+    + e:V;
     
     i := upper;
     {i < lower}.until_do {
@@ -455,7 +476,7 @@ Section Public
     };
   );
 
-  - from_collection model:COLLECTION[E] <-
+  - from_collection model:COLLECTION[V] <-
   // Add all items of `model'.
   [ ...
     -? {model != NULL}; 

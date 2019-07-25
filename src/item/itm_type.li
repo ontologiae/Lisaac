@@ -30,7 +30,7 @@ Section Header
   
 Section Inherit
   
-  - parent_object:OBJECT := OBJECT;
+  - parent_any:ANY := ANY;
   
 Section Public
   

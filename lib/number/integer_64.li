@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := Expanded INTEGER_64 -> INTEGER;
+  + name    := Expanded INTEGER_64;
+
+  - export  := INTEGER;
   
   - comment := "Signed 64 bits integer.";
 
@@ -42,9 +44,9 @@ Section Public
   // Range
   //
   
-  - maximum:UINTEGER_64 <- 07FFF_FFFFh.to_raw_uinteger_64; //Bug C 07FFFFFFFFFFFFFFFh;
+  - maximum:UINTEGER_64 <- `0x7FFFFFFFFFFFFFFFLLU`:UINTEGER_64;
   
-  - minimum:INTEGER_64  <- 0.to_raw_integer_64 - 07FFF_FFFFh.to_raw_integer_64;
+  - minimum:INTEGER_64  <- `-0x8000000000000000LL`:INTEGER_64;
   
   //
   // Conversion with test.

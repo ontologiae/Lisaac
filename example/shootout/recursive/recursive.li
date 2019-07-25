@@ -23,7 +23,7 @@ Section Header
   + name         := RECURSIVE;
   
   - bibliography := "http://IsaacOS.com";
-  - author       := "Pierre-Alexandre Voye (ontologiae@gmail.com)";
+  - author       := "Pierre-Alexandre Voye (ontologiae@gmail.com), Xavier Oswald <x.oswald@free.fr>";
   - comment      := "Language shootout - Recursive"; 
   
 Section Inherit
@@ -107,14 +107,14 @@ Section Public
     };
     "Ack(3,".print;
     (n + 1).print;
-    " ): ".print;
+    "): ".print;
     ack 3 and (n+1).print;
     "\n".print;
 
     "Fib(".print; 
     (28.0 + n.to_real_64).to_integer.print;
-    "): ".print;
-    fibfp (28.0 + n.to_real_64).to_integer.print;
+    ".0): ".print;
+    fibfp (28.0 + n.to_real_64).print_format_c "%.1f";
     "\n".print;
 
     "Tak(".print;
@@ -132,6 +132,6 @@ Section Public
     "\n".print;
 
     "Tak(3.0,2.0,1.0): ".print;
-    takfp(3.0,2.0,1.0).to_integer.print;
+    takfp(3.0,2.0,1.0).print_format_c "%.1f";
     "\n".print;
   );

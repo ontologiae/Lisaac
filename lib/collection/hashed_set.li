@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := HASHED_SET[E];
+  + name    := HASHED_SET[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -31,7 +31,7 @@ Section Header
     
 Section Inherit
   
-  + parent_set:Expanded SET[E];
+  + parent_set:Expanded SET[V];
   
 Section Public
   
@@ -40,7 +40,7 @@ Section Public
   
 Section SET
   
-  + buckets:NATIVE_ARRAY[HASHED_SET_NODE[E]];
+  + buckets:NATIVE_ARRAY[HASHED_SET_NODE[V]];
   // The `buckets' storage area is the primary hash table of `capacity'
   // elements. To search some element, the first access is done in
   // `buckets' using the remainder of the division of the key `hash_code' by
@@ -58,7 +58,7 @@ Section SET
   // active, the corresponding index in `buckets' is save in
   // `cache_buckets' and the corresponding node in `cache_node'.
   
-  + cache_node:HASHED_SET_NODE[E];
+  + cache_node:HASHED_SET_NODE[V];
   // Meaningful only when `cache_user' is not -1.
   
   + cache_buckets:INTEGER;
@@ -109,7 +109,7 @@ Section Public
   ( + new_capacity:INTEGER;
         
     new_capacity := HASH_TABLE_SIZE.prime_number_ceiling medium_size;
-    buckets := NATIVE_ARRAY[HASHED_SET_NODE[E]].create new_capacity;
+    buckets := NATIVE_ARRAY[HASHED_SET_NODE[V]].create new_capacity;
     capacity := new_capacity;
     cache_user := -1;
     count := 0;
@@ -131,11 +131,11 @@ Section Public
   // Adding and removing:
   //
   
-  - add e:E <-
+  - add e:V <-
   // Add a new item to the set:the mathematical definition of
   // adding in a set is followed.
   ( + h, idx:INTEGER;
-    + node:HASHED_SET_NODE[E];
+    + node:HASHED_SET_NODE[V];
             
     cache_user := -1;
     h := e.hash_code;
@@ -149,17 +149,17 @@ Section Public
 	increase_capacity;
 	idx := h % capacity;
       };
-      node := HASHED_SET_NODE[E].create e next (buckets.item idx);
+      node := HASHED_SET_NODE[V].create e next (buckets.item idx);
       buckets.put node to idx;
       count := count + 1;
     };
   );
 
-  - fast_add e:E <-
+  - fast_add e:V <-
   // Add a new item to the set:the mathematical definition of
   // adding in a set is followed.
   ( + h, idx:INTEGER;
-    + node:HASHED_SET_NODE[E];
+    + node:HASHED_SET_NODE[V];
         
     cache_user := -1;
     h := e.hash_code;
@@ -173,17 +173,17 @@ Section Public
 	increase_capacity;
 	idx := h % capacity;
       };
-      node := HASHED_SET_NODE[E].create e next (buckets.item idx);
+      node := HASHED_SET_NODE[V].create e next (buckets.item idx);
       buckets.put node to idx;
       count := count + 1;
     };   
   );  
   	 
-  - remove e:E <-
+  - remove e:V <-
   // Remove item `e' from the set:the mathematical definition of
   // removing from a set is followed.
   ( + h, idx:INTEGER;
-    + node, previous_node:HASHED_SET_NODE[E];
+    + node, previous_node:HASHED_SET_NODE[V];
        
     cache_user := -1;
     h := e.hash_code;
@@ -209,11 +209,11 @@ Section Public
     };    
   );
   
-  - fast_remove e:E <-
+  - fast_remove e:V <-
   // Remove item `e' from the set:the mathematical definition of
   // removing from a set is followed.
   ( + h, idx:INTEGER;
-    + node, previous_node:HASHED_SET_NODE[E];
+    + node, previous_node:HASHED_SET_NODE[V];
        
     cache_user := -1;
     h := e.hash_code;
@@ -254,10 +254,10 @@ Section Public
   // Looking and searching:
   //
   
-  - has e:E :BOOLEAN <-
+  - has e:V :BOOLEAN <-
   // Is element `e' in the set?
   ( + idx:INTEGER;
-    + node:HASHED_SET_NODE[E];
+    + node:HASHED_SET_NODE[V];
         
     idx := e.hash_code % capacity;
     node := buckets.item idx;
@@ -267,10 +267,10 @@ Section Public
     node != NULL        
   );
   
-  - fast_has e:E :BOOLEAN <-
+  - fast_has e:V :BOOLEAN <-
   // Is element `e' in the set?
   ( + idx:INTEGER;
-    + node:HASHED_SET_NODE[E];
+    + node:HASHED_SET_NODE[V];
         
     idx := e.hash_code % capacity;
     node := buckets.item idx;
@@ -280,10 +280,10 @@ Section Public
     node != NULL
   );
   
-  - reference_at e:E :E <-
+  - reference_at e:V :V <-
   ( + idx:INTEGER; 
-    + node:HASHED_SET_NODE[E];
-    + result:E;
+    + node:HASHED_SET_NODE[V];
+    + result:V;
 				
     idx := e.hash_code % capacity;
     node := buckets.item idx;
@@ -300,7 +300,7 @@ Section Public
   // To provide iterating facilities:
   //
     
-  - item i:INTEGER :E <-
+  - item i:INTEGER :V <-
   // Return the item indexed by `index'.
   (         
     set_cache_user i;
@@ -314,7 +314,7 @@ Section Public
   - intersection other:SELF <-
   // Make the intersection of the `self' set with `other'.
   ( + i,c:INTEGER;
-    + node1, node2:HASHED_SET_NODE[E];
+    + node1, node2:HASHED_SET_NODE[V];
         
     cache_user := -1;
     i := capacity - 1;
@@ -361,7 +361,7 @@ Section Public
     };
   );
   
-  - from_collection model:COLLECTION[E] <-
+  - from_collection model:COLLECTION[V] <-
   ( + i, up:INTEGER;
 				
     with_capacity (model.count.max 1);
@@ -378,8 +378,8 @@ Section Private
   - increase_capacity <-
   // There is no more free slots:the set must grow.
   ( + i,idx, new_capacity:INTEGER;
-    + old_buckets:NATIVE_ARRAY[HASHED_SET_NODE[E]];
-    + node1, node2:HASHED_SET_NODE[E];
+    + old_buckets:NATIVE_ARRAY[HASHED_SET_NODE[V]];
+    + node1, node2:HASHED_SET_NODE[V];
     
     new_capacity := HASH_TABLE_SIZE.prime_number_ceiling (capacity + 1);
     old_buckets := buckets;
@@ -450,7 +450,7 @@ Section Private
   
   - union other:SELF <-
   // Make the union of the `self' set with `other'.
-  ( + e:E;
+  ( + e:V;
     + old_count:INTEGER;
     
     ? {old_count := count; 
@@ -466,7 +466,7 @@ Section Private
   - fast_union other:SELF <-
   // Make the union of the `self' set with `other'.
   ( + old_count:INTEGER;
-    + e:E;
+    + e:V;
     ? {old_count := count; 
        other != NULL};
     
@@ -677,11 +677,11 @@ Section Private
   // NONE
   
     
-  - force e:E <-  
+  - force e:V <-  
   // Add a new item to the set: the mathematical definition of
   // adding in a set is followed.
   ( + h, idx: INTEGER;
-    + node:HASHED_SET_NODE[E];
+    + node:HASHED_SET_NODE[V];
     ? {! fast_has e};
     h := e.hash_code;
     cache_user := -1;
@@ -689,17 +689,17 @@ Section Private
       increase_capacity;
     };
     idx := h % capacity;
-    node := HASHED_SET_NODE[E].create e next (buckets.item idx);
+    node := HASHED_SET_NODE[V].create e next (buckets.item idx);
     buckets.put node to idx;
     count := count + 1;
     ? {fast_has e};
   );
   
-    - search e:E :E <-
+    - search e:V :V <-
   // Is element `e' in the set?
   ( + idx:INTEGER;
-    + node:HASHED_SET_NODE[E];
-    + result:E;
+    + node:HASHED_SET_NODE[V];
+    + result:V;
     ? { e != NULL };
     idx := e.hash_code % capacity;
     node := buckets.item idx;
@@ -712,11 +712,11 @@ Section Private
     result
   );
   
-  - get_if cmp:BLOCK with_hash h:INTEGER :E <-
+  - get_if cmp:BLOCK with_hash h:INTEGER :V <-
   // Is element `e' in the set?
   ( + idx:INTEGER;
-    + node:HASHED_SET_NODE[E];
-    + result:E;
+    + node:HASHED_SET_NODE[V];
+    + result:V;
 
     idx := h % capacity;
     node := buckets.item idx;
@@ -729,11 +729,11 @@ Section Private
     result
   );
 
-  - fast_search e:E :E <-
+  - fast_search e:V :V <-
   // Is element `e' in the set?
   ( + idx:INTEGER;
-    + node:HASHED_SET_NODE[E];
-    + result:E;
+    + node:HASHED_SET_NODE[V];
+    + result:V;
     ? { e != NULL };
     idx := e.hash_code % capacity;
     node := buckets.item idx;
@@ -746,7 +746,7 @@ Section Private
     result
   );
   
-  - fast_index_of elt:E :INTEGER <-
+  - fast_index_of elt:V :INTEGER <-
   ( + result:INTEGER;
     
     result := upper;

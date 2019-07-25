@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := Expanded UINTEGER_64 -> INTEGER;
+  + name    := Expanded UINTEGER_64;
+
+  - export  := INTEGER;
 
   - comment :="Unsigned 64 bits integer.";
 
@@ -39,7 +41,7 @@ Section Public
   // Range.
   //
   
-  - maximum:UINTEGER_64 := 07FFF_FFFFh.to_raw_uinteger_64; //BSBS pb C 0FFFFFFFFFFFFFFFFh; 
+  - maximum:UINTEGER_64 := `0xFFFFFFFFFFFFFFFFLLU`:UINTEGER_64; //BSBS pb C 0FFFFFFFFFFFFFFFFh; 
   
   //
   // Conversion with test.

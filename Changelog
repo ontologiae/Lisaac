@@ -1,3 +1,14 @@
 Version 0.12 :
+==============
 2007/07/22
  * Append '-i' option for define inline level.
+
+Version 0.13 :
+==============
+2007/09/26
+ * Change syntax for import/export
+ * Export/Import with parameter type
+ * Export/import with genericity type
+ * Update library
+ * Update Makefile
+ * Add Lisaac & shorter manpages

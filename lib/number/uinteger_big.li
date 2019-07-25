@@ -29,7 +29,7 @@ Section Header
 
 Section Inherit
 
-  - parent_unsigned:UNSIGNED := UNSIGNED;
+  - parent_unsigned:UNSIGNED_INTEGER := UNSIGNED_INTEGER;
 
 Section UINTEGER_BIG
   

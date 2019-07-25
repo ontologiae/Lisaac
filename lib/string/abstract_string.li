@@ -20,9 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := ABSTRACT_STRING -> STRING;
+  + name    := ABSTRACT_STRING;
 
-
+  - export  := STRING;
+    
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
   - comment := "Generic prototype for STRING and STRING_CONSTANT";
@@ -33,7 +34,7 @@ Section Inherit
   
   - parent_comparable:COMPARABLE := COMPARABLE;
   
-Section ABSTRACT_STRING, ABSTRACT_ENTRY
+Section Public  //ABSTRACT_STRING, ABSTRACT_ENTRY
   
   + storage:NATIVE_ARRAY[CHARACTER];
   
@@ -922,7 +923,21 @@ Section Public
   (
     IO.put_string Self;  
   );
+
+  -  printline <-
+  (
+    IO.put_string Self;
+    IO.put_string "\n";
+  );
+
   
+  - println <-
+  [ -? {storage.item count = '\0'}; ]
+  (
+    to_external.println;
+  );
+                                   
+
   //
   // The guru section
   //
@@ -936,4 +951,6 @@ Section Public
     deferred;
     NULL
   );
-  
+
+
+

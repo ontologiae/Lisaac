@@ -83,45 +83,6 @@ Section Public
   - name:STRING_CONSTANT <- prototype.name;
     
   - hash_code:INTEGER <- intern_name.hash_code;
-  
-  //
-  // Import / Export manager.
-  //
-  
-  - is_export_to t:TYPE :BOOLEAN <-
-  ( + j:INTEGER;
-    + result:BOOLEAN;
-    (prototype.export_list != NULL).if {
-      j := prototype.export_list.lower;
-      {
-	(j <= prototype.export_list.upper) && 
-	{prototype.export_list.item j.name != t.name}
-      }.while_do {
-	j := j + 1;
-      };
-      // prototype.export_list.fast_has (t.itm_type) 
-      result := (j <= prototype.export_list.upper);
-    };
-    result
-  );
-  
-  - is_import_to t:TYPE :BOOLEAN <-
-  ( + j:INTEGER;
-    + result:BOOLEAN;
-    
-    (prototype.import_list != NULL).if {
-      j := prototype.import_list.lower;
-      {
-	(j <= prototype.import_list.upper) && 
-	{prototype.import_list.item j.name != t.name}
-      }.while_do {
-	j := j + 1;
-      };
-      // prototype.export_list.fast_has (t.itm_type) 
-      result := (j <= prototype.import_list.upper);
-    };
-    result
-  );
       
   //
   // Get.

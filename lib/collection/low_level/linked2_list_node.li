@@ -20,12 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := LINKED2_LIST_NODE[E];
+  + name    := LINKED2_LIST_NODE[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
 
-  - comment := "To implement LINKED2_LIST[E].";
+  - comment := "To implement LINKED2_LIST[V].";
     
 Section Inherit
   
@@ -33,15 +33,15 @@ Section Inherit
   
 Section Public
   
-  + item:E;
+  + item:V;
   
-  + previous:LINKED2_LIST_NODE[E];
+  + previous:LINKED2_LIST_NODE[V];
   
-  + next:LINKED2_LIST_NODE[E];
+  + next:LINKED2_LIST_NODE[V];
 
 Section LINKED2_LIST
   
-  - create i:E previous p:SELF next n:SELF :SELF<-
+  - create i:V previous p:SELF next n:SELF :SELF<-
   ( + result:SELF;
     
     result := clone;
@@ -49,7 +49,7 @@ Section LINKED2_LIST
     result
   );
     
-  - make i:E previous p:SELF next n:SELF <-
+  - make i:V previous p:SELF next n:SELF <-
   (
     item := i;
     previous := p;
@@ -63,7 +63,7 @@ Section LINKED2_LIST
 
 Section LINKED2_LIST,LINKED2_LIST_NODE
   
-  - set_item i:E <-
+  - set_item i:V <-
   (
     item := i;
   )
@@ -79,7 +79,7 @@ Section LINKED2_LIST,LINKED2_LIST_NODE
     +? {next = n};
   ];
   
-  - set_all_with v:E <-
+  - set_all_with v:V <-
   ( + lnk:SELF;
     
     lnk := Self;    

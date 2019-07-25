@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name        := ARRAY[E];
+  + name        := ARRAY[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -40,7 +40,7 @@ Section Header
   
 Section Inherit
     
-  + parent_arrayed_collection:Expanded ARRAYED_COLLECTION[E];
+  + parent_arrayed_collection:Expanded ARRAYED_COLLECTION[V];
   
 Section Public
   
@@ -111,7 +111,7 @@ Section Public
   ]
   (
     (capacity < needed_capacity).if {
-      storage := NATIVE_ARRAY[E].create needed_capacity;
+      storage := NATIVE_ARRAY[V].create needed_capacity;
       capacity := needed_capacity;
     };
     lower := low;
@@ -142,7 +142,7 @@ Section Public
     ( needed > 0 ).if {
       ( needed > capacity ).if {
 	( capacity = 0 ).if {
-	  storage := NATIVE_ARRAY[E].calloc needed;
+	  storage := NATIVE_ARRAY[V].calloc needed;
 	  capacity := needed;
 	} else {
 	  storage := storage.realloc capacity with needed;
@@ -214,17 +214,17 @@ Section Public
   
   - count:INTEGER <- ( upper - lower + 1 );
   
-  - item i:INTEGER :E <-
+  - item i:INTEGER :V <-
   ( 
     storage.item (i - lower)
   );
   
-  - put element:E to i:INTEGER <-
+  - put element:V to i:INTEGER <-
   ( 
     storage.put element to (i - lower);    
   );
     
-  - force element:E to index:INTEGER <-
+  - force element:V to index:INTEGER <-
   (     
     (upper < index).if {
       (index = upper + 1).if {
@@ -259,7 +259,7 @@ Section Public
     };
   );
   
-  - set_all_with v:E <-
+  - set_all_with v:V <-
   ( 
     storage.set_all_with v until (upper - lower);    
   );
@@ -296,7 +296,7 @@ Section Public
     +? {capacity = Old capacity};   
   ];
   
-  - add_first element:E <-
+  - add_first element:V <-
   ( 
     (upper < lower).if {
       add_last element;
@@ -307,7 +307,7 @@ Section Public
     };
   );
   
-  - add_last element:E <-
+  - add_last element:V <-
   ( + new_capacity:INTEGER;
     
     ( capacity < count + 1 ).if {
@@ -325,7 +325,7 @@ Section Public
     put element to upper;   
   );
   
-  - from_collection model:COLLECTION[E] <-
+  - from_collection model:COLLECTION[V] <-
   (
     with_capacity ((model.count),(model.lower));    
     upper := modele.upper;    
@@ -343,17 +343,17 @@ Section Public
     storage.all_default (upper - lower)
   );
   
-  - occurrences element:E :INTEGER <-
+  - occurrences element:V :INTEGER <-
   ( 
     storage.occurrences element until (upper - lower)
   );
   
-  - fast_occurrences element:E :INTEGER <-
+  - fast_occurrences element:V :INTEGER <-
   ( 
     storage.fast_occurrences element until (upper - lower)
   );
   
-  - first_index_of element:E :INTEGER <-
+  - first_index_of element:V :INTEGER <-
   ( + result:INTEGER;
     
     (upper >= lower).if {
@@ -363,7 +363,7 @@ Section Public
     };
   );
   
-  - index_of element:E start start_index:INTEGER :INTEGER <-
+  - index_of element:V start start_index:INTEGER :INTEGER <-
   ( + result:INTEGER;
     
     (upper >= lower).if {
@@ -374,7 +374,7 @@ Section Public
     result    
   );
   
-  - reverse_index_of element:E start start_index:INTEGER :INTEGER <-
+  - reverse_index_of element:V start start_index:INTEGER :INTEGER <-
   ( + result:INTEGER;
     
     (upper >= lower).if {
@@ -384,7 +384,7 @@ Section Public
     };
   );
   
-  - fast_index_of element:E start start_index:INTEGER :INTEGER <-
+  - fast_index_of element:V start start_index:INTEGER :INTEGER <-
   ( + result:INTEGER;
     
     (upper >= lower).if {
@@ -395,7 +395,7 @@ Section Public
     result
   );
   
-  - fast_reverse_index_of element:E start start_index:INTEGER :INTEGER <-
+  - fast_reverse_index_of element:V start start_index:INTEGER :INTEGER <-
   ( + result:INTEGER;
     
     (upper >= lower).if {

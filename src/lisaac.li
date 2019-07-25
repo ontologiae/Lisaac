@@ -20,10 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name     := LISAAC;
+  + name      := LISAAC;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
+  - copyright := "2003-2007 Benoit Sonntag";
   
   - author   := "Sonntag Benoit (sonntag@icps.u-strasbg.fr)";
   - comment  := "The main prototype";
@@ -57,7 +56,7 @@ Section Private
 
   - usage: STRING_CONSTANT :=
   "----------------------------------------------------------------\n\
-  \--            Lisaac IS An Advanced Compiler V.0.12           --\n\
+  \--            Lisaac IS An Advanced Compiler V.0.13 Beta      --\n\
   \--            LORIA - LSIIT - ULP - CNRS - FRANCE             --\n\
   \--         Benoit SONNTAG - sonntag@icps.u-strasbg.fr         --\n\
   \--                   http://www.IsaacOS.com                   --\n\

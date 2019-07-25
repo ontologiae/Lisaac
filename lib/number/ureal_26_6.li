@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := Expanded UREAL_26_6 -> REAL_32, REAL_64;
+  + name    := Expanded UREAL_26_6;
+
+  - export  := REAL_32, REAL_64;
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   

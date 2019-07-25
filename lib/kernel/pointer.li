@@ -20,8 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := Expanded POINTER -> INTEGER;
+  + name    := Expanded POINTER;
 
+  - export  := INTEGER;
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   

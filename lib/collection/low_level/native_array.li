@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
  
-  + name        := Strict NATIVE_ARRAY[E];
+  + name        := Strict NATIVE_ARRAY[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -33,7 +33,7 @@ Section Header
     
 Section Inherit
   
-  - parent_safe_equal:SAFE_EQUAL[E] := SAFE_EQUAL[E];
+  - parent_safe_equal:SAFE_EQUAL[V] := SAFE_EQUAL[V];
   
 Section Public  
   
@@ -46,15 +46,15 @@ Section Public
   - element_sizeof:INTEGER <- 
   // The size in number of bytes for type `E'.
   ( + result:INTEGER;
-    (E.is_expanded_type).if {
-      result := E.object_size;
+    (V.is_expanded_type).if {
+      result := V.object_size;
     } else {
       result := POINTER.object_size;
     };
     result
   );
   
-  - calloc_intern nb_elements:INTEGER :NATIVE_ARRAY[E] <-
+  - calloc_intern nb_elements:INTEGER :NATIVE_ARRAY[V] <-
   // Allocate a new array of 'nb_elements' of type `E'.
   // The new array is initialized with default values.
   [ ...
@@ -62,25 +62,25 @@ Section Public
   ]
   ( + capacity:INTEGER;
     + p:POINTER;
-    + result  :NATIVE_ARRAY[E];
+    + result  :NATIVE_ARRAY[V];
     
     capacity := nb_elements * element_sizeof;    
     //p := `malloc(@capacity)`:POINTER; 
     p := MEMORY.alloc_dynamic (capacity.to_uinteger_32);
-    result := CONVERT[POINTER,NATIVE_ARRAY[E]].on p;
+    result := CONVERT[POINTER,NATIVE_ARRAY[V]].on p;
     result
   )
   [ ...
     +? {Result != NULL};
   ];
   
-  - create nb_elements:INTEGER :NATIVE_ARRAY[E] <-
+  - create nb_elements:INTEGER :NATIVE_ARRAY[V] <-
   // Allocate a new array of `nb_elements' of type `E'.
   // The new array is initialized with default values.
   [ ...
     -? {nb_elements > 0};
   ]
-  ( + result:NATIVE_ARRAY[E];
+  ( + result:NATIVE_ARRAY[V];
    
     result:=calloc_intern nb_elements;
     result.clear_all (nb_elements-1); 
@@ -90,7 +90,7 @@ Section Public
     +? {Result.all_default (nb_elements-1)};
   ];
   
-  - realloc old_nb_elts:INTEGER with new_nb_elts:INTEGER :NATIVE_ARRAY[E] <-
+  - realloc old_nb_elts:INTEGER with new_nb_elts:INTEGER :NATIVE_ARRAY[V] <-
   // Assume Current is a valid NATIVE_ARRAY in range
   // [0 .. `old_nb_elts'-1]. Allocate a bigger new array in
   // range [0 .. `new_nb_elts'-1].
@@ -101,17 +101,17 @@ Section Public
     -? {old_nb_elts > 0};
     -? {old_nb_elts < new_nb_elts};
   ]
-  ( + new:NATIVE_ARRAY[E];
+  ( + new:NATIVE_ARRAY[V];
     + old_ptr,new_ptr:POINTER;
     + new_cap:INTEGER;
     
-    old_ptr := CONVERT[NATIVE_ARRAY[E],POINTER].on Self; 
+    old_ptr := CONVERT[NATIVE_ARRAY[V],POINTER].on Self; 
     new_cap := new_nb_elts * element_sizeof;
     //new_ptr := `realloc(@old_ptr,@new_cap)`:POINTER;
     new_ptr := MEMORY.realloc_dynamic old_ptr 
     old_size ((old_nb_elts * element_sizeof).to_uinteger_32) 
     new_size (new_cap.to_uinteger_32);
-    new := CONVERT[POINTER,NATIVE_ARRAY[E]].on new_ptr;
+    new := CONVERT[POINTER,NATIVE_ARRAY[V]].on new_ptr;
     new.clear old_nb_elts to (new_nb_elts - 1);
     new
   )
@@ -119,9 +119,9 @@ Section Public
     +? {Result != NULL};
   ];
   
-  - first:E <- item 0;
+  - first:V <- item 0;
     
-  - item index:INTEGER :E <-
+  - item index:INTEGER :V <-
   // To read an `item'.
   // Assume that `calloc' is already done and that `index' is 
   // the range [0 .. `nb_elements'-1].
@@ -132,7 +132,7 @@ Section Public
     `10` 
   );
   
-  - put element:E to index:INTEGER <-
+  - put element:V to index:INTEGER <-
   // To write an item.
   // Assume that `calloc' is already done and that `index'
   // is the range [0 .. `nb_elements'-1].
@@ -150,20 +150,20 @@ Section Public
   // Displacement
   //
   
-  - '+' Left 80 other:INTEGER :NATIVE_ARRAY[E] <- 
+  - '+' Left 80 other:INTEGER :NATIVE_ARRAY[V] <- 
   // other is in element index
   ( + ptr:POINTER;
     
     ptr := to_pointer;
     ptr := ptr + other * element_sizeof;
-    CONVERT[POINTER, NATIVE_ARRAY[E]].on ptr
+    CONVERT[POINTER, NATIVE_ARRAY[V]].on ptr
   );
   
   //
   // Comparison:
   //
   
-  - memcmp other:NATIVE_ARRAY[E] until capacity:INTEGER :BOOLEAN <-
+  - memcmp other:NATIVE_ARRAY[V] until capacity:INTEGER :BOOLEAN <-
   // True if all elements in range [0..capacity-1] are
   // identical using `equal'. Assume Current and `other'
   // are big enough.
@@ -180,7 +180,7 @@ Section Public
     i < 0
   );
   
-  - slice_memcmp (at:INTEGER,other:NATIVE_ARRAY[E],other_lower,other_upper:INTEGER) :BOOLEAN <-
+  - slice_memcmp (at:INTEGER,other:NATIVE_ARRAY[V],other_lower,other_upper:INTEGER) :BOOLEAN <-
   // True if all elements in range [0 .. `other_upper' - `other_lower'] are identical
   // to the elements in range [`other_lower' .. `other_upper'] of `other' using
   // `is_equal'. Assume `Current' and `other' are big enough.
@@ -200,7 +200,7 @@ Section Public
     i < 0
   );
   
-  - fast_memcmp other:NATIVE_ARRAY[E] until capacity:INTEGER :BOOLEAN <-
+  - fast_memcmp other:NATIVE_ARRAY[V] until capacity:INTEGER :BOOLEAN <-
   // Same jobs as `memcmp' but uses infix `=' instead `equal'.
   [ ...
     -? {(capacity > 0) ->> {other.is_not_null}};
@@ -214,7 +214,7 @@ Section Public
     i < 0
   );
   
-  - slice_fast_memcmp (at:INTEGER, other:NATIVE_ARRAY[E], other_lower,other_upper:INTEGER) :BOOLEAN <-
+  - slice_fast_memcmp (at:INTEGER, other:NATIVE_ARRAY[V], other_lower,other_upper:INTEGER) :BOOLEAN <-
   // Same jobs as `slice_memcmp' but uses infix "=" instead of `is_equal'.
   [ ...
     -? {at >= 0};
@@ -231,13 +231,13 @@ Section Public
     i < 0
   );
 			
-  - deep_memcmp other:NATIVE_ARRAY[E] until capacity:INTEGER :BOOLEAN <-
+  - deep_memcmp other:NATIVE_ARRAY[V] until capacity:INTEGER :BOOLEAN <-
   // Same jobs as `memcmp' but uses `is_deep_equal' instead `equal'.
   [ ...
     -? {(capacity > 0) ->> {other.is_not_null}};
   ]
   ( + result:BOOLEAN;  // BEN : A REVOIR, il y a + efficace...
-    + e1,e2:E;
+    + e1,e2:V;
     + i:INTEGER;
     
     result := TRUE;
@@ -259,7 +259,7 @@ Section Public
     result
   );
   
-  - slice_deep_memcmp (at:INTEGER,other:NATIVE_ARRAY[E],other_lower,other_upper:INTEGER) :BOOLEAN <-
+  - slice_deep_memcmp (at:INTEGER,other:NATIVE_ARRAY[V],other_lower,other_upper:INTEGER) :BOOLEAN <-
   // Same jobs as `slice_memcmp' but uses `is_deep_equal' instead of `is_equal'.
   [ ...
     -? {at >= 0};
@@ -268,7 +268,7 @@ Section Public
     -? {(other_upper >= other_lower) ->> {other.is_not_null}};
   ]
   ( + i:INTEGER; 
-    + e1,e2:E;
+    + e1,e2:V;
     + result:BOOLEAN;
 	
     i := other_upper - other_lower;
@@ -295,7 +295,7 @@ Section Public
   // Searching:
   //
   
-  - first_index_of element:E until upper:INTEGER :INTEGER <-
+  - first_index_of element:V until upper:INTEGER :INTEGER <-
   // Give the index of the first occurrence of `element' using
   // `==' for comparison.
   // Answer `upper + 1' when `element' is not inside.
@@ -311,7 +311,7 @@ Section Public
     idx
   );
   
-  - index_of (element:E,start_index:INTEGER) until upper:INTEGER :INTEGER <-
+  - index_of (element:V,start_index:INTEGER) until upper:INTEGER :INTEGER <-
   // Using `is_equal' for comparison, gives the index of the first occurrence of `element' 
   // at or after `start_index'. Answer `upper + 1' when the search fail.
   // See also `fast_index_of', `reverse_index_of'.
@@ -332,7 +332,7 @@ Section Public
     +? {(Result <= upper) ->> {safe_equal (element,item Result)}};
   ];
   
-  - reverse_index_of element:E from upper:INTEGER :INTEGER <-
+  - reverse_index_of element:V from upper:INTEGER :INTEGER <-
   // Give the index of the first occurrence of `element' using
   // `==' for comparison, from upper to lower.
   // Answer -1 when `element' is not inside.
@@ -352,7 +352,7 @@ Section Public
     +? {(Result > 0) ->> {safe_equal (element, item Result)}};
   ];
   
-  - fast_index_of (element:E,start_index:INTEGER) until upper:INTEGER :INTEGER <-
+  - fast_index_of (element:V,start_index:INTEGER) until upper:INTEGER :INTEGER <-
   // Using basic `=' for comparison, gives the index of the first occurrence of 
   // `element' at or after `start_index'. Answer `upper + 1' when the search fail.
   // See also `index_of', `reverse_index_of'.
@@ -373,7 +373,7 @@ Section Public
     +? {(Result <= upper) ->> {element = item Result}};
   ];
   
-  - fast_reverse_index_of element:E from upper:INTEGER :INTEGER <-
+  - fast_reverse_index_of element:V from upper:INTEGER :INTEGER <-
   // Same as `reverse_index_of' but use basic `=' for comparison.
   // Search is done in reverse direction, which means from `upper' down to the
   // `0'. Answer `-1' when the search fail.
@@ -394,7 +394,7 @@ Section Public
     +? {(Result > 0) ->> {element = item Result}};
   ];
 
-  - fast_first_index_of element:E until upper:INTEGER :INTEGER <-
+  - fast_first_index_of element:V until upper:INTEGER :INTEGER <-
   // Same as `index_of' but use basic `=' for comparison.
   // `0'. Answer `upper + 1' when the search fail.
   // See also `fast_index_of', `reverse_index_of'.
@@ -413,7 +413,7 @@ Section Public
     +? {(Result <= upper) ->> {element = item Result}};
   ];    
   
-  - has element:E until upper:INTEGER :BOOLEAN <-
+  - has element:V until upper:INTEGER :BOOLEAN <-
   // Look for `element' using `==' for comparison.
   // Also consider `has' to choose the most appropriate.
   [ ...
@@ -430,7 +430,7 @@ Section Public
     result
   );
   
-  - fast_has element:E until upper:INTEGER :BOOLEAN <-
+  - fast_has element:V until upper:INTEGER :BOOLEAN <-
   // Look for `element' using basic `=' for comparison.
   // Also consider `has' to choose the most appropriate.
   [
@@ -483,7 +483,7 @@ Section Public
   // Replacing:
   //
   
-  - replace_all old_value:E with new_value:E until upper:INTEGER <-
+  - replace_all old_value:V with new_value:V until upper:INTEGER <-
   // Replace all occurences of the element `old_value' by `new_value'
   // using `==' for comparison.
   // See also `fast_replace_all' to choose the apropriate one.
@@ -498,7 +498,7 @@ Section Public
     };
   );
   
-  - fast_replace_all old_value:E with new_value:E until upper:INTEGER <-
+  - fast_replace_all old_value:V with new_value:V until upper:INTEGER <-
   // Replace all occurences of the element `old_value' by `new_value'
   // using basic `=' for comparison.
   // See also `replace_all' to choose the apropriate one.
@@ -517,7 +517,7 @@ Section Public
   // Adding:
   //
     
-  - copy src:NATIVE_ARRAY[E] to dest:INTEGER until src_capacity:INTEGER <-
+  - copy src:NATIVE_ARRAY[V] to dest:INTEGER until src_capacity:INTEGER <-
   // Copy range [0 .. `src_capacity - 1'] of `src' to range
   // [`dest' .. `dest + src_capacity - 1'] of `Self'.
   // No subscript checking.
@@ -535,7 +535,7 @@ Section Public
     };
   );
   
-  - slice_copy src:NATIVE_ARRAY[E] to dest:INTEGER from src_min:INTEGER to src_max:INTEGER <-
+  - slice_copy src:NATIVE_ARRAY[V] to dest:INTEGER from src_min:INTEGER to src_max:INTEGER <-
   // Copy range [`src_min' .. `src_max'] of `src' to range
   // [`at' .. `at + src_max - src_min - 1'] of `Current'.
   // No subscript checking.
@@ -559,7 +559,7 @@ Section Public
   // Other:
   //
   
-  - set_all_with v:E until upper:INTEGER <-
+  - set_all_with v:V until upper:INTEGER <-
   // Set all elements in range [0 .. upper] with
   // value `v'.
   [ ...
@@ -571,7 +571,7 @@ Section Public
     };
   );
   
-  - set_slice_with v:E from lower:INTEGER until upper:INTEGER <-
+  - set_slice_with v:V from lower:INTEGER until upper:INTEGER <-
   // Set all elements in range [`lower' .. `upper'] with value `v'.
   [ ...
     -? {lower >= 0};
@@ -592,7 +592,7 @@ Section Public
   [ ...
     -? {upper >= -1};
   ]
-  ( + v:E;
+  ( + v:V;
     
     upper.downto 0 do { i:INTEGER;      
       put v to i;
@@ -606,14 +606,14 @@ Section Public
     -? {lower >= 0};
     -? {upper >= lower};
   ]
-  ( + v:E;
+  ( + v:V;
         
     lower.to upper do { i:INTEGER;
       put v to i;
     };
   );
   
-  - copy_from model:NATIVE_ARRAY[E] until upper:INTEGER <-
+  - copy_from model:NATIVE_ARRAY[V] until upper:INTEGER <-
   // Assume `upper' is a valid index both in Current and `model'.
   [ ...
     -? {upper >= -1};
@@ -624,15 +624,15 @@ Section Public
     };
   );
   
-  - deep_twin_from capacity:INTEGER :NATIVE_ARRAY[E] <-
+  - deep_twin_from capacity:INTEGER :NATIVE_ARRAY[V] <-
   // To implement `deep_twin'. Allocate a new array of
   // `capacity' initialized with `deep_twin'.
   // Assume `capacity' is valid both in Current and `model'.
   [ ...
     -? {capacity >= 0};
   ]
-  ( + element:E;
-    + result:NATIVE_ARRAY[E];
+  ( + element:V;
+    + result:NATIVE_ARRAY[V];
        
     (capacity > 0).if {
       result := calloc capacity;
@@ -668,7 +668,7 @@ Section Public
     };
   );
   
-  - occurrences element:E until upper:INTEGER :INTEGER <-
+  - occurrences element:V until upper:INTEGER :INTEGER <-
   // Number of occurrences of `element' in range [0..upper]
   // using `equal' for comparison.
   // See also `fast_occurrences' to chose the apropriate one.
@@ -685,7 +685,7 @@ Section Public
     count
   );
   
-  - slice_occurrences element:E from lower:INTEGER until upper:INTEGER :INTEGER <-
+  - slice_occurrences element:V from lower:INTEGER until upper:INTEGER :INTEGER <-
   // Number of occurrences of `element' in range [`lower' .. `upper'] using 
   // `is_equal' for comparison.
   // See also `slice_fast_occurrences' to chose the apropriate one.
@@ -705,7 +705,7 @@ Section Public
     result
   );
 
-  - fast_occurrences element:E until upper:INTEGER :INTEGER <-
+  - fast_occurrences element:V until upper:INTEGER :INTEGER <-
   // Number of occurrences of `element' in range [0..upper]
   // using basic "=" for comparison.
   // See also `fast_occurrences' to chose the apropriate one.
@@ -722,7 +722,7 @@ Section Public
     count
   );
   
-  - slice_fast_occurrences element:E from lower:INTEGER until upper:INTEGER :INTEGER <-
+  - slice_fast_occurrences element:V from lower:INTEGER until upper:INTEGER :INTEGER <-
   // Number of occurrences of `element' in range [`lower' .. `upper']
   // using basic "=" for comparison.
   // See also `slice_occurrences' to chose the apropriate one.
@@ -749,7 +749,7 @@ Section Public
     -? {upper >= -1};
   ]
   ( + result:BOOLEAN;
-    + model:E;
+    + model:V;
     ? {upper >= -1};
     result := TRUE;
     upper.downto 0 do { i:INTEGER;
@@ -768,7 +768,7 @@ Section Public
     -? {upper >= lower - 1};
   ]
   ( + i:INTEGER; 
-    + v:E;
+    + v:V;
     + result:BOOLEAN;
 		
     result := TRUE;
@@ -798,7 +798,9 @@ Section Public
   // Guru Section
   //
   
-  - force_put element:E to index:INTEGER <-
+  - println <- `puts(@Self)`;
+  
+  - force_put element:V to index:INTEGER <-
   // Used in Memory count: not to use directly without caution !
   [ ...
     -? {index>=0};

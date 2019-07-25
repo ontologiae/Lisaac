@@ -50,3 +50,9 @@ Section Public
     deferred;
     NULL
   );
+  
+  //
+  // Cast.
+  //
+  
+  - append_cast_name_in buf:STRING <- deferred;

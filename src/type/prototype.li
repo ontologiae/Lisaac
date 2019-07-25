@@ -127,15 +127,15 @@ Section Public
   // Cast information.
   //
 
-  + export_list:HASHED_SET[ITM_TYPE_SIMPLE];
-  + import_list:HASHED_SET[ITM_TYPE_SIMPLE];
+  + export_list:FAST_ARRAY[ITM_TYPE_MONO];
+  + import_list:FAST_ARRAY[ITM_TYPE_MONO];
 
-  - set_export_list s:HASHED_SET[ITM_TYPE_SIMPLE] <-
+  - set_export_list s:FAST_ARRAY[ITM_TYPE_MONO] <-
   (
     export_list := s;
   );
 
-  - set_import_list s:HASHED_SET[ITM_TYPE_SIMPLE] <-
+  - set_import_list s:FAST_ARRAY[ITM_TYPE_MONO] <-
   (
     import_list := s;
   );
@@ -149,6 +149,8 @@ Section Public
   + source  : STRING;   // Text source code.
   
   + generic_count:INTEGER;
+  
+  + idf_generic_list:FAST_ARRAY[CHARACTER];
   
   //
   // Default value.
@@ -183,6 +185,7 @@ Section Public
     filename := f;
     name     := n;    
     generic_count := c;
+    idf_generic_list := FAST_ARRAY[CHARACTER].create_with_capacity c;
         
     // Collection.    
     index := prototype_list.count;

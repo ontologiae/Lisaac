@@ -31,10 +31,6 @@ Section Inherit
   - parent_any:OBJECT := OBJECT;
 
 Section Private
-
-  //TODO: to improve performance, use alu:STRING as an ARRAY instead of alub
-
-  - out          :STRING;
   
   - im           :INTEGER := 139968;
 
@@ -54,14 +50,14 @@ Section Private
   
   - homo_sapiens :FAST_ARRAY[FREQUENCY]; 
 
-  - alu :STRING :=
+  - alu :STRING_CONSTANT :=
             "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG\
             \GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA\
             \CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT\
             \ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA\
             \GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG\
             \AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC\
-            \AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA".to_string;
+            \AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA";
 
   - alub    :FAST_ARRAY[CHARACTER] := FAST_ARRAY[CHARACTER].create (alu.count);
   
@@ -110,128 +106,83 @@ Section Private
     };
   );
 
-  - select_random (a:FAST_ARRAY[FREQUENCY]) :CHARACTER <-
+  - select_random a:FAST_ARRAY[FREQUENCY] :CHARACTER <-
   ( + return_char :CHARACTER;
     + random :REAL_64;
-    + exit :BOOLEAN;
-
-    //TODO : improve this loop
-    random := rand(1.0);
-    0.to (a.upper) do { i:INTEGER;
-      (!exit).if {
-        (random < (a.item i).p).if {
-          exit := TRUE;
-          return_char := (a.item i).c;
-        };
-      };
+    + i,up:INTEGER;
+    
+    up := a.upper;
+    random := rand (1.0);
+    
+    i := a.lower;
+    {(i <= up) && {random >= a.item i.p}}.while_do { 
+      i := i + 1;
+    };
+    (i <= up).if {
+      return_char := a.item i.c;
+    } else {
+      return_char := a.last.c;
     };
     
-    (!exit).if {
-      return_char := (a.item(a.upper)).c;
-    };
-
     return_char
   );
-
+  
+  - puts tab:NATIVE_ARRAY[CHARACTER] <- `puts(@tab)`;
+  
+  - pick:NATIVE_ARRAY[CHARACTER] := NATIVE_ARRAY[CHARACTER].create (line_length + 1);
+  
   - make_random_fasta(id, desc:STRING_CONSTANT, a :FAST_ARRAY[FREQUENCY], n:INTEGER) <-
   ( + m :INTEGER;
     + n_temp :INTEGER;
-    + desc_str :STRING;
-
+   
     index  := 0;
     n_temp := n;
 
-    desc_str := STRING.create 5;
-    desc_str.append ">";
-    desc_str.append id;
-    desc_str.append " ";
-    desc_str.append desc;
-    desc_str.append "\n";
-    out.append desc_str;
-
-    {n_temp > 0}.while_do {
-
-      (n_temp < line_length).if {
-        m := n_temp;
-      } else {
-        m := line_length;
-      };
-
-      ((buffer_size - index) < m).if {
-        0.to (index - 1) do {i:INTEGER;
-          out.append_character(bbuffer.item i);
-        };
-        index := 0;
-      };
-
-      0.to (m - 1) do { i:INTEGER;
-        bbuffer.put(select_random a) to index;
-        index := index + 1;
-      };
-      bbuffer.put '\n' to index;
-      index := index + 1;
+    '>'.print;
+    id.print;
+    ' '.print;
+    desc.print;
+    '\n'.print;
+    
+    {n_temp > 0}.while_do {      
+      m := n_temp.min line_length;
+      0.to (m-1) do { i:INTEGER;		
+	pick.put (select_random a) to i;
+      };      
+      pick.put '\0' to m;
+      puts pick;
       n_temp := n_temp - line_length;
-    };
-
-    (index != 0).if {
-      0.to (index - 1) do { i:INTEGER;
-        out.append_character (bbuffer.item i);
-      };
     };
   );
 
-  - make_repeat_fasta(id, desc:STRING_CONSTANT, alu:STRING, n:INTEGER ) <-
-  ( + m, k, kn :INTEGER;
-    + n_temp   :INTEGER;
-    + desc_str :STRING;
-   
-    1.to (alu.count) do { i:INTEGER;
-      alub.put (alu.item i) to (i - 1);
-    };
-    index    := 0;
-    n_temp   := n;
-    kn       := alub.count;
+  - make_repeat_fasta(id, desc:STRING_CONSTANT, alu:STRING_CONSTANT, n:INTEGER ) <-
+  ( + k, kn,j,i,idx :INTEGER;
+
+    '>'.print;
+    id.print;
+    ' '.print;
+    desc.print;
+    '\n'.print;
     
-    desc_str := STRING.create 5;
-    desc_str.append ">";
-    desc_str.append id;
-    desc_str.append " ";
-    desc_str.append desc;
-    desc_str.append "\n";
-    out.append desc_str;
-
-    {n_temp > 0}.while_do {
-      (n_temp < line_length).if {
-        m := n_temp;
-      } else {
-        m := line_length;
+    kn := alu.count;
+    k := 1;
+    i := n;
+    {i >= 1}.while_do {         
+      j := i.min line_length;
+      idx := 0;
+      {j >= 1}.while_do {           
+	(k > kn).if {
+	  k := 1;
+	};
+	pick.put (alu.item k) to idx;
+	k := k + 1;
+	j := j - 1;
+	idx := idx + 1;
       };
-      ((buffer_size - index) < m).if {
-        0.to (index - 1) do { i:INTEGER;
-          out.append_character (bbuffer.item i);
-        };
-        index := 0;
-      };
-
-      0.to (m - 1) do { i:INTEGER;
-        (k = kn).if {
-          k := 0;
-        };
-        bbuffer.put (alub.item k) to index;
-        index := index + 1;
-        k := k + 1;
-      };
-
-      bbuffer.put '\n' to index;
-      index := index + 1;
-      n_temp := n_temp - line_length;
-    };
-
-    (index != 0).if {
-      0.to (index - 1) do { i:INTEGER;
-        out.append_character (bbuffer.item i);
-      };
-    };
+      pick.put '\0' to idx;
+      puts pick;
+      i := i - line_length;
+    };       
   );
 
 Section Public
@@ -239,21 +190,14 @@ Section Public
   - main <-
   ( + n :INTEGER;
   
-    out := STRING.create 10;
-
-    (COMMAND_LINE.upper = 1).if {
-      n := COMMAND_LINE.item 1.to_integer;
-    } else {
-      n := 250_000;
-    };
+    n := COMMAND_LINE.item 1.to_integer;
 
     create_iub;
     create_homo_sapiens;
     make_cumulative iub;
     make_cumulative(homo_sapiens);
+ 
     make_repeat_fasta("ONE", "Homo sapiens alu", alu, n * 2);
     make_random_fasta("TWO", "IUB ambiguity codes", iub, n * 3);
     make_random_fasta("THREE", "Homo sapiens frequency", homo_sapiens, n * 5);
-
-    out.print;
   );

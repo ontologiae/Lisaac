@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := ARRAY2[E];
+  + name    := ARRAY2[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -29,7 +29,7 @@ Section Header
     
 Section Inherit
 
-  + parent_collection2:Expanded COLLECTION2[E];
+  + parent_collection2:Expanded COLLECTION2[V];
   
 Section Public
   
@@ -41,7 +41,7 @@ Section Public
   
 Section ARRAY2
   
-  + storage:NATIVE_ARRAY[E];
+  + storage:NATIVE_ARRAY[V];
   // To store elements line by line.
 
   + capacity:INTEGER;
@@ -82,7 +82,7 @@ Section Public
       storage.clear_all (count - 1);
     } else {
       capacity := count;
-      storage := NATIVE_ARRAY[E].create count;
+      storage := NATIVE_ARRAY[V].create count;
     }; 
   )
   [ ...
@@ -92,7 +92,7 @@ Section Public
     +? {column_maximum = column_max};
   ];
 
-  - from_collection2 model:COLLECTION2[E] <-
+  - from_collection2 model:COLLECTION2[V] <-
   (
     make (model.line_minimum,model.column_minimum) 
     to   (model.line_maximum,model.column_maximum);
@@ -108,7 +108,7 @@ Section Public
     +? { lower2 = model.lower2 };
   ];
 
-  - from_collection contents:COLLECTION[E] 
+  - from_collection contents:COLLECTION[V] 
   size (line_min,column_min:INTEGER) to (line_max,column_max:INTEGER) <-
   //  Reset all bounds using `line_min', `line_max', `column_min',
   //  and `column_max' .
@@ -132,7 +132,7 @@ Section Public
     +? { count = contents.count };
   ];
     
-  - from_model model:COLLECTION[COLLECTION[E]] <-
+  - from_model model:COLLECTION[COLLECTION[V]] <-
   // The `model' is used to fill line by line the COLLECTION2.
   // Assume all sub-collections of `model' have the same indexing.
   (
@@ -186,12 +186,12 @@ Section Public
   // Implementation of others feature from COLLECTION2:
   //
   
-  - item (line,column:INTEGER) :E <-
+  - item (line,column:INTEGER) :V <-
   (
     storage.item ((line - lower1) * count2 + column - lower2)
   );
     
-  - put element:E to (line,column:INTEGER) <-
+  - put element:V to (line,column:INTEGER) <-
   (
     storage.put element to ((line - lower1) * count2 + column - lower2);
   );
@@ -211,7 +211,7 @@ Section Public
     count1 * count2
   );
     
-  - force x:E to (line, column:INTEGER) <-
+  - force x:V to (line, column:INTEGER) <-
   (
     (! valid_index (line,column)).if {
       resize (line.min lower1,column.min lower2) to 
@@ -220,17 +220,17 @@ Section Public
     put x to (line,column);
   );
     
-  - set_all_with element:E <-
+  - set_all_with element:V <-
   (
     storage.set_all_with element until (count - 1);
   );
     
-  - replace_all old_value:E with new_value:E <-
+  - replace_all old_value:V with new_value:V <-
   (
     storage.replace_all old_value with new_value until (count - 1);
   );
     
-  - fast_replace_all old_value:E with new_value:E <-
+  - fast_replace_all old_value:V with new_value:V <-
   (
     storage.fast_replace_all old_value with new_value until (count - 1);
   );
@@ -260,17 +260,17 @@ Section Public
   // Looking and comparison:
   //
   
-  - occurrences elt:E :INTEGER <-
+  - occurrences elt:V :INTEGER <-
   (
     storage.occurrences elt until (count - 1)    
   );
     
-  - fast_occurrences elt:E :INTEGER <-
+  - fast_occurrences elt:V :INTEGER <-
   (
     storage.fast_occurrences elt until (count - 1)    
   );
     
-  - has x:E :BOOLEAN <-
+  - has x:V :BOOLEAN <-
   // Search if a element x is in the array using `equal'.
   // See also `fast_has' to chose the apropriate one.
   ( + result:BOOLEAN;
@@ -281,7 +281,7 @@ Section Public
     result
   );
     
-  - fast_has x:E :BOOLEAN <-
+  - fast_has x:V :BOOLEAN <-
   //  Search if a element x is in the array using `='.
   ( + result:BOOLEAN;
     
@@ -297,7 +297,7 @@ Section Public
   );
     
   - swap (line1, column1:INTEGER) with (line2, column2:INTEGER) <-
-  ( + tmp:E;
+  ( + tmp:V;
     + c2, index1, index2:INTEGER; 
     
     c2 := count2;

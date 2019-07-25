@@ -20,13 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name        := ITM_TYPE_GENERIC_ELT;
+  + name      := ITM_TYPE_GENERIC_ELT;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
+  - copyright := "2003-2007 Benoit Sonntag";
   
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Virtual element for generic style type";
+  - author    := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment   := "Virtual element for generic style type";
   
 Section Inherit
   
@@ -34,19 +33,28 @@ Section Inherit
   
 Section Private
   
-  - list:FAST_ARRAY[ITM_TYPE_GENERIC_ELT] := FAST_ARRAY[ITM_TYPE_GENERIC_ELT].create_with_capacity 4;
-  
-  - create idx:INTEGER :SELF <-
-  ( + result:SELF;
+  - list:FAST_ARRAY[ITM_TYPE_GENERIC_ELT] := 
+  // 'A' to 'Z'
+  ( + result:FAST_ARRAY[ITM_TYPE_GENERIC_ELT];
     
-    result := clone;
-    result.make idx;
+    result := FAST_ARRAY[ITM_TYPE_GENERIC_ELT].create_with_capacity 26; 
+    'A'.to 'Z' do { c:CHARACTER;
+      result.add_last (create c);
+    };
     result
   );
   
-  - make idx:INTEGER <-
+  - create idf:CHARACTER :SELF <-
+  ( + result:SELF;
+    
+    result := clone;
+    result.make idf;
+    result
+  );
+  
+  - make idf:CHARACTER <-
   (
-    index := idx;
+    index := idf -! 'A';    
   );
 
 Section Public
@@ -55,18 +63,15 @@ Section Public
   
   - hash_code:INTEGER <- index;
      
-  - get idx:INTEGER :ITM_TYPE_GENERIC_ELT <-
-  (     
-    {idx > list.upper}.while_do {
-      list.add_last (create idx);
-    };
-    list.item idx
+  - get idf:CHARACTER :ITM_TYPE_GENERIC_ELT <-
+  (         
+    list.item (idf -! 'A')
   );
   
   - display buffer:STRING <-
   (
     buffer.append "Generic[";
-    index.append_in buffer;
+    buffer.add_last ('A' +# index);    
     buffer.add_last ']';
   );
   
@@ -74,7 +79,28 @@ Section Public
   
   - to_run:TYPE_FULL <-
   ( + type_generic:TYPE_GENERIC;
+    + result:TYPE_FULL;
+    + t:CHARACTER;
     
+    t := 'A' +# index;
     type_generic ?= ITM_TYPE_SELF.self_up;        
-    type_generic.generic_list.item index
+    (type_generic != NULL).if {
+      result := type_generic.generic_to_type t;
+    };
+    (result = NULL).if {
+      string_tmp.copy "Type parameter `";
+      string_tmp.add_last t;
+      string_tmp.append "' is not define.";
+      semantic_error (ITM_TYPE_SELF.to_run.prototype.position,string_tmp);
+    };
+    result
+  );
+
+  //
+  // Cast.
+  //
+  
+  - append_cast_name_in buf:STRING <- 
+  (
+    buf.add_last ('a' +# index);
   );

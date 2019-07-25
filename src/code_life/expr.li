@@ -145,10 +145,7 @@ Section Public
 	instr := local.write position value Self;		
 	list_current.add_last instr;
 	//
-	string_tmp.copy "to_";
-	string_tmp.append (t.raw.name);
-	string_tmp.to_lower;
-	slot_name := ALIAS_STR.get string_tmp;
+	slot_name := ALIAS_STR.get (TYPE_FULL.last_cast_name);	
 	slot_msg  := static_type.get_slot slot_name; 
 	(slot_msg = NULL).if {	  
 	  string_tmp.clear;
@@ -195,11 +192,8 @@ Section Public
 	local := static_type.get_temporary position;
 	instr := local.write position value Self;		
 	list_current.add_last instr;
-	//
-	string_tmp.copy "from_";
-	string_tmp.append (static_type.raw.name);
-	string_tmp.to_lower;
-	slot_name := ALIAS_STR.get string_tmp;
+	//	
+	slot_name := ALIAS_STR.get (TYPE_FULL.last_cast_name);
 	slot_msg  := t.get_slot slot_name; 
 	(slot_msg = NULL).if {	  
 	  string_tmp.clear;

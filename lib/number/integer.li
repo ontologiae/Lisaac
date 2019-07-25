@@ -20,11 +20,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := Expanded INTEGER -> 
+  + name   := Expanded INTEGER;
+  
+  - export := 
   // Integer: 
   UINTEGER_8,  UINTEGER_16, UINTEGER_32, UINTEGER_64,
   INTEGER_8 ,  INTEGER_16 , INTEGER_32 , INTEGER_64 ,
-  UINTEGER_BIG,INTEGER_BIG,
+  UINTEGER_BIG,//INTEGER_BIG,
   // Fixed real:
   UREAL_16_16, UREAL_24_8 , UREAL_26_6 , 
   REAL_16_16 , REAL_24_8  , REAL_26_6  , 

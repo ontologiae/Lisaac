@@ -54,7 +54,7 @@ Section Public
       max_depth := n;
     };
     stretch_depth := max_depth+1;
-    check := (TREENODE.bottom_up_tree(0,stretch_depth)).item_check;
+    check := TREENODE.bottom_up_tree (0,stretch_depth).item_check;
 
     "stretch tree of depth ".print;
     stretch_depth.print;
@@ -62,27 +62,27 @@ Section Public
     check.print;
     '\n'.print;
     
-    long_lived_tree := TREENODE.bottom_up_tree(0, max_depth);
+    long_lived_tree := TREENODE.bottom_up_tree (0, max_depth);
     depth := min_depth;
     {depth <= max_depth}.while_do {
       iterations := 1 << (max_depth - depth  + min_depth);
       check := 0;
       1.to iterations do { i:INTEGER;
-        check := check + (TREENODE.bottom_up_tree(i,depth)).item_check;
-        check := check + (TREENODE.bottom_up_tree(-i,depth)).item_check;
+        check := check + TREENODE.bottom_up_tree (i,depth) .item_check;
+        check := check + TREENODE.bottom_up_tree (-i,depth).item_check;
       };
-      (iterations*2).print;
+      (iterations * 2).print;
       "\t trees of depth ".print;
       depth.print;
       "\t check: ".print;
       check.print;
       '\n'.print;
-      depth := depth+2;
+      depth := depth + 2;
     };
     
     "long lived tree of depth ".print;
     max_depth.print;
     "\t check: ".print;
-    (long_lived_tree.item_check).print;
+    long_lived_tree.item_check.print;
     '\n'.print;
   );

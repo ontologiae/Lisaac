@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name        := COLLECTION2[E];
+  + name        := COLLECTION2[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -34,7 +34,7 @@ Section Header
       
 Section Inherit
   
-  - parent_safe_equal:SAFE_EQUAL[E] := SAFE_EQUAL[E];
+  - parent_safe_equal:SAFE_EQUAL[V] := SAFE_EQUAL[V];
   
 Section Public
   
@@ -86,9 +86,9 @@ Section Public
   // Reading:
   //
   
-  - item (line, column:INTEGER) :E <-
+  - item (line, column:INTEGER) :V <-
   [ -? { valid_index (line,column) }; ]
-  ( + result:E;
+  ( + result:V;
     
     deferred;
     result
@@ -98,14 +98,14 @@ Section Public
   // Writing:
   //
   
-  - put element:E to (line, column:INTEGER) <-
+  - put element:V to (line, column:INTEGER) <-
   [ -? { valid_index (line,column) }; ]
   (
     deferred;
   )
   [ +? { item (line,column) = element}; ];
     
-  - force element:E to (line, column:INTEGER) <-
+  - force element:V to (line, column:INTEGER) <-
   // Put `element' at position (`line',`column'). Collection is
   // resized first when (`line',`column') is not inside current
   // bounds. New bounds are initialized with default values.
@@ -216,7 +216,7 @@ Section Public
     +? { count = Old count };
   ];
     
-  - set_all_with v:E <-
+  - set_all_with v:V <-
   // Set all item with value `v'.
   (
     deferred;
@@ -227,7 +227,7 @@ Section Public
     
   - clear_all <-
   // Set all items to default values.
-  ( + value:E;
+  ( + value:V;
         
     set_all_with value;
   )
@@ -240,7 +240,7 @@ Section Public
   // Creating or initializing:
   //
   
-  - from_collection2 model:COLLECTION2[E] <-
+  - from_collection2 model:COLLECTION2[V] <-
   //  Uses `model' to initialize Current.
   [ -? { model != NULL }; ]
   (
@@ -251,7 +251,7 @@ Section Public
     +? { count2 = model.count2 };
   ];
     
-  - from_model model:COLLECTION[COLLECTION[E]] <-
+  - from_model model:COLLECTION[COLLECTION[V]] <-
   // The `model' is used to fill line by line Current.
   // Assume all sub-collections of `model' have the same
   // number of lines.
@@ -278,7 +278,7 @@ Section Public
     FALSE
   );
   
-  - '==' other:COLLECTION2[E] :BOOLEAN <-
+  - '==' other:COLLECTION2[V] :BOOLEAN <-
   // Do both collections have the same `lower1', `lower2', `upper1' and `upper2', and items?
   // The basic `=' is used for comparison of items.
   //
@@ -306,7 +306,7 @@ Section Public
     result
   );
 
-  - is_equal_map (other:COLLECTION2[E]) :BOOLEAN <-
+  - is_equal_map (other:COLLECTION2[V]) :BOOLEAN <-
   // Do both collections have the same `lower1', `lower2', `upper1' and `upper2', and items?
   // Feature `is_equal' is used for comparison of items.
   //
@@ -339,7 +339,7 @@ Section Public
   
   - fill_tagged_out_memory <-
   ( + line:INTEGER;
-    +v:E;
+    +v:V;
     
     tagged_out_memory.append "lower1:";
     lower1.append_in tagged_out_memory;
@@ -378,7 +378,7 @@ Section Public
   // Miscellaneous features:
   //
   
-  - occurrences elt:E :INTEGER <-
+  - occurrences elt:V :INTEGER <-
   // Number of occurrences using `equal'.
   //
   // See also `fast_occurrences' to chose the apropriate one.
@@ -388,7 +388,7 @@ Section Public
   )
   [ +? { Result >= 0 }; ];
     
-  - fast_occurrences elt:E :INTEGER <-
+  - fast_occurrences elt:V :INTEGER <-
   // Number of occurrences using `='.
   //
   // See also `occurrences' to chose the apropriate one.
@@ -398,7 +398,7 @@ Section Public
   )
   [ +? { Result >= 0 }; ];
      
-  - has x:E :BOOLEAN <-
+  - has x:V :BOOLEAN <-
   // Search if a element x is in the array using `equal'.
   //
   // See also `fast_has' to chose the apropriate one.
@@ -407,14 +407,14 @@ Section Public
     FALSE
   );
     
-  - fast_has x:E :BOOLEAN <-
+  - fast_has x:V :BOOLEAN <-
   //  Search if a element x is in the array using `='.
   (
     deferred;
     FALSE
   );
     
-  - replace_all old_value:E with new_value:E <-
+  - replace_all old_value:V with new_value:V <-
   // Replace all occurences of the element `old_value' by `new_value'
   // using `equal' for comparison.
   //
@@ -427,7 +427,7 @@ Section Public
     +? { occurrences old_value = 0 };
   ];
     
-  - fast_replace_all old_value:E with new_value:E <-
+  - fast_replace_all old_value:V with new_value:V <-
   // Replace all occurences of the element `old_value' by `new_value'
   // using operator `=' for comparison.
   //
@@ -454,7 +454,7 @@ Section Public
     +? { result != NULL };
   ];
     
-  - set_area (line_min,column_min:INTEGER) to (line_max,column_max:INTEGER) with element:E <-
+  - set_area (line_min,column_min:INTEGER) to (line_max,column_max:INTEGER) with element:V <-
   // Set all the elements of the selected area rectangle with `element'.
   [
     -? { valid_index (line_min,column_min) };

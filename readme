@@ -11,13 +11,16 @@ Install.
 * Linux/Unix:
 -------------
 
-For the installation in your system, simply to tape : 
+For a userland installation in your system, simply use : 
 
+    make interactive_userland
+
+For a full system installation : 
+	
     make
-    ./install_lisaac
+		make install (as root)
 
 Run `lisaac' to compile.
-
 
 * Windows/Dos:
 --------------
@@ -39,7 +42,9 @@ set path=d:/mingw\bin;%path%
 
 5- Reboot or reloaded AUTOEXEC.BAT
 
-6- In lisaac directory, to run 'make', and 'install_lisaac'
+6- In lisaac directory, run 'make interactive_userland'
+
+7- Run 'install_lisaac' to finish the installation
 
 7- Reboot or reloaded AUTOEXEC.BAT
 

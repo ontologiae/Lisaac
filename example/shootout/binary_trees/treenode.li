@@ -40,8 +40,8 @@ Section Private
 
 Section Public
   
-  - item_check :INTEGER <-
-  ( + item_tmp :INTEGER;
+  - item_check:INTEGER <-
+  ( + item_tmp:INTEGER;
 
     (left = NULL).if {
       item_tmp := item;
@@ -51,22 +51,24 @@ Section Public
     item_tmp
   );
 
-  - bottom_up_tree (item, depth :INTEGER) :SELF <-
+  - bottom_up_tree (item, depth:INTEGER) :SELF <-
   ( + result :SELF;
 
     result := clone;
     
     (depth > 0).if {
-      result.make (bottom_up_tree(2*item-1, depth-1),
-                   bottom_up_tree(2*item, depth-1),
-		               item);
+      result.make (
+	bottom_up_tree(2*item-1, depth-1),
+	bottom_up_tree(2*item, depth-1),
+	item
+      );
     } else {
       result.make_item_only item;
     };
     result
   );
 
-  - make (l, r :TREENODE, i :INTEGER) <-
+  - make (l, r:TREENODE, i:INTEGER) <-
   (
     left  := l;
     right := r;

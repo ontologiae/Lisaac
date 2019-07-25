@@ -86,3 +86,14 @@ Section Public
   (
     buffer.append name;
   );
+  
+  //
+  // Cast.
+  //
+  
+  - append_cast_name_in buf:STRING <- 
+  (
+    (name.lower).to (name.upper) do { j:INTEGER;
+      buf.add_last (name.item j.to_lower);
+    };
+  );

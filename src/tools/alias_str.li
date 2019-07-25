@@ -113,7 +113,8 @@ Section Public
   - variable_target     :STRING_CONSTANT := "target";
     
   - slot_name         :STRING_CONSTANT := "name";
-  - slot_category     :STRING_CONSTANT := "category";
+  - slot_export       :STRING_CONSTANT := "export";
+  - slot_import       :STRING_CONSTANT := "import";
   - slot_external     :STRING_CONSTANT := "external";
   - slot_default      :STRING_CONSTANT := "default";
   - slot_type         :STRING_CONSTANT := "type";
@@ -133,6 +134,8 @@ Section Public
   - slot_main         :STRING_CONSTANT := "main";
   - slot_infix        :STRING_CONSTANT := "__infix";
   - slot_prefix       :STRING_CONSTANT := "__prefix";
+  - slot_to           :STRING_CONSTANT := "to_";
+  - slot_from         :STRING_CONSTANT := "from_";
   - slot_storage      :STRING_CONSTANT := "storage";
   
   - c_void           :STRING_CONSTANT := "void";
@@ -339,7 +342,8 @@ Section Public
     
     // Slot particulier :
     list.add slot_name;
-    list.add slot_category;
+    list.add slot_export;
+    list.add slot_import;
     list.add slot_external;
     list.add slot_default;
     list.add slot_type;
@@ -359,6 +363,8 @@ Section Public
     list.add slot_main;
     list.add slot_infix;
     list.add slot_prefix;
+    list.add slot_to;
+    list.add slot_from;
     list.add slot_storage;
     
     // Type C :

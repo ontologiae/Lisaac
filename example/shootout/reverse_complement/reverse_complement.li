@@ -1,0 +1,125 @@
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name         := REVERSE_COMPLEMENT;
+  
+  - bibliography := "http://IsaacOS.com";
+  - author       := "Xavier Oswald (x.oswald@free.fr)";
+  - comment      := "Language shootout - REVERSE-COMPLEMENT";
+  
+Section Inherit
+  
+  - parent_any:OBJECT := OBJECT;
+
+Section Public
+  
+  - buffer :NATIVE_ARRAY[CHARACTER];
+  - buffer_count:INTEGER;
+    
+  - iub_pairs:STRING_CONSTANT := "ATCGBVDHKMRY";
+  
+  // 1+UCHAR_MAX -> 255+1
+  - iub_complement :NATIVE_ARRAY[CHARACTER] := NATIVE_ARRAY[CHARACTER].create 256; 
+    
+  - build_iub_complement <-
+  ( 
+    0.to 256 do { i:INTEGER;
+      iub_complement.put (i.to_character) to i;   
+    };
+    
+    (iub_pairs.lower).to (iub_pairs.upper) by 2 do { j:INTEGER;
+      iub_complement.put(iub_pairs.item (j+1)) to (iub_pairs.item  j   .to_integer); 
+      iub_complement.put(iub_pairs.item  j   ) to (iub_pairs.item (j+1).to_integer);
+      iub_complement.put(iub_pairs.item (j+1)) to (iub_pairs.item  j   .to_lower.to_integer); 
+      iub_complement.put(iub_pairs.item  j   ) to (iub_pairs.item (j+1).to_lower.to_integer);
+    };    
+  );
+
+  - in_place_reverse <-
+  ( + i,len:INTEGER;
+    + c:CHARACTER;    
+    
+    i := 0;
+    len := buffer_count - 1;    
+    
+    {i <= len}.while_do {
+      c := buffer.item i;
+      buffer.put (iub_complement.item((buffer.item len).to_integer)) to i;
+      buffer.put (iub_complement.item(c.to_integer)) to len;
+      i := i + 1;
+      len := len - 1;
+    };    
+  );
+  
+  - process <-
+  ( + c :CHARACTER;    
+    + len:INTEGER;
+    + s:NATIVE_ARRAY[CHARACTER];
+    
+    in_place_reverse;
+    
+    s := buffer;
+    len := buffer_count;
+        
+    {len > 60}.while_do {
+      c := s.item 60;
+      s.put '\0' to 60;
+      s.println;
+      s.put c to 60;
+      s := s + 60; 
+      len := len - 60;
+    };
+    
+    s.put '\0' to len;
+    s.println;    
+  );
+
+  - main <-
+  ( + line:STRING;
+    + buf:NATIVE_ARRAY[CHARACTER];
+    + l:INTEGER;
+   
+    buf := buffer := NATIVE_ARRAY[CHARACTER].create 16777216;
+            
+    build_iub_complement;
+              
+    IO.read_line;
+    line := IO.last_string;        
+    {`NULL != fgets(@buf,1023,stdin)`:BOOLEAN(TRUE,FALSE)}.while_do {      
+      (buf.item 0 = '>').if {		
+	(buffer_count > 0).if {
+	  process;	  
+	  buffer_count := 0;	  
+	};	
+	buf.put '>' to 0;
+	buf.println;		
+	buf := buffer;
+      } else {	
+	l := `strlen(@buf)`:INTEGER;
+	buffer_count := buffer_count + l;
+	buf := buf + l;
+      };      
+    };
+    (buffer_count > 0).if {
+      process;
+    };        
+  );

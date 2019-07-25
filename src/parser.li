@@ -20,13 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name        := PARSER;
+  + name      := PARSER;
 
-  - copyright   := "2003-2007 Benoit Sonntag";
-
+  - copyright := "2003-2007 Benoit Sonntag";
   
-  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
-  - comment     := "Parser for Lisaac language.";
+  - author    := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment   := "Parser for Lisaac language.";
   
   // You can to get current grammar with `grep "//++" parser.li'
   
@@ -97,18 +96,7 @@ Section Public
   - short_local:HASHED_SET[STRING_CONSTANT];
   
 Section Private  
-  
-  //
-  // Generic information.
-  //
-  
-  - is_generic:BOOLEAN <- generic_list_count != 0;
-  
-  - generic_list_count:INTEGER;
-  
-  - keyword_generic_list:FAST_ARRAY[STRING_CONSTANT] :=
-  FAST_ARRAY[STRING_CONSTANT].create_with_capacity 2;
-  
+    
   //
   // Source information.
   //
@@ -533,6 +521,23 @@ Section Private
     result
   );
   
+  //-- cap_character -> 'A'-'Z'
+  - read_cap_character:CHARACTER <-
+  ( + result,char:CHARACTER;
+    
+    // Skip spaces
+    ((read_space) && {last_character.is_upper}).if {
+      char := last_character;
+      position := position + 1;
+      ((last_character.is_upper) || {last_character.is_digit} || {last_character = '_'}).if {
+	position := position - 1;
+      } else {
+	result := char;
+      };
+    };
+    result
+  );
+
   //-- integer -> number 
   //-- number  -> {'0'-'9'} ['d'] 
   //--          | '0'-'9' {'0'-'9' | 'A'-'F' | 'a'-'f'} 'h'
@@ -1416,7 +1421,7 @@ Section Private
     + genericity:FAST_ARRAY[ITM_TYPE_MONO];
     + continue:BOOLEAN;
     + t,result:ITM_TYPE_MONO;
-    + idx,old_pos,old_derive,sav_derive:INTEGER;
+    + old_pos,old_derive,sav_derive:INTEGER;
     
     read_cap_identifier.if {            
       old_pos    := position;
@@ -1428,6 +1433,10 @@ Section Private
 	//
 	// Genericity.
 	//
+	(name.count = 1).if {
+	  syntax_error (current_position,"Incorrect parameter type.");
+	};
+	
 	short (ALIAS_STR.short_prototype) token 
 	(old_pos-name.count) to old_pos;
 	
@@ -1454,8 +1463,8 @@ Section Private
 	  warning_error (current_position,"Added ']'.");
 	}; // if
       } else {
-	idx := keyword_generic_list.fast_first_index_of name;
-	(idx <= keyword_generic_list.upper).if {	  
+	(name.count = 1).if {
+	  // Parameter type.	  
 	  (is_shorter).if {
 	    short (ALIAS_STR.short_keyprototype) token 
 	    (old_pos - name.count) to old_pos;
@@ -1467,9 +1476,10 @@ Section Private
 	      string_tmp.append "' ignored.";
 	      warning_error (current_position,string_tmp);
 	    };
-	    result := ITM_TYPE_GENERIC_ELT.get idx;
+	    result := ITM_TYPE_GENERIC_ELT.get (name.first);
 	  };
-	} else {	  
+	} else {
+	  // Simple type.	  
 	  (style = NULL).if {
 	    result := ITM_TYPE_SIMPLE.get name;
 	  } else {
@@ -2058,15 +2068,15 @@ Section Private
     result
   );  // read_argument
   
-  // name, category, type, default, external, version, date, comment, author,
-  // bibliography, language, bug_report.
+  // name, export, import, type, default, external, version, date, comment, author,
+  // bibliography, language, bug_report, copyright.
   - read_slot_header first:BOOLEAN :BOOLEAN <-
   ( + result:BOOLEAN;
     //+ j:INTEGER;
-    + t:ITM_TYPE_SIMPLE;    
+    + t:ITM_TYPE_MONO;    
     + v:ITM_CODE;
-    + cast:HASHED_SET[ITM_TYPE_SIMPLE];
-    + style:CHARACTER;
+    + cast:FAST_ARRAY[ITM_TYPE_MONO];
+    + style, parameter_type:CHARACTER;
     + is_export:BOOLEAN;
     
     style := read_style;
@@ -2114,63 +2124,54 @@ Section Private
 	  (last_string != object.name).if {
 	    syntax_error (current_position,"Incorrect name (filename != name).");
 	  };
+	  (last_string.count = 1).if {
+	    syntax_error (current_position,"Incorrect name (name length > 1).");
+	  };
 	  
 	  (read_character '[').if {
 	    //
 	    // Generic loader.
 	    //
 	    (is_shorter).if_false {	      
-	      (! is_generic).if {
+	      (object.generic_count = 0).if {
 		syntax_error (current_position,"Object can't be generic.");
 	      };
 	    };
 	    
-	    (read_cap_identifier).if_false {
-	      syntax_error (current_position,"identifier is needed.");
+	    parameter_type := read_cap_character;
+	    (parameter_type = '\0').if {
+	      syntax_error (current_position,"Identifier parameter type is needed.");
 	    };
 	    
 	    short (ALIAS_STR.short_keyprototype) token
-	    (position-last_string.count) to position;
+	    (position - 1) to position;
 	    
-	    keyword_generic_list.add_last last_string;
-	    {read_character ','}.while_do {
-	      (! read_cap_identifier).if {
-		syntax_error (current_position,"Incorrect identifier.");
+	    object.idf_generic_list.add_last parameter_type;
+	    last_string := NULL;
+	    {(read_character ',') || {read_identifier}}.while_do {
+	      (last_string != NULL).if {
+		short (ALIAS_STR.short_slot) token
+		(position - last_string.count) to position;
+		warning_error (current_position,"Sorry, not yet implemented (ignored).");
 	      };
+	      
+	      parameter_type := read_cap_character;
+	      (parameter_type = '\0').if {
+		syntax_error (current_position,"Identifier parameter type is needed.");
+	      };	      
+	      
 	      short (ALIAS_STR.short_keyprototype) token
-	      (position-last_string.count) to position;
-	      keyword_generic_list.add_last last_string;
+	      (position - 1) to position;
+	      
+	      object.idf_generic_list.add_last parameter_type;
 	    }; // loop
-	    
-	    {read_identifier}.while_do {
-	      short (ALIAS_STR.short_slot) token
-	      (position-last_string.count) to position;
-	      
-	      warning_error (current_position,"Sorry, not yet implemented (ignored).");
-	      
-	      (! read_cap_identifier).if {
-		syntax_error (current_position,"Incorrect identifier.");
-	      };
-	      short (ALIAS_STR.short_keyprototype) token
-	      (position-last_string.count) to position;
-	      keyword_generic_list.add_last last_string;
-	      
-	      {read_character ','}.while_do {
-		(! read_cap_identifier).if {
-		  syntax_error (current_position,"Incorrect identifier.");
-		};
-		short (ALIAS_STR.short_keyprototype) token
-		(position-last_string.count) to position;
-		keyword_generic_list.add_last last_string;
-	      }; // loop
-	    }; // loop
-	    
+	    	    
 	    (! read_character ']').if {
 	      warning_error (current_position,"Added ']'.");
 	    };
 	    
 	    (is_shorter).if_false {	      
-	      (keyword_generic_list.count != generic_list_count).if {
+	      (object.idf_generic_list.count != object.generic_count).if {
 		syntax_error (current_position,"Invalid generic list number.");
 	      };
 	    };
@@ -2182,6 +2183,8 @@ Section Private
 	    // Auto-cast system.
 	    //
 	    
+	    warning_error (current_position,"Obsolete syntax : Use `export' or `import' slot.");
+	    
 	    // ('->' | '<-') TYPE {',' TYPE}
 	    (is_export).if {
 	      cast := object.export_list;
@@ -2189,20 +2192,20 @@ Section Private
 	      cast := object.import_list;
 	    };
 	    (cast = NULL).if {
-	      cast := HASHED_SET[ITM_TYPE_SIMPLE].create;	   
+	      cast := FAST_ARRAY[ITM_TYPE_MONO].create_with_capacity 4;	   
 	    };
-	    t ?= read_type TRUE;
+	    t := read_type TRUE;
 	    (t = NULL).if {
 	      syntax_error (current_position,"Incorrect type.");
 	    };
 	    {read_character ','}.while_do {
-	      cast.fast_add t;
-	      t ?= read_type TRUE;
+	      cast.add_last t;
+	      t := read_type TRUE;
 	      (t = NULL).if {
 		syntax_error (current_position,"Incorrect type.");
 	      };
 	    };
-	    cast.fast_add t;
+	    cast.add_last t;
 	    (is_export).if {
 	      object.set_export_list cast;
 	    } else {
@@ -2212,32 +2215,27 @@ Section Private
 	} else {
 	  syntax_error (current_position,"Slot `name' must to be first slot.");
 	};
-      }.elseif {read_word (ALIAS_STR.slot_category)} then {
-	//
-	// Read `category' slot.
-	// WARNING : Obsolete.
-	
-	warning_error (current_position,"Slot `category' is Obsolete.");
-	
-	// '-' "category" ':=' CAP_IDENTIFIER
+      }.elseif {
+	(is_export := read_word (ALIAS_STR.slot_export)) || 
+	{read_word (ALIAS_STR.slot_import)}
+      } then {
+	// - ("export"|"import") ':=' TYPE_LIST 
 	short (ALIAS_STR.short_slot) token
 	(position-last_string.count) to position;
 
 	(read_symbol (ALIAS_STR.symbol_affect_immediate)).if_false {
 	  warning_error (current_position,"Added ':='.");
 	};
-	(
-	  (! read_cap_identifier)
-	).if {
-	  // BSBS: Seulement pour voir !!!! A remettre !
-	  //warning_error current_position,"Incorrect category identifier.";
+	cast := read_type_list FALSE;
+	(cast = NULL).if {
+	  syntax_error (current_position,"Incorrect type list.");
 	};
-	
-	(is_shorter).if {
-	  short (ALIAS_STR.short_keyprototype) token
-	  (position-last_string.count) to position;
-	};	
-      }.elseif {read_word(ALIAS_STR.slot_external) } then {
+	(is_export).if {
+	  object.set_export_list cast;
+	} else {
+	  object.set_import_list cast;
+	};
+      }.elseif {read_word (ALIAS_STR.slot_external)} then {
 	//
 	// Read `external' slot.
 	//
@@ -2604,9 +2602,7 @@ Section Public
     pos_cur  := source.lower;
     pos_line := 1;
     pos_col  := 0;
-    keyword_generic_list.clear;
-    generic_list_count := object.generic_count;
-
+    
     (is_shorter).if {
       is_active_short := TRUE;
       key_comment_default := ALIAS_STR.short_comment_header_line;

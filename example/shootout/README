@@ -29,6 +29,33 @@ How to get started?
      or
      svn co http://svn.gna.org/svn/isaac/trunk isaac
 
+Status:
+=======
+
++===============================================================================+
+| Benchmark          | C       | Lisaac  | Winner  |       Comments             |
++===============================================================================+
+| binary_trees       | 1.940s  | 0.536s  | Lisaac  |                            |
+| chameneos          | NC      | NC      |         | Thread used                |
+| fannkuch           | 4.948s  | 4.008s  | Lisaac  |                            |
+| fasta              | 9.641s  | 9.177s  | Lisaac  |                            | 
+| k-nucleotide       | 0.048s  | 0.032s  | Lisaac  |                            |
+| mandelbrot         |         |         | ?       | BUG !!!                    | 
+| meteor-contest     | TODO    | TODO    | ?       | TODO                       |
+| n-body             | 10.933s | 11.637s | C       |                            | 
+| nsieve             | 3.264s  | 3.308s  | C       |                            |
+| nsieve-bits        | 0.792s  | 0.624s  | Lisaac  |                            |
+| partial-sums       | 1.444s  | 1.580s  | C       |                            |
+| pidigits           | NC      | NC      |         | Library used               |
+| recursive          | 1.592s  | 1.508s  | Lisaac  |                            |
+| regex-dna          | NC      | NC      |         | Library used               |
+| reverse-complement |         |         | ?       | BUG !!!                    |
+| spectral-norm      | 21.225s | 21.117s | Lisaac  |                            |
+| startup            | 0.100s  | 0.064s  | Lisaac  |                            |
+| sum-file           |         |         | ?       |                            |
+| thread-ring (new)  | NC      | NC      |         | Thread used                |
++===============================================================================+
+
 Best regards,
     Xavier Oswald <x.oswald@free.fr>
     The Lisaac team.

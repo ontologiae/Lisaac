@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name := AVL_TREE_NODE[E];
+  + name := AVL_TREE_NODE[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -57,11 +57,11 @@ Section Public
 Section Public 
   //AVL_TREE_NODE, AVL_TREE
   
-  + left:AVL_TREE_NODE[E];
+  + left:AVL_TREE_NODE[V];
 
-  + right:AVL_TREE_NODE[E];
+  + right:AVL_TREE_NODE[V];
 
-  + item:E;
+  + item:V;
 
   + balance:INTEGER;
   // Balance factor; either `balanced' (the tree is balanced),
@@ -93,7 +93,7 @@ Section Public
     result + 1
   );
 
-  - map_in map:COLLECTION[AVL_TREE_NODE[E]] <-
+  - map_in map:COLLECTION[AVL_TREE_NODE[V]] <-
   [
     -? {map != NULL};
   ]
@@ -110,11 +110,11 @@ Section Public
     +? {map.count = Old map.count + count};
   ];
 
-  - has e:E :BOOLEAN <-
+  - has e:V :BOOLEAN <-
   // Is element `e' in the tree?
   ( + result:BOOLEAN;
 		
-    result := item == e; //SAFE_EQUAL[E].test item and e;
+    result := item == e; //SAFE_EQUAL[V].test item and e;
     (! result).if {
       (e < item).if {
 	result := (left != NULL) && {left.has e};
@@ -125,12 +125,12 @@ Section Public
     result
   );	
 
-  - fast_has e:E :BOOLEAN <-
+  - fast_has e:V :BOOLEAN <-
   // Is element `e' in the tree?
   ( + result:BOOLEAN;
 		
     result := item = e;
-    ((! result) && {! item == e /*SAFE_EQUAL[E].test item and e*/}).if {
+    ((! result) && {! item == e /*SAFE_EQUAL[V].test item and e*/}).if {
       (e < item).if {
 	result := (left != NULL) && {left.fast_has e};
       } else {
@@ -143,11 +143,11 @@ Section Public
     +? {Result -> (count > 0)};
   ];
 
-  - at e:E :AVL_TREE_NODE[E] <-
+  - at e:V :AVL_TREE_NODE[V] <-
   // Is element `e' in the tree?
-  ( + result:AVL_TREE_NODE[E];
+  ( + result:AVL_TREE_NODE[V];
 			
-    (item == e /*SAFE_EQUAL[E].test item and e*/).if {
+    (item == e /*SAFE_EQUAL[V].test item and e*/).if {
       result := Self;
     }.elseif {e < item} then {
       (left != NULL).if {
@@ -161,7 +161,7 @@ Section Public
     result
   );
 
-  - set_item i:E <-
+  - set_item i:V <-
   [
     // Equality admitted for the free list
     -? {(left != NULL) ->> {(left.item = i) || {left.item < i}}};
@@ -174,7 +174,7 @@ Section Public
     +? {item = i};
   ];
 
-  - set_left l:AVL_TREE_NODE[E] <-
+  - set_left l:AVL_TREE_NODE[V] <-
   [
     // Equality admitted for the free list
     -? {(l != NULL) -> ((l.item = item) || {l.item < item})};
@@ -186,7 +186,7 @@ Section Public
     +? {left = l};
   ];
 
-  - set_right r:AVL_TREE_NODE[E] <-
+  - set_right r:AVL_TREE_NODE[V] <-
   [
     -? {(r != NULL) ->> {r.item > item}};
   ]
@@ -211,10 +211,10 @@ Section AVL_TREE, AVL_DICTIONARY, AVL_SET
   // Rotations:
   //
   
-  - rotate_right:AVL_TREE_NODE[E] <-
+  - rotate_right:AVL_TREE_NODE[V] <-
   // Proceeds to some reorganisation and returns the upper node.
-  ( + result:AVL_TREE_NODE[E];
-    + left_right:AVL_TREE_NODE[E];
+  ( + result:AVL_TREE_NODE[V];
+    + left_right:AVL_TREE_NODE[V];
     
     result := left;
     left_right := left.right;
@@ -226,10 +226,10 @@ Section AVL_TREE, AVL_DICTIONARY, AVL_SET
     +? {Result != NULL};
   ];
 
-  - rotate_left:AVL_TREE_NODE[E] <-
+  - rotate_left:AVL_TREE_NODE[V] <-
   // Proceeds to some reorganisation and returns the upper node.
-  ( + result:AVL_TREE_NODE[E];
-    + right_left:AVL_TREE_NODE[E];
+  ( + result:AVL_TREE_NODE[V];
+    + right_left:AVL_TREE_NODE[V];
 		
     result := right;
     right_left := right.left;

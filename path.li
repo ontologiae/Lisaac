@@ -121,8 +121,14 @@ Section UNIX
   - unix   + "video/";
   
   * "gcc " + input_file + " -O3 -fomit-frame-pointer -lm -lX11 -o " + 
-  output_file + " -L" + path_lib_x11 + option_gcc;
-      
+    output_file + " -L" + path_lib_x11 + option_gcc;
+
+  //* "gcc -D_ISOC9X_SOURCE -O3 -mfpmath=sse -msse2 -march=pentium4 -ffast-math -funroll-loops -o " +
+  //output_file + " " + input_file + " -lm";
+  
+  //* "gcc -D_ISOC9X_SOURCE -O3 -mfpmath=sse -msse2 -march=pentium4 -ffast-math -funroll-loops -o " +
+  //"mandelbrot_c mandelbrot_c.c -lm";
+  
 Section WINDOWS
   
   - unix   + "system/";
@@ -138,3 +144,119 @@ Section DOS
   - dos + "video/";
   
   * "gcc " + input_file + " -o " + output_file + ".exe " + option_gcc; 
+  
+// ********************************  
+//            ISAAC  
+// ********************************
+Section X86, IPAQ, ST2XX, LINUX
+  //
+  // Standard.
+  //
+  
+  + isaac := "/home/sonntag/svn/isaac/trunk/isaacos/";  
+  + isaac_stdlib   := isaac + "stdlib/";
+  + isaac_software := isaac + "software/";
+  
+  //
+  // Standard Library.
+  //
+  
+  - isaac_stdlib + "driver/";
+  - isaac_stdlib + "driver/clock";
+  - isaac_stdlib + "driver/keyboard";
+  - isaac_stdlib + "driver/mouse";
+  - isaac_stdlib + "driver/video";
+  
+  - isaac_stdlib + "event/";
+  
+  - isaac_stdlib + "file_system/";
+  
+  - isaac_stdlib + "format/";
+  - isaac_stdlib + "format/freetype";
+  
+  - isaac_stdlib + "interface/";
+  - isaac_stdlib + "interface/clipping";
+  - isaac_stdlib + "interface/group";
+  - isaac_stdlib + "interface/item";
+  
+  - isaac_stdlib + "system/";
+  
+  //
+  // Software
+  //
+  
+  - isaac_software + "about/";
+  
+  - isaac_software + "console/";
+  
+  - isaac_software + "game/fouronline";
+  - isaac_software + "game/tetris";
+  
+  - isaac_software + "panel";
+  
+  - isaac_software + "viewer";
+  
+Section X86  
+  
+  + machine := isaac + "x86/";
+  
+  // Specific directory
+  
+  - machine + "file_system/physical";
+  - machine + "file_system/partition";
+  
+  
+//  * "gcc -specs=" + isaac + "tool/gcc/x86/specs " + input_file + " -c -fPIC";
+//  * "cp -f startup.o ../loader/";
+    * "gcc -specs=" + isaac + "tool/gcc/x86/specs " + input_file + " -o " + output_file;
+    * isaac+"tool/elf2eof/elf2eof -v -p 2048 "+output_file+" -prepend "+isaac+"x86/bootloader/startup.com";
+    * "rm startup.sys";
+    * "mv startup.eof startup.sys";
+    * "./dosemu c startup.sys .";
+    * "./dosemu e";
+
+  
+//  * "mount /floppy";
+//  * "cp -f startup.eof /mnt/floppy/startup.sys";
+//  * "umount /floppy";
+  
+Section IPAQ  
+  
+  + machine := isaac + "ipaq/";
+  
+  * "arm-linux-gcc -specs="+isaac+"tool/gcc/ipaq/specs -nostdlib " + input_file + " -O3 -o " + output_file;
+  * isaac+"tool/elf2eof/elf2eof -f " + output_file + " -append "+isaac+"image/isaac.ai "+isaac+"image/newton.bmp";
+  
+Section ST2XX  
+  
+  + machine := isaac + "st2xx/";
+  
+//  * "/home/sonntagb/lxbe/le/bin/gcc entry_isaac.s -c";
+  * "/home/sonntagb/lxbe/le/bin/gcc " + input_file + " -c";
+  * "/home/sonntagb/lxbe/le/bin/ld -EL "+output_file+".o -o "+output_file+" -T../tool/gcc/st2xx/isaac.x";
+
+Section LINUX  
+  
+  - unix   + "system/";
+  - unix   + "file_system/";
+  + machine := isaac + "linux/";
+  
+  // Specific directory
+  
+  * "gcc -L/usr/X11R6/lib -lX11 -lXext " + input_file + " -o " + output_file;
+  
+Section IPAQ, X86, ST2XX, LINUX
+    
+  //
+  // Specific machine.
+  //
+
+  - machine + "driver/";
+  - machine + "driver/clock";
+  - machine + "driver/keyboard";
+  - machine + "driver/mouse";
+  - machine + "driver/video";
+  
+  - machine + "file_system/";
+  
+  - machine + "system/";

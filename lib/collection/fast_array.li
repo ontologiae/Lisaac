@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name     := FAST_ARRAY[E];
+  + name     := FAST_ARRAY[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -49,7 +49,7 @@ Section Header
 		  
 Section Inherit
   
-  + parent_arrayed_collection:Expanded ARRAYED_COLLECTION[E];
+  + parent_arrayed_collection:Expanded ARRAYED_COLLECTION[V];
   
 Section Public
   
@@ -93,7 +93,7 @@ Section Public
     -? {element_sizeof = 1};
   ]
   ( 
-    storage := CONVERT[OBJECT,NATIVE_ARRAY[E]].on obj;
+    storage := CONVERT[OBJECT,NATIVE_ARRAY[V]].on obj;
     capacity := obj.object_size;
     upper := -1;
   )
@@ -124,7 +124,7 @@ Section Public
   ( 
     ( new_count.to_integer > capacity).if {
       // The new one is bigger:
-      storage := NATIVE_ARRAY[E].create new_count;
+      storage := NATIVE_ARRAY[V].create new_count;
       capacity := new_count;
     }.elseif { (capacity > 0) && { upper >= 0}} then { 
       // The new one is smaller and just need to be cleared:
@@ -145,7 +145,7 @@ Section Public
   ]
   (    
     (capacity < needed_capacity).if {
-      storage := NATIVE_ARRAY[E].create needed_capacity;
+      storage := NATIVE_ARRAY[V].create needed_capacity;
       capacity := needed_capacity;
     //}.elseif { capacity > needed_capacity } then {
     //  storage.clear 0 to upper; // BSBS: Ca serre a quoi de le vider !
@@ -186,7 +186,7 @@ Section Public
   (    
     (new_capacity > capacity).if {
       (capacity = 0).if {
-  	storage := NATIVE_ARRAY[E].create new_capacity;
+  	storage := NATIVE_ARRAY[V].create new_capacity;
       } else {
   	storage := storage.realloc capacity with new_capacity;	
       }; 
@@ -196,6 +196,14 @@ Section Public
   [
     +? { capacity >= Old capacity };    
   ];
+  
+  - fast_resize new_count:INTEGER <-
+  [
+    ? {new_count <= capacity}; 
+  ]
+  (
+    upper := new_count - 1;
+  );
   
   - resize new_count:INTEGER <-
   // Resize the array. When `new_count' is greater than
@@ -208,7 +216,7 @@ Section Public
            
     ( new_count > count).if {
       (capacity = 0).if {
-	storage := NATIVE_ARRAY[E].create new_count;
+	storage := NATIVE_ARRAY[V].create new_count;
 	capacity := new_count;
       }.elseif { capacity < new_count } then {
 	new_capacity := capacity * 2;
@@ -235,17 +243,17 @@ Section Public
   
   - is_empty:BOOLEAN <- ( upper < 0 ); // end is_empty
     
-  - item i:INTEGER :E <- 
+  - item i:INTEGER :V <- 
   (    
     storage.item i
   ); 
     
-  - put element:E to i:INTEGER <-
+  - put element:V to i:INTEGER <-
   (     
     storage.put element to i;    
   ); 
     
-  - add_first element:E <-
+  - add_first element:V <-
   ( 
     add_last element;
     (upper = 0).if {
@@ -257,13 +265,13 @@ Section Public
     }; 
   ); 
     
-  - add_last element:E <-
+  - add_last element:V <-
   ( + new_capacity:INTEGER;
         
     (upper + 1 <= capacity - 1 ).if {
       upper := upper + 1;
     }.elseif {capacity = 0} then {
-      storage := NATIVE_ARRAY[E].create 2;
+      storage := NATIVE_ARRAY[V].create 2;
       capacity := 2;
       upper := 0
     } else {
@@ -285,7 +293,7 @@ Section Public
     +? { capacity = Old capacity };    
   ]; 
     
-  - copy other:FAST_ARRAY[E] <-
+  - copy other:FAST_ARRAY[V] <-
   // Copy `other' onto Current.
   ( + other_upper, new_capacity:INTEGER;
     
@@ -294,7 +302,7 @@ Section Public
       new_capacity := other_upper + 1;
       
       ( capacity < new_capacity ).if {
-	storage := NATIVE_ARRAY[E].create new_capacity;
+	storage := NATIVE_ARRAY[V].create new_capacity;
 	capacity := new_capacity;
       //}.elseif { capacity > 0 } then {
       //  storage.clear_all (capacity - 1);
@@ -306,7 +314,7 @@ Section Public
     upper := other_upper;
   ); 
   
-  - set_all_with v:E <-
+  - set_all_with v:V <-
   ( 
     storage.set_all_with v until upper;    
   ) ; 
@@ -347,7 +355,7 @@ Section Public
   //
   //
   
-  - from_collection model:COLLECTION[E] <-
+  - from_collection model:COLLECTION[V] <-
   ( + i1:INTEGER;
     
     with_capacity model.count;
@@ -359,7 +367,7 @@ Section Public
     }; 
   ); 
     
-  - '=='  Right 60 other:COLLECTION[E] :BOOLEAN <-
+  - '=='  Right 60 other:COLLECTION[V] :BOOLEAN <-
   ( + result:BOOLEAN;
     + o:SELF;
     
@@ -395,17 +403,17 @@ Section Public
     storage.all_default upper
   ); 
     
-  - occurrences element:E :INTEGER <- 
+  - occurrences element:V :INTEGER <- 
   (    
     storage.occurrences element until upper    
   ); 
     
-  - fast_occurrences element:E :INTEGER <- 
+  - fast_occurrences element:V :INTEGER <- 
   (     
     storage.fast_occurrences element until upper    
   ); 
   
-  - first_index_of element:E :INTEGER <- 
+  - first_index_of element:V :INTEGER <- 
   ( + result:INTEGER;
     
     (upper >= 0).if {
@@ -414,7 +422,7 @@ Section Public
     result
   ); 
 
-  - index_of element:E start start_index:INTEGER :INTEGER <- 
+  - index_of element:V start start_index:INTEGER :INTEGER <- 
   ( + result:INTEGER;
     
     (upper >= 0).if {
@@ -423,12 +431,12 @@ Section Public
     result 
   ); 
   
-  - reverse_index_of element:E start start_index:INTEGER :INTEGER <-
+  - reverse_index_of element:V start start_index:INTEGER :INTEGER <-
   (
     storage.reverse_index_of (element, start_index)
   );
     
-  - fast_first_index_of element:E :INTEGER <- 
+  - fast_first_index_of element:V :INTEGER <- 
   ( + result:INTEGER;    
     
     (upper >= 0).if {
@@ -437,7 +445,7 @@ Section Public
     result
   ); 
 
-  - fast_index_of element:E start start_index:INTEGER :INTEGER <- 
+  - fast_index_of element:V start start_index:INTEGER :INTEGER <- 
   ( + result:INTEGER;    
     
     (upper >= 0).if {
@@ -446,7 +454,7 @@ Section Public
     result
   ); 
   
-  - fast_reverse_index_of element:E start start_index:INTEGER :INTEGER <-
+  - fast_reverse_index_of element:V start start_index:INTEGER :INTEGER <-
   (
     storage.fast_reverse_index_of (element, start_index)
   );
@@ -460,7 +468,7 @@ Section Public
     result
   ); 
     
-  - force element:E to index:INTEGER <- 
+  - force element:V to index:INTEGER <- 
   (     
     ( index <= upper ).if {
       storage.put element to index;
@@ -473,7 +481,7 @@ Section Public
   ); 
     
   - remove_first <- 
-  ( + void_storage:NATIVE_ARRAY[E];
+  ( + void_storage:NATIVE_ARRAY[V];
     
     ( upper = 0).if {
       storage := void_storage;

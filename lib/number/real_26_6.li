@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := Expanded REAL_26_6 -> REAL_32, REAL_64;
+  + name    := Expanded REAL_26_6;
+
+  - export  := REAL_32, REAL_64;
   
   - comment := "signed 26.6 fixed float.";
 

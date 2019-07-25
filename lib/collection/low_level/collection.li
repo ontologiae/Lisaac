@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := COLLECTION[E];
+  + name    := COLLECTION[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag, 2007 Pierre-Alexandre Voye";
@@ -48,7 +48,7 @@ Section Inherit
   
 //  - parent_storage:STORAGE := STORAGE;
   
-  - parent_traversable:TRAVERSABLE[E] := TRAVERSABLE[E]; 
+  - parent_traversable:TRAVERSABLE[V] := TRAVERSABLE[V]; 
   
 Section Public
   
@@ -56,11 +56,11 @@ Section Public
   // Accessing:
   //
   
-  - item i:INTEGER :E <-  
+  - item i:INTEGER :V <-  
   // Item at the corresponding index `i'.
   //
   // See also `lower', `upper', `valid_index', `put', `swap'.
-  ( + result:E;
+  ( + result:V;
     
     deferred;
     result
@@ -70,7 +70,7 @@ Section Public
   // Writing:
   //
   
-  - put element:E to i:INTEGER <-
+  - put element:V to i:INTEGER <-
   // Make `element' the item at index `i'.
   //
   // See also `lower', `upper', `valid_index', `item', `swap', `force'.
@@ -93,7 +93,7 @@ Section Public
     -? { valid_index i1 };
     -? { valid_index i2 };
   ]
-  ( + tmp:E;
+  ( + tmp:V;
    
     tmp := item i1;
     put (item i2) to i1;
@@ -105,7 +105,7 @@ Section Public
     +? { count = Old count };
   ];
     
-  - set_all_with v:E <-
+  - set_all_with v:V <-
   // Set all items with value `v'.
   //
   // See also `set_slice_with'.
@@ -116,7 +116,7 @@ Section Public
     +? { count = Old count };
   ];
     
-  - set_slice lower_index:INTEGER to upper_index:INTEGER with v:E <-
+  - set_slice lower_index:INTEGER to upper_index:INTEGER with v:V <-
   // Set all items in range [`lower_index' .. `upper_index'] with `v'.
   //
   // See also `set_all_with'.
@@ -139,7 +139,7 @@ Section Public
   // The `count' is not affected 
   //
   // see also `clear', `all_default'.
-  ( + value:E;
+  ( + value:V;
    
     set_all_with value;
   ) 
@@ -153,7 +153,7 @@ Section Public
   // Adding:
   //
   
-  - add_first element:E <-
+  - add_first element:V <-
   // Add a new item in first position : `count' is increased by
   // one and all other items are shifted right.
   //
@@ -168,7 +168,7 @@ Section Public
     -? { upper = 1 + Old upper };
   ];
     
-  - add_last element:E <-
+  - add_last element:V <-
   // Add a new item at the end : `count' is increased by one.
   //
   // See also `add_first', `last', `first', `add'.
@@ -182,7 +182,7 @@ Section Public
     +? { upper = 1 + Old upper };
   ];
     
-  - add element:E to index:INTEGER <-
+  - add element:V to index:INTEGER <-
   // Add a new `element' at rank `index' : `count' is increased
   // by one and range [`index' .. `upper'] is shifted right
   // by one position.
@@ -200,7 +200,7 @@ Section Public
     +? { upper = 1 + Old upper };
   ];
     
-  - append_collection other:COLLECTION[E] <-
+  - append_collection other:COLLECTION[V] <-
   // Append `other' to Current.
   //
   // See also `add_last', `add_first', `add'.
@@ -220,7 +220,7 @@ Section Public
   // Modification:
   //
   
-  - force element:E to index:INTEGER <-
+  - force element:V to index:INTEGER <-
   // Make `element' the item at `index', enlarging the collection if
   // necessary (new bounds except `index' are initialized with
   // default values).
@@ -243,7 +243,7 @@ Section Public
     deferred;
   );
     
-  - from_collection model:COLLECTION[E] <-
+  - from_collection model:COLLECTION[V] <-
   // Initialize the current object with the contents of `model'.
   [
     -? { model != NULL };
@@ -353,7 +353,7 @@ Section Public
   // Looking and Searching:
   //
   
-  - has x:E :BOOLEAN <-
+  - has x:V :BOOLEAN <-
   // Look for `x' using `equal' for comparison.
   // 
   // See also `fast_has', `index_of', `fast_index_of'.
@@ -361,15 +361,15 @@ Section Public
     valid_index (first_index_of x)
   );
     
-  - fast_has x:E :BOOLEAN <-
+  - fast_has x:V :BOOLEAN <-
   // Look for `x' using basic `=' for comparison.
   // 
   // See also `has', `fast_index_of', `index_of'.
   (
-    valid_index (fast_index_of x)
+    valid_index (fast_first_index_of x)
   );
     
-  - first_index_of element:E :INTEGER <-
+  - first_index_of element:V :INTEGER <-
   // Give the index of the first occurrence of `element' using
   // `==' for comparison.
   // Answer `upper + 1' when `element' is not inside.
@@ -384,7 +384,7 @@ Section Public
     "Definition." +? {Result = index_of element start lower};
   ];  
   
-  - index_of element:E start start_index:INTEGER :INTEGER <-
+  - index_of element:V start start_index:INTEGER :INTEGER <-
   // Using `is_equal' for comparison, gives the index of the first occurrence 
   // of `element' at or after `start_index'. Answer `upper + 1' when `element' 
   // when the search fail.
@@ -396,10 +396,10 @@ Section Public
   )
   [
     +? {Result.in_range start_index to (upper + 1)};
-    +? {valid_index Result ->> { SAFE_EQUAL[E].test element with (item Result)}};
+    +? {valid_index Result ->> { SAFE_EQUAL[V].test element with (item Result)}};
   ];
   
-  - reverse_index_of element:E start start_index:INTEGER :INTEGER <-
+  - reverse_index_of element:V start start_index:INTEGER :INTEGER <-
   // Using `is_equal' for comparison, gives the index of the first occurrence of 
   // `element' at or before `start_index'. Search is done in reverse direction, 
   // which means from the `start_index' down to the `lower' index . 
@@ -418,7 +418,7 @@ Section Public
     +? {valid_index Result -> (item Result == element)};
   ];
 
-  - last_index_of element:E :INTEGER <-
+  - last_index_of element:V :INTEGER <-
   // Using `is_equal' for comparison, gives the index of the last occurrence 
   // of `element' at or before `upper'. Search is done in reverse direction, 
   // which means from the `upper' down to the `lower' index . Answer `lower -1' 
@@ -432,7 +432,7 @@ Section Public
     "Definition." +? {Result = reverse_index_of element start upper};
   ];
 
-  - fast_first_index_of element:E :INTEGER <-
+  - fast_first_index_of element:V :INTEGER <-
   // Give the index of the first occurrence of `element' using basic `=' 
   // for comparison. Answer `upper + 1' when `element' is not inside.
   //
@@ -445,7 +445,7 @@ Section Public
     "Definition." +? {Result = fast_index_of element start lower};
   ];
 
-  - fast_index_of element:E start start_index:INTEGER :INTEGER <-
+  - fast_index_of element:V start start_index:INTEGER :INTEGER <-
   // Using basic `=' for comparison, gives the index of the first occurrence 
   // of `element' at or after `start_index'. Answer `upper + 1' when `element' 
   // when the search fail.
@@ -460,7 +460,7 @@ Section Public
     +? {valid_index Result ->> {element = item Result}};
   ];
 
-  - fast_reverse_index_of element:E start start_index:INTEGER :INTEGER <-
+  - fast_reverse_index_of element:V start start_index:INTEGER :INTEGER <-
   // Using basic `=' comparison, gives the index of the first occurrence 
   // of `element' at or before `start_index'. Search is done in reverse 
   // direction, which means from the `start_index' down to the `lower' 
@@ -479,7 +479,7 @@ Section Public
     +? { valid_index Result ->> {item Result = element}};
   ];
 
-  - fast_last_index_of element:E :INTEGER <-
+  - fast_last_index_of element:V :INTEGER <-
   // Using basic `=' for comparison, gives the index of the last occurrence 
   // of `element' at or before `upper'. Search is done in reverse direction, 
   // which means from the `upper' down to the `lower' index . Answer `lower -1' 
@@ -497,7 +497,7 @@ Section Public
   // Looking and comparison:
   //
   
-  - '=='  Right 60 other:COLLECTION[E] :BOOLEAN <-
+  - '=='  Right 60 other:COLLECTION[V] :BOOLEAN <-
   // Do both collections have the same `lower', `upper', and
   // items?
   // The basic `=' is used for comparison of items.
@@ -535,7 +535,7 @@ Section Public
     FALSE
   );
     
-  - same_items other:COLLECTION[E] :BOOLEAN <-
+  - same_items other:COLLECTION[V] :BOOLEAN <-
   // Do both collections have the same items? The basic `=' is used
   // for comparison of items and indices are not considered (for
   // example this routine may yeld true with `Current' indexed in
@@ -564,7 +564,7 @@ Section Public
     +? { result -> (count = other.count)};   
   ];
     
-  - occurrences element:E :INTEGER <-
+  - occurrences element:V :INTEGER <-
   // Number of occurrences of `element' using `equal' for comparison.
   // 
   // See also `fast_occurrences', `index_of'.
@@ -576,7 +576,7 @@ Section Public
     +? { result >= 0 };
   ];
     
-  - fast_occurrences element:E :INTEGER <-
+  - fast_occurrences element:V :INTEGER <-
   // Number of occurrences of `element' using basic `=' for comparison.
   // 
   // See also `occurrences', `index_of'.
@@ -594,7 +594,7 @@ Section Public
   
   - fill_tagged_out_memory <-
   ( + i:INTEGER;
-    + v:E;
+    + v:V;
     
     tagged_out_memory.append "lower: ";
     lower.append_in tagged_out_memory;
@@ -709,7 +709,7 @@ Section Public
   
   - filter test:BLOCK in other:SELF <-
   // Filter all element which `test' element is true
-  ( + elt:E;
+  ( + elt:V;
     
     lower.to upper do { j:INTEGER;
       elt := item j;
@@ -719,8 +719,8 @@ Section Public
     };
   );
 
-  - fold_left function:BLOCK with element:E :E <-
-  ( + result:E;
+  - fold_left function:BLOCK with element:V :V <-
+  ( + result:V;
     
     result := element;
     lower.to upper do { j:INTEGER;
@@ -729,8 +729,8 @@ Section Public
     result
   );
 
-  - fold_right function:BLOCK with element:E :E <-
-  ( + result:E;
+  - fold_right function:BLOCK with element:V :V <-
+  ( + result:V;
     
     result := element;
     upper.downto lower do { j:INTEGER;
@@ -743,7 +743,7 @@ Section Public
   // Other features
   //
       
-  - replace_all old_value:E with new_value:E <-
+  - replace_all old_value:V with new_value:V <-
   // Replace all occurrences of the element `old_value' by `new_value'
   // using `equal' for comparison.
   //
@@ -753,10 +753,10 @@ Section Public
   )
   [
     +? { count = Old count};
-    +? { (! SAFE_EQUAL[E].test old_value with new_value) ->> {occurrences old_value = 0}};
+    +? { (! SAFE_EQUAL[V].test old_value with new_value) ->> {occurrences old_value = 0}};
   ];  
   
-  - fast_replace_all old_value:E with new_value:E <-
+  - fast_replace_all old_value:V with new_value:V <-
   // Replace all occurrences of the element `old_value' by `new_value'
   // using operator `=' for comparison.
   //
@@ -782,7 +782,7 @@ Section Public
     -? { valid_index upper_index };
     -? { valid_index (upper_index + distance) };
   ]
-  ( + default_value:E;
+  ( + default_value:V;
     
     (distance != 0).if {
       (distance < 0).if {      

@@ -81,6 +81,7 @@ syn match   liNumber "\<\d\(\(_\|\d*\)\d\)*[dDbBoO]\=\>"
 
 " real 
 syn match   liNumber "\<\d\(\(_\|\d*\)\d\)*\.\d*\(E-\=\)\=\(\(_\|\d*\)\d\)*[fF]\=\>"
+"syn match   liNumber "-\=\<\(_\|\d\)*\.\(_\|\d\)*\(E-\=\)\=[fF]\=\>"
 
 "+---------+
 " Comments 
@@ -104,11 +105,11 @@ if version >= 508 || !exists("did_li_syn_inits")
   HiLink liKey                  Statement 
   HiLink liSlot                 Keyword 
   HiLink liSymbolDeclaration    Keyword
-  HiLink liAssignment           Operator 
-  HiLink liOperator             Operator
-  HiLink liBlock                Delimiter 
-  HiLink liContrat              Delimiter
-  HiLink liElement              Delimiter
+  HiLink liBlock                Keyword
+  HiLink liContrat              keyword
+  HiLink liElement              keyword
+  HiLink liAssignment           Delimiter
+  HiLink liOperator             Delimiter
   HiLink liQuotedExprInComment  SpecialChar 
   HiLink liQuotedExpr           Special 
   HiLink liStringSpecial        SpecialChar

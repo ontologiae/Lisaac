@@ -88,8 +88,12 @@ Section Public
   (         
     (Self != other).if {
       (type != other.type).if {
-	POSITION.put_error semantic text 
-	"Invariance type result invalid.";
+	string_tmp.copy "Invariance type result invalid."; // (";
+	//type.to_run.append_name_in string_tmp;
+	//string_tmp.append " != ";
+	//other.type.to_run.append_name_in string_tmp;
+	//string_tmp.append ").";
+	POSITION.put_error semantic text string_tmp;
 	position.put_position;
 	(other.position).put_position;
 	POSITION.send_error; 

@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := CONVERT[SRC, /* to */DST];
+  + name    := CONVERT[S, /* to */D];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -29,6 +29,6 @@ Section Header
 
 Section Public
     
-  - on src:SRC :DST <- `13`;
+  - on src:S :D <- `13`;
 
   

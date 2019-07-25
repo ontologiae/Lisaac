@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := LINKED_LIST[E];
+  + name    := LINKED_LIST[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -39,18 +39,18 @@ Section Header
   
 Section Inherit
   
-  + parent_linked_collection:Expanded LINKED_COLLECTION[E];
+  + parent_linked_collection:Expanded LINKED_COLLECTION[V];
     
 Section LINKED_LIST
   
-  + first_link:LINKED_LIST_NODE[E];
+  + first_link:LINKED_LIST_NODE[V];
   // NULL when empty or gives access to the first element.
     
-  + last_link:LINKED_LIST_NODE[E];
+  + last_link:LINKED_LIST_NODE[V];
   // NULL when empty or gives access to the last element.
   
   + mem_idx:INTEGER; 
-  + mem_lnk:LINKED_LIST_NODE[E];
+  + mem_lnk:LINKED_LIST_NODE[V];
   // To speed up accessing, `mem_idx' and `mem_lnk' is the
   // memory of the last access done. For example, after
   // item(1), `mem_idx' is 1 and `mem_lnk' is `first_link'.
@@ -70,40 +70,40 @@ Section Public
     
   - is_empty:BOOLEAN <- first_link = NULL;
   
-  - add_first element:E <-
+  - add_first element:V <-
   ( 
     (first_link = NULL).if {
-      first_link := LINKED_LIST_NODE[E].create element next NULL;
+      first_link := LINKED_LIST_NODE[V].create element next NULL;
       upper := 1;
       last_link := first_link;
       mem_idx := 1;
       mem_lnk := first_link;
     } else {
-      first_link := LINKED_LIST_NODE[E].create element next first_link;
+      first_link := LINKED_LIST_NODE[V].create element next first_link;
       upper := upper + 1;
       mem_idx := mem_idx + 1;
     };    
   );
   
-  - add_last element:E <-
-  ( + lnk:LINKED_LIST_NODE[E];
+  - add_last element:V <-
+  ( + lnk:LINKED_LIST_NODE[V];
     
     (first_link = NULL).if {
-      first_link := LINKED_LIST_NODE[E].create element next NULL;
+      first_link := LINKED_LIST_NODE[V].create element next NULL;
       upper := 1;
       last_link := first_link;
       mem_idx := 1;
       mem_lnk := first_link;
     } else {
-      lnk := LINKED_LIST_NODE[E].create element next NULL;
+      lnk := LINKED_LIST_NODE[V].create element next NULL;
       last_link.set_next lnk;
       upper := upper + 1;
       last_link := lnk;
     };
   );
   
-  - add element:E to index:INTEGER <-
-  ( + link:LINKED_LIST_NODE[E];
+  - add element:V to index:INTEGER <-
+  ( + link:LINKED_LIST_NODE[V];
 
     (index = 1).if {
       add_first element;
@@ -113,7 +113,7 @@ Section Public
       ((index - 1) != mem_idx ).if {
 	go_item (index - 1);
       };
-      link := LINKED_LIST_NODE[E].create element next (mem_lnk.next);
+      link := LINKED_LIST_NODE[V].create element next (mem_lnk.next);
       mem_lnk.set_next link;
       upper := upper + 1;
     };
@@ -139,7 +139,7 @@ Section Public
   );
   
   - remove index:INTEGER <-
-  ( + link:LINKED_LIST_NODE[E];    
+  ( + link:LINKED_LIST_NODE[V];    
     
     (index = 1).if {
       remove_first;
@@ -155,11 +155,11 @@ Section Public
     };    
   );
   
-  - first:E <- first_link.item;
+  - first:V <- first_link.item;
   
-  - last:E <- last_link.item;
+  - last:V <- last_link.item;
   
-  - item i:INTEGER :E <-
+  - item i:INTEGER :V <-
   (
     (i != mem_idx).if {
       go_item i;
@@ -167,7 +167,7 @@ Section Public
     mem_lnk.item
   );
     
-  - put element:E to i:INTEGER <-
+  - put element:V to i:INTEGER <-
   ( 
     (i != mem_idx).if {
       go_item i;
@@ -177,7 +177,7 @@ Section Public
   
   - count:INTEGER <- upper;
   
-  - set_all_with v:E <-
+  - set_all_with v:V <-
   ( 
     (first_link != NULL).if {
       first_link.set_all_with v;
@@ -191,7 +191,7 @@ Section Public
   
   - '=='  Right 60 other:SELF :BOOLEAN <-
   ( + result:BOOLEAN;
-    + lnk1, lnk2:LINKED_LIST_NODE[E];
+    + lnk1, lnk2:LINKED_LIST_NODE[V];
         
     (Self = other).if {
       result := TRUE;
@@ -210,8 +210,8 @@ Section Public
   
   - is_equal_map other:SELF :BOOLEAN <-
   ( + result:BOOLEAN;
-    + lnk1, lnk2:LINKED_LIST_NODE[E];    
-    + safe_equal:SAFE_EQUAL[E];
+    + lnk1, lnk2:LINKED_LIST_NODE[V];    
+    + safe_equal:SAFE_EQUAL[V];
     
     ( Self = other).if {
       result := TRUE;
@@ -228,9 +228,9 @@ Section Public
     result
   );
   
-  - index_of x:E start start_index:INTEGER :INTEGER <-
+  - index_of x:V start start_index:INTEGER :INTEGER <-
   ( + result:INTEGER;
-    + safe_equal:SAFE_EQUAL[E];
+    + safe_equal:SAFE_EQUAL[V];
     
     result := start_index;
     {(result > upper) || {safe_equal.test x with (item result)}}.until_do {
@@ -239,10 +239,10 @@ Section Public
     result
   );
 
-  - reverse_index_of element:E start start_index:INTEGER :INTEGER <-
-  ( + safe_equal: SAFE_EQUAL[E_]; 
+  - reverse_index_of element:V start start_index:INTEGER :INTEGER <-
+  ( + safe_equal: SAFE_EQUAL[V]; 
     + temporary_idx, new_mem_idx:INTEGER;
-    + temporary_lnk, new_mem_lnk:LINKED_LIST_NODE[E];
+    + temporary_lnk, new_mem_lnk:LINKED_LIST_NODE[V];
     + result:INTEGER;
 
     temporary_idx := lower;
@@ -265,7 +265,7 @@ Section Public
     result
   );
      
-  - fast_index_of element:E start start_index:INTEGER :INTEGER <-
+  - fast_index_of element:V start start_index:INTEGER :INTEGER <-
   ( + u:INTEGER;
     + result:INTEGER;
     
@@ -277,10 +277,10 @@ Section Public
     result
   );
   
-  - fast_reverse_index_of element:E start start_index:INTEGER :INTEGER <-
-  ( + safe_equal: SAFE_EQUAL[E_]; 
+  - fast_reverse_index_of element:V start start_index:INTEGER :INTEGER <-
+  ( + safe_equal: SAFE_EQUAL[V]; 
     + temporary_idx, new_mem_idx:INTEGER;
-    + temporary_lnk, new_mem_lnk:LINKED_LIST_NODE[E];
+    + temporary_lnk, new_mem_lnk:LINKED_LIST_NODE[V];
     + result:INTEGER;
 
     temporary_idx := lower;
@@ -317,8 +317,8 @@ Section Public
     +? {upper = 0};    
   ];
   
-  - from_collection model:COLLECTION[E] <-
-  ( + lnk:LINKED_LIST_NODE[E];
+  - from_collection model:COLLECTION[V] <-
+  ( + lnk:LINKED_LIST_NODE[V];
     
     (first_link = NULL).if {
       (model.lower).to (model.upper) do { i:INTEGER;
@@ -353,7 +353,7 @@ Section Public
   
   - slice low:INTEGER to up:INTEGER :SELF <-
   ( + result:SELF;
-    + lnk:LINKED_LIST_NODE[E];
+    + lnk:LINKED_LIST_NODE[V];
         
     result := SELF.create;    
     (mem_idx != low).if {
@@ -368,10 +368,10 @@ Section Public
     result
   );
   
-  - occurrences element:E :INTEGER <-
-  ( + lnk:LINKED_LIST_NODE[E];
+  - occurrences element:V :INTEGER <-
+  ( + lnk:LINKED_LIST_NODE[V];
     + result:INTEGER;
-    + safe_equal:SAFE_EQUAL[E];
+    + safe_equal:SAFE_EQUAL[V];
     
     lnk := first_link;
     {lnk = NULL}.until_do {
@@ -383,8 +383,8 @@ Section Public
     result
   );
   
-  - fast_occurrences element:E :INTEGER <-
-  ( + lnk:LINKED_LIST_NODE[E];
+  - fast_occurrences element:V :INTEGER <-
+  ( + lnk:LINKED_LIST_NODE[V];
     + result:INTEGER;
     
     lnk := first_link;
@@ -397,8 +397,8 @@ Section Public
     result
   );
   
-  - force element:E to index:INTEGER <-
-  ( + v:E;
+  - force element:V to index:INTEGER <-
+  ( + v:V;
     
     {index <= upper}.until_do {
       add_last v;
@@ -408,8 +408,8 @@ Section Public
   
   - all_default:BOOLEAN <-
   ( + result:BOOLEAN;
-    + l:LINKED_LIST_NODE[E];
-    + d:E;
+    + l:LINKED_LIST_NODE[V];
+    + d:V;
     
     result := TRUE;
     l := first_link;
@@ -442,8 +442,8 @@ Section Public
     };    
   );
   
-  - replace_all old_value:E with new_value:E <-
-  ( + safe_equal:SAFE_EQUAL[E];
+  - replace_all old_value:V with new_value:V <-
+  ( + safe_equal:SAFE_EQUAL[V];
     
     lower.to upper do { i:INTEGER;
       (safe_equal.test (item i) with old_value).if {
@@ -452,7 +452,7 @@ Section Public
     };    
   );
     
-  - fast_replace_all old_value:E with new_value:E <-
+  - fast_replace_all old_value:V with new_value:V <-
   ( 
     lower.to upper do { i:INTEGER;
       (item i = old_value).if {
@@ -462,7 +462,7 @@ Section Public
   );
 
   - reverse <-
-  ( + prev, lnk, next:LINKED_LIST_NODE[E];
+  ( + prev, lnk, next:LINKED_LIST_NODE[V];
 		
     lnk := first_link;			
     {lnk = NULL}.until_do {

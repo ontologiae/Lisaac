@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := Expanded UINTEGER_32 -> INTEGER, UINTEGER_64, INTEGER_64, POINTER;
+  + name    := Expanded UINTEGER_32;
+
+  - export  := INTEGER, UINTEGER_64, INTEGER_64, POINTER;
    
   - comment := "Unsigned 32 bits integer.";
   
@@ -46,3 +48,5 @@ Section Public
   //
   
   - to_uinteger_32:UINTEGER_32 <- Self;
+
+  - to_uinteger_64:UINTEGER_64 <- to_raw_uinteger_64;

@@ -20,12 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := HASHED_SET_NODE[E];
+  + name    := HASHED_SET_NODE[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  - comment := "Auxilliary class to implement SET[E].";
+  - comment := "Auxilliary class to implement SET[V].";
     
 Section Inherit
   
@@ -33,12 +33,12 @@ Section Inherit
   
 Section Public
   
-  + item:E;
+  + item:V;
   
-  + next:HASHED_SET_NODE[E];
+  + next:HASHED_SET_NODE[V];
   // The `next' one when some clash occurs.
   
-  - set_next n:HASHED_SET_NODE[E] <-
+  - set_next n:HASHED_SET_NODE[V] <-
   (
     next := n;
   )
@@ -48,7 +48,7 @@ Section Public
   
 Section HASHED_SET
   
-  - create i:E next n:HASHED_SET_NODE[E] :SELF <-
+  - create i:V next n:HASHED_SET_NODE[V] :SELF <-
   ( + result:SELF;
     
     result := clone;
@@ -56,7 +56,7 @@ Section HASHED_SET
     result
   );
   
-  - make i:E next n:HASHED_SET_NODE[E] <-
+  - make i:V next n:HASHED_SET_NODE[V] <-
   (
     item := i;
     next := n;

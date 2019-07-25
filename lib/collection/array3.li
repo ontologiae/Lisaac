@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name        := ARRAY3[E];
+  + name        := ARRAY3[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -29,7 +29,7 @@ Section Header
     
 Section Inherit
   
-  + parent_collection3:Expanded COLLECTION3[E];
+  + parent_collection3:Expanded COLLECTION3[V];
   
 Section Public
   
@@ -49,7 +49,7 @@ Section Public
   
 Section ARRAY3
   
-  + storage:NATIVE_ARRAY[E];
+  + storage:NATIVE_ARRAY[V];
   // To store elements line by line.
   
   + capacity:INTEGER;
@@ -97,7 +97,7 @@ Section Public
       storage.clear_all (count - 1);
     } else {
       capacity := count;
-      storage := NATIVE_ARRAY[E].calloc count;
+      storage := NATIVE_ARRAY[V].calloc count;
     };
   )
   [ ...
@@ -109,7 +109,7 @@ Section Public
     +? { depth_maximum = depth_max };
   ];
     
-  - from_collection3 model:COLLECTION3[E] <-
+  - from_collection3 model:COLLECTION3[V] <-
   (
     make (model.line_minimum, model.column_minimum, model.depth_minimum) 
     to   (model.line_maximum, model.column_maximum, model.depth_maximum);
@@ -128,7 +128,7 @@ Section Public
     +? { lower3 = model.lower3 };
   ];
     
-  - from_collection contents:COLLECTION[E] 
+  - from_collection contents:COLLECTION[V] 
   size (line_min,column_min,depth_min:INTEGER) 
   to (line_max,column_max,depth_max:INTEGER) <-
   // Reset all bounds using `line_min', `line_max', `column_min',
@@ -161,7 +161,7 @@ Section Public
     +? { count = contents.count };
   ];
     
-  - from_model model:COLLECTION[COLLECTION[COLLECTION[E]]] <-
+  - from_model model:COLLECTION[COLLECTION[COLLECTION[V]]] <-
   //The `model' is used to fill line by line the COLLECTION3.
   //Assume all sub-collections of have the same indexing.
   (
@@ -228,7 +228,7 @@ Section Public
   // Implementation of others feature from COLLECTION3:
   //
   
-  - item (line, column, depth:INTEGER) :E <-
+  - item (line, column, depth:INTEGER) :V <-
   (
     storage.item (
       (line - lower1) * count2 * count3 + 
@@ -236,7 +236,7 @@ Section Public
     )
   );
     
-  - put element:E to (line, column, depth:INTEGER) <-
+  - put element:V to (line, column, depth:INTEGER) <-
   (
     storage.put element to (
       (line - lower1) * count2 * count3 + 
@@ -244,7 +244,7 @@ Section Public
     );
   );
     
-  - force x:E to (line, column, depth:INTEGER) <-
+  - force x:V to (line, column, depth:INTEGER) <-
   (
     (! valid_index (line,column,depth)).if {
       resize (line.min lower1,column.min lower2,depth.min lower3) 
@@ -253,17 +253,17 @@ Section Public
     put x to (line,column,depth);
   );
     
-  - set_all_with element:E <-
+  - set_all_with element:V <-
   (
     storage.set_all_with element with (count - 1);
   );
     
-  - replace_all old_value:E with new_value:E <-
+  - replace_all old_value:V with new_value:V <-
   (
     storage.replace_all old_value with new_value until (count - 1);
   );
     
-  - fast_replace_all old_value:E with new_value:E <-
+  - fast_replace_all old_value:V with new_value:V <-
   (
     storage.fast_replace_all old_value with new_value until (count - 1);
   );
@@ -298,17 +298,17 @@ Section Public
   // Looking and comparison:
   //
   
-  - occurrences elt:E :INTEGER <-
+  - occurrences elt:V :INTEGER <-
   (
     storage.occurrences elt until (count - 1)
   );
     
-  - fast_occurrences elt:E :INTEGER <-
+  - fast_occurrences elt:V :INTEGER <-
   (
     storage.fast_occurrences elt until (count - 1)
   );
     
-  - has x:E :BOOLEAN <-
+  - has x:V :BOOLEAN <-
   //Search if a element x is in the array using `equal'.
   //See also `fast_has' to choose the apropriate one.
   ( + result:BOOLEAN;
@@ -319,7 +319,7 @@ Section Public
     result
   );
     
-  - fast_has x:E :BOOLEAN <-
+  - fast_has x:V :BOOLEAN <-
   // Search if a element x is in the array using `='.
   ( + result:BOOLEAN;
     
@@ -335,7 +335,7 @@ Section Public
   );
     
   - swap (line1, column1, depth1:INTEGER) with (line2, column2, depth2:INTEGER) <-
-  ( + tmp:E;
+  ( + tmp:V;
     + index1, index2:INTEGER;
     
     index1 := (line1 - lower1) * count2 * count3 + (column1 - lower2) * count3 + depth1 - lower3;

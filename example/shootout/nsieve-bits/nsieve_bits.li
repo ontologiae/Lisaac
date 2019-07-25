@@ -104,9 +104,9 @@ Section Public
         };
       };
       "Primes up to ".print;
-      n.print;
+      n.print_format 8;
       ' '.print;
-      count.print;
+      count.print_format 8;
       '\n'.print;
     };
   );

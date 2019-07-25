@@ -29,7 +29,7 @@ Section Header
   
 Section Inherit
   
-  + parent_itm_type_mono:Expanded ITM_TYPE_STYLE;
+  + parent_itm_type_style:Expanded ITM_TYPE_STYLE;
   
 Section Private
   
@@ -108,4 +108,19 @@ Section Public
     };
     list_type.last.display buffer;
     buffer.add_last ']';
+  );
+  
+  //
+  // Cast.
+  //
+  
+  - append_cast_name_in buf:STRING <- 
+  (
+    parent_itm_type_style.append_cast_name_in buf;
+    buf.append "_of_";
+    (list_type.lower).to (list_type.upper - 1) do { j:INTEGER;
+      list_type.item j.append_cast_name_in buf;
+      buf.append "_and_";
+    };
+    list_type.last.append_cast_name_in buf;
   );

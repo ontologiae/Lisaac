@@ -20,22 +20,22 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := ARRAYED_COLLECTION[E];
+  + name    := ARRAYED_COLLECTION[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  - comment := "Common root for ARRAY[E] and FAST_ARRAY[E].";
+  - comment := "Common root for ARRAY[V] and FAST_ARRAY[V].";
   
 Section Inherit
   
   - parent_arrayed:ARRAYED := ARRAYED;
   
-  - parent_collection:COLLECTION[E] := COLLECTION[E];
+  - parent_collection:COLLECTION[V] := COLLECTION[V];
   
 Section ARRAYED_COLLECTION, BMP_FILE, TYPES
   
-  + storage:NATIVE_ARRAY[E];
+  + storage:NATIVE_ARRAY[V];
   // Internal access to storage location.
     
 Section Public
@@ -44,8 +44,8 @@ Section Public
   // The size in number of bytes for type `E'.
   ( + result:INTEGER;
     
-    (E.is_expanded_type).if {
-      result := E.object_size;
+    (V.is_expanded_type).if {
+      result := V.object_size;
     } else {
       result := POINTER.object_size;
     };
@@ -81,13 +81,13 @@ Section Public
   // Implementation of deferred:
   //
   
-  - first:E <- storage.item 0;
+  - first:V <- storage.item 0;
   
-  - second:E <- storage.item 1;
+  - second:V <- storage.item 1;
   
-  - last :E <- item upper;
+  - last :V <- item upper;
   
-  - add element:E to index:INTEGER <-
+  - add element:V to index:INTEGER <-
   ( 
     (index = upper + 1).if {
       add_last element;
@@ -108,12 +108,12 @@ Section Public
     upper := upper - n;
   );
   
-  - replace_all old_value:E with new_value:E <-
+  - replace_all old_value:V with new_value:V <-
   ( 
     storage.replace_all old_value with new_value until (count - 1);    
   );
     
-  - fast_replace_all old_value:E with new_value:E <-
+  - fast_replace_all old_value:V with new_value:V <-
   ( 
     storage.fast_replace_all old_value with new_value until (count - 1);    
   );
@@ -185,7 +185,7 @@ Section Public
       crash;
     };
     
-    tab := CONVERT[NATIVE_ARRAY[E],NATIVE_ARRAY[UINTEGER_8]].on storage;
+    tab := CONVERT[NATIVE_ARRAY[V],NATIVE_ARRAY[UINTEGER_8]].on storage;
     tab.copy (buf.storage + beg) to pos_beg until size;
     //ofs_buf := (pos_beg + size) % element_sizeof;
     upper   := (pos_beg + size - 1) / element_sizeof;

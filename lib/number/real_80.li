@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name     := Expanded REAL_80 -> REAL;
+  + name     := Expanded REAL_80;
+
+  - export   := REAL;
   
   - comment  := "Float 80 bits (C `long double' mapping).";
     

@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := FAST_ARRAY3[E];
+  + name    := FAST_ARRAY3[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -31,7 +31,7 @@ Section Header
     
 Section Inherit
   
-  + parent_collection3:Expanded COLLECTION3[E];
+  + parent_collection3:Expanded COLLECTION3[V];
   
 Section Public
   
@@ -54,7 +54,7 @@ Section Private
   
 Section FAST_ARRAY3
     
-  + storage:NATIVE_ARRAY[E];
+  + storage:NATIVE_ARRAY[V];
   
   + capacity:INTEGER; // of `storage'.
   
@@ -95,7 +95,7 @@ Section Public
     count := count1 * count2x3;
     (capacity < count).if {
       capacity := count;
-      storage := NATIVE_ARRAY[E].create capacity;
+      storage := NATIVE_ARRAY[V].create capacity;
     } else {
       storage.clear_all (capacity - 1);
     };
@@ -107,7 +107,7 @@ Section Public
     +? { all_default };
   ];
     
-  - from_collection3 model:COLLECTION3[E] <-
+  - from_collection3 model:COLLECTION3[V] <-
   // Uses the `model' to update self.
   (
     make (model.upper1 + 1, model.upper2 + 1, model.upper3 + 1);
@@ -120,7 +120,7 @@ Section Public
     };
   );
     
-  - from_collection contents:COLLECTION[E] size (new_count1, new_count2, new_count3:INTEGER) <-
+  - from_collection contents:COLLECTION[V] size (new_count1, new_count2, new_count3:INTEGER) <-
   //  Reset all bounds using `new_count#i'.
   //  Copy all elements of `contents', line by line into self.
   [ ...
@@ -143,7 +143,7 @@ Section Public
   ];
   
   
-  - from_model model:COLLECTION[COLLECTION[COLLECTION[E]]] <-
+  - from_model model:COLLECTION[COLLECTION[COLLECTION[V]]] <-
   // The `model' is used to fill line by line the COLLECTION3.
   // Assume all sub-collections of have the same indexing.
   ( + n:INTEGER;
@@ -173,18 +173,18 @@ Section Public
   // Implementation of others feature from COLLECTION3:
   //
   
-  - item (line, column, depth:INTEGER) :E <-
+  - item (line, column, depth:INTEGER) :V <-
   (
     storage.item (line * count2x3 + column * count3 + depth)
   );
     
-  - put element:E to (line, column, depth:INTEGER) <-
+  - put element:V to (line, column, depth:INTEGER) <-
   (
     storage.put element to (line * count2x3 + column * count3 + depth);
   );
   
   
-  - force element:E to (line, column, depth :INTEGER) <-
+  - force element:V to (line, column, depth :INTEGER) <-
   (
     (! valid_index (line, column, depth)).if {
       resize (line.max upper1 + 1, column.max upper2 + 1, depth.max upper3 + 1);
@@ -241,7 +241,7 @@ Section Public
   // Writing:
   //
   
-  - set_all_with x:E <-
+  - set_all_with x:V <-
   //  All element are set with the value x.
   (
     storage.set_all_with x until (count - 1);
@@ -268,7 +268,7 @@ Section Public
     };
   ); 
     
-  - set_slice (l1,up1:INTEGER) to (l2,up2:INTEGER) to (l3,up3:INTEGER) with element:E <-
+  - set_slice (l1,up1:INTEGER) to (l2,up2:INTEGER) to (l3,up3:INTEGER) with element:V <-
   // Set all the elements in the
   // range [(l1,up1),(l2,up2),(l3,up3)] of
   // self with the element 'element'.
@@ -283,7 +283,7 @@ Section Public
   );  
   
   - swap (line1, column1, depth1:INTEGER) with (line2, column2, depth2:INTEGER) <-
-  ( + tmp:E;
+  ( + tmp:V;
     + c3, c2x3, index1, index2:INTEGER;
     c3   := count3;
     c2x3 := count2x3;
@@ -298,12 +298,12 @@ Section Public
   // Looking and comparison:
   //
   
-  - occurrences elt:E :INTEGER <-
+  - occurrences elt:V :INTEGER <-
   (
     storage.occurrences elt until (count - 1)
   );
     
-  - fast_occurrences elt:E :INTEGER <-
+  - fast_occurrences elt:V :INTEGER <-
   (
     storage.fast_occurrences elt until (count - 1)
   );
@@ -349,7 +349,7 @@ Section Public
   // Looking and Searching:
   //
   
-  - has x:E :BOOLEAN <-
+  - has x:V :BOOLEAN <-
   // Look for `x' using `equal' for comparison.
   ( + result:BOOLEAN;
     
@@ -359,7 +359,7 @@ Section Public
     result
   );  
   
-  - fast_has x:E :BOOLEAN <-
+  - fast_has x:V :BOOLEAN <-
   // Same as `has' but use `=' for comparison
   ( + result:BOOLEAN;
     
@@ -373,13 +373,13 @@ Section Public
   // Other features:
   //
   
-  - replace_all old_value:E with new_value:E <-
+  - replace_all old_value:V with new_value:V <-
   (
     storage.replace_all old_value with new_value until (count - 1);
   );
   
   
-  - fast_replace_all old_value:E with new_value:E <-
+  - fast_replace_all old_value:V with new_value:V <-
   (
     storage.fast_replace_all old_value with new_value until (count - 1);
   );

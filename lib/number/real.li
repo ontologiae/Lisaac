@@ -20,7 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := Expanded REAL -> REAL_32, REAL_64, REAL_80,
+  + name   := Expanded REAL;
+  
+  - export :=
+  REAL_32, REAL_64, REAL_80,
   REAL_16_16,  REAL_24_8,  REAL_26_6,
   UREAL_16_16, UREAL_24_8, UREAL_26_6;
 
@@ -36,11 +39,13 @@ Section Insert
   
 Section Public
   
+  - '+'  Left 80  other:SELF :SELF <- `@Self + @other`:SELF;
+
   - bound_test low:INTEGER_64 to up:UINTEGER_64 :BOOLEAN <-  
   (
     TRUE
   );
-
+  
   - pi   :SELF <- 3.14159265358979323846;
 
   - atan :SELF <- `atan(@Self)`:SELF;

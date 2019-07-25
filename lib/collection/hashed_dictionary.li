@@ -20,12 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := HASHED_DICTIONARY[V,K];
+  + name      := HASHED_DICTIONARY[V,K];
 
 
-  - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
+  - copyright := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  - comment :=" Associative memory.\
+  - comment   := " Associative memory.\
   \Values of type `V' are stored using Keys of type `K'.";
   
   // Efficient implementation of DICTIONARY using `hash_code' on keys.   
@@ -90,7 +90,7 @@ Section Public
   
   - reference_at k:K :V <-
   // Return NULL or the value associated with key `k'. Actually, this 
-  // feature is useful when the type of values (the type V) is a 
+  // feature is useful when the type of values (the type E) is a 
   // reference type, to avoid using `has' just followed by `at' to get 
   // the corresponding value.
   ( + idx:INTEGER;

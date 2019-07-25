@@ -121,7 +121,19 @@ Section Private
     '\n'.print;
   );    
   
-  - update file:ABSTRACT_STRING idf id:STRING_CONSTANT with new_text:ABSTRACT_STRING <-
+  - question str:ABSTRACT_STRING :CHARACTER <-
+  ( + result:CHARACTER;
+    
+    str.print;
+    " (y/n) ".print;
+    {(result != 'y') && {result != 'n'}}.while_do {
+      result := IO.read_character;
+    };
+    result
+  );
+  
+  - update file:ABSTRACT_STRING idf id:STRING_CONSTANT 
+  with new_text:ABSTRACT_STRING confirmation conf:BOOLEAN <-
   ( + index:INTEGER;
     + old_buffer,input:STRING;
     + std_file:POINTER;
@@ -167,18 +179,24 @@ Section Private
     } else {
       // Creation file.
       "' file has been created with:\n".print; 
-      new_text.print;
+      new_text.print;      
       input := new_text;
       (! make_file file).if {
         error "Not create file!";
       };
     };    
-    std_file := open_write file;
-    (std_file = NULL).if {
-      error "Not open file (Write protection) !";
+    
+    ((! conf) || {question "  Confirmation ?" = 'y'}).if {            
+      (conf).if { 
+	'\n'.print; 
+      };
+      std_file := open_write file;
+      (std_file = NULL).if {
+	error "Not open file (Write protection) !";
+      };
+      write std_file with input size (input.count);
+      close std_file;
     };
-    write std_file with input size (input.count);
-    close std_file;
   );
   
   //
@@ -197,12 +215,14 @@ Section Private
   - system_unix_bash:STRING_CONSTANT := "Unix - bash";
   - system_unix_tcsh:STRING_CONSTANT := "Unix - tcsh";
   - system_unix_zsh :STRING_CONSTANT := "Unix - zsh";
+  - system_unix_bsd :STRING_CONSTANT := "Unix - BSD or Mac";
   - system_windows  :STRING_CONSTANT := "Windows - DOS";
   - system_unknown  :STRING_CONSTANT := "Unknown";
   
   - file_bashrc   :STRING_CONSTANT := "/.bashrc";
   - file_cshrc    :STRING_CONSTANT := "/.cshrc";
   - file_zshenv   :STRING_CONSTANT := "/.zshenv";
+  - file_profile  :STRING_CONSTANT := "/.profile";
   - file_autoexec :STRING_CONSTANT := "C:\\autoexec.bat";
   - file_msdos_sys:STRING_CONSTANT := "C:\\msdos.sys";
   
@@ -288,13 +308,13 @@ Section Private
     '\n'.print;
     (system != system_unknown).if {
       (system = system_windows).if {
-        update "path.li" idf "  + target" with "  + target := WINDOWS;\n";
+        update "path.li" idf "  + target" with "  + target := WINDOWS;\n" confirmation FALSE;
         "\n  Note: Use `mingw' for Windows.\n".print; 
       } else {
-        update "path.li" idf "  + target" with "  + target := UNIX;\n";
+        update "path.li" idf "  + target" with "  + target := UNIX;\n" confirmation FALSE;
         //
         "\n  Search path for `libX11.a' : (please wait...)\n".print;
-        ENVIRONMENT.execute_command "find /usr -name \"libX11.a\" 2> /dev/null > xlib_path.txt";
+        ENVIRONMENT.execute_command "find /usr/lib/ -name \"libX11.a\" 2> /dev/null > xlib_path.txt";
         std_file := open_read "xlib_path.txt";	
         len := file_size std_file;
         (len = 0).if {
@@ -305,7 +325,7 @@ Section Private
           new_text.remove_last 10;
           new_text.prepend "  + path_lib_x11 := \"";
           new_text.append "\";\n";
-          update "path.li" idf "  + path_lib_x11" with new_text;
+          update "path.li" idf "  + path_lib_x11" with new_text confirmation FALSE;
         };
         close std_file;
         ENVIRONMENT.execute_command "rm -f xlib_path.txt";
@@ -332,7 +352,7 @@ Section Private
       new_text.append path;
       new_text.append path_current;
       new_text.append path_next;
-      update file idf comment with new_text;
+      update file idf comment with new_text confirmation TRUE;
     };
     
     //
@@ -349,9 +369,9 @@ Section Private
     };
     new_text.prepend "#define LISAAC_DIRECTORY \"";
     new_text.append "\"\n";
-    update "bin/path.h" idf "#define LISAAC_DIRECTORY" with new_text;
+    update "bin/path.h" idf "#define LISAAC_DIRECTORY" with new_text confirmation FALSE;
     '\n'.print;
-    update "src/path.h" idf "#define LISAAC_DIRECTORY" with new_text;
+    update "src/path.h" idf "#define LISAAC_DIRECTORY" with new_text confirmation FALSE;
     '\n'.print;
   );
   
@@ -376,10 +396,7 @@ Section Private
   ( + char:CHARACTER;
     + file_name, new_text:STRING;
     
-    "  Do you want to install the `lisaac-mode' for Emacs editor ? (y/n)".print;
-    {(char != 'y') && {char != 'n'}}.while_do {
-      char := IO.read_character;
-    };
+    char := question "  Do you want to install the `lisaac-mode' for Emacs editor ?";
     (char = 'n').if {
       "  Not install `lisaac-mode' for Emacs editor.\n\n".print;
     } else {
@@ -398,7 +415,7 @@ Section Private
       };
       new_text.append lisaac_mode_path_end;
       new_text.append lisaac_mode;
-      update file_name idf lisaac_mode_comment with new_text;
+      update file_name idf lisaac_mode_comment with new_text confirmation TRUE;
     };
   );
 
@@ -408,10 +425,7 @@ Section Private
     (system = system_windows).if {
       "  Sorry, not Kate editor for windows.\n\n".print;
     } else {
-      "  Do you want to install the `lisaac_v2.xml' for Kate editor ? (y/n)".print;
-      {(char != 'y') && {char != 'n'}}.while_do {
-        char := IO.read_character;
-      };
+      char := question "  Do you want to install the `lisaac_v2.xml' for Kate editor ?";
       (char = 'n').if {
         "  Not install `lisaac_v2.xml' for Kate editor.\n\n".print;
       } else {
@@ -439,10 +453,7 @@ Section Private
     (system = system_windows).if {
       "  Sorry, not Vim editor for windows.\n\n".print;
     } else {
-      "  Do you want to install the Lisaac support for Vim editor ? (y/n)".print;
-      {(char != 'y') && {char != 'n'}}.while_do {
-        char := IO.read_character;
-      };
+      char := question "  Do you want to install the Lisaac support for Vim editor ?"; 
       (char = 'n').if {
         "  Not install `lisaac.vim' for Vim editor.\n\n".print;
       } else {
@@ -476,14 +487,11 @@ Section Private
         };
 
         // Install ~/.vimrc file
-        char := '?';
+        char := question
         "\n  It is recommanded to install the default vimrc file provided by the   \n\
         \  lisaac installer.                                                     \n\n\
         \  If you choose not doing this action, your vimrc will only be updated    \n\
-        \  Do you want to install the default config provided by lisaac installer? (y/n)".print;
-        {(char != 'y') && {char != 'n'}}.while_do {
-          char := IO.read_character;
-        };
+        \  Do you want to install the default config provided by lisaac installer ?";        
         (char = 'n').if {
           file_name := STRING.create 100;
           (path_home = NULL).if {
@@ -492,7 +500,7 @@ Section Private
             file_name.copy path_home;
           };
           file_name.append "/.vimrc";	
-          update file_name idf lisaac_vim with lisaac_vim;
+          update file_name idf lisaac_vim with lisaac_vim confirmation TRUE;
         } else {
           string_tmp.copy "cp -f editor/vim/vimrc ~/.vimrc";
           "  `".print;
@@ -539,10 +547,7 @@ Section Private
   - build_lib <-
   ( + char:CHARACTER;
         
-    "  Do you want to build a HTML librarie documentation ? (y/n)".print;
-    {(char != 'y') && {char != 'n'}}.while_do {
-      char := IO.read_character;
-    };
+    char := question "  Do you want to build a HTML librarie documentation ?";
     (char = 'n').if {
       "  Not install librarie documentation.\n\n".print;
     } else {      

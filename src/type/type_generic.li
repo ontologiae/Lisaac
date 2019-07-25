@@ -48,6 +48,19 @@ Section Public
   
   + generic_list:FAST_ARRAY[TYPE_FULL];  
   
+  - generic_to_type char:CHARACTER :TYPE_FULL <-
+  ( + idx:INTEGER;
+    + result:TYPE_FULL;
+    + tab:FAST_ARRAY[CHARACTER];
+    
+    tab := prototype.idf_generic_list;
+    idx := tab.fast_first_index_of char;
+    (idx <= tab.upper).if {
+      result := generic_list.item idx;
+    };
+    result
+  );
+  
   //
   // Get
   //

@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    :=Expanded REAL_16_16 -> REAL_32, REAL_64;
+  + name    := Expanded REAL_16_16;
+
+  - export  := REAL_32, REAL_64;
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   

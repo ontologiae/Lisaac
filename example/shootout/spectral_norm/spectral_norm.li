@@ -31,46 +31,48 @@ Section Inherit
   - parent_any:OBJECT := OBJECT;
 
 Section Private
-
+  
+  - n:INTEGER;
+  
   - eval_a(i,j:INTEGER) :REAL_64 <- 
   (
     1.0 /((i+j)*(i+j+1)/2+i+1)
   );
 
-  - eval_a_times_u(u,au:FAST_ARRAY[REAL_64]) <- 
+  - eval_a_times_u(u,au:NATIVE_ARRAY[REAL_64]) <- 
   ( 
-    0.to (au.upper) do { i:INTEGER;
+    0.to n do { i:INTEGER;
       au.put 0 to i;
-      0.to (au.upper) do { j:INTEGER;
+      0.to n do { j:INTEGER;
         au.put (au.item i + eval_a(i,j) * u.item j) to i;
       };
     };
   );
 
-  - eval_at_times_u(u,au:FAST_ARRAY[REAL_64]) <-
+  - eval_at_times_u(u,au:NATIVE_ARRAY[REAL_64]) <-
   (
-    0.to (au.upper) do { i:INTEGER;
+    0.to n do { i:INTEGER;
       au.put 0 to i;
-      0.to (au.upper) do { j:INTEGER;
+      0.to n do { j:INTEGER;
         au.put (au.item i + eval_a(j,i) * u.item j) to i;
       };
     };
   );
-
-  - eval_ata_times_u(u,atau:FAST_ARRAY[REAL_64]) <-
-  ( + v:FAST_ARRAY[REAL_64];
-    v := FAST_ARRAY[REAL_64].create (u.count);
-    eval_a_times_u(u,v);
-    eval_at_times_u(v,atau);
+  
+  - vtmp:NATIVE_ARRAY[REAL_64];
+  
+  - eval_ata_times_u(u,atau:NATIVE_ARRAY[REAL_64]) <-
+  ( 
+    eval_a_times_u(u,vtmp);
+    eval_at_times_u(vtmp,atau);
   );
 
 Section Public
  
   - main <-
   ( + vbv,vv:REAL_64;
-    + u :FAST_ARRAY[REAL_64];
-    + v :FAST_ARRAY[REAL_64];
-    + n :INTEGER;
+    + u :NATIVE_ARRAY[REAL_64];
+    + v :NATIVE_ARRAY[REAL_64];    
  
     ( COMMAND_LINE.upper = 1).if {
       n := COMMAND_LINE.item 1.to_integer;
@@ -78,11 +80,13 @@ Section Public
       n := 2000;
     };
     
-    u := FAST_ARRAY[REAL_64].create_with_capacity n;
-    v := FAST_ARRAY[REAL_64].create n;
+    u    := NATIVE_ARRAY[REAL_64].calloc_intern n;
+    vtmp := NATIVE_ARRAY[REAL_64].calloc_intern n;
+    v    := NATIVE_ARRAY[REAL_64].calloc_intern n;
     
-    0.to (n-1) do { i:INTEGER;
-      u.add_last 1;    
+    n := n - 1;    
+    0.to n do { i:INTEGER;
+      u.put 1 to i;    
     };
 
     0.to 9 do { i:INTEGER;
@@ -90,24 +94,10 @@ Section Public
       eval_ata_times_u(v,u);
     };
 
-    0.to (n-1) do { i:INTEGER;
+    0.to n do { i:INTEGER;
       vbv := vbv + u.item i * v.item i;
-       vv :=  vv + v.item i * v.item i;
+      vv  :=  vv + v.item i * v.item i;
     };
      
-    ((vbv/vv).sqrt).print;
-    '\n'.print;
-
-    /*
-    ( + t:REAL_64;
-      t := (vbv/vv).sqrt;
-     `printf("%f\n",@t)`;
-     '\n'.print;
-     vbv.print;
-     '\n'.print;
-     vv.print;
-     '\n'.print;
-    );
-    */
-
+    ((vbv/vv).sqrt).print_format_c "%.9f\n";    
   );

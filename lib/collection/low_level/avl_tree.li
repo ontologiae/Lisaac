@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name := AVL_TREE[E];
+  + name := AVL_TREE[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -55,36 +55,36 @@ Section Public
   // Adding and removing:
   //
   
-  - remove e:E <-
+  - remove e:V <-
   (
     root := do_remove (root, e);
   );
 
-  - fast_remove e:E <-
+  - fast_remove e:V <-
   (
     root := fast_do_remove (root, e);
   );
 
 Section SELF
   
-  + root:AVL_TREE_NODE[E];
+  + root:AVL_TREE_NODE[V];
 
   + rebalance:BOOLEAN;
 
-  + item_memory:E;
+  + item_memory:V;
 
-  - set_value_and_key n:AVL_TREE_NODE[E] <-
+  - set_value_and_key n:AVL_TREE_NODE[V] <-
   (
     deferred;
   );
 
-  - set_value n:AVL_TREE_NODE[E] <-
+  - set_value n:AVL_TREE_NODE[V] <-
   (
     deferred;
   );
 
-  - fast_do_insert n:AVL_TREE_NODE[E] :AVL_TREE_NODE[E] <-
-  ( + result:AVL_TREE_NODE[E];
+  - fast_do_insert n:AVL_TREE_NODE[V] :AVL_TREE_NODE[V] <-
+  ( + result:AVL_TREE_NODE[V];
     
     (n = NULL).if {
       result := new_node;
@@ -120,8 +120,8 @@ Section SELF
     +? {rebalance = (node_height Result > Old node_height n)};
   ];
 
-  - do_insert n:AVL_TREE_NODE[E] :AVL_TREE_NODE[E] <-
-  ( + result:AVL_TREE_NODE[E];
+  - do_insert n:AVL_TREE_NODE[V] :AVL_TREE_NODE[V] <-
+  ( + result:AVL_TREE_NODE[V];
     
     (n = NULL).if {
       result := new_node;
@@ -157,13 +157,13 @@ Section SELF
     +? {rebalance = (node_height Result > Old node_height n)};
   ];
 
-  - left_grown n:AVL_TREE_NODE[E] :AVL_TREE_NODE[E] <-
+  - left_grown n:AVL_TREE_NODE[V] :AVL_TREE_NODE[V] <-
   [
     -? {rebalance};
     -? {n != NULL};
     -? {node_height (n.right) - node_height (n.left) + 1 = n.balance};
   ]
-  ( + result:AVL_TREE_NODE[E];
+  ( + result:AVL_TREE_NODE[V];
     
     (n.balance)
     .when imbalanced_left then {
@@ -210,13 +210,13 @@ Section SELF
     };
   ];
 
-  - right_grown n:AVL_TREE_NODE[E] :AVL_TREE_NODE[E] <-
+  - right_grown n:AVL_TREE_NODE[V] :AVL_TREE_NODE[V] <-
   [
     -? {rebalance};
     -? {n != NULL};
     -? {node_height (n.right) - 1 - node_height (n.left) = n.balance};
   ]
-  ( + result:AVL_TREE_NODE[E];
+  ( + result:AVL_TREE_NODE[V];
     
     (n.balance)
     .when imbalanced_right then {
@@ -264,8 +264,8 @@ Section SELF
     };
   ];
 
-  - fast_do_remove (n:AVL_TREE_NODE[E],e:E) :AVL_TREE_NODE[E] <-
-  ( + result:AVL_TREE_NODE[E];
+  - fast_do_remove (n:AVL_TREE_NODE[V],e:V) :AVL_TREE_NODE[V] <-
+  ( + result:AVL_TREE_NODE[V];
     
     (n = NULL).if {
       rebalance := FALSE;
@@ -309,8 +309,8 @@ Section SELF
     +? {rebalance = (node_height Result < Old node_height n)};
   ];
 
-  - do_remove (n:AVL_TREE_NODE[E],e:E) :AVL_TREE_NODE[E] <-
-  ( + result:AVL_TREE_NODE[E];
+  - do_remove (n:AVL_TREE_NODE[V],e:V) :AVL_TREE_NODE[V] <-
+  ( + result:AVL_TREE_NODE[V];
     
     (n = NULL).if {
       rebalance := FALSE;
@@ -350,12 +350,12 @@ Section SELF
     +? {rebalance = (node_height Result < Old node_height n)};
   ];
 
-  - remove_right (n1, n2:AVL_TREE_NODE[E]) :AVL_TREE_NODE[E] <-
+  - remove_right (n1, n2:AVL_TREE_NODE[V]) :AVL_TREE_NODE[V] <-
   [
     -? {n1 != NULL};
     -? {n2 != NULL};
   ]
-  ( + result:AVL_TREE_NODE[E];
+  ( + result:AVL_TREE_NODE[V];
     
     (n2.right = NULL).if {
       result := n2.left;
@@ -376,13 +376,13 @@ Section SELF
     +? {rebalance = (node_height Result < Old node_height n2)};
   ];
 
-  - left_shrunk n:AVL_TREE_NODE[E] :AVL_TREE_NODE[E] <-
+  - left_shrunk n:AVL_TREE_NODE[V] :AVL_TREE_NODE[V] <-
   [
     -? {rebalance};
     -? {n != NULL};
     -? {node_height (n.right) - node_height (n.left) - 1 = n.balance};
   ]
-  ( + result:AVL_TREE_NODE[E];
+  ( + result:AVL_TREE_NODE[V];
 				
     (n.balance)
     .when imbalanced_left then {
@@ -434,13 +434,13 @@ Section SELF
     Old node_height (n.right).max (node_height (n.left) + 1))};
   ];
 
-  - right_shrunk n:AVL_TREE_NODE[E] :AVL_TREE_NODE[E] <-
+  - right_shrunk n:AVL_TREE_NODE[V] :AVL_TREE_NODE[V] <-
   [
     -? {rebalance};
     -? {n != NULL};
     -? {node_height (n.right) + 1 - node_height (n.left) = n.balance};
   ]
-  ( + result:AVL_TREE_NODE[E];
+  ( + result:AVL_TREE_NODE[V];
 		
     (n.balance)
     .when imbalanced_right then {
@@ -491,7 +491,7 @@ Section SELF
     Old node_height (n.left).max (node_height (n.right) + 1))};
   ];
 
-  - exchange_and_discard (n1, n2:AVL_TREE_NODE[E]) <-
+  - exchange_and_discard (n1, n2:AVL_TREE_NODE[V]) <-
   [
     -? {n1 != NULL};
     -? {n2 != NULL};
@@ -505,7 +505,7 @@ Section SELF
     +? {rebalance};
   ];
 	
-  - clear_nodes node:AVL_TREE_NODE[E] <-
+  - clear_nodes node:AVL_TREE_NODE[V] <-
   (
     (node.left != NULL).if {
       clear_nodes (node.left);
@@ -516,7 +516,7 @@ Section SELF
     discard_node node;
   );
 
-  - node_height node:AVL_TREE_NODE[E] :INTEGER <-
+  - node_height node:AVL_TREE_NODE[V] :INTEGER <-
   ( + result:INTEGER;
     
     (node != NULL).if {
@@ -531,13 +531,13 @@ Section Public
   // Looking and searching:
   //
   
-  - has e:E :BOOLEAN <-
+  - has e:V :BOOLEAN <-
   // Is element `e' in the set?
   (
     (root != NULL) && {root.has e}
   );
 
-  - fast_has e:E :BOOLEAN <-
+  - fast_has e:V :BOOLEAN <-
   // Is element `e' in the set?
   (
     (root != NULL) && {root.fast_has e}
@@ -564,7 +564,7 @@ Section SELF
     "build_done" +? {! map_dirty};
   ];
 
-  + map:FAST_ARRAY[AVL_TREE_NODE[E]];
+  + map:FAST_ARRAY[AVL_TREE_NODE[V]];
   // Elements in a row for iteration. See `build_map'.
 
   + map_dirty:BOOLEAN;
@@ -573,18 +573,18 @@ Section SELF
 
 Section SELF
   
-  - new_node:AVL_TREE_NODE[E] <-
+  - new_node:AVL_TREE_NODE[V] <-
   ( 
     a_new_node
   );
 
-  - a_new_node:AVL_TREE_NODE[E] <-
+  - a_new_node:AVL_TREE_NODE[V] <-
   (
     deferred;
     NULL
   );
 	
-  - discard_node n:AVL_TREE_NODE[E] <-
+  - discard_node n:AVL_TREE_NODE[V] <-
   [
     -? {n != NULL};
   ]

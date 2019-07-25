@@ -20,12 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := LINKED_LIST_NODE[E];
+  + name    := LINKED_LIST_NODE[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
   
-  - comment := "To implement LINKED_LIST[E]. .";
+  - comment := "To implement LINKED_LIST[V]. .";
     
 Section Inherit
   
@@ -33,13 +33,13 @@ Section Inherit
   
 Section Public
   
-  + item:E;
+  + item:V;
   
-  + next:LINKED_LIST_NODE[E];
+  + next:LINKED_LIST_NODE[V];
   
 Section LINKED_LIST
   
-  - create i:E next n:LINKED_LIST_NODE[E] :SELF <-
+  - create i:V next n:LINKED_LIST_NODE[V] :SELF <-
   ( + result:SELF;
     
     result := clone;
@@ -47,7 +47,7 @@ Section LINKED_LIST
     result
   );
   
-  - make i:E next n:LINKED_LIST_NODE[E] <-
+  - make i:V next n:LINKED_LIST_NODE[V] <-
   (    
     item := i;
     next := n;
@@ -60,7 +60,7 @@ Section LINKED_LIST
   
 Section LINKED_LIST_NODE,LINKED_LIST
   
-  - set_item i:E <-
+  - set_item i:V <-
   (
     item := i;
   )
@@ -68,7 +68,7 @@ Section LINKED_LIST_NODE,LINKED_LIST
     +? {item = i};
   ];
     
-  - set_next n:LINKED_LIST_NODE[E] <-
+  - set_next n:LINKED_LIST_NODE[V] <-
   (
     next := n;
   )
@@ -76,7 +76,7 @@ Section LINKED_LIST_NODE,LINKED_LIST
     +? {next = n};
   ];
     
-  - set_all_with v:E <-
+  - set_all_with v:V <-
   ( + lnk:SELF;
     
     lnk := Self;

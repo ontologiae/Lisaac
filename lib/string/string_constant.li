@@ -31,7 +31,7 @@ Section Inherit
   
   - parent_abstract_string:ABSTRACT_STRING := ABSTRACT_STRING;
         
-Section ABSTRACT_STRING, ABSTRACT_ENTRY
+Section Public //ABSTRACT_STRING, ABSTRACT_ENTRY
   
   // BSBS: A revoir avec les Section External.
   
@@ -88,7 +88,7 @@ Section Public
   // of the internal `storage'. This extra null character is not
   // part of the Lisaac STRING.
   (
-    to_string.to_external
+    storage
   );
 
   - create_copy other:ABSTRACT_STRING :SELF <-
@@ -104,8 +104,9 @@ Section Public
     
     c := other.count;
     (c != 0).if {
-      storage := NATIVE_ARRAY[CHARACTER].create c;
+      storage := NATIVE_ARRAY[CHARACTER].create (c+1);
       storage.copy_from (other.storage) until (c-1);
+      storage.put '\0' to c;
       count := c;
     };
   );
@@ -119,6 +120,5 @@ Section Public
   - '-?' test:BLOCK <- test -? Self;
   
   - '+?' test:BLOCK <- test +? Self;
-  
-  
+    
 

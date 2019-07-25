@@ -33,7 +33,7 @@ Section Inherit
   
   - parent_arrayed:ARRAYED := ARRAYED;
   
-Section ABSTRACT_STRING, ABSTRACT_ENTRY
+Section Public //ABSTRACT_STRING, ABSTRACT_ENTRY
   
   + storage:NATIVE_ARRAY[CHARACTER];
   
@@ -51,14 +51,14 @@ Section Public
   ( ? {tab != NULL};
     storage := tab;
   );
-  
+    
   //
   // Creation / Modification :
   //
   
   - create needed_capacity:INTEGER :SELF <-
   ( + result:SELF;
-    result := STRING.clone;   
+    result := SELF.clone;   
     result.make needed_capacity;
     result
   );
@@ -678,24 +678,21 @@ Section Public
   // To be compatible with C, a null character is added at the end
   // of the internal `storage'. This extra null character is not
   // part of the Eiffel STRING.
-  ( + old_count:INTEGER;
-    + result:NATIVE_ARRAY[CHARACTER];
-    old_count:=count;
-    (capacity > count).if {
-      count := count + 1;
-      (item count != '\0').if	{ // Append 0 terminal.
-	put '\0' to  count;
-      };
+  (     
+    // Append 0 terminal.
+    (capacity > count).if {       
+      storage.put '\0' to count;
     } else {
       add_last '\0';
+      count := count - 1;
     }; 
-    count := count - 1;
-    result:= storage;
     
-    ? {count = old_count};
-    ? {result.is_not_null};
-    result
-  );
+    storage
+  )
+  [    
+    +? {count = Old count};
+    +? {Result.is_not_null};
+  ];
   
   - from_external p:NATIVE_ARRAY[CHARACTER] <-
   // Internal `storage' is set using `p' (may be dangerous because

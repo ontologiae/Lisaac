@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name    := Expanded UREAL_16_16 -> REAL_32, REAL_64;
+  + name    := Expanded UREAL_16_16;
+
+  - export  := REAL_32, REAL_64;
   
   - comment := "unsigned 16.16 fixed float.";
     

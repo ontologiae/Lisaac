@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name := AVL_SET_NODE[E];
+  + name := AVL_SET_NODE[V];
 
 
   - copyright   := "2003-2005 Jérome Boutet, 2003-2007 Benoit Sonntag";
@@ -32,7 +32,7 @@ Section Header
   
 Section Inherit
   
-  + parent_avl_tree_node:Expanded AVL_TREE_NODE[E];
+  + parent_avl_tree_node:Expanded AVL_TREE_NODE[V];
   
   - parent_any_avl_set_node:ANY_AVL_SET_NODE := ANY_AVL_SET_NODE;
 
@@ -42,7 +42,7 @@ Section AVL_SET
   // Creation:
   //
   
-  - create i:E :SELF <-
+  - create i:V :SELF <-
   ( + result:SELF;
     
     result := clone;
@@ -50,7 +50,7 @@ Section AVL_SET
     result
   );
   
-  - make i:E <-
+  - make i:V <-
   (
     set_balance balanced;
     left  := NULL;

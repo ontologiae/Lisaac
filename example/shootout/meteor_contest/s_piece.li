@@ -1,0 +1,65 @@
+///////////////////////////////////////////////////////////////////////////////
+//                              Lisaac Example                               //
+//                                                                           //
+//                   LSIIT - ULP - CNRS - INRIA - FRANCE                     //
+//                                                                           //
+//   This program is free software: you can redistribute it and/or modify    //
+//   it under the terms of the GNU General Public License as published by    //
+//   the Free Software Foundation, either version 3 of the License, or       //
+//   (at your option) any later version.                                     //
+//                                                                           //
+//   This program is distributed in the hope that it will be useful,         //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//   GNU General Public License for more details.                            //
+//                                                                           //
+//   You should have received a copy of the GNU General Public License       //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.   //
+//                                                                           //
+//                     http://isaacproject.u-strasbg.fr/                     //
+///////////////////////////////////////////////////////////////////////////////
+Section Header
+  
+  + name         := S_PIECE;
+  
+  - author       := "Benoit Sonntag";
+  - comment      := "Language shootout - Meteor contest (based on the C++ version)"; 
+  
+Section Inherit
+  
+  - parent_any:OBJECT := OBJECT;
+
+Section Public
+  
+  + vec:UINTEGER_32;
+  + i_piece:INTEGER_16;
+  + row:INTEGER_16;
+  
+  - create (avec,apiece,arow:UINTEGER_32) :SELF <-
+  ( + result:SELF;
+    result := clone;
+    result.make (avec,apiece,arow);
+    result
+  );
+  
+  - make (avec,apiece,arow:UINTEGER_32) <-
+  (
+    vec := avec;
+    i_piece := apiece.to_integer_16;
+    row := arow.to_integer_16;
+  );
+  
+  - set_vec v:UINTEGER_32 <-
+  (
+    vec := v;
+  );
+  
+  - set_i_piece v:UINTEGER_32 <-
+  (
+    i_piece := v.to_integer_16;
+  );
+  
+  - set_row v:UINTEGER_32 <-
+  (
+    row := v.to_integer_16;
+  );

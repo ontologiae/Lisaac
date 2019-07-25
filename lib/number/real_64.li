@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 Section Header
   
-  + name     := Expanded REAL_64 -> REAL, REAL_80;
+  + name     := Expanded REAL_64;
+
+  - export   := REAL, REAL_80;
   
   - comment  := "Float (C `double' mapping).";
     

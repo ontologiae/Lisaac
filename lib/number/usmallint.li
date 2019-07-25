@@ -1,0 +1,68 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  * name        :=USMALLINT ->  ULONGINT, UINTEGER, USHORTINT, 
+                                LONGINT, INTEGER, SHORTINT,
+                                UREAL_26_6, NUMERIC;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Unsigned 8 bits integer.";
+
+  - type        := `unsigned char`;
+  - default     := 0;
+  
+section INHERIT
+  
+  - parent_unsigned:UNSIGNED := UNSIGNED;
+  
+section PUBLIC
+  
+  - object_size:INTEGER := 1;
+
+  //
+  // Range.
+  //
+  
+  - maximum:ULONGINT := 255;
+  
+  //
+  // Conversion with test.
+  //
+  
+  - to_ulongint:ULONGINT   <- to_raw_ulongint;
+  
+  - to_uinteger:UINTEGER   <- to_raw_uinteger;
+  
+  - to_ushortint:USHORTINT <- to_raw_ushortint;
+  
+  - to_usmallint:USMALLINT <- self;
+  
+  - to_longint:LONGINT     <- to_raw_longint;
+  
+  - to_integer:INTEGER     <- to_raw_integer;
+  
+  - to_shortint:SHORTINT   <- to_raw_shortint;
+  
+  - to_smallint:SMALLINT   <- 
+  ( ? {self <=# (SMALLINT.maximum)};
+    to_raw_smallint
+  );
+  
+  - to_character:CHARACTER <- 
+  (
+    ? {in_range (CHARACTER.minimum) to (CHARACTER.maximum)};
+    CHARACTER.force_conversion self
+  );
+
+
+

@@ -1,0 +1,71 @@
+/****************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := CHARACTER_REF;
+  - comment     :=" .";
+  
+  - category    := MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_hashable:HASHABLE <- HASHABLE;
+  
+  - parent_comparable:COMPARABLE <- COMPARABLE;
+  
+section PUBLIC
+  
+  - item:CHARACTER;
+  
+  - set_item value:CHARACTER <-
+  (
+    item := value;
+  );
+
+  - '<' other:SELF : BOOLEAN <-
+  (
+    item < other.item
+  );
+  
+  - code:INTEGER <-
+  // ASCII code of Current
+  (
+    item.code
+  );
+
+  - to_upper:SELF <-
+  (
+    item.to_upper
+  );
+
+  - to_lower:SELF <-
+  // Conversion of Current to lower case
+  (
+    item.to_lower
+  );
+
+  // Object Printing:
+
+  - out_in_tagged_out_memory <- fill_tagged_out_memory;
+      
+  - fill_tagged_out_memory <-
+  (
+    item.fill_tagged_out_memory;
+  );
+      
+  // Hashing:
+  
+  - hash_code:INTEGER <-
+  (
+    item.hash_code
+  );

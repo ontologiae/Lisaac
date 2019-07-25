@@ -1,0 +1,329 @@
+/****************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := FIXED_ARRAY2[E];
+  - comment     :="Resizable two dimensional array.                   \
+                  \Unlike ARRAY2, the `lower1' bound and the `lower2' \
+                  \bound are frozen to 0. Thus, one can expect better \
+                  \performances.";
+  
+  - category    := MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr), Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  - parent_collection2:COLLECTION2[E] <- COLLECTION2[E];
+  
+section PUBLIC
+  
+  + upper1:INTEGER; 
+  + count1:INTEGER;
+  + upper2:INTEGER;
+  + count2:INTEGER;
+  + count:INTEGER;
+  
+  // FIXED_ARRAY2
+  
+  + storage:NATIVE_ARRAY[E];
+  
+  + capacity :INTEGER; // of `storage'.
+  
+  - lower1:INTEGER := 0;
+  
+  - lower2:INTEGER := 0;
+  
+  - create new_count1,new_count2:NUMERIC :SELF<-
+  (
+    + result:SELF;
+    result := clone;
+    result.make new_count1,new_count2;
+    result
+  );
+  
+  - make new_count1,new_count2:NUMERIC <-
+  // Create or reset self with new dimensions.
+  // All elements are set to the default value of type E.
+  (
+    ? { new_count1 > 0};
+    ? { new_count2 > 0};
+    count1 := new_count1;
+    upper1 := new_count1 - 1;
+    count2 := new_count2;
+    upper2 := new_count2 - 1;
+    count := count1 * count2;
+    (capacity < count).if {
+      capacity := count;
+      storage := NATIVE_ARRAY[E].calloc capacity;
+    } else {
+      storage.clear_all (capacity - 1);
+    };
+    
+    ? { count1 = new_count1};
+    ? { count2 = new_count2};
+    ? { all_default};
+  );
+  
+  
+  - from_collection model:COLLECTION2[E] <-
+  // Uses the `model' to update self.
+  (
+    make (model.upper1 + 1), (model.upper2 + 1);
+    
+    lower1.to upper1 do { i:INTEGER;
+      lower2.to upper2 do {j :INTEGER;
+	put (model.item i,j) to i,j;
+      };
+    };
+  );
+  
+  
+  // Implementation of others feature from COLLECTION2:
+  
+  - item line, column:NUMERIC :E <-
+  (
+    storage.item (line * count2 + column)
+  );
+  
+  
+  - put x:E to line, column:NUMERIC <-
+  (
+    storage.put x to (line * count2 + column);
+  );
+  
+  
+  - force element:E to line , column :NUMERIC <-
+  (
+    (!valid_index line, column).if {
+      resize (line.max upper1),(column.max upper2);
+    };
+    
+    put element to line,column;
+  );
+  
+  
+  - copy other:SELF <-
+  (
+    count1 := other.count1;
+    upper1 := count1 - 1;
+    count2 := other.count2;
+    upper2 := count2 - 1;
+    count := count1 * count2;
+    ( capacity < count).if {
+      capacity := count;
+      storage := storage.calloc capacity;
+    };
+    storage.copy_from (other.storage) until (count - 1);
+  );
+  
+  
+  - is_equal other:SELF :BOOLEAN <-
+  ( + result:BOOLEAN;
+ 
+    ( other = self).if {
+      result := TRUE;
+    }.elseif { upper1 != other.upper1} then {
+    }.elseif { upper2 != other.upper2} then {
+    } else {
+      result := storage.memcmp (other.storage) until count;
+    };
+    result
+  );
+  
+  // Writing:
+  
+  - set_all_with x:E <-
+  //  All element are set with the value x.
+  (
+    + old_count:INTEGER;
+    storage.set_all_with x until (count - 1);
+    
+    ? { count = old_count};
+  ); // set_all_with
+  
+  
+  - all_default:BOOLEAN <-
+  (
+    storage.all_default (count - 1)
+  );
+  
+  
+  -  slice l1,up1:NUMERIC to l2,up2:NUMERIC :SELF <-
+  // Create a new collection initialized with elements of
+  // range `low'..`up'. result has the same dynamic type
+  // as self collection.
+  (
+    + result:SELF;
+    result := SELF.create (up1 - l1 + 1),(up2 - l2 + 1);
+    l1.to up1 do { line:INTEGER;
+      l2.to up2 do { column:INTEGER;
+	result.put (item ligne,colonne) to (ligne - l1),(colonne - l2);
+      };
+    };
+  ); // slice
+  
+  
+  - set_slice l1,up1:NUMERIC to l2,up2:NUMERIC with element:E <-
+  // Set all the elements in the
+  // range [(l1,up1),(l2,up2)] of
+  // self with the element 'element'.
+  (
+    (l1 * count2).to (up1 * count2) by count2 do { i:INTEGER;
+      l2.to up2 do { j:INTEGER;
+	storage.put element to (i + j);
+      };
+    };
+  );
+  
+  
+  - swap line1, column1:NUMERIC with line2, column2:NUMERIC <-
+  (
+    + tmp:E;
+    + c2, index1, index2:NUMERIC;
+    
+    c2 := count2;
+    index1 := line1 * c2 + column1;
+    index2 := line2 * c2 + column2;
+    tmp := storage.item  index1;
+    storage.put (storage.item index2) to index1;
+    storage.put tmp to index2;
+  );
+  
+  
+  // Looking and comparison:
+  
+  - occurrences elt:E :NUMERIC <-
+  (
+    storage.occurrences elt until (count - 1)
+  );
+  
+  
+  - fast_occurrences elt:E :NUMERIC <-
+  (
+    storage.fast_occurrences elt until (count - 1)
+  );
+  
+  
+  // Resizing:
+  
+  - resize new_count1,new_count2:NUMERIC <-
+  (   
+    + tmp:SELF;
+    
+    ? {new_count1 > 0};
+    ? { new_count2 > 0};
+    
+    tmp := SELF.create new_count1, new_count2;
+    // It may be possible to avoid this ceation when :
+    //    new `capacity' <= old `capacity'
+    line_maximum.downto 0 do { l:INTEGER;
+      column_maximum.downto 0 do { c:INTEGER;
+	(tmp.valid_index l,c).if {
+	  tmp.put (item l,c) to l,c;
+	};
+      };
+    };
+    
+    standard_copy tmp;
+    ? {upper1 = new_count1 - 1};
+    ? { count1 = new_count1};
+    ? { upper2 = new_count2 - 1};
+    ? { count2 = new_count2};
+    ? { count = new_count1 * new_count2};
+  );
+  
+  
+  // Looking and Searching:
+  
+  - has x:E :BOOLEAN <-
+  // Look for `x' using `equal' for comparison.
+  (
+    storage.index_of x until (count-1) <= (count-1);
+  );  // has
+  
+  
+  - fast_has x:E :BOOLEAN <-
+  // Same as `has' but use `=' for comparison
+  (
+    storage.fast_index_of x until (count - 1) <= (count - 1);
+  ); // fast_has
+  
+  
+  // Other features:
+  
+  - replace_all old_value:E with new_value:E <-
+  (
+    storage.replace_all old_value with new_value until (count - 1);
+  );
+  
+  
+  - fast_replace_all old_value:E with new_value:E <-
+  (
+    storage.fast_replace_all old_value with new_value until (count - 1);
+  );
+  
+  
+  - transpose <-
+  // Transpose the self array
+  (
+    + oldu1 , oldu2 :INTEGER;
+    
+    oldu1 := upper1;
+    oldu2 := upper2;
+    
+    resize (upper2.max upper1),(upper2.max upper1);
+    
+    lower1.to (upper1 - 1) do {i :INTEGER;
+      (i + 1).to upper2 do { j:INTEGER;
+	swap i,j with j,i;
+      };
+    };
+    resize oldu2 to oldu1;
+  );
+  
+  
+  - to_external:POINTER <-
+  // Gives C access to the internal `storage' (may be dangerous).
+  (
+    storage.to_external
+  );
+  
+  
+  // COLLECTION2
+  
+  - same_as other:COLLECTION2[E] :BOOLEAN <-
+  (
+    other.same_as_fixed_array2 self
+  );
+  
+  
+  - same_as_array2 other:ARRAY2[E] :BOOLEAN <-
+  (
+    standard_same_as other
+  );
+  
+  
+  - same_as_fixed_array2 other:FIXED_ARRAY2[E] :BOOLEAN <-
+  (
+    standard_same_as other
+  );
+  
+  
+  - invariant:BOOLEAN <-
+  (
+    ( count1 = upper1 + 1) && 
+    { count2 = upper2 + 1} &&
+    { count = count1 * count2} &&
+    { capacity >= count }
+  );
+  
+  

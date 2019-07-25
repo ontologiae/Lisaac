@@ -1,0 +1,612 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  - name        :=COLLECTION[E];
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  - comment     :="Common abstract definition of a sequenceable collection  \
+  \of objects. Such a collection is traversable using a     \
+  \simple INTEGER index from `lower' to `upper'. Items can  \
+  \be added, changed or removed.                            \
+  \The Lisaac standard library provides four implementations\
+  \of COLLECTION[E]:ARRAY[E], FIXED_ARRAY[E], LINKED_LIST[E]\
+  \and TWO_WAY_LINKED_LIST[E]. All implementations have     \
+  \exactly the same behavior. Switching from one            \
+  \implementation to another only change the memory used and\
+  \the execution time.";
+  
+section INHERIT
+  
+  - parent_safe_equal:SAFE_EQUAL[E] := SAFE_EQUAL[E];
+  
+section PUBLIC
+  
+  // Indexing:
+  
+  - lower:INTEGER <-
+  // Minimum index.
+  ( + result:INTEGER;
+    deferred;
+    result
+  );
+  
+  
+  - upper:INTEGER <-
+  // Maximum index.
+  ( + result:INTEGER;
+    deferred;
+    result
+  );
+  
+  
+  - valid_index index:NUMERIC :BOOLEAN <- 
+  // True when `index' is valid (ie. inside actual
+  // bounds of the collection).
+  ( + result:BOOLEAN;
+    result := (lower <= index) && {index <= upper};
+    ? { result = (lower <= index) && {index <= upper}};
+    result
+  );
+  
+  
+  // Counting:
+  
+  - count:INTEGER <-
+  // Number of available indices.
+  ( + result:INTEGER;
+    deferred;
+    ? {result = upper - lower + 1};
+    result
+  );
+  
+  
+  - is_empty:BOOLEAN <-
+  // Is collection empty ?
+  ( + result:BOOLEAN;
+    deferred;
+    ? { result = (count = 0)};
+    result
+  );
+  
+  
+  // Accessing:
+  
+  - item i:NUMERIC :E <-  // infix @
+  // Item at the corresponding index `i'.
+  ( + result:E;
+    ? { valid_index i};
+    deferred;
+    result
+  );
+  
+  
+  - '@' left 1 i:NUMERIC :E <-
+  (
+    item i
+  );
+  
+  
+  - first:E <-
+  // The very `first' item.
+  ( + result:E;
+    ? {count >= 1};
+    deferred;
+    ? { result = item lower};
+    result
+  );
+  
+  
+  - last:E <-
+  // The `last' item.
+  ( + result:E;
+    ? {! is_empty};    
+    deferred;
+    ? { result = item upper};
+    result
+  );
+  
+  
+  // Writing:
+  
+  - put element:E to i:NUMERIC <-
+  // Make `element' the item at index `i'.
+  ( + old_count:INTEGER;
+    old_count := count;
+    ? { valid_index i};
+    deferred;
+    ? { item i = element};
+    ? { count = old_count};
+  );
+  
+  
+  - swap i1:NUMERIC with i2:NUMERIC <-
+  // Swap item at index `i1' with item at index `i2'.
+  (
+    +old_item1:E;
+    +old_item2:E;
+    +old_count:INTEGER;
+    + tmp:E;
+    
+    ? { valid_index i1};
+    ? { valid_index i2};
+    
+    old_item1 := item i1;
+    old_item2 := item i2;
+    old_count := count;
+    tmp := item i1;
+    put (item i2) to i1;
+    put tmp to i2;
+    
+    ? { item i1 = old_item2 };
+    ? { item i2 = old_item1 };
+    ? { count = old count };
+  );
+  
+  
+  - set_all_with v:E <-
+  // Set all items with value `v'.
+  ( + old_count:INTEGER;
+    old_count := count;
+    deferred;
+    ? { count = old_count };
+  );
+  
+  
+  - set_slice lower_index:NUMERIC to upper_index:NUMERIC with v:E <-
+  // Set all items in range [`lower_index' .. `upper_index'] with `v'.
+  (
+    + old_count:INTEGER;
+    ? { lower_index <= upper_index};
+    ? { valid_index(lower_index)};
+    ? { valid_index(upper_index)};
+    
+    old_count := count;
+    lower_index.to (upper_index - 1) do { i:INTEGER;
+      put v to i;
+    }; // end do
+    
+    ? { count = old_count };
+  );
+  
+  
+  - clear_all <-
+  // Set every item to its default value.
+  // The `count' is not affected (see also `clear').
+  (
+    + value:E;
+    + old_upper:INTEGER;
+    + old_lower:INTEGER;
+    
+    old_upper := upper;
+    old_lower := lower;
+    set_all_with value;
+    
+    ? { upper = old_upper };
+    ? { lower = old_lower };
+    ? { all_default };
+  );
+  
+  
+  // Adding:
+  
+  - add_first element:E <-
+  // Add a new item in first position : `count' is increased by
+  // one and all other items are shifted right.
+  ( + old_count,old_lower,old_upper:INTEGER;
+    old_count := count;
+    old_lower := lower;
+    old_upper := upper;
+    deferred;
+    ? { first = element };
+    ? { count = 1 + old_count };
+    ? { lower = old_lower };
+    ? { upper = 1 + old_upper };
+  );
+  
+  
+  - add_last element:E <-
+  // Add a new item at the end : `count' is increased by one.
+  ( + old_count,old_lower,old_upper:INTEGER;
+    old_count := count;
+    old_lower := lower;
+    old_upper := upper;
+    deferred;
+    ? { last = element };
+    ? { count = 1 + old_count };
+    ? { lower = old_lower };
+    ? { upper = 1 + old_upper };
+  );
+  
+  
+  - add element:E to index:NUMERIC <-
+  // Add a new `element' at rank `index' : `count' is increased
+  // by one and range [`index' .. `upper'] is shifted right
+  // by one position.
+  ( + old_count,old_upper:INTEGER;
+    ? { index.in_range lower to (upper + 1)};
+    old_count := count;
+    old_upper := upper;
+    deferred;
+    ? { item index = element };
+    ? { count = 1 + old_count };
+    ? { upper = 1 + old_upper };
+  );
+  
+  
+  - append_collection other:COLLECTION[E] <-
+  // Append `other' to Current.
+  (
+    + old_count:INTEGER;
+    
+    ? { other != NULL};
+    
+    old_count := count;
+    
+    (other.lower).to (other.upper - 1) do { i:INTEGER; 	
+      add_last (other.item i);
+    }; // end do
+    
+    ? { count = other.count + old_count };
+  );
+  
+  
+  // Modification:
+  
+  - force element:E to index:NUMERIC <-
+  // Make `element' the item at `index', enlarging the collection if
+  // necessary (new bounds except `index' are initialized with
+  // default values).
+  ( + old_upper:INTEGER;
+    ? { index >= lower};
+    old_upper:=upper;
+    deferred;
+    ? { upper = index.max old_upper };
+    ? { item index = element };
+  );
+  
+  
+  - copy other:SELF <-
+  // Reinitialize by copying all the items of `other'.
+  (
+    deferred;
+  );
+  
+  
+  - from_collection model:COLLECTION[E] <-
+  // Initialize the current object with the contents of `model'.
+  (
+    ? { model != NULL };
+    deferred;
+    ? { count = model.count };
+  );
+  
+  // Removing:
+  
+  - remove_first <-
+  // Remove the `first' element of the collection.
+  ( + old_lower,old_upper,old_count:INTEGER;
+    ? { not is_empty };
+    old_lower := lower;
+    old_upper := upper;
+    old_count := count;
+    deferred;   
+    ? { count = old_count - 1};
+    ? {(lower = old_lower + 1) ^ (upper = old_upper - 1)};
+  );
+  
+  
+  - remove index:NUMERIC <-
+  // Remove the item at position `index'. Followings items
+  // are shifted left by one position.
+  ( + old_count,old_upper:INTEGER;
+    ? { valid_index(index)};
+    old_count := count;
+    old_upper := upper;
+    deferred;    
+    ? { count = old_count - 1};
+    ? { upper = old_upper - 1};
+  );
+  
+  
+  - remove_last <-
+  // Remove the `last' item.
+  ( + old_count,old_upper:INTEGER;
+    ? {! is_empty};
+    old_count := count;
+    old_upper := upper;
+    deferred;    
+    ? { count = old_count - 1};
+    ? { upper = old_upper - 1};
+  );
+  
+  
+  - clear <-
+  // Discard all items in order to make it `is_empty'.
+  // See also `clear_all'.
+  (
+    deferred;
+    ? { is_empty };
+  );
+  
+  
+  // Looking and Searching:
+  
+  - has x:E :BOOLEAN <-
+  // Look for `x' using `equal' for comparison.
+  // Also consider `fast_has' to choose the most appropriate.
+  (
+    valid_index (index_of x)
+  );
+  
+  
+  - fast_has x:E :BOOLEAN <-
+  // Look for `x' using basic `=' for comparison.
+  // Also consider `has' to choose the most appropriate.
+  (
+    valid_index (fast_index_of x)
+  );
+  
+  
+  - index_of element:E :INTEGER <-
+  // Give the index of the first occurrence of `element' using
+  // `is_equal' for comparison.
+  // Answer `upper + 1' when `element' is not inside.
+  // Also consider `fast_index_of' to choose the most appropriate.
+  //
+  // Note: we'll have to mimic what's done in the new ELKS STRING class
+  // for `index_of' (ie. to add an extra argument). This is in the todo
+  // list ... let people switch first to ELKS 2001 at time being.
+  ( + result:INTEGER;
+    deferred
+    ? { lower <= result };
+    ? { result <= upper + 1 };
+    ? { (result <= upper) -> ( element.is_equal (item result))};
+    result
+  );
+  
+  
+  - fast_index_of element:E :INTEGER <-
+  // Give the index of the first occurrence of `element' using
+  // basic `=' for comparison.
+  // Answer `upper + 1' when `element' is not inside.
+  // Also consider `index_of' to choose the most appropriate.
+  ( + result:INTEGER;
+    deferred
+    ? { lower <= result };
+    ? { result <= upper + 1 };
+    ? { (result <= upper) -> ( element = item result)};
+    result
+  );
+  
+  
+  // Looking and comparison:
+  
+  - is_equal other:SELF :BOOLEAN <-
+  // Do both collections have the same `lower', `upper', and
+  // items?
+  // The basic `=' is used for comparison of items.
+  // See also `is_equal_map'.
+  ( + result:BOOLEAN;
+    deferred;
+    ? { result -> (lower = other.lower & upper = other.upper)};
+    result
+  );
+  
+  
+  - is_equal_map other:SELF :BOOLEAN <-
+  // Do both collections have the same `lower', `upper', and
+  // items?
+  // Feature `is_equal' is used for comparison of items.
+  // See also `is_equal'.
+  ( + result:BOOLEAN;
+    deferred;
+    ? { result -> (lower = other.lower & upper = other.upper)};
+    result
+  );
+  
+  
+  - all_default:BOOLEAN <-
+  // Do all items have their type's default value?
+  ( + result:BOOLEAN;
+    deferred;
+    result
+  );
+  
+  
+  - same_items other:COLLECTION[E] :BOOLEAN <-
+  // Do both collections have the same items? The basic `=' is used
+  // for comparison of items and indices are not considered (for
+  // example this routine may yeld true with `Current' indexed in
+  // range [1..2] and `other' indexed in range [2..3]).
+  (
+    + result:BOOLEAN;
+    + i,j:INTEGER;
+    
+    ? { other != NULL };
+    ( count = other.count).if {
+      result := TRUE;
+      i := lower;
+      j := other.lower;
+      {!result || {i > upper}}.until_do {
+	result := (item i = other.item j);
+	i := i + 1;
+	j := j + 1;
+      }; // end until_do
+    }; // end if
+    
+    ? { result -> ( count = other.count)};
+    
+    result
+  );
+  
+  
+  - occurrences element:E :INTEGER <-
+  // Number of occurrences of `element' using `equal' for comparison.
+  // Also consider `fast_occurrences' to choose the most appropriate.
+  ( + result:INTEGER;
+    deferred;
+    ? { result >= 0};
+    result
+  );
+  
+  
+  - fast_occurrences element:E :INTEGER <-
+  // Number of occurrences of `element' using basic `=' for comparison.
+  // Also consider `occurrences' to choose the most appropriate.
+  ( + result:INTEGER;
+    deferred;
+    ? { result >= 0};
+    result
+  );
+  
+  
+  // Printing:
+  
+  - fill_tagged_out_memory <-
+  (
+    + i:INTEGER;
+    + v:E;
+    
+    tagged_out_memory.append "lower: ";
+    lower.append_in tagged_out_memory;
+    tagged_out_memory.append " upper: ";
+    upper.append_in tagged_out_memory;
+    tagged_out_memory.append " [";
+    
+    i := lower;
+    { (i > upper) || { tagged_out_memory.count > 2048}}.until_do {
+      v := item i;
+      ( v = NULL).if {
+	tagged_out_memory.append "Void";
+      } else {
+	v.out_in_tagged_out_memory;
+      }; // end if
+      (i < upper).if {
+	tagged_out_memory.extend ' ';
+      }; // end if
+      i := i + 1;
+    }; // end until_do
+    (i <= upper).if {
+      tagged_out_memory.append " ...";
+    }; // end if
+    tagged_out_memory.extend ']';
+  );
+  
+  
+  // Other features
+  
+  - get_new_iterator:ITERATOR[E] <-
+  ( + result:ITERATOR[E];
+    deferred;
+    result
+  );
+  
+  
+  - replace_all old_value:E with new_value:E <-
+  // Replace all occurrences of the element `old_value' by `new_value'
+  // using `equal' for comparison.
+  // See also `fast_replace_all' to choose the apropriate one.
+  ( + old_count:INTEGER;
+    old_count := count;
+    deferred;
+    ? { count = old_count};
+    ? { occurrences old_value = 0};
+  );
+  
+  
+  - fast_replace_all old_value:E with new_value:E <-
+  // Replace all occurrences of the element `old_value' by `new_value'
+  // using operator `=' for comparison.
+  // See also `replace_all' to choose the apropriate one.
+  ( + old_count:INTEGER;
+    old_count := count;
+    deferred;
+    ? { count = old_count};
+    ? { occurrences old_value = 0};
+  );
+  
+  
+  - move lower_index:NUMERIC to upper_index:NUMERIC by distance:NUMERIC <-
+  // Move range `lower_index' .. `upper_index' by `distance'
+  // positions. Negative distance moves towards lower indices.
+  // Free places get default values.
+  (
+    + default_value:E;
+    + old_count:INTEGER;
+    
+    ? { lower_index <= upper_index};
+    ? { valid_index lower_index };
+    ? { valid_index (lower_index + distance) };
+    ? { valid_index upper_index };
+    ? { valid_index (upper_index + distance) };
+    
+    old_count := count;
+    ( distance = 0 ).if {
+    }.elseif { distance < 0} then {
+      
+      lower_index.to upper_index do { i:INTEGER;
+	put (item i) to (i + distance);
+	put default_value to i;
+      }; // end do
+    } else {
+      upper_index.downto lower_index do { i:INTEGER;
+	put (item i) to (i + distance);
+	put default_value to i;
+      }; // end do
+    }; // end if
+    
+    ? {count = old_count};
+  );
+  
+  
+  - slice min:NUMERIC to max:NUMERIC :SELF <-
+  // New collection consisting of items at indexes in [`min'..`max'].
+  // Result has the same dynamic type as `Current'.
+  // The `lower' index of the `Result' is the same as `lower'.
+  ( + result:SELF;
+    ? { lower <= min };
+    ? { max <= upper };
+    ? { min <= max + 1 };
+    
+    deferred;
+    ? { same_dynamic_type result };
+    ? { result.count = max - min + 1};
+    ? { result.lower = lower };
+  );
+  
+  - reverse <-
+  // Reverse the order of the elements.
+  (
+    + i, j:INTEGER;
+    + old_count:INTEGER;
+    
+    old_count := count;
+    
+    i := lower;
+    j := upper;
+    { i >= j }.until_do {
+      swap i with j;
+      i := i + 1;
+      j := j - 1;
+    }; // end until_do
+    
+    ? { count = old_count };
+  );
+  
+  
+  - invariant:BOOLEAN <-
+  (
+    lower <= upper + 1
+  );
+  

@@ -1,0 +1,127 @@
+/****************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  - name        := COMPARABLE;
+  - comment     :=" All classes handling COMPARABLE objects with a total order\
+                  \relation should inherit from this class.";
+  
+  - category    := MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+  
+  - is_equal other:SELF :BOOLEAN <- (! (self < other)) && { ! (other < self)};
+
+  - '<' left 1 other:SELF :BOOLEAN <-
+  // Is `self' strictly less than `other'?
+  (
+    ? { other != NULL };
+    deferred;
+    //? { result -> ! (other < self)};
+  );
+
+  - '<=' left 1 other:SELF :BOOLEAN <-
+  // Is `self' less than or equal `other'?
+  (
+    + result:BOOLEAN;
+    
+    ? { other != NULL };
+    result := ! (other < self);
+    ? { result = ((self < other) | is_equal other)};
+    
+    result
+  );
+
+  -  '>' other:SELF :BOOLEAN <-
+  // Is `self' strictly greater than `other'?
+  (
+    ?{ other != NULL };
+    other < self
+  );
+
+  - '>=' other:SELF :BOOLEAN <-
+  // Is `self' greater than or equal than `other'?
+  (
+    ?{ other != NULL };
+    ! (self < other)
+  );
+  
+  - in_range lower:SELF to upper:SELF :BOOLEAN <-
+  // Return true if `self' is in range [`lower'..`upper']
+  (
+    (self >= lower) && { self <= upper }
+  );
+
+  - compare other:SELF :INTEGER <-
+  // If current object equal to `other', 0;
+  // if smaller,  -1; if greater, 1.
+  (
+    + result:INTEGER;
+    ?{ other != NULL };
+    (self < other).if {
+      result := -1;
+    }.elseif { other < self } then {
+      result := 1;
+    } else {
+      result := 0;
+    };
+	
+    ? { (result =  0) = ( is_equal other)};
+    ? { (result = -1) = (self < other)};
+    ? { (result =  1) = (self > other)};
+
+    result
+  );
+
+  - min other:SELF :SELF <-
+  // Minimum of `self' and `other'.
+  (
+    + result:SELF;
+    
+    ?{ other != NULL };
+    ( self <= other ).if {
+      result := self;
+    } else {
+      result := other;
+    };
+    
+    ? { (result <= self) && { result <= other}};
+    ? { (compare result = 0) || { other.compare result = 0 }};
+    
+    result
+  );
+  
+  
+  - max other:SELF :SELF <-
+  // Maximum of `self' and `other'.
+  (
+    + result:SELF;
+    ?{ other != NULL };
+    
+    ( self >= other ).if {
+      result := self;
+    } else {
+      result := other;
+    };
+
+    ? { (result >= self) && { result >= other }};
+    ? { (compare result = 0) || {other.compare result = 0}};
+
+    result
+  );
+
+

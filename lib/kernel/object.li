@@ -1,0 +1,112 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  - name        := OBJECT;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Root object.";
+
+section PUBLIC
+  
+  //
+  // Compiler consideration.
+  //
+  
+  - object_size:INTEGER <- `52`;
+  
+  - pointer_size:INTEGER <- POINTER.pointer_size;
+
+  - is_debug_mode:BOOLEAN <- `50`;
+  
+  - is_ansi:BOOLEAN := TRUE;
+  
+  //
+  // Control Error.
+  //
+  
+  - is_clonable:BOOLEAN <- `0`;
+  
+  - print_runtime_stack <- `51`;
+  
+  - die_with_code code:INTEGER <- SYSTEM.exit code;
+  // Terminate execution with exit status code `code'.
+  
+  - exit_success_code:INTEGER := 0;
+  
+  - exit_failure_code:INTEGER := 1;
+  
+  - deferred <-
+  (
+    crash_with_message "Slot deferred.\n";
+  );
+  
+  - check_crash <-
+  (
+    crash_with_message "Check runtime error.\n";
+  );
+  
+  - crash <-
+  (
+    crash_with_message "Crash system.\n";
+  );
+  
+  - not_yet_implemented <-
+  (
+    crash_with_message "Sorry, Some Feature is Not Yet Implemented.\n";
+  );
+
+  - crash_with_message msg:ABSTRACT_STRING <-
+  (
+    print_runtime_stack;
+    msg.print;
+    die_with_code exit_failure_code;
+  );
+  
+  //
+  // Common Function.
+  //
+  
+  - '=='  right 60 other:SELF :BOOLEAN <- deferred;
+  
+  - '!==' right 60 other:SELF :BOOLEAN <- (! (self == other));
+  
+  - clone:SELF <- 
+  ( + result:SELF;
+    + ptr:POINTER;
+    + sz:INTEGER;
+    ? {is_clonable};
+    
+    sz := object_size;
+    (sz = 0).if {
+      result := self;
+    } else {
+      ptr := MEMORY.allocation sz;
+      MEMORY.copy ptr from to_pointer size sz;
+      result := force_conversion ptr;
+    };
+    result
+  );
+  
+  - to_pointer:POINTER <- POINTER.force_conversion self;
+  
+  - same_dynamic_type other:OBJECT :BOOLEAN <-
+  ( + convert:SELF;
+    convert ?= other;
+    convert != NULL        
+  );
+  
+  //
+  // The Guru section
+  //
+  
+  - force_conversion obj:OBJECT :SELF <- `@obj`:SELF;

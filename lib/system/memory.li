@@ -1,0 +1,48 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  - name        := MEMORY;
+  
+  - comment     := "Memory manager, generic (with C glue)";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";  
+  
+section PRIVATE
+  
+  - create beg:UINTEGER <-
+  (
+    // Nothing to do in generic case
+  );
+  
+  - allocation nb:NUMERIC :POINTER <-
+  (
+    `malloc(@nb)`:POINTER
+  );
+  
+  - free p:POINTER size n:NUMERIC <-
+  (
+    // In this case the size doesn't matter
+    `free((void*)@p)`;
+  );
+  - copy dest:POINTER from source:POINTER size n:NUMERIC :POINTER <-
+  (
+    `memcpy((void*)@dest,(void*)@source,@n)`:(POINTER)
+  );
+
+
+
+
+
+
+
+

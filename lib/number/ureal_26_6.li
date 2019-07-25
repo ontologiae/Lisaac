@@ -1,0 +1,198 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  * name        := UREAL_26_6; // Aucun Auto-Cast pour l'instant...(peu etre
+  // REAL ...)
+  
+  - comment     := "unsigned 26.6 fixed float.";
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+
+  - type        := `unsigned long`;
+  - default     := 0;
+  
+section INHERIT
+  
+  - parent_unsigned:UNSIGNED := UNSIGNED;
+  
+section PUBLIC
+  
+  - object_size:INTEGER := 4;
+  
+  //
+  // Range.
+  //
+  
+  - maximum:ULONGINT <- 67108863; // (2**26)-1
+  
+  //
+  // Convertion format with test.
+  //
+  
+  - to_ulongint:ULONGINT   <- 
+  ( //? {in_range 0,(ULONGINT.maximum)};
+    floor    
+  );
+  
+  - to_uinteger:UINTEGER   <- 
+  ( //? {in_range 0,(UINTEGER.maximum)};
+    floor
+  );
+  
+  - to_ushortint:USHORTINT <- 
+  ( //? {in_range 0,(USHORTINT.maximum)};
+    floor.to_ushortint
+  );
+  
+  - to_usmallint:USMALLINT <- 
+  ( //? {in_range 0,(USMALLINT.maximum)};
+    floor.to_usmallint
+  );
+  
+  - to_longint:LONGINT     <- 
+  ( //? {in_range (LONGINT.minimum),(LONGINT.maximum)};
+    floor
+  );
+  
+  - to_integer:INTEGER     <- 
+  ( //? {in_range (INTEGER.minimum),(INTEGER.maximum)};
+    floor.to_integer
+  );
+  
+  - to_shortint:SHORTINT   <- 
+  ( //? {in_range (SHORTINT.minimum),(SHORTINT.maximum)};
+    floor.to_shortint
+  );
+  
+  - to_smallint:SMALLINT   <- 
+  ( //? {in_range (SMALLINT.minimum),(SMALLINT.maximum)};
+    floor.to_smallint
+  );
+  
+  - to_ureal_26_6:UREAL_26_6 <- self;
+  
+  - floor:UINTEGER <-
+  // Greatest integral value no greater than Current.
+  ( + result:UINTEGER;
+    
+    result:=to_raw_uinteger >> 6;
+    ? {self <= result.to_ureal_26_6};
+    ? {(self - result.to_ureal_26_6) < 1};
+    result
+  );
+  
+  - ceiling:UINTEGER <-
+  // Smallest integral value no smaller than Current.
+  ( + result:UINTEGER;
+    
+    result:=(to_raw_uinteger+63) >> 6;
+    ? {self >= result.to_ureal_26_6};
+    ? {(self - result.to_ureal_26_6) < 1};
+    result
+  );
+  
+  - rounded:UINTEGER <-
+  // Rounded integral value.
+  (
+    (to_raw_uinteger+32) >> 6
+  );
+  
+  - truncated_to_integer:UINTEGER <- floor;
+  // Integer part (largest absolute value no greater than Current).
+  
+  //
+  // binary operator :
+  //
+  
+  - '-'  left 80  other:SELF :SELF <- 
+  (
+    (to_raw_uinteger - other.to_raw_uinteger).to_raw_ureal_26_6
+  );
+
+  - '*#' left 100 other:UINTEGER :SELF <- 
+  (
+    (to_raw_uinteger * other).to_raw_ureal_26_6
+  );
+  
+  - '*'  left 100 other:SELF :SELF <- 
+  (
+    ((to_raw_ulongint * other.to_raw_ulongint)>>6).to_raw_ureal_26_6
+  );
+  
+  - '/#' left 100 other:UINTEGER :SELF <- 
+  (
+    (to_raw_uinteger / other).to_raw_ureal_26_6
+  );
+  
+  - '/'  left 100 other:SELF :SELF <- 
+  (
+    ((to_raw_ulongint<<6) / other.to_raw_ulongint).to_raw_ureal_26_6
+  );
+  
+  - '&'  left 100 other:SELF :SELF <-
+  (
+    (to_raw_uinteger & other.to_raw_uinteger).to_raw_ureal_26_6
+  );
+  
+  //
+  // Test binary operator :
+  //
+  
+  - '>'   right 60 other:SELF :BOOLEAN <- 
+  (
+    to_raw_uinteger > other.to_raw_uinteger
+  );
+  
+  //
+  // prefix : Unary operator
+  //
+  
+  - '~' :SELF <- 
+  (
+    (~ to_raw_uinteger).to_raw_ureal_26_6
+  );
+  
+  //
+  // Convertion
+  //
+  
+  - append_in buffer:STRING <- 
+  // Append in the `buffer' the equivalent of `to_string'. No new STRING
+  // creation during the process.
+  ( + val:UINTEGER;
+    + old_count,new_count:INTEGER;
+    ? {buffer!=NULL};
+    
+    val:=to_raw_uinteger;
+    (val>>6).append_in buffer;
+    buffer.extend '.';
+    old_count:=buffer.count;
+    //     1/64 = 0.015625 => 6 digit.    
+    (((val & 63) * 1000000)>>6).append_in buffer;
+    new_count:=old_count+6;
+    {buffer.count!=new_count}.while_do {
+      buffer.insert '0' to old_count;
+    };
+
+  );
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  

@@ -1,0 +1,69 @@
+/****************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := ITERATOR_ON_STRING;
+  - comment     :=" .";
+  
+  - category    := MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_iterator:ITERATOR[CHARACTER] := ITERATOR[CHARACTER];
+  
+section PUBLIC
+  
+  - string:STRING;
+  // The one to be traversed.
+
+  - item_index:INTEGER;
+  //  Memorize the current position.
+  
+  - create s:STRING :SELF <-
+  (
+    + result:SELF;
+    result := clone;
+    result.make s
+  );
+  
+  - make s: STRING <-
+  (
+    ? { s != NULL };
+
+    string := s;
+    item_index := 1;
+
+    ? { string = s };
+  );
+  
+  
+  - start <-
+  (
+    item_index := 1;
+  );
+  
+  
+  - is_off:BOOLEAN <-
+  (
+    item_index > (string.count)
+  );
+
+  - item:CHARACTER <-
+  (
+    string.item item_index;
+  );
+
+  - next <-
+  (
+    item_index := item_index + 1;
+  );

@@ -1,0 +1,71 @@
+/****************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := ITERATOR_ON_DICTIONARY_ITEMS[E];
+  - comment     :=" .";
+  
+  - category    := MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_iterator:ITERATOR[E] := ITERATOR[E];
+  
+section PUBLIC
+  
+  - dictionary:DICTIONARY[E,HASHABLE];
+  // The one to be traversed.
+
+  - item_index: INTEGER;
+  // Memorize the current position.
+
+  
+  - create d: DICTIONARY[E,HASHABLE] :SELF <-
+  (
+    + result:SELF;
+    result := clone;
+    result.make d
+  );
+  
+  - make d:DICTIONARY[E,HASHABLE] <-
+  (
+    ? { d != NULL };
+
+    dictionary := d;
+    item_index := 1;
+    
+    ? { dictionary = d};
+  );
+  
+  - start <-
+  (
+    item_index := 1;
+  );
+  
+  
+  - is_off:BOOLEAN <-
+  (
+    item_index > dictionary.count
+  );
+  
+  
+  - item:E <-
+  (
+    dictionary.item item_index
+  );
+
+  - next
+  (
+    item_index := item_index + 1;
+  );
+

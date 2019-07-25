@@ -1,0 +1,77 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+section HEADER
+  
+  * name        := DATE;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+
+  - author      := "Benoit Sonntag (bsonntag@loria.fr), Jerome Boutet (boutet@loria.fr)";  
+
+  - comment     := "Date";
+  
+  - type        := `unsigned long`;
+  
+  - default     := `0`:DATE;
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT; 
+  
+section PRIVATE
+  
+  - to_raw:UINTEGER <-
+  (
+    UINTEGER.force_conversion self
+  );
+  
+section PUBLIC
+
+  - year :USHORTINT <-
+  ( 
+    (to_raw >> 16).to_ushortint
+  );
+  
+  - month:USMALLINT <-
+  (
+    ((to_raw & 0FF00h)>>8).to_usmallint 
+  );
+  
+  - day  :USMALLINT <-
+  (
+    (to_raw & 0FFh).to_usmallint 
+  );
+  
+section PUBLIC
+  
+  - create y:USHORTINT,m,d:USMALLINT :DATE <-
+  ( + date:UINTEGER;
+    
+    date := y.to_uinteger << 16;
+    date := date | (m.to_uinteger << 8);
+    date := date | d;
+    force_conversion date
+  );
+  
+  - print <-
+  (
+    (day < 10).if {
+      '0'.print;
+    };
+    day.print;
+    '/'.print;
+    (month < 10).if {
+      '0'.print;
+    };
+    month.print;
+    '/'.print;
+    year.print;
+  );

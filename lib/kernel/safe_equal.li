@@ -1,0 +1,54 @@
+/****************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  - name        := SAFE_EQUAL[E];
+  - comment     :="The goal of this class is to share the definition of \
+                  \feature `safe_equal'. Feature `safe_equal' compares  \
+                  \two arguments of type E, by calling `is_equal' only  \
+                  \and only if both arguments have the `same_type'..";
+  
+  - category    := MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr), Benoit Sonntag (bsonntag@loria.fr)";
+  
+section INHERIT
+  
+  - parent:OBJECT := OBJECT;
+  
+section PUBLIC
+  
+  - safe_equal e1, e2:E :BOOLEAN <-
+  // In order to avoid run-time type errors, feature `safe_equal' call
+  // `is_equal' only when `e1' and `e2' have exactly the same `generating_type'.
+  // Furthermore, this feature avoid argument passing from some
+  // expanded type to the corresponding reference type (no automatic
+  // allocation of some reference type during the comparison).
+  ( /*
+    + result:BOOLEAN;
+    
+    ( e1.is_basic_expanded_type).if { then
+      result := (e1 = e2);
+    }.elseif {e1.is_expanded_type} then {
+      result := e1.is_equal e2;
+    }.elseif {e1 = e2} then {
+      result := true;
+    }.elseif {(e1 = NULL) || {e2 = NULL}} then {
+    }.elseif {e1.generating_type = e2.generating_type} then {
+      result := e1.is_equal e2;
+    }; // end if
+    
+    result
+    */
+    (e1=e2) || {(e1!=NULL) && {e1==e2}}
+  );
+  
+

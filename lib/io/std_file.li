@@ -1,0 +1,196 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        :=STD_FILE;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+  - comment     :=" ";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+  
+  + path:ABSTRACT_STRING;
+  // Not Void when connected to the corresponding file on the disk.
+  
+  - size:INTEGER <-
+  ( ? {is_connected};
+    FILE_TOOLS.size_of path
+  );
+    
+  - size_max:INTEGER := 0FFFFFh;
+  
+  - is_connected:BOOLEAN <-
+  (
+    path != NULL
+  );
+
+  - connect_to new_path:ABSTRACT_STRING <-
+  // Open binary file for reading. The stream is positioned at the
+  // beginning of the file.
+  (
+    ? { ! is_connected };
+    ? { ! new_path.is_empty };
+
+    input_stream := basic_io_binary_file_read_open (new_path.to_external);
+    (input_stream.is_not_null).if {
+      path := new_path;
+      (capacity = 0).if {
+	buffer := NATIVE_ARRAY[USMALLINT].calloc size_max;
+	capacity := size_max;
+      };
+      end_reached := FALSE;
+      buffer_position := 0;
+      buffer_size := 0;
+    };
+  );
+
+  - disconnect <-
+  (
+    ? { is_connected };
+    basic_io_fclose;
+    path := NULL;
+  );
+  
+  - read_byte :USMALLINT <-
+  // Read a byte and assign it to `last_byte'.
+  (
+    ? { is_connected };
+    ? { ! end_of_input };
+    (buffer_position >= buffer_size).if {
+      fill_buffer;
+    };
+    last_byte := buffer.item buffer_position;
+    buffer_position := buffer_position + 1;
+    end_of_input := end_reached;
+    last_byte
+  );
+  
+  + cursor:UINTEGER;
+  
+  - set_cursor c:NUMERIC <-
+  (
+    cursor := c;
+    
+  );
+  
+  - read  dst:OBJECT :INTEGER <- 
+  ( 
+    array_intern.make_with_map_object dst;
+    read array_intern size (dst.object_size)
+  ); 
+  
+  - read dest:ARRAYED size nb_byte:NUMERIC :INTEGER <-
+  ( + result:INTEGER;
+    + tmp:NATIVE_ARRAY[USMALLINT];
+    + elt_size,elt_ofs:INTEGER;
+    
+    ? { nb_byte > 0};
+    ? {dest!=NULL};
+    elt_size:=dest.element_sizeof;
+    basic_io_fseek cursor;
+    tmp := NATIVE_ARRAY[USMALLINT].calloc nb_byte;
+    result := basic_io_fread tmp size nb_byte;
+    0.to (nb_byte - 1) do {i:INTEGER;
+      dest.add_last_byte (tmp.item i) offset elt_ofs;
+      elt_ofs := (elt_ofs+1) % elt_size;
+    };
+    cursor := cursor + nb_byte;
+    result
+  );
+  //
+  //
+  //
+  
+  - last_byte:USMALLINT;
+  // Last byte read with `read_byte'.
+
+  - end_of_input:BOOLEAN;
+  // Has end-of-input been reached ?
+  // True when the last character has been read.
+
+  + buffer:NATIVE_ARRAY[USMALLINT];
+  
+  + end_reached:BOOLEAN;
+  
+  + buffer_position:INTEGER;
+
+  + buffer_size:INTEGER;
+  
+  + capacity:INTEGER;
+
+  + input_stream:POINTER;
+
+  - fill_buffer <-
+  (
+    buffer_size := basic_io_fread buffer size capacity;
+    
+    buffer_position := 0;
+    (buffer_size <= 0).if {
+      end_reached := TRUE;
+      //if buffer_size = -1 => exception ?
+      buffer_size := 1;
+      buffer_position := 1;
+    };
+  );
+  
+  - create:SELF <-
+  ( + result:SELF;
+    
+    result:=SELF.clone;
+    result.make;
+    result
+  );
+  
+  - make <-
+  // The new created object is not connected. (See also `connect_to'.)
+  (
+    ? { ! is_connected };
+  );
+  
+section PRIVATE
+  
+  - basic_io_binary_file_read_open path_pointer:NATIVE_ARRAY[CHARACTER] :POINTER <-
+  (    
+    `fopen(((char*)(@path_pointer)),"rb")`:POINTER
+  );
+  
+  - basic_io_fread buf:NATIVE_ARRAY[USMALLINT] size s:INTEGER :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( + str:POINTER;
+    str := input_stream;
+    
+    `fread((void *)(@buf),(size_t)(1), (size_t)(@s),(FILE*)(@str))`:(INTEGER)
+  );
+  
+  - basic_io_fseek pos:NUMERIC :INTEGER <-
+  // return size read or 0 if end of input (-1 on error => exception ?)
+  ( + str:POINTER;
+    str := input_stream;
+    
+    `fseek((FILE*)(@str),@pos,SEEK_SET)`:(INTEGER)
+  );
+  
+  - basic_io_fclose stream_pointer:POINTER <-
+  ( + str:POINTER;
+    str := input_stream;
+    `fclose((FILE*)(@str))`;
+  );
+  
+section PRIVATE
+  
+  + array_intern:FIXED_ARRAY[USMALLINT] := FIXED_ARRAY[USMALLINT].clone; 

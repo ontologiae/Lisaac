@@ -1,0 +1,413 @@
+/****************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := ARRAY[E];
+  - comment     :=" General purpose resizable ARRAYs .";
+  
+  - category    := MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+section INHERIT
+  
+  * parent_arrayed_collection:ARRAYED_COLLECTION[E];
+  
+section PUBLIC
+  
+  + lower:INTEGER;
+  // Lower index bound.
+  
+  // Creation and Modification:
+  
+  - create min_index:NUMERIC to max_index:NUMERIC :SELF <-
+  (
+    + result:SELF;
+    result := SELF.clone;
+    result.make min_index to max_index;
+    result
+  );
+  
+  - make min_index:NUMERIC to max_index:NUMERIC <-
+  // Prepare the array to hold values for indexes in range
+  // [`min_index' .. `max_index']. Set all values to default.
+  // When `max_index' = `min_index' - 1, the array `is_empty'.
+  (
+    + needed:INTEGER;
+    ? { min_index <= max_index + 1 };
+    
+    lower := min_index;
+    upper := max_index;
+    needed := max_index - min_index + 1;
+    (needed > 0).if {
+      ( capacity < needed ).if {
+	storage := NATIVE_ARRAY[E].calloc needed;
+	capacity := needed;
+      } else {
+	clear_all;
+      };
+    };
+    
+    ? { lower = min_index };
+    ? { upper = max_index };
+    ? { all_default};
+  );
+  
+  
+  - with_capacity needed_capacity, low:NUMERIC <-
+  // Create an empty array with `capacity' initialized
+  // at least to `needed_capacity' and `lower' set to `low'.
+  (
+    ? { needed_capacity >= 0};
+    
+    ( capacity < needed_capacity ).if {
+      storage := storage.calloc needed_capacity;
+      capacity := needed_capacity;
+    };
+    lower := low;
+    upper := low - 1;
+    ? { is_empty };
+    ? { needed_capacity <= capacity };
+    ? { lower = low };
+  );
+  
+  
+  // Modification:
+  
+  - resize min_index, max_index:NUMERIC <-
+  // Resize to bounds `min_index' and `max_index'. Do not lose any
+  // item whose index is in both [`lower' .. `upper'] and
+  // [`min_index' .. `max_index']. New positions if any are
+  // initialized with the appropriate default value.
+  ( 
+    + needed, offset, intersize:INTEGER;
+    
+    ? { min_index <= max_index + 1 };
+    
+    needed := max_index - min_index + 1;
+    ( needed > 0 ).if {
+      ( needed > capacity ).if {
+	( capacity = 0 ).if {
+	  storage := storage.calloc needed;
+	  capacity := needed;
+	} else {
+	  storage := storage.realloc capacity, needed;
+	  capacity := needed;
+	};
+      };
+      offset := lower - min_index;
+      intersize := max_index.min upper - min_index.max lower + 1;
+      ( intersize > 0 ).if {
+	( offset = 0 ).if {
+	  ( intersize < capacity ).if {
+	    storage.clear intersize to (capacity - 1);
+	  };
+	}.elseif { offset < 0 } then {
+	  storage.move (- offset), (intersize - offset - 1), offset;
+	  ( intersize < capacity ).if {
+	    storage.clear intersize to ( capacity - 1);
+	  };
+	} else {
+	  storage.move 0, (intersize - 1), offset;
+	  storage.clear 0, ( offset - 1);
+	  ( intersize + offset < capacity ).if {
+	    storage.clear (intersize + offset) to (capacity - 1);
+	  };
+	};
+      } else {
+	storage.clear 0 to ( capacity - 1);
+      };
+    };
+    lower := min_index;
+    upper := max_index;
+    
+    ? { lower = min_index };
+    ? { upper = max_index };
+  );
+  
+  
+  - reindex new_lower:NUMERIC <-
+  // Change indexing to take in account the expected `new_lower'
+  // index. The `upper' index is translated accordingly.
+  (
+    + i:INTEGER;
+    
+    i := new_lower - lower;
+    lower := lower + i;
+    upper := upper + i;
+    
+    ? { lower = new_lower };
+    ? { count = old count };
+  );
+  
+  
+  // Implementation of deferred:
+  
+  - subarray min, max:NUMERIC :SELF <-
+  ( + result:SELF;    
+    ? { lower <= min };
+    ? { max <= upper };
+    ? { min <= max + 1 };
+    result := slice min,max;
+    result.reindex min;
+    ? { same_dynamic_type result};
+    ? { result.count = max - min + 1};
+    ? { result.lower = min | (result.lower = 0)};  
+    result
+  );
+  
+  - is_empty:BOOLEAN <-
+  ( + result:BOOLEAN;
+    result := upper < lower;
+    ? { result = (count = 0)};
+    result
+  );
+  
+  - count:INTEGER <-
+  ( + result:INTEGER;
+    result :=  upper - lower + 1;
+    ? {result = upper - lower + 1};
+    result
+  );
+  
+  - item i:NUMERIC :E <-
+  (
+    ? { valid_index i};
+    storage.item (i - lower)
+  );
+  
+  - '@' left 1 i:NUMERIC :E <-
+  (
+    item i
+  );
+  
+  - put element:E to i:NUMERIC <-
+  ( + old_count:INTEGER;
+    old_count := count;
+    ? { valid_index i};
+    storage.put element to (i - lower);
+    ? { item i = element};
+    ? { count = old_count};    
+  );
+  
+  
+  - force element:E to index:NUMERIC <-
+  ( + old_upper, old_lower:INTEGER;
+    ? { index >= lower};
+    old_upper:=upper;
+    old_lower := lower;
+    
+    ( upper < index ).if {
+      ( index = upper + 1 ).if {
+	add_last element;
+      } else {
+	resize lower,index;
+	put element to index;
+      };
+    }.elseif { index < lower } then {
+      resize index,upper;
+      put element to index;
+    } else {
+      put element to index;
+    };
+    
+    ? { lower = index.min old_lower };
+    ? { upper = index.max old_upper };
+    ? { item index = element };
+  );
+  
+  - copy other:SELF <-
+  (
+    +  needed_capacity:INTEGER;
+    
+    lower := other.lower;
+    upper := other.upper;
+    needed_capacity := upper - lower + 1;
+    ( capacity < needed_capacity ).if {
+      storage := storage.calloc needed_capacity;
+      capacity := needed_capacity;
+    };
+    ( needed_capacity > 0 ).if {
+      storage.copy_from (other.storage),(needed_capacity - 1);
+    };
+  );
+  
+  - set_all_with v:E <-
+  ( + old_count:INTEGER;
+    old_count := count;
+    storage.set_all_with v until (upper - lower);
+    ? { count = old_count };
+  );
+  
+  - remove_first <-
+  ( + old_lower,old_upper,old_count:INTEGER;
+    ? { not is_empty };
+    old_lower := lower;
+    old_upper := upper;
+    old_count := count;
+    storage.remove_first (upper - lower);
+    lower := lower + 1;
+    ? { count = old_count - 1};
+    ? {(lower = old_lower + 1) ^ (upper = old_upper - 1)};
+  );
+  
+  - remove index:NUMERIC <-
+  ( + old_count,old_upper:INTEGER;
+    ? { valid_index(index)};
+    old_count := count;
+    old_upper := upper;
+    storage.remove (index - lower) until (upper - lower);
+    upper := upper - 1;    
+    ? { count = old_count - 1};
+    ? { upper = old_upper - 1};
+  );
+  
+  - clear <-
+  (
+    + old_capacity:INTEGER;
+    old_capacity := capacity;    
+    upper := lower - 1;    
+    ? { capacity = old_capacity };
+    ? { is_empty };    
+  );
+  
+  - add_first element:E <-
+  ( + old_count,old_lower,old_upper:INTEGER;
+    old_count := count;
+    old_lower := lower;
+    old_upper := upper;
+    (upper < lower).if {
+      add_last element;
+    } else {
+      add_last element;
+      move lower,(upper - 1),1;
+      put element,lower;
+    };
+    ? { first = element };
+    ? { count = 1 + old_count };
+    ? { lower = old_lower };
+    ? { upper = 1 + old_upper };
+  );
+  
+  - add_last element:E <-
+  ( + new_capacity:INTEGER;
+    + old_count,old_lower,old_upper:INTEGER;
+    old_count := count;
+    old_lower := lower;
+    old_upper := upper;
+    ( capacity < count + 1 ).if {
+      ( capacity = 0 ).if {
+	new_capacity := 16;
+	storage := storage.calloc new_capacity;
+	capacity := new_capacity;
+      } else {
+	new_capacity := 2 * capacity;
+	storage := storage.realloc capacity with new_capacity;
+	capacity := new_capacity;
+      };
+    };
+    upper := upper + 1;
+    put element to upper;
+    ? { last = element };
+    ? { count = 1 + old_count };
+    ? { lower = old_lower };
+    ? { upper = 1 + old_upper };
+  );
+  
+  - from_collection model:COLLECTION[E] <-
+  (
+    ? { model != NULL };        
+    with_capacity (model.count),(model.lower);    
+    upper := modele.upper;    
+    (model.lower).to (model.upper) do { i:INTEGER;
+      put (model.item i),i;
+    };
+    ? { count = model.count };
+    ? { lower = model.lower };
+    ? { upper = model.upper };
+  );
+  
+  - all_default:BOOLEAN <-
+  (
+    storage.all_default (upper - lower)
+  );
+  
+  - occurrences element:E :INTEGER <-
+  ( + result:INTEGER;
+    result := storage.occurrences element,(upper - lower);
+    ? { result >= 0};
+    result    
+  );
+  
+  - fast_occurrences element:E :INTEGER <-
+  ( + result:INTEGER;
+    result := storage.fast_occurrences element,(upper - lower);
+    ? { result >= 0};
+    result
+  );
+  
+  - index_of element:E :INTEGER <-
+  ( + result:INTEGER;
+    result := lower + storage.index_of element,(upper - lower);
+    ? { lower <= result };
+    ? { result <= upper + 1 };
+    ? { (result <= upper) -> ( element.is_equal (item result))};
+    result    
+  );
+  
+  - fast_index_of element:E:INTEGER <-
+  ( + result:INTEGER;
+    result := lower + storage.fast_index_of element,(upper - lower);
+    ? { lower <= result };
+    ? { result <= upper + 1 };
+    ? { (result <= upper) -> ( element = item result)};
+    result
+  );
+  
+  - is_equal other:SELF :BOOLEAN <-
+  ( + result:BOOLEAN;    
+    ( self = other ).if {
+      result := true;
+    }.elseif { (lower = other.lower) && { upper = other.upper }} then {
+      result := storage.fast_memcmp (other.storage),count;
+    };
+    ? { result -> (lower = other.lower & upper = other.upper)};
+    result
+  );
+  
+  - is_equal_map other:SELF :BOOLEAN <-
+  ( + result:BOOLEAN;
+    ( self = other ).if {
+      result := true;
+    }.elseif { (lower = other.lower) && { upper = other.upper }} then {
+      result := storage.memcmp (other.storage),count;
+    };
+    ? { result -> (lower = other.lower & upper = other.upper)};
+    result
+  );
+  
+  - slice min, max:NUMERIC :SELF <-
+  ( + result:SELF;
+    ? { lower <= min };
+    ? { max <= upper };
+    ? { min <= max + 1 };
+    result.create lower,(lower + max - min);
+    result.storage.copy_slice 0,storage,(min - lower),(max - lower);
+    ? { same_dynamic_type result };
+    ? { result.count = max - min + 1};
+    ? { result.lower = lower };
+  );
+  
+  - get_new_iterator:ITERATOR[E] <-
+  (
+    ITERATOR_ON_COLLECTION[E].clone.make self;
+  );
+  

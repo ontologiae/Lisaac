@@ -1,0 +1,73 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        :=STD_INPUT_OUTPUT;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+  - comment     :="To have the useful `io'";
+  
+section INHERIT
+  
+  - parent_input_stream:INPUT_STREAM := INPUT_STREAM;
+
+  - parent_output_stream:OUTPUT_STREAM := OUTPUT_STREAM;
+  
+section PUBLIC
+
+  - is_connected:BOOLEAN := TRUE;
+
+  - make <-
+  (
+  );
+
+  - read_character <-
+  (
+    std_input.read_character;
+  );
+
+  - unread_character <-
+  (
+    std_input.unread_character;
+  );
+
+  - push_back_flag:BOOLEAN <-
+  (
+    std_input.push_back_flag
+  );
+
+  - last_character:CHARACTER <-
+  (
+    std_input.last_character
+  );
+
+  - put_character c:CHARACTER <-
+  (
+    std_output.put_character c;
+  );
+
+  - end_of_input:BOOLEAN <-
+  (
+    std_input.end_of_input
+  );
+  
+  - read_line_in str:STRING <-
+  (
+    std_input.read_line_in str;
+  );
+
+  - flush <-
+  (
+    std_output.flush;
+  );

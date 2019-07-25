@@ -1,0 +1,23 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  - name        :=IO;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Standard Input Output (UNIX Operating System).";
+
+section INHERIT
+  
+  - parent_std_input:STD_INPUT := STD_INPUT;
+  
+  - parent_std_output:STD_OUTPUT := STD_OUTPUT;

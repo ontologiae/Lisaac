@@ -1,0 +1,54 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  - name        := PROCESSOR;
+  
+  - category    := MICRO;
+  
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     := "Processor object.";
+
+section PUBLIC
+  
+  - to_intel_ulong v:ULONGINT :ULONGINT <- deferred;
+  
+  - to_intel_uint v:UINTEGER :UINTEGER <- deferred;
+  
+  - to_intel_ushort v:USHORTINT :USHORTINT <- deferred;
+  
+  - to_motorola_ulong v:ULONGINT :ULONGINT <-
+  (    
+    (v << 56) | ((v & 0FF00h) << 40) | ((v & 0FF0000h) << 24) | ((v & 0FF000000h) << 8) |
+           (v >> 56)   | ((v >> 40) & 0FF00h) | ((v >> 24) & 0FF0000h) | ((v >> 8) & 0FF000000h)
+  );
+  
+  - to_motorola_uint v:UINTEGER :UINTEGER <-
+  (
+    (v << 24) | ((v & 0FF00h) << 8) | ((v >> 8) & 0FF00h) | (v >> 24)     
+  );
+  
+  - to_motorola_int v:INTEGER :INTEGER <-
+  (
+    // Conversion in uxxx to cut the sign
+    (v  << 24) | (((v & 0FF00h) << 8).to_ushortint) | (((v >> 8) & 0FF00h).to_ushortint) | ((v >> 24).to_usmallint)     
+  );
+  
+  - to_motorola_ushort v:USHORTINT :USHORTINT <-
+  (
+    (v  << 8) | (v >> 8)
+  );
+
+  - to_motorola_short v:SHORTINT :SHORTINT <-
+  (
+    // Conversion in usmall to cut the sign
+    ((v << 8) | ((v >> 8) & 0FFh))
+  );
+

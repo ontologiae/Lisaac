@@ -1,0 +1,164 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        :=TEXT_FILE_WRITE;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+  - comment     :="Basic output facilities to write a named file on the disk.";
+  
+section INHERIT
+  
+  - parent_output_stream:OUTPUT_STREAM := OUTPUT_STREAM;
+  
+section PUBLIC
+
+  + path:ABSTRACT_STRING;
+  // Not NULL when connected to the corresponding file on the disk.
+  
+  - size_max:INTEGER := 32768;
+  
+  - is_connected:BOOLEAN <-
+  (
+    path != NULL
+  );
+  
+  - connect_to new_path:ABSTRACT_STRING <-
+  // Truncate file to zero length or create text file for writing.
+  // The stream is positioned at the beginning of the file.
+  (
+    ? { ! is_connected };
+    ? { ! new_path.is_empty };
+
+    output_stream := basic_io_text_file_write_open (new_path.to_external);
+    ( output_stream.is_not_null ).if {
+      path := new_path;
+      ( capacity =0 ).if {
+	buffer := NATIVE_ARRAY[CHARACTER].calloc size_max;	
+	capacity := size_max;
+      };
+    };
+  );
+
+  - connect_for_appending_to new_path:ABSTRACT_STRING <-
+  // Open for writing. The file is created if it does not exist.
+  // The stream is positioned at the end of the file.
+  (
+    ? { ! is_connected };
+    ? {! new_path.is_empty };
+
+    output_stream := basic_io_text_file_write_append (new_path.to_external);
+    ( output_stream.is_not_null ).if {
+      path := new_path;
+      ( capacity = 0 ).if {
+	buffer := NATIVE_ARRAY[CHARACTER].calloc size_max;
+	capacity := size_max;
+      };
+    };
+  );
+
+  - disconnect <-
+  (
+    ? { is_connected };
+    (buffer_position > 0).if {
+      write_buffer;
+    };
+    basic_io_fclose output_stream;    
+    path := NULL;
+  );
+
+  - flush <-
+  (
+    ( buffer_position > 0 ).if {
+      write_buffer;
+    };
+    basic_io_flush output_stream;
+  );
+
+  - put_character c:CHARACTER <-
+  (
+    ( buffer_position >= size_max ).if {
+      write_buffer;
+    };
+    buffer.put c to buffer_position;
+    buffer_position := buffer_position + 1;
+  );
+  
+  - write_string s:ABSTRACT_STRING <-
+  (
+    ? {s != NULL};
+    (s.upper < size_max).if {
+      buffer_position := s.upper;
+    } else {
+      // We keep only the size_max first character
+      buffer_position := size_max;
+    };
+    buffer.copy_from (s.to_external) until buffer_position;
+    write_buffer;    
+  );
+  
+  + buffer:NATIVE_ARRAY[CHARACTER];
+  
+  + buffer_position:INTEGER;
+  
+  + capacity:INTEGER;
+  
+  + output_stream:POINTER;
+  
+  - create:SELF <-
+  (
+    + result:SELF;
+    result := SELF.clone;
+    result.make;
+    result
+  );
+  
+  - make <-
+  // The new created object is not connected. (See also `connect_to' and
+  // `connect_for_appending_to'.)
+  (
+    buffer := NATIVE_ARRAY[CHARACTER].calloc size_max;
+    capacity := size_max;
+    ? { ! is_connected};
+  );
+
+  - dispose <-
+  (
+    ? { ! is_connected };
+  );
+
+  - write_buffer <-
+  (
+    (buffer_position > 0).if {
+      basic_io_fwrite buffer, buffer_position, output_stream;
+      buffer_position := 0;
+    };
+  );
+  
+section PRIVATE
+  
+  - basic_io_text_file_write_open path_pointer:NATIVE_ARRAY[CHARACTER] :POINTER <-
+  (
+    `fopen(((char*)(@path_pointer)),"w")`:POINTER
+  );
+
+  - basic_io_text_file_write_append path_pointer:NATIVE_ARRAY[CHARACTER] :POINTER <-
+  (
+    `fopen(((char*)(@path_pointer)),"a")`:POINTER
+  );
+  
+  - basic_io_fclose stream_pointer:POINTER <-
+  (
+    `fclose((FILE*)(@stream_pointer))`;
+  );

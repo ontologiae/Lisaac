@@ -1,0 +1,44 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  * name        :=POINTER;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoît (bsonntag@loria.fr)";
+  - comment     :="References to objects (POINTER is mapped as C type 'void *')";
+
+  - type        :=`void *`;
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PRIVATE
+
+  - object_size:INTEGER <- pointer_size;
+
+  - pointer_size:INTEGER <- `sizeof(void *)`:INTEGER;
+  
+  - is_null:BOOLEAN <- ! is_not_null;
+  // Is the external POINTER a NULL pointer ?
+  
+  - is_not_null:BOOLEAN <- (self!=NULL);
+  // Is the external POINTER a non-NULL pointer ?
+  
+  - to_native_array:NATIVE_ARRAY[USMALLINT] <- NATIVE_ARRAY[USMALLINT].force_conversion self;
+  // Convert `pointer' into 'native_array' type.
+  
+  - to_uinteger:UINTEGER <- UINTEGER.force_conversion self;
+  // convert `pointer' into uinteger type (adress of the pointer)
+  
+  - from_uinteger p:UINTEGER :POINTER <- POINTER.force_conversion p;
+  // create POINTER from an adress

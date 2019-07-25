@@ -1,0 +1,596 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+
+  + name        := ULARGEINT; // Aucun Auto-Cast pour l'instant...(peut etre
+                              // LARGEINT ...)
+                               
+  - comment     := "Integer without bits limit! (Just for fun!)";
+
+  - category    := MICRO;
+
+  - bibliography:= "http://IsaacOS.com";
+  - author      := "Benoit Sonntag (bsonntag@loria.fr)";
+
+  - default     := 0;
+
+section INHERIT
+
+  - parent_unsigned:UNSIGNED := UNSIGNED;
+
+section ULARGEINT
+  
+  + storage:FIXED_ARRAY[UINTEGER];
+  
+  - last_modulo:UINTEGER;
+  
+  - make init:UINTEGER :SELF <-
+  (     
+    storage:=FIXED_ARRAY[UINTEGER].create 1; 
+    storage.put init to 0;
+    self 
+  );
+
+  - count:NUMERIC <- storage.count;
+
+  - lower:NUMERIC <- storage.lower;
+
+  - upper:NUMERIC <- storage.upper;
+
+  - item idx:NUMERIC :UINTEGER <- storage.item idx;
+
+  - copy other:ULARGEINT <- storage.copy (other.storage);
+
+  - force elt:UINTEGER to idx:NUMERIC <- storage.force elt to idx;
+  
+  - put elt:UINTEGER to idx:NUMERIC <- storage.put elt to idx;
+  
+  - add_last elt:UINTEGER <- storage.add_last elt;
+  
+  - resize new_size:NUMERIC <-
+  (
+    ? { new_size > 0};    
+    storage.resize new_size;
+  );
+  
+section NUMERIC
+
+  - create init:UINTEGER :ULARGEINT <- ULARGEINT.clone.make init;
+  
+section PUBLIC  
+  
+  - object_size:INTEGER <- 
+  {
+    crash; // A REVOIR !!  4 * count ?
+    0
+  };
+
+  //
+  // Range.
+  //
+  
+  - maximum:ULONGINT <- 
+  (
+    crash_with_message "ULARGEINT's maximum is undefined.";
+    0
+  );
+    
+  //
+  // Convertion format with test.
+  //
+  
+  - to_ulongint:ULONGINT   <- 
+  ( ? {in_range 0,(ULONGINT.maximum)};
+    storage.first + (storage.item 1.to_ulongint << 32) 
+  );
+  
+  - to_uinteger:UINTEGER   <- 
+  ( ? {in_range 0,(UINTEGER.maximum)};
+    storage.first.to_uinteger
+  );
+  
+  - to_ushortint:USHORTINT <- 
+  ( ? {in_range 0,(USHORTINT.maximum)};
+    storage.first.to_ushortint
+  );
+  
+  - to_usmallint:USMALLINT <- 
+  ( ? {in_range 0,(USMALLINT.maximum)};
+    storage.first.to_usmallint
+  );
+  
+  - to_longint:LONGINT     <- 
+  ( ? {in_range (LONGINT.minimum),(LONGINT.maximum)};
+    storage.first.to_longint
+  );
+  
+  - to_integer:INTEGER     <- 
+  ( ? {in_range (INTEGER.minimum),(INTEGER.maximum)};
+    storage.first.to_integer
+  );
+  
+  - to_shortint:SHORTINT   <- 
+  ( ? {in_range (SHORTINT.minimum),(SHORTINT.maximum)};
+    storage.first.to_ushortint
+  );
+  
+  - to_smallint:SMALLINT   <- 
+  ( ? {in_range (SMALLINT.minimum),(SMALLINT.maximum)};
+    storage.first.to_smallint
+  );
+
+  //- to_ureal_26_6:UREAL_26_6 <- self;
+
+  - to_ulargeint:ULARGEINT <- self;
+  
+  - clean <-
+  (
+    {(storage.count!=1) && {storage.last == 0}}.while_do {
+      storage.remove_last;
+    };	
+  );
+  
+  //
+  // binary operator :
+  //
+  
+  - '-' left 80  other:SELF :SELF <- 
+  (
+    + result:ULARGEINT;
+    + over,substr,part1,part2:ULONGINT;
+
+    (other > self).if {
+      crash;
+      result := 0;
+    } else {      
+      result.resize count;
+      (other.count < count).if {
+	other.resize count;
+      };
+      lower.to upper do { idx:INTEGER;
+	part1 := item idx;
+	part2 := other.item idx.to_ulongint + over;
+	substr := part1 - part2;
+	((substr >> 32) == 1).if {
+	  over := 1;
+	};
+	result.put ((substr & (UINTEGER.maximum)).to_uinteger) to idx;
+      };
+    };
+    
+    result.clean;
+    result
+  );
+  
+  
+  - '-#' left 80 other:NUMERIC :SELF <-
+  (
+    + result:ULARGEINT;
+    + part1,over,substr:ULONGINT;
+    + idx:INTEGER;
+
+    (self <# other).if {
+      crash;
+      result := 0;
+    } else {
+      result.resize count;
+      part1 := item 0;
+      substr := part1 - other;
+      ((substr >> 32) == 1).if {
+	over := 1;
+      };
+      result.put ((substr & (UINTEGER.maximum)).to_uinteger) to 0;
+      idx := idx + 1;
+      {over == 0}.until_do {
+	part1 := item idx;
+	substr := part1 - over;
+	((substr >> 32) == 1).if {
+	  over := 1;
+	};
+	result.put ((substr & (UINTEGER.maximum)).to_uinteger) to idx;
+	idx := idx + 1;
+      };      
+    };
+    
+    result.clean;
+    result
+  );
+  
+  
+  - '+'  left 80  other:SELF :SELF <- 
+  (
+    + result:ULARGEINT;
+    + part1,part2,sum,over:ULONGINT;
+
+    (other.count > count).if {
+      result := other + self;
+    } else {
+       result.resize count;
+      (other.lower).to (other.upper) do { idx:INTEGER;
+        part1:=item idx;
+        part2:=other.item idx;
+        sum:=part1+part2+over;
+        result.put ((sum & (UINTEGER.maximum)).to_uinteger) to idx;
+        over:=sum >> 32;
+      };
+      (other.upper+1).to upper do { idx:INTEGER;
+        part1:=item idx;
+        sum:=part1+over;
+        result.put ((sum & (UINTEGER.maximum)).to_uinteger) to idx;
+        over:=sum >> 32;
+      };
+      (over!==0).if {
+        result.add_last (over.to_uinteger);
+      };
+    };    
+    result
+  );  
+  
+  
+  - '+#' left 80  other:NUMERIC :SELF <-
+  (
+    + result:ULARGEINT;
+    + part1,sum,over:ULONGINT;
+    + idx:INTEGER;
+    result.resize count;
+    part1 := item 0;
+    sum := part1 + other;
+    result.put ((sum & (UINTEGER.maximum)).to_uinteger) to 0;
+    idx := idx + 1;
+    over:=sum >> 32;
+    {(over == 0) || {idx > upper}}.until_do {
+      part1 := item idx;
+      sum := part1 + over;
+      result.put ((sum & (UINTEGER.maximum)).to_uinteger) to idx;
+      idx := idx + 1; 
+      over:=sum >> 32;
+    };
+    
+    (over!==0).if {
+      result.add_last (over.to_uinteger);
+    };
+    
+    result
+  );
+  
+  
+  - '*'  left 100 other:SELF :SELF <- 
+  (
+    + result:ULARGEINT;
+    + part1,part2,product:ULONGINT;
+    + index_result:INTEGER;
+    
+    result.resize (count + other.count);
+    
+    lower.to upper do { idx:INTEGER;
+      + result_current:ULARGEINT;
+      result_current.resize count;
+      part1 := item idx;
+
+//      idx.print;
+//      " -> ".print;
+//      "part1 :".print;
+//      part1.print;
+
+      index_result := idx;
+      (other.lower).to (other.upper) do { idx_other:INTEGER;
+	part2 := other.item idx_other;
+	product := part1 * part2;	
+	
+//	"Product :".print;
+//	product.print;	
+	
+	(product < (UINTEGER.maximum)).if {
+
+//	  " < max ".print;
+
+	  result_current.put (product.to_uinteger) to index_result;
+	} else {
+	  
+//	  " > max ".print;
+//	  (product & (UINTEGER.maximum)).to_uinteger.print;
+	  
+	  result_current.put ((product & (UINTEGER.maximum)).to_uinteger) to index_result;
+	  index_result := index_result + 1;
+	  
+//	  " : ".print;
+//	  index_result.print;
+//	  " -> ".print;
+//	  (product >> 32).to_uinteger.print;
+	  
+	  result_current.force ((product >> 32).to_uinteger) to index_result;
+	  index_result := index_result + 1;
+	};
+//	"\n".print;	
+//	result_current.item 0.print;
+
+//	(result_current.upper > 0).if {
+//	  " - ".print;
+//	  result_current.item 1.print;
+//	};
+	
+//	"\n".print;
+      };
+      
+      result := result + result_current;
+      
+    };
+    result.clean;
+    result
+  );
+  
+  - '*#' left 100 other:NUMERIC :SELF <-
+  (
+    + result:ULARGEINT;
+    + part1,product,over:ULONGINT;
+    result.resize count;
+    lower.to upper do { idx:INTEGER;
+      
+//      idx.print;
+//      " : ".print;
+      
+      part1 := item idx;
+      
+//      part1.print;
+      
+      product :=  part1 * other + over;
+      
+//      " prod ".print;
+//      product.print;
+      
+      (product < (UINTEGER.maximum)).if {
+//	" < max ".print;
+	
+	result.put (product.to_uinteger) to idx;
+	over := 0;
+      } else {
+//	" > max :".print;
+//	(product & (UINTEGER.maximum)).to_uinteger.print;
+	
+	result.put ((product & (UINTEGER.maximum)).to_uinteger) to idx;
+
+//	" prod ".print;
+//	product.print;
+
+	over := product >> 32;
+
+//	" over ".print;
+//	over.to_uinteger.print;
+      };
+    };
+    
+    (over!==0).if {
+      result.add_last (over.to_uinteger);
+    };    
+    
+    result.clean;
+    result
+  );
+  
+  - '/'  left 100 other:SELF :SELF <- 
+  (
+    not_yet_implemented; self
+  );
+  
+  
+  - '/#' left 100 other:NUMERIC :SELF <-
+  (
+    + result:ULARGEINT;
+    + last_mod,div:ULONGINT;
+    + idx:INTEGER;
+    result.resize count;
+    idx := upper;
+    last_mod := item idx;    
+    {idx < lower}.until_do {
+      div := 0;
+      (last_mod < other).if {
+	idx := idx - 1;
+	(idx >= lower).if {
+	  last_mod := (last_mod << 32) + item idx.to_ulongint;
+	  div := last_mod / (other.to_ulongint);
+	  last_mod := last_mod % (other.to_ulongint);
+	};
+      } else {
+	div := last_mod / (other.to_ulongint);
+	last_mod := last_mod % (other.to_ulongint); 
+      };      
+      (div !== 0).if {
+	result.put ((div & (UINTEGER.maximum)).to_uinteger) to idx;
+      };
+    };
+    last_modulo := last_mod.to_uinteger;
+    result.clean;
+    result
+  );
+  
+  
+  
+  - '&'  left 100 other:SELF :SELF <-
+  (
+    not_yet_implemented; self
+  );
+
+  //
+  // Test binary operator :
+  //
+    
+  - '>'   right 60 other:SELF :BOOLEAN <- 
+  (
+    + result:BOOLEAN;
+    (count > (other.count)).if {
+      result := TRUE;
+    }.elseif {count < other.count} then {
+      result  := FALSE;
+    } else {
+      + i:INTEGER;
+      + find:BOOLEAN;
+      i := lower;
+
+      {find || {i > upper}}.until_do {
+	(item i > other.item i).if {
+	  result := TRUE;
+	  find := TRUE;
+	}.elseif {item i < other.item i} then {
+	  result := FALSE;
+	  find := TRUE;
+	};
+
+	i := i + 1; 
+      };
+    };
+    
+    result
+  );
+  
+  
+  - '>#' right 60 other:NUMERIC :BOOLEAN <-
+  (
+    + result:BOOLEAN;
+    (count > 1).if {
+      result := TRUE;
+    } else {
+      result := item 0 > other;
+    };
+    result
+  );
+  
+  - '=='  right 60 other:SELF :BOOLEAN <-
+  (
+    + result:BOOLEAN;
+    + idx:INTEGER;
+    (count == other.count).if {
+      idx := upper;
+      { (idx >= lower) && {item idx == other.item idx} }.while_do {
+	idx := idx - 1;
+      };
+      (idx < lower).if {
+	result := TRUE;
+      };
+    };
+    
+    result
+  );
+  
+  //
+  // prefix : Unary operator
+  //
+    
+  - '~' :SELF <- 
+  (
+    not_yet_implemented; self 
+  );  
+  
+  - '-' :SELF <-
+  (
+    lower.to upper do { idx:INTEGER;
+      force (~item idx) to idx;
+    };
+    
+    self + 1
+  );
+
+
+  - factorial:SELF <-
+  ( + result,value:SELF;
+    + value2:UINTEGER;
+    ? {self>=#0};
+    
+    (value.count = 1).if {
+      result := 1;
+      value2 := self.to_uinteger;
+      {value2 <=# 1}.until_do {
+/*
+	value2.print;
+	" : ".print;
+	result.print;
+	" - ".print;
+	result.item 0.print;
+	" : ".print;
+	result.item 1.print;
+	" : ".print;
+	result.item 2.print;
+	" : ".print;
+	"\n".print;
+*/
+	result := result *# value2;
+	value2  := value2 - 1;
+      };
+    } else {
+      result := 1;
+      value  := self;
+      {value <=# 1}.until_do {
+	result := result * value;
+	value  := value -# 1;
+      };
+    };
+    result
+  );
+  
+
+  //
+  // conversion
+  //
+  
+  - append_in buffer:STRING <- 
+  // Append in the `buffer' the equivalent of `to_string'. No new STRING
+  // creation during the process.
+  ( + value:ULARGEINT; 
+    + mod:UINTEGER;
+    + count:INTEGER;
+    + old_upper,new_upper:INTEGER;
+    
+    old_upper:=buffer.upper + 1;
+    
+    (upper = 0).if { 
+      item 0.append_in buffer;
+    } else {
+      value:=self;
+      {
+//	" value:".print;
+//	value.item 0.print;
+//	(value.upper > 0).if {
+//	  " : ".print;
+//       value.item 1.print;
+//	};
+//	"\n".print;
+	value:=value /# 1000000000;
+	mod:=last_modulo;
+	
+//	"mod :".print;
+//	mod.print;
+//	"\n".print;
+	
+	{count==0}.until_do {
+	  buffer.extend '0';
+	  count:=count-1;
+	};
+	count := 9;
+	{	
+	  buffer.extend ((mod % 10).digit);
+	  mod := mod / 10;
+	  count := count-1;
+	}.do_while {mod!==0};
+      }.do_while {value!==0};
+      
+      new_upper := buffer.upper;      
+
+      // Swap.
+      {old_upper >= new_upper}.until_do {
+	buffer.swap old_upper with new_upper;
+	new_upper := new_upper - 1;
+	old_upper := old_upper + 1;
+      };
+    };
+  );
+  
+
+
+
+

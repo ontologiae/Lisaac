@@ -1,0 +1,187 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  + name        :=TEXT_FILE_READ_WRITE;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+  - comment     :="";
+  
+section INHERIT
+  
+  - parent_input_stream:INPUT_STREAM := INPUT_STREAM;
+  
+  - parent_output_stream:OUTPUT_STREAM := OUTPUT_STREAM;
+  
+section PUBLIC
+
+  + path:ABSTRACT_STRING;
+  
+  - size_max:INTEGER := 32768;
+  
+  + last_character:CHARACTER;
+  
+  + push_back_flag:BOOLEAN;
+  
+  - is_connected:BOOLEAN <-
+  (
+    path != NULL
+  );
+  
+  - connect_to new_path:ABSTRACT_STRING <-
+  // Open for reading and writing. The stream is positioned at the
+  // beginning of the file.
+  (
+    + s:POINTER;
+    + tfw:TEXT_FILE_WRITE;
+    (! file_exists new_path).if {
+      tfw := TEXT_FILE_WRITE.create;
+      tfw.connect_to new_path;
+      tfw.disconnect;
+    };
+    (file_exists new_path).if {
+      s := basic_io_text_file_read_write_open (new_path.to_external);       
+      (s.is_not_null).if {
+	stream := s;
+	path := new_path;
+      };
+    };
+  );
+  
+  - connect_for_appending_to new_path:ABSTRACT_STRING <-
+  // Open for reading and writing. The file is created if it does not
+  // exist. The stream is positioned at the end of the file.
+  (
+    + s:POINTER;
+    + tfw:TEXT_FILE_WRITE;
+
+    (! file_exists new_path).if {
+      tfw := TEXT_FILE_WRITE.create;
+      tfw.connect_to new_path;
+      tfw.disconnect;
+    };
+    (file_exists new_path).if {
+      s := basic_io_text_file_read_write_append (new_path.to_external);
+      (s.is_not_null).if {
+	stream := s;
+	path := new_path;
+      };
+    };
+  );
+
+  - disconnect <-
+  (
+    ? { is_connected };
+    basic_io_fclose stream;
+    path := NULL;
+  );
+
+  - read_character <-
+  (
+    basic_io_flush stream;
+    last_character := basic_io_getc stream;
+    push_back_flag := FALSE;
+  );
+
+  - put_character c:CHARACTER <-
+  (
+    basic_io_flush stream;
+    basic_io_putc c to stream;
+  );
+
+  - unread_character <-
+  (
+    + p:POINTER;
+    + c:CHARACTER;
+    p := stream;
+    c := last_character;
+    `ungetc (@c,@p);`;
+    push_back_flag := TRUE;
+  );
+
+  - end_of_input:BOOLEAN <-
+  (
+    basic_io_flush stream;
+    basic_io_feof stream
+  );
+  
+  - read_file_in str:STRING <-
+  // read the entire file and put it in a STRING
+  ( + tmp_string:STRING; 
+    ? { str != NULL};
+    { end_of_input}.until_do {
+      tmp_string := STRING.create 0;
+      read_line_in tmp_string;
+      (! end_of_input).if {
+	str.append tmp_string;
+	str.extend '\n';
+      };
+    };
+  );
+  
+  - read_line_in str:STRING <-
+  (
+    ? { str != NULL};
+    read_character;
+    (last_character != '\n').if {
+      str.extend last_character;
+      { end_of_input || {last_character == '\n'}}.until_do {
+	read_character;
+	//last_character.print;
+	((! end_of_input) && {last_character != '\n'}).if {
+	  str.extend last_character;
+	};
+      };
+    };
+  );
+
+  + stream:POINTER;
+  
+  - create:SELF <-
+  ( + result:SELF;
+    
+    result := SELF.clone;
+    result.make;
+    result
+  );
+  
+  - make <-
+  // The new created object is not connected. (See also `connect_to' and
+  // `connect_for_appending_to'.)
+  (
+    ? { ! is_connected };
+  );
+  
+section PRIVATE
+  
+  - basic_io_text_file_read_write_open path_pointer:NATIVE_ARRAY[CHARACTER] :POINTER <-
+  (
+    `fopen(((char*)(@path_pointer)),"r+")`:POINTER
+  );
+
+  - basic_io_text_file_read_write_append path_pointer:NATIVE_ARRAY[CHARACTER] :POINTER <-
+  (
+    `fopen(((char*)(@path_pointer)),"a+")`:POINTER
+  );
+  
+  - basic_io_fclose stream_pointer:POINTER <-
+  (
+    `fclose((FILE*)(@stream_pointer))`;
+  );
+
+  - basic_io_feof stream_ptr:POINTER :BOOLEAN <-
+  (
+    `feof(((FILE*)(@stream_ptr)))`:INTEGER = 1
+  );
+

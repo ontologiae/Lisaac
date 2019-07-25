@@ -1,0 +1,37 @@
+/***************************************************************************
+*                      Isaac Object Operating System                       *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  - name        :=STD_OUTPUT;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Standard Output (UNIX Operating System).";
+  
+section INHERIT
+  
+  - parent_output_stream:OUTPUT_STREAM := OUTPUT_STREAM;
+  
+section PUBLIC
+  
+  - is_connected:BOOLEAN := TRUE;
+  
+  - put_character c:CHARACTER <- SYSTEM.write_byte stdout,c;
+  
+  - flush <- flush_stream stdout;
+  
+  - stdout: POINTER <- `stdout`:POINTER;
+  
+
+
+
+
+

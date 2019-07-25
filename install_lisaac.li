@@ -1,0 +1,264 @@
+/****************************************************************************
+*                     Isaac Object Operating System                        *
+*                             Lisaac Compiler                              *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := INSTALL_LISAAC;
+
+  - comment     :="Configure the system.txt file and the PATH";
+  
+  - category    := MACRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_object:OBJECT <- OBJECT;
+  
+section PUBLIC
+  
+  + main <-
+  (
+    + file_w:TEXT_FILE_WRITE;
+    + file_r:TEXT_FILE_READ;
+    + path_lisaac,path,path_home,shell,my_line:STRING;
+    + buffer,buffer2,buffer3:STRING;
+    
+    // Create the SYSTEM.TXT file
+    
+    DIRECTORY.scan "./lib/";
+    path_lisaac := DIRECTORY.get_current_working_directory;
+    path := path_lisaac + "/lib/";
+    
+    file_w := TEXT_FILE_WRITE.create;
+    file_w.connect_to "system.txt";
+    
+    (DIRECTORY.name_list.lower).to (DIRECTORY.name_list.upper) do { i:INTEGER;
+      ((!(DIRECTORY.name_list.item i == ".")) && { !( DIRECTORY.name_list.item i == "..")}).if {
+	my_line := STRING.create_from_string path;
+	my_line.append (DIRECTORY.name_list.item i);
+	my_line.append "\n";
+	file_w.write_string my_line;
+      };
+    };
+    file_w.disconnect; 
+    
+    path :=  DIRECTORY.get_current_working_directory + "/";
+    path_home := ENVIRONMENT.get_environment_variable "HOME";
+    shell := ENVIRONMENT.get_environment_variable "SHELL";
+
+    (shell.has_substring "bash").if {
+      //Append in `.bashrc' :
+      //export LISAAC=xxxx/lisaac/
+      //export PATH=xxxxx/lisaac/bin:$PATH
+      
+      DIRECTORY.change_current_working_directory path_home;
+      DIRECTORY.scan_current_working_directory;
+      (DIRECTORY.has ".bashrc").if {
+	// There is a .bashrc file
+	file_r := TEXT_FILE_READ.create;
+	file_r.connect_to ".bashrc";
+	buffer := STRING.create 0;
+	file_r.read_file_in buffer;
+	file_r.disconnect;
+	buffer2 := "export LISAAC=" + path + "\n";
+	buffer3 := "export PATH=" + path + "bin:$PATH\n\n";
+	// Search for an old version in the PATH
+	((buffer.has_substring buffer2) && {buffer.has_substring buffer3}).if {
+	  // There was a previous install in the same directory
+	  "No change need detected in your .bashrc file\n".print;
+	} else {
+	  + index:INTEGER;
+	  index := buffer.first_substring_index "export LISAAC=";
+	  (index != 0).if {
+	    // There was a previous install but not in the same directory
+	    // The previous lines are deleted
+	    + index2,index3:INTEGER;
+	    // We search the end of line
+	    index2 := buffer.substring_index "\n",index;
+	    (buffer.substring (index2 + 1) to (index2 + 12) == "export PATH=").if {
+	      // The next line seems to be the right as in a previous install
+	      index3 := buffer.substring_index "\n",(index2 + 12);
+	    };
+	    "There was a previous install of Lisaac, in a different directory\n".print;
+	    "The following lines have been removed from your config file:\n".print;
+	    buffer.substring index to index3.print;
+	    buffer.remove_between index to index3;
+	    buffer.insert_string (buffer2 + buffer3) to index;
+	    file_w.connect_to ".bashrc";
+	    file_w.write_string buffer;
+	    "\nYour .bashrc file has been updated with: \n".print;
+	    buffer2.print;
+	    buffer3.print;
+	    file_w.disconnect;
+	  } else {
+	    // There wasn't any previous install
+	    file_w.connect_for_appending_to ".bashrc";
+	    file_w.write_string "\n# LISAAC COMPILER\n";
+	    file_w.write_string buffer2;
+	    file_w.write_string buffer3;
+	    "Your .bashrc file has been updated with: \n".print;
+	    buffer2.print;
+	    buffer3.print;
+	    file_w.disconnect;
+	  };	  
+	};	
+	
+      } else {
+	// There is no .bashrc file
+	file_w.connect_to ".bashrc";
+	file_w.write_string "# LISAAC COMPILER\n";
+	file_w.write_string buffer2;
+	file_w.write_string buffer3;
+	"A .bashrc file has been created with: \n".print;
+	buffer2.print;
+	buffer3.print;
+	file_w.disconnect;
+      };      
+      
+    }.elseif { shell.has_substring "tcsh" } then {
+      //Append in `.cshrc' :
+      //setenv LISAAC xxxx/lisaac/
+      //set path=(xxxxx/lisaac/bin $path)
+      
+      DIRECTORY.change_current_working_directory path_home;
+      DIRECTORY.scan_current_working_directory;
+      (DIRECTORY.has ".cshrc").if {
+	// There is a .cshrc file
+	file_r := TEXT_FILE_READ.create;
+	file_r.connect_to ".cshrc";
+	buffer := STRING.create 0;
+	file_r.read_file_in buffer;
+	file_r.disconnect;
+	buffer2 := "setenv LISAAC " + path + "\n";
+	buffer3 := "set path=(" + path + "bin $path)\n";
+	// Search for an old version in the PATH
+	((buffer.has_substring buffer2) && {buffer.has_substring buffer3}).if {
+	  // There was a previous install in the same directory
+	  "No change need detected in your .cshrc file\n".print;
+	} else {
+	  + index:INTEGER;
+	  index := buffer.first_substring_index "setenv LISAAC";
+	  (index != 0).if {
+	    // There was a previous install but not in the same directory
+	    // The previous lines are deleted
+	    + index2,index3:INTEGER;
+	    // We search the end of line
+	    index2 := buffer.substring_index "\n",index;
+	    (buffer.substring (index2 + 1) to (index2 + 10) == "set path=(").if {
+	      // The next line seems to be the right as in a previous install
+	      index3 := buffer.substring_index "\n",(index2 + 10);
+	    };
+	    "There was a previous install of Lisaac, in a different directory\n".print;
+	    "The following lines have been removed from your config file:\n".print;
+	    buffer.substring index to index3.print;
+	    buffer.remove_between index to index3;
+	    buffer.insert_string (buffer2 + buffer3) to index;
+	    file_w.connect_to ".cshrc";
+	    file_w.write_string buffer;
+	    "\nYour .cshrc file has been updated with: \n".print;
+	    buffer2.print;
+	    buffer3.print;
+	    file_w.disconnect;
+	  } else {
+	    // There wasn't any previous install
+	    file_w.connect_for_appending_to ".cshrc";
+	    file_w.write_string "\n# LISAAC COMPILER\n";
+	    file_w.write_string buffer2;
+	    file_w.write_string buffer3;
+	    "Your .cshrc file has been updated with: \n".print;
+	    buffer2.print;
+	    buffer3.print;
+	    file_w.disconnect;
+	  };	  
+	};	
+	
+      } else {
+	// There is no .bashrc file
+	file_w.connect_to ".cshrc";
+	file_w.write_string "# LISAAC COMPILER\n";
+	file_w.write_string buffer2;
+	file_w.write_string buffer3;
+	"A .cshrc file has been created with: \n".print;
+	buffer2.print;
+	buffer3.print;
+	file_w.disconnect;
+      };  
+
+
+    } else {
+      // On other shell
+      DIRECTORY.change_current_working_directory "\\";
+      DIRECTORY.scan_current_working_directory;
+      path.replace_all '/' with '\\';
+      buffer2 := "set LISAAC=" + path + "\n";
+      buffer3 := "set path=%path%;" + path + "bin\n";
+
+      (DIRECTORY.has "autoexec.bat").if {
+	// We are under Windows
+	file_r := TEXT_FILE_READ.create;
+	file_r.connect_to "autoexec.bat";
+	buffer := STRING.create 0;
+	file_r.read_file_in buffer;
+	file_r.disconnect;
+	// Search for an old version in the PATH
+	((buffer.has_substring buffer2) && {buffer.has_substring buffer3}).if {
+	  // There was a previous install in the same directory
+	  "No change need detected in your autoexec.bat file\n".print;
+	} else {
+	  + index:INTEGER;
+	  index := buffer.first_substring_index "set LISAAC";
+	  (index != 0).if {
+	    // There was a previous install but not in the same directory
+	    // The previous lines are deleted
+	    + index2,index3:INTEGER;
+	    // We search the end of line
+	    index2 := buffer.substring_index "\n",index;
+	    (buffer.substring (index2 + 1) to (index2 + 9) == "set path=").if {
+	      // The next line seems to be the right as in a previous install
+	      index3 := buffer.substring_index "\n",(index2 + 9);
+	    };
+	    "There was a previous install of Lisaac, in a different directory\n".print;
+	    "The following lines have been removed from your autoexec.bat file:\n".print;
+	    buffer.substring index to index3.print;
+	    buffer.remove_between index to index3;
+	    buffer.insert_string (buffer2 + buffer3) to index;
+	    file_w.connect_to "autoexec.bat";
+	    file_w.write_string buffer;
+	    "\nYour autoexec.bat file has been updated with: \n".print;
+	    buffer2.print;
+	    buffer3.print;
+	    file_w.disconnect;
+	  } else {
+	    // There wasn't any previous install
+	    file_w.connect_for_appending_to "autoexec.bat";
+	    file_w.write_string "\nREM ****** LISAAC COMPILER ******\n";
+	    file_w.write_string buffer2;
+	    file_w.write_string buffer3;
+	    "Your autoexec.bat file has been updated with: \n".print;
+	    buffer2.print;
+	    buffer3.print;
+	    file_w.disconnect;
+	  };	  
+	};	
+	"You'll have to reboot or run Autoexec.bat to acknowledge the changes\n".print;
+      } else {
+	"You have to change your environment variables as following: \n".print;
+	buffer2.print;
+	buffer3.print;	
+      };  
+    };        
+    DIRECTORY.change_current_working_directory path_lisaac;
+    "Installation successfull.\n".print;
+    "Welcome to the Lisaac World !\n".print;
+    "Run 'lisaac' to compile\n".print;
+  );
+
+

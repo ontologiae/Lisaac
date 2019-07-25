@@ -1,0 +1,83 @@
+/****************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := STD_INPUT;
+  - comment     :=" To use the standard input file. As for UNIX, the default standard input is the keyboard.";
+  
+  - category    := MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_input_stream:INPUT_STREAM := INPUT_STREAM;
+  
+section PRIVATE
+
+  - memory:CHARACTER;
+  // Memory of the last available user's value.
+
+section PUBLIC
+  
+  - is_connected:BOOLEAN := TRUE;
+  
+  - read_character:CHARACTER<-
+  (
+    push_back_flag.if {
+      push_back_flag := FALSE;
+    } else {
+      memory := basic_io_getc basic_io_stdin;
+    };
+    last_character
+  );
+  
+  
+  - unread_character <-
+  (
+    push_back_flag := TRUE;
+  );
+  
+  
+  - last_character:CHARACTER <-
+  (
+    memory
+  );
+  
+  
+  - end_of_input:BOOLEAN <-
+  (
+    + result:BOOLEAN;
+    (! push_back_flag).if {
+      result := (memory = basic_io_eof);
+    };
+  );
+  
+  - read_line_in str:STRING <-
+  (
+    + mem:CHARACTER;
+    read_character;
+    ( (last_character != '\n') && { memory != basic_io_eof } ).if {
+      str.extend memory;
+      mem := basic_io_getc basic_io_stdin;
+      
+      { (mem = basic_io_eof) || {mem = '\n'} }.until_do {
+	str.extend mem;
+	mem := basic_io_getc basic_io_stdin;
+      };
+      memory := mem;
+    };
+  );
+  
+section PRIVATE
+
+  - basic_io_stdin:POINTER <- `stdin`:POINTER;
+  

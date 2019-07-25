@@ -1,0 +1,362 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  * name        :=CHARACTER -> SMALLINT, CHAR_UNICODE;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Static Character library (self is mapping on unsigned char C).";
+
+  - type        :=`signed char`;
+  - default     :='\0';
+  
+section INHERIT
+  
+  - parent_character_ref:CHARACTER_REF := CHARACTER_REF;
+  
+section PUBLIC
+    
+  - in_range low:CHARACTER to up:CHARACTER :BOOLEAN <- ((self >= low) && {self<= up});
+  
+  //
+  // General :
+  //
+  
+  - object_size:INTEGER := 1;
+
+  - pointer_size:INTEGER := 1;
+  
+  - maximum:INTEGER := 255;
+  
+  - minimum:INTEGER := 0;
+  
+  - to_integer:INTEGER <-
+  // Sign-extended conversion.
+  ( + result:INTEGER;
+    result:=code.to_integer;
+    ? {result.in_range (SMALLINT.minimum) to (SMALLINT.maximum)};
+    result
+  );
+  
+  - code:SMALLINT <-
+  // ASCII code of Current.
+  // No Sign-extended conversion.
+  ( + result:SMALLINT;
+    result:=to_smallint;
+    //? {result.in_range minimum to maximum};
+    result
+  );
+  
+  - to_smallint:SMALLINT <- SMALLINT.force_conversion self;
+  // Auto-cast.
+  
+  - to_char_unicode:CHAR_UNICODE <- CHAR_UNICODE.force_conversion self;
+  // Auto-cast.
+  
+  - to_usmallint:USMALLINT <- USMALLINT.force_conversion self;
+  
+  //
+  // Print.
+  //
+  
+  - print <- IO.put_character self;
+  
+  //
+  // Switch case :
+  //
+  
+  - when value:CHARACTER then block:BLOCK :CHARACTER <-
+  (
+    (self=value).if block;
+    self
+  );
+  
+  - when first_value:CHARACTER to last_value:CHARACTER then block:BLOCK :CHARACTER <-
+  ( ? {first_value<=last_value};
+
+    ((self>=first_value) && {self<=last_value}).if block;
+    self
+  );
+  
+  //
+  // Binary operator :
+  //
+  
+  - '+' other:CHARACTER :CHARACTER <- (code+other.code).to_character;
+  
+  - '-' other:CHARACTER :CHARACTER <- (code-other.code).to_character;
+  
+  - '!==' other:CHARACTER :BOOLEAN <- (code !== other.code);
+  // Comparison using `code'.
+  
+  - '==' right 60 other:CHARACTER :BOOLEAN <- (code == other.code);
+  // Comparison using `code'.
+  
+  - '<' other:CHARACTER :BOOLEAN <- ( code < other.code );
+  // Comparison using `code'.
+  
+  - '<=' other:CHARACTER :BOOLEAN <- ( code <= other.code );
+  // Comparison using `code'.
+  
+  - '>' other:CHARACTER :BOOLEAN <- ( code > other.code );
+  // Comparison using `code'.
+  
+  - '>=' other:CHARACTER :BOOLEAN <- ( code >= other.code );
+  // Comparison using `code'.
+  
+  - decimal_value:INTEGER <-
+  // Gives the value of a decimal digit.
+  ( + result:INTEGER;
+    ? {is_digit};
+    result := to_integer - 48;
+    ? {result.in_range 0 to 9};
+    result
+  );
+  
+  - binary_value:INTEGER <-
+  // Gives the value of a binary digit.
+  ( + result:INTEGER;
+    ? {is_binary_digit};
+    result := code - 48;
+    ? {result.in_range 0 to 1};
+    result
+  );
+  
+  - octal_value:INTEGER <-
+  // Gives the value of an octal digit.
+  ( + result:INTEGER;
+    ? {is_octal_digit};
+    result := code - 48;
+    ? {result.in_range 0 to 7};
+    result
+  );
+  
+  - hexadecimal_value:INTEGER <-
+  // Gives the value of an hexadecimal digit.
+  ( + result:INTEGER;
+    ? {is_hexadecimal_digit};
+    (code < 'A'.code).if {
+      result := code - 48;
+    }.elseif {code<'a'.code} then {
+      result := code - 55;
+    } else {
+      result := code - 87;
+    };
+    ? {result.in_range 0 to 15};
+    result
+  );
+  
+  - same_as other:CHARACTER :BOOLEAN <-
+  // Case insensitive comparison.
+  // No difference between upper/lower case letters.
+  ( + result:BOOLEAN;
+    (self = other).if {
+      result:=TRUE;
+    } else {
+      code
+      .when 65 to 90 then {
+	result:=(code = (other.code - 32));
+      }
+      .when 97 to 122 then {
+	result:=(code = (other.code + 32));
+      };
+      ? {result -> ((to_lower = other) | (to_upper = other))};
+    };
+    result
+  );
+  
+  - to_upper:CHARACTER <-
+  // Conversion to the corresponding upper case.
+  ( + result:CHARACTER;
+    ((code < 97) || {code > 122}).if {
+      result := self;
+    } else {
+      result := (code - 32).to_character;
+    };
+    result
+  );
+  
+  - to_lower:CHARACTER <-
+  // Conversion to the corresponding lower case.
+  ( + result:CHARACTER;
+    ((code < 65) || {code > 90}).if {
+      result := self;
+    } else {
+      result := (code + 32).to_character;
+    };
+    result
+  );
+  
+  - is_letter:BOOLEAN <-
+  // Is it a letter ('a' .. 'z' or 'A' .. 'Z') ?
+  ( + result:BOOLEAN;
+    (self >= 'a').if {
+      result := (self <= 'z');
+    }.elseif {self >= 'A'} then {
+      result := (self <= 'Z');
+    };
+    ? {result = (in_range 'A' to 'Z' | in_range 'a' to 'z')};
+    result
+  );
+  
+  - is_digit:BOOLEAN <-
+  // Belongs to '0'..'9'.
+  ( + result:BOOLEAN;
+    (self >= '0').if {
+      result := (self <= '9');
+    };
+    ? {result = in_range '0' to '9'};
+    result
+  );
+  
+  - is_binary_digit:BOOLEAN <-
+  // Belongs to '0'..'1'.
+  ( + result:BOOLEAN;
+    result:= (self = '0') || {self = '1'};
+    ? {result = in_range '0' to '1'};
+    result
+  );
+  
+  - is_octal_digit:BOOLEAN <-
+  // Belongs to '0'..'7'.
+  ( + result:BOOLEAN;
+    (self >= '0').if {
+      result := (self <= '7');
+    };
+    ? {result = in_range '0' to '7'};
+    result
+  );
+  
+  - is_hexadecimal_digit:BOOLEAN <-
+  // Is it one character of "0123456789abcdefABCDEF" ?
+  ( + result:BOOLEAN;
+    (is_digit).if {
+      result := TRUE;
+    }.elseif {self >= 'a'} then {
+      result := (self <= 'f');
+    }.elseif {self >= 'A'} then {
+      result := (self <= 'F');
+    };
+    ? {result = ("0123456789abcdefABCDEF".has self)};
+    result
+  );
+  
+  - is_lower:BOOLEAN <-
+  // Is it some lowercase letter ('a'..'z')?
+  ( + result:BOOLEAN;
+    (self >= 'a').if {
+      result:=(self <= 'z');
+    };
+    result
+  );
+  
+  - is_upper:BOOLEAN <-
+  // Is it some uppercase letter ('A'..'Z')?
+  ( + result:BOOLEAN;
+    (self >= 'A').if {
+      result:=(self <= 'Z');
+    };
+    result
+  );
+  
+  - is_separator:BOOLEAN <-
+  // True when character is a separator.
+  (
+    (self= ' ') || {self = '\t'} || {self='\n'} ||
+    {self='\r'} || {self = '\0'} || {self='\f'} || {self='\v'}
+  );
+  
+  - is_letter_or_digit:BOOLEAN <-
+  // Is it a letter (see `is_letter') or a digit (see `is_digit') ?
+  ( + result:BOOLEAN;
+    result := (is_letter || {is_digit});
+    ? {result = (is_letter | is_digit)};
+    result
+  );
+  
+  - is_ascii:BOOLEAN := TRUE;
+  // Is character a 8-bit ASCII character?
+  
+  - is_bit:BOOLEAN <- ((self='0') || {self='1'});
+  // True for `0' and `1'.
+  
+  - next:CHARACTER <-
+  // Give the next character (the following `code');
+  ( ? {code<255};
+    (code + 1).to_character
+  );
+  
+  - previous:CHARACTER <-
+  // Give the previous character (the `code' before);
+  ( ? {code > 0};
+    (code - 1).to_character
+  );
+  
+  //
+  // Conversions:
+  //
+  
+  - to_hexadecimal:STRING <-
+  // Create a new STRING giving the `code' in hexadecimal.
+  // For example :
+  //    (255).to_character.to_hexadecimal gives "FF".
+  // Note: see `to_hexadecimal_in' to save memory.
+  ( + result:STRING;
+    string:=STRING.make 2;
+    to_hexadecimal_in result;
+    ? {result.count = 2};
+    result
+  );
+  
+  - to_hexadecimal_in str:STRING <-
+  // Append the equivalent of `to_hexadecimal' at the end of
+  // `str'. Thus you can save memory because no other
+  // STRING is allocate for the job.
+  ( + c, old_count:INTEGER;
+    
+    old_count:=str.count;
+    c := code >> 4;
+    (c<10).if {
+      str.extend (('0'.code + c).to_character);
+    } else {
+      str.extend (('A'.code - 10 + c).to_character);
+    };
+    c := code & 00001111b;
+    (c<10).if {
+      str.extend (('0'.code + c).to_character);
+    } else {
+      str.extend (('A'.code - 10 + c).to_character);
+    };
+    ? {str.count = (2 + old_count)};
+  );
+  
+  //
+  // Miscellaneous:
+  //
+  
+  - is_alpha:BOOLEAN <-
+  // See `is_letter' (yes this is just a call to `is_letter').
+  // Isn't `is_letter' better English ;-)
+  ( + result:BOOLEAN;
+    result := is_letter;
+    ? {result = is_letter};
+    result
+  );
+  
+  //
+  // Hashing :
+  //
+  
+  - hash_code: INTEGER <- code;
+  
+  
+

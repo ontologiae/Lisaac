@@ -1,0 +1,71 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  * name        :=SHORTINT -> NUMERIC, LONGINT, INTEGER;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Sonntag Benoit (bsonntag@loria.fr)";
+  - comment     :="Signed 16 bits integer.";
+
+  - type        := `signed short`;
+  - default     := 0;
+  
+section INHERIT
+  
+  - parent_signed:SIGNED := SIGNED;
+  
+section PUBLIC
+  
+  - object_size:INTEGER := 2;
+
+  //
+  // Range
+  //
+    
+  - maximum:ULONGINT <- 32767;
+  
+  //
+  // Conversion with test.
+  //
+  
+  - to_ulongint:ULONGINT   <- 
+  ( ? {self >= 0};
+    to_raw_ulongint
+  );
+  
+  - to_uinteger:UINTEGER   <- 
+  ( ? {self >= 0};  
+    to_raw_uinteger
+  );
+  
+  - to_ushortint:USHORTINT <- 
+  ( ? {self >= 0};
+    to_raw_ushortint
+  );
+  
+  - to_usmallint:USMALLINT <- 
+  ( ? {self >= 0};
+    ? {self <=# (USMALLINT.maximum)};
+    to_raw_usmallint
+  );
+  
+  - to_longint:LONGINT     <- to_raw_longint;
+  
+  - to_integer:INTEGER     <- to_raw_integer;
+  
+  - to_shortint:SHORTINT   <- self;
+
+  - to_smallint:SMALLINT   <- 
+  ( ? {self >=# (SMALLINT.minimum)};
+    ? {self <=# (SMALLINT.maximum)};
+    to_raw_smallint
+  );

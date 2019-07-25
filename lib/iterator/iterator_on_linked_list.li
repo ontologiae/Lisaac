@@ -1,0 +1,67 @@
+/****************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Jerome BOUTET  - boutet@loria.fr                       *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+****************************************************************************/
+
+section HEADER
+  
+  + name        := ITERATOR_ON_LINKED_LIST[E];
+  - comment     :=" .";
+  
+  - category    := MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+section INHERIT
+  
+  - parent_iterator:ITERATOR[E] := ITERATOR[E];
+  
+section PUBLIC
+  
+  - linked_list:LINKED_LIST[E];
+  // The one to be traversed.
+
+  - current_link:LINK[E];
+  //  Memorize the current position.
+
+  - create ll:LINKED_LIST[E] :SELF <-
+  (
+    + result:SELF;
+    result := clone;
+    result.make ll
+  );
+  
+  - make ll:LINKED_LIST[E] <-
+  (
+    ? { ll != NULL};
+
+    linked_list := ll;
+    current_link := linked_list.first_link;
+
+    ? { linked_list = ll };
+  );
+
+  - start <-
+  (
+    current_link := linked_list.first_link;
+  );
+
+  - is_off:BOOLEAN <-
+  (
+    current_link = NULL
+  );
+
+  - item:E <-
+  (
+    current_link.item
+  );
+
+  - next <-
+  (
+    current_link := current_link.next;
+  );

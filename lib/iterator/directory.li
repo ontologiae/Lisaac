@@ -1,0 +1,244 @@
+/***************************************************************************
+*                             Lisaac Library                               *
+*                      (c) INRIA 2003 see 'licence.txt' for more details   *
+*                      LORIA - UHP - INRIA - FRANCE                        *
+*                   Benoit SONNTAG - bsonntag@loria.fr                     *
+*                          http://www.IsaacOS.com                          *
+***************************************************************************/
+
+section HEADER
+  
+  - name        :=DIRECTORY;
+  
+  - category    :=MICRO;
+  
+  - bibliography:="http://IsaacOS.com";
+  
+  - author      :="Boutet Jerome (boutet@loria.fr)";
+  
+  - comment     :="Tools for file-system directory handling.\
+   \High-level facade for prototype BASIC_DIRECTORY ";
+  
+section INHERIT
+  
+  - parent_object:OBJECT := OBJECT;
+  
+section PUBLIC
+
+  - path:ABSTRACT_STRING;
+  // The directory path in use (see `scan').
+  
+  - last_scan_status:BOOLEAN;
+  // True when last `scan' (or last `re_scan') has sucessfully
+  // read some existing directory using `path'.
+
+  - name_list:FIXED_ARRAY[STRING];
+  // Actual list of entries (files or subdirectories)..
+
+  - make <-
+  // Make a new not assigned one.
+  (
+    ( name_list = NULL).if {
+      name_list := FIXED_ARRAY[STRING].create 0;
+    } else {
+      name_list.clear;
+    };
+    ? { is_empty };
+  );
+
+  // Disk access:
+
+  - scan directory_path:ABSTRACT_STRING <-
+  // Try to scan some existing `directory_path' which is supposed to be a 
+  // correctly spelled directory path. After this call the client is 
+  // supposed to check `last_scan_status' to know. So, when `last_scan_status' is 
+  // true after this call, the entire directory has been read.
+  (
+    + entry:STRING;
+    
+    ? { ! directory_path.is_empty };
+    make;
+    path := directory_path;
+    BASIC_DIRECTORY.connect_to path;
+    ( BASIC_DIRECTORY.is_connected).if {	
+      BASIC_DIRECTORY.read_entry;
+      {BASIC_DIRECTORY.end_of_input}.until_do {
+	entry := BASIC_DIRECTORY.last_entry.twin;
+	name_list.add_last entry;
+	BASIC_DIRECTORY.read_entry;
+      };
+      BASIC_DIRECTORY.disconnect;
+      last_scan_status := TRUE;
+    } else {
+      last_scan_status := FALSE;
+    };
+    ? { (! last_scan_status) -> is_empty};
+  );
+
+  - scan_with some_path:ABSTRACT_STRING <-
+  // Try to scan `Current' using `some_path' where `some_path' can be
+  // either a file path or an existing directory path.
+  // When `some_path' is a directory path, the behavior is equivalent
+  // to `connect_to'.
+  // When `some_path' is the path of an existing file, the directory
+  // which contains this file is scanned.
+  (
+    ? { ! some_path.is_empty };
+    scan some_path;
+    (! last_scan_status).if {
+      BASIC_DIRECTORY.connect_with some_path;
+      (BASIC_DIRECTORY.is_connected).if {
+	path := BASIC_DIRECTORY.last_entry.twin;
+	BASIC_DIRECTORY.disconnect;
+	scan path;
+      };
+    };
+
+    ? { (! last_scan_status) -> is_empty};
+  );
+
+  - re_scan <-
+  // Update internal information by reloading all the information
+  // about the `path' directory from the disk.
+  // Update `last_scan_status', `count', and all `item's.
+  (
+    + entry:STRING;
+    + i:INTEGER;
+    
+    ? { path != NULL };
+    (! name_list.is_empty).if {
+      BASIC_DIRECTORY.connect_to path;
+      (BASIC_DIRECTORY.is_connected).if {
+	BASIC_DIRECTORY.read_entry;
+	{ BASIC_DIRECTORY.end_of_input }.until_do {
+	  ( name_list.valid_index i).if {
+	    entry := name_list.item i;
+	    (! BASIC_DIRECTORY.last_entry.is_equal entry).if {
+	      entry := BASIC_DIRECTORY.last_entry.twin;
+	      name_list.put entry to i;
+	    };
+	  } else {
+	    entry := BASIC_DIRECTORY.last_entry.twin;
+	    name_list.add_last entry;
+	  };
+	  BASIC_DIRECTORY.read_entry;
+	  i := i + 1;
+	};
+	BASIC_DIRECTORY.disconnect;
+	name_list.resize i;
+	last_scan_status := TRUE;	  
+      } else {
+	name_list.clear;
+	last_scan_status := FALSE;
+      };
+    };
+    ? { (! last_scan_status) -> is_empty };
+  );
+    
+  - scan_current_working_directory <-
+  (
+    + entry:STRING;
+    make;    
+    BASIC_DIRECTORY.connect_to_current_working_directory;
+    (BASIC_DIRECTORY.is_connected).if {
+      path := BASIC_DIRECTORY.last_entry.twin;
+      BASIC_DIRECTORY.read_entry;
+      {BASIC_DIRECTORY.end_of_input}.until_do {
+	entry := BASIC_DIRECTORY.last_entry.twin;
+	name_list.add_last entry;
+	BASIC_DIRECTORY.read_entry;
+      };
+      //BASIC_DIRECTORY.disconnect;
+      last_scan_status := TRUE;
+    } else {
+      last_scan_status := FALSE;
+    };
+    
+    ? { (! last_scan_status) -> is_empty};
+  );
+  
+  - get_current_working_directory:STRING <-
+  // get the current path
+  (
+    BASIC_DIRECTORY.get_current_working_directory
+  );
+  
+  // Access:
+
+  - lower:INTEGER := 1;
+  // Index of the first item.
+
+  - upper:INTEGER <-
+  // Index of the last item.
+  (
+    name_list.upper + 1
+  );
+
+  - count:INTEGER <-
+  // Number of items (files or directories) in Current.
+  (
+    + result:INTEGER;
+    result := name_list.count;
+    ? { result >= 0 };
+    result
+  );
+
+  - is_empty:BOOLEAN <-
+  (
+    count = 0
+  );
+
+  - valid_index index:INTEGER :BOOLEAN <-
+  (
+    + result:BOOLEAN;
+    (index >= 1).if {
+      result := index <= name_list.upper + 1;
+    };
+    ? { result = (lower <= index & (index <= upper))};
+    
+    result
+  );
+
+  - item index:INTEGER :STRING <-
+  // Return the name of entry (file or subdirectory) at `index'.
+  (
+    + result:STRING;
+    ? { valid_index index };
+    result := name_list.item (index - 1);
+    ? { has result};
+    result
+  );
+  
+  - name index:INTEGER :STRING <-
+  (
+    item index
+  );
+      
+  - has entry_name:ABSTRACT_STRING :BOOLEAN <-
+  // Does Current contain the `entry_name' (file or subdirectory) ?
+  (
+    + is_case_sensitive:BOOLEAN;
+    + entry:STRING;
+    + i:INTEGER;
+    + result:BOOLEAN;
+    
+    ? { ! entry_name.is_empty };
+    
+    is_case_sensitive := BASIC_DIRECTORY.is_case_sensitive;
+    i := name_list.upper;
+    { result || {i < name_list.lower}}.until_do {
+      entry := name_list.item i;
+      is_case_sensitive.if {
+	result := entry.is_equal entry_name;
+      } else {
+	result := entry.same_as entry_name;
+      };
+      i := i - 1
+    };
+    result
+  );
+  
+  - change_current_working_directory directory_path:ABSTRACT_STRING <-
+  (
+    BASIC_DIRECTORY.change_current_working_directory directory_path;
+  );
